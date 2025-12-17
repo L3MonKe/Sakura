@@ -37,9 +37,9 @@ public class NotificationHud extends HudModule {
                         aligned.is(AlignedEnum.LEFT),
                         primaryColorConfig.get(),
                         backgroundColorConfig.get(),
-                        maxWidthConfig.get().floatValue(),
+                        maxWidthConfig.getValue().floatValue(),
                         backgroundBlur.get(),
-                        blurStrength.get().floatValue()
+                        blurStrength.getValue().floatValue()
                 );
                 width = size[0];
                 height = size[1];
@@ -50,9 +50,9 @@ public class NotificationHud extends HudModule {
                         aligned.is(AlignedEnum.LEFT),
                         primaryColorConfig.get(),
                         backgroundColorConfig.get(),
-                        maxWidthConfig.get().floatValue(),
+                        maxWidthConfig.getValue().floatValue(),
                         backgroundBlur.get(),
-                        blurStrength.get().floatValue()
+                        blurStrength.getValue().floatValue()
                 );
             }
         });

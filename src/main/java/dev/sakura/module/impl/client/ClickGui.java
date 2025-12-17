@@ -65,14 +65,15 @@ public class ClickGui extends Module {
 
     public static Color color(int tick) {
         return switch (colorMode.get()) {
-            case Fade -> ColorUtil.fade(fadeSpeed.get().intValue(), tick * 20, new Color(mainColor.get().getRGB()), 1);
+            case Fade ->
+                    ColorUtil.fade(fadeSpeed.getValue().intValue(), tick * 20, new Color(mainColor.get().getRGB()), 1);
             case Static -> mainColor.get();
             case Astolfo ->
-                    new Color(ColorUtil.swapAlpha(astolfoRainbow(tick, astolfoSaturation.get().floatValue(), astolfoBrightness.get().floatValue()), 255));
+                    new Color(ColorUtil.swapAlpha(astolfoRainbow(tick, astolfoSaturation.getValue().floatValue(), astolfoBrightness.getValue().floatValue()), 255));
             case Rainbow ->
-                    new Color(RenderUtils.getRainbow(System.currentTimeMillis(), rainbowSpeed.get().intValue(), tick));
+                    new Color(RenderUtils.getRainbow(System.currentTimeMillis(), rainbowSpeed.getValue().intValue(), tick));
             case Tenacity ->
-                    ColorUtil.interpolateColorsBackAndForth(colorSpeed.get().intValue(), colorIndex.get().intValue() * tick, mainColor.get(), secondColor.get(), false);
+                    ColorUtil.interpolateColorsBackAndForth(colorSpeed.getValue().intValue(), colorIndex.get().intValue() * tick, mainColor.get(), secondColor.get(), false);
             case Dynamic ->
                     new Color(ColorUtil.swapAlpha(ColorUtil.colorSwitch(mainColor.get(), new Color(ColorUtil.darker(mainColor.get().getRGB(), 0.25F)), 2000.0F, 0, 10, colorSpeed.get()).getRGB(), 255));
             case Double -> {

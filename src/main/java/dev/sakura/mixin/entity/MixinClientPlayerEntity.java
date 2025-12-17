@@ -2,6 +2,7 @@ package dev.sakura.mixin.entity;
 
 import dev.sakura.Sakura;
 import dev.sakura.events.player.MotionEvent;
+import dev.sakura.events.player.PlayerTickEvent;
 import dev.sakura.events.type.EventType;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -57,5 +58,12 @@ public class MixinClientPlayerEntity {
     private void sendMovementPacketsTailInject(CallbackInfo info) {
         ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
         Sakura.EVENT_BUS.post(new MotionEvent(EventType.POST, player.getYaw(), player.getPitch()));
+    }
+
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    private void tickHeadHook(CallbackInfo ci) {
+        PlayerTickEvent playerTickEvent = new PlayerTickEvent();
+        Sakura.EVENT_BUS.post(playerTickEvent);
+        if (playerTickEvent.isCancelled()) ci.cancel();
     }
 }

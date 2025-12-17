@@ -1,9 +1,13 @@
 package dev.sakura.utils.player;
 
+import dev.sakura.events.input.MoveInputEvent;
+import dev.sakura.utils.math.MathUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.util.PlayerInput;
+import net.minecraft.util.math.MathHelper;
 
-public class MovementUtil {
+public class MovementUtils {
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
     public static boolean isMoving() {
@@ -109,6 +113,19 @@ public class MovementUtil {
 
         return Math.toRadians(yaw);
     }
+    public static double getDirection(float rotationYaw, final double moveForward, final double moveStrafing) {
+        if (moveForward < 0F) rotationYaw += 180F;
+
+        float forward = 1F;
+
+        if (moveForward < 0F) forward = -0.5F;
+        else if (moveForward > 0F) forward = 0.5F;
+
+        if (moveStrafing > 0F) rotationYaw -= 90F * forward;
+        if (moveStrafing < 0F) rotationYaw += 90F * forward;
+
+        return Math.toRadians(rotationYaw);
+    }
 
     public static float getMoveForward() {
         if (mc.player == null) return 0;
@@ -148,5 +165,36 @@ public class MovementUtil {
         double z = forward * speed * cos - strafe * speed * -sin;
 
         return new double[]{x, z};
+    }
+
+    public static void fixMovement(final MoveInputEvent event, final float yaw) {
+        final float forward = event.getForward();
+        final float strafe = event.getStrafe();
+
+        final double angle = MathHelper.wrapDegrees(Math.toDegrees(getDirection(mc.player.getYaw(), forward, strafe)));
+
+        if (forward == 0 && strafe == 0) {
+            return;
+        }
+
+        float closestForward = 0, closestStrafe = 0, closestDifference = Float.MAX_VALUE;
+
+        for (float predictedForward = -1F; predictedForward <= 1F; predictedForward += 1F) {
+            for (float predictedStrafe = -1F; predictedStrafe <= 1F; predictedStrafe += 1F) {
+                if (predictedStrafe == 0 && predictedForward == 0) continue;
+
+                final double predictedAngle = MathHelper.wrapDegrees(Math.toDegrees(getDirection(yaw, predictedForward, predictedStrafe)));
+                final double difference = MathUtils.wrappedDifference(angle, predictedAngle);
+
+                if (difference < closestDifference) {
+                    closestDifference = (float) difference;
+                    closestForward = predictedForward;
+                    closestStrafe = predictedStrafe;
+                }
+            }
+        }
+
+        event.setForward(closestForward);
+        event.setStrafe(closestStrafe);
     }
 }

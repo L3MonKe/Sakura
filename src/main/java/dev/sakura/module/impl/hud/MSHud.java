@@ -28,9 +28,9 @@ public class MSHud extends HudModule {
 
     @Override
     public void onRenderContent() {
-        float s = hudScale.get().floatValue();
+        float s = hudScale.getValue().floatValue();
 
-        if (timer.hasReached(delay.get() * 1000)) {
+        if (timer.hasReached(delay.getValue() * 1000)) {
             cachedPing = getPing();
             timer.reset();
         }

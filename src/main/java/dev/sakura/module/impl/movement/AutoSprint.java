@@ -3,10 +3,13 @@ package dev.sakura.module.impl.movement;
 import dev.sakura.events.client.TickEvent;
 import dev.sakura.events.packet.PacketEvent;
 import dev.sakura.events.type.EventType;
+import dev.sakura.manager.impl.RotationManager;
 import dev.sakura.mixin.accessor.IClientPlayerEntity;
 import dev.sakura.mixininterface.IPlayerInteractEntityC2SPacket;
 import dev.sakura.module.Category;
 import dev.sakura.module.Module;
+import dev.sakura.utils.rotation.MovementFix;
+import dev.sakura.utils.vector.Vector2f;
 import dev.sakura.values.impl.BoolValue;
 import dev.sakura.values.impl.EnumValue;
 import meteordevelopment.orbit.EventHandler;
@@ -34,6 +37,7 @@ public class AutoSprint extends Module {
     private void onTickMovement(TickEvent.Post event) {
         if (mc.player == null || unsprintInWater.get() && mc.player.isTouchingWater()) return;
         mc.player.setSprinting(shouldSprint());
+        RotationManager.setRotations(new Vector2f(0, mc.player.getPitch()), 10f, MovementFix.NORMAL);
     }
 
     @EventHandler(priority = EventPriority.HIGH)

@@ -28,15 +28,11 @@ public abstract class Value<V> {
     }
 
     public V get() {
-        return value;
+        return this.value;
     }
 
     public void set(V value) {
         this.value = value;
-    }
-
-    public String getName() {
-        return name;
     }
 
     public boolean isAvailable() {
@@ -48,7 +44,21 @@ public abstract class Value<V> {
         boolean check();
     }
 
+    // Getter methods
     public Dependency getDependency() {
         return dependency;
+    }
+
+    public V getValue() {
+        return value;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    // Setter methods
+    public void setValue(V value) {
+        this.value = value;
     }
 }

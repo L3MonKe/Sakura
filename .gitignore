@@ -22,3 +22,4 @@ run
 # Rust
 target/
 *.lock
+/.trae

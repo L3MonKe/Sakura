@@ -7,7 +7,7 @@ import dev.sakura.events.type.EventType;
 import dev.sakura.module.Category;
 import dev.sakura.module.Module;
 import dev.sakura.utils.entity.EntityUtil;
-import dev.sakura.utils.player.MovementUtil;
+import dev.sakura.utils.player.MovementUtils;
 import dev.sakura.values.impl.BoolValue;
 import dev.sakura.values.impl.EnumValue;
 import dev.sakura.values.impl.NumberValue;
@@ -59,7 +59,7 @@ public class Step extends Module {
                 mc.player.isTouchingWater() ||
                 inWebPause.get() && EntityUtil.isInWeb(mc.player) ||
                 !mc.player.isOnGround() ||
-                onlyMoving.get() && !MovementUtil.isMoving()) {
+                onlyMoving.get() && !MovementUtils.isMoving()) {
             setStepHeight(0.6f);
             return;
         }

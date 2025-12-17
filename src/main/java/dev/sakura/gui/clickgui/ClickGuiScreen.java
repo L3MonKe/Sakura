@@ -61,7 +61,7 @@ public class ClickGuiScreen extends Screen {
 
         // 应用背景模糊在NanoVG绘制之外
         if (ClickGui.backgroundBlur.get()) {
-            float blurStrength = ClickGui.blurStrength.get().floatValue();
+            float blurStrength = ClickGui.blurStrength.getValue().floatValue();
             Shader2DUtils.drawQuadBlur(
                     guiGraphics.getMatrices(),
                     0, 0,

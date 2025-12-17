@@ -44,9 +44,9 @@ public class FPSHud extends HudModule {
 
     @Override
     public void onRenderContent() {
-        float s = hudScale.get().floatValue();
+        float s = hudScale.getValue().floatValue();
 
-        if (timer.hasReached(delay.get() * 1000)) {
+        if (timer.hasReached(delay.getValue() * 1000)) {
             cachedFps = FrameRateCounter.INSTANCE.getFps();
             timer.reset();
         }
@@ -80,8 +80,8 @@ public class FPSHud extends HudModule {
     }
 
     private int calculateGradientColor(long offset) {
-        float speed = Math.max(100.0f - rainbowSpeedConfig.get().floatValue(), 0.1f);
-        float difference = Math.max(100.0f - rainbowDifferenceConfig.get().floatValue(), 0.1f);
+        float speed = Math.max(100.0f - rainbowSpeedConfig.getValue().floatValue(), 0.1f);
+        float difference = Math.max(100.0f - rainbowDifferenceConfig.getValue().floatValue(), 0.1f);
 
         double phase = Math.toRadians(offset * difference + System.currentTimeMillis() / speed);
         double factor = Math.abs(Math.sin(phase));
@@ -94,15 +94,15 @@ public class FPSHud extends HudModule {
     }
 
     private int rainbow(long offset) {
-        float speed = rainbowSpeedConfig.get().floatValue();
-        float diff = rainbowDifferenceConfig.get().floatValue();
+        float speed = rainbowSpeedConfig.getValue().floatValue();
+        float diff = rainbowDifferenceConfig.getValue().floatValue();
 
         float hue = ((System.currentTimeMillis() % (long) (10000 / speed)) / (10000f / speed) + offset * diff / 360f) % 1f;
 
         return Color.HSBtoRGB(
                 hue,
-                rainbowSaturationConfig.get().floatValue() / 100.0f,
-                rainbowBrightnessConfig.get().floatValue() / 100.0f
+                rainbowSaturationConfig.getValue().floatValue() / 100.0f,
+                rainbowBrightnessConfig.getValue().floatValue() / 100.0f
         );
     }
 }

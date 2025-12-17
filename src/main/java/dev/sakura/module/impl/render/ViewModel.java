@@ -24,9 +24,9 @@ public class ViewModel extends Module {
     @EventHandler
     private void onHeldItemRender(HeldItemRendererEvent event) {
         if (event.getHand() == Hand.MAIN_HAND) {
-            event.getMatrices().translate(mainX.get(), mainY.get(), mainZ.get());
+            event.getMatrices().translate(mainX.getValue(), mainY.getValue(), mainZ.getValue());
         } else {
-            event.getMatrices().translate(offX.get(), offY.get(), offZ.get());
+            event.getMatrices().translate(offX.getValue(), offY.getValue(), offZ.getValue());
         }
     }
 }

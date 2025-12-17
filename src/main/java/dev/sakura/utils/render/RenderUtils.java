@@ -103,6 +103,6 @@ public class RenderUtils {
     }
 
     public static float animate(float end, float start, float multiple) {
-        return (1 - MathUtils.clamp_float((float) (deltaTime() * multiple), 0, 1)) * end + MathUtils.clamp_float((float) (deltaTime() * multiple), 0, 1) * start;
+        return (1 - MathUtils.clamp((float) (deltaTime() * multiple), 0, 1)) * end + MathUtils.clamp((float) (deltaTime() * multiple), 0, 1) * start;
     }
 }

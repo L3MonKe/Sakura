@@ -7,7 +7,7 @@ import dev.sakura.events.player.MoveEvent;
 import dev.sakura.events.type.EventType;
 import dev.sakura.module.Category;
 import dev.sakura.module.Module;
-import dev.sakura.utils.player.MovementUtil;
+import dev.sakura.utils.player.MovementUtils;
 import dev.sakura.utils.time.TimerUtil;
 import dev.sakura.values.impl.BoolValue;
 import dev.sakura.values.impl.EnumValue;
@@ -54,8 +54,8 @@ public class Speed extends Module {
     protected void onEnable() {
         Sakura.EVENT_BUS.subscribe(this);
         if (mc.player != null) {
-            moveSpeed = MovementUtil.getBaseSpeed(false, speed.get());
-            distance = MovementUtil.getDistance2D();
+            moveSpeed = MovementUtils.getBaseSpeed(false, speed.get());
+            distance = MovementUtils.getDistance2D();
         }
         stage = 4;
         lagTimer.reset();
@@ -83,8 +83,8 @@ public class Speed extends Module {
                         moveSpeed += lastExp * hFactor.get();
                         distance += lastExp * hFactor.get();
 
-                        if (MovementUtil.getMotionY() > 0 && vFactor.get() != 0) {
-                            MovementUtil.setMotionY(MovementUtil.getMotionY() * vFactor.get());
+                        if (MovementUtils.getMotionY() > 0 && vFactor.get() != 0) {
+                            MovementUtils.setMotionY(MovementUtils.getMotionY() * vFactor.get());
                         }
                     }
                 }
@@ -110,7 +110,7 @@ public class Speed extends Module {
         distance = Math.sqrt(dx * dx + dz * dz);
 
         if (mode.get() == Mode.GrimCollide) {
-            if (!MovementUtil.isMoving()) return;
+            if (!MovementUtils.isMoving()) return;
 
             int collisions = 0;
             Box box = mc.player.getBoundingBox().expand(1.0);
@@ -133,9 +133,9 @@ public class Speed extends Module {
     public void onMove(MoveEvent event) {
         if (mc.player == null || mc.world == null) return;
 
-        if (!MovementUtil.isMoving() && airStop.get() && mode.get() != Mode.GrimCollide) {
-            MovementUtil.setMotionX(0);
-            MovementUtil.setMotionZ(0);
+        if (!MovementUtils.isMoving() && airStop.get() && mode.get() != Mode.GrimCollide) {
+            MovementUtils.setMotionX(0);
+            MovementUtils.setMotionZ(0);
             return;
         }
 
@@ -144,7 +144,7 @@ public class Speed extends Module {
         }
 
         if (mc.player.isRiding() || mc.player.isHoldingOntoLadder() ||
-                mc.player.getAbilities().flying || mc.player.isGliding() || !MovementUtil.isMoving()) {
+                mc.player.getAbilities().flying || mc.player.isGliding() || !MovementUtils.isMoving()) {
             return;
         }
 
@@ -152,20 +152,20 @@ public class Speed extends Module {
 
         if (!lagTimer.hasReached(lagTime.get())) return;
 
-        double baseSpeed = MovementUtil.getBaseSpeed(slowness.get(), speed.get());
+        double baseSpeed = MovementUtils.getBaseSpeed(slowness.get(), speed.get());
 
         if (stage == 1) {
             moveSpeed = 1.35 * baseSpeed - 0.01;
         } else if (stage == 2 && mc.player.isOnGround() && (mc.options.jumpKey.isPressed() || jump.get())) {
-            double yMotion = 0.3999 + MovementUtil.getJumpBoost();
-            MovementUtil.setMotionY(yMotion);
+            double yMotion = 0.3999 + MovementUtils.getJumpBoost();
+            MovementUtils.setMotionY(yMotion);
             event.setY(yMotion);
             moveSpeed *= boost ? 1.6835 : 1.395;
         } else if (stage == 3) {
             moveSpeed = distance - 0.66 * (distance - baseSpeed);
             boost = !boost;
         } else {
-            if ((mc.world.canCollide(null, mc.player.getBoundingBox().offset(0.0, MovementUtil.getMotionY(), 0.0))
+            if ((mc.world.canCollide(null, mc.player.getBoundingBox().offset(0.0, MovementUtils.getMotionY(), 0.0))
                     || mc.player.collidedSoftly) && stage > 0) {
                 stage = 1;
             }
@@ -175,8 +175,8 @@ public class Speed extends Module {
         moveSpeed = Math.min(moveSpeed, 10);
         moveSpeed = Math.max(moveSpeed, baseSpeed);
 
-        double forward = MovementUtil.getMoveForward();
-        double strafe = MovementUtil.getMoveStrafe();
+        double forward = MovementUtils.getMoveForward();
+        double strafe = MovementUtils.getMoveStrafe();
         double yaw = mc.player.getYaw();
 
         if (forward == 0 && strafe == 0) {

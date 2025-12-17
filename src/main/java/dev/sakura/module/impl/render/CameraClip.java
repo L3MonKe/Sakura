@@ -63,7 +63,7 @@ public class CameraClip extends Module {
         lastPerspective = currentPerspective;
 
         if (mode.is(Mode.NORMAL)) {
-            float normalSpeed = speed.get().floatValue();
+            float normalSpeed = speed.getValue().floatValue();
             if (currentPerspective == Perspective.FIRST_PERSON)
                 animation = AnimationUtil.fast(animation, 0f, normalSpeed);
             else animation = AnimationUtil.fast(animation, 1f, normalSpeed);
@@ -74,11 +74,11 @@ public class CameraClip extends Module {
     }
 
     public float getDistance() {
-        return 1f + ((distance.get().floatValue() - 1f) * animation);
+        return 1f + ((distance.getValue().floatValue() - 1f) * animation);
     }
 
     public float getActionDistance() {
-        return 1f + ((actionDistance.get().floatValue() - 1f) * animation);
+        return 1f + ((actionDistance.getValue().floatValue() - 1f) * animation);
     }
 
     public boolean isNormal() {
@@ -116,14 +116,14 @@ public class CameraClip extends Module {
         float currentYaw = mc.player.getYaw();
         float currentPitch = mc.player.getPitch();
 
-        float rotSmooth = rotationSmoothness.get().floatValue();
+        float rotSmooth = rotationSmoothness.getValue().floatValue();
         smoothYaw += (currentYaw - smoothYaw) * rotSmooth;
         smoothPitch += (currentPitch - smoothPitch) * rotSmooth;
 
         float yawDelta = currentYaw - smoothYaw;
         float pitchDelta = currentPitch - smoothPitch;
 
-        float offsetMultiplier = rotationOffset.get().floatValue();
+        float offsetMultiplier = rotationOffset.getValue().floatValue();
         double yawRad = Math.toRadians(smoothYaw);
 
         // 使用玩家的右向量计算水平偏移，这样左转时向右偏移，右转时向左偏移
@@ -135,14 +135,14 @@ public class CameraClip extends Module {
         double rotOffsetZ = rightZ * yawDelta * offsetMultiplier * 0.02;
 
         double distance = cameraPos.distanceTo(playerPos);
-        float maxDist = maxDistance.get().floatValue();
+        float maxDist = maxDistance.getValue().floatValue();
 
         if (distance > maxDist) {
             cameraPos = playerPos;
             return;
         }
 
-        float smoothFactor = smoothness.get().floatValue();
+        float smoothFactor = smoothness.getValue().floatValue();
         double dynamicFactor = smoothFactor * (1.0 - Math.exp(-distance / maxDist));
 
         double dx = playerPos.x - cameraPos.x + rotOffsetX;
@@ -169,6 +169,6 @@ public class CameraClip extends Module {
     }
 
     public boolean getDisableFirstPers() {
-        return disableFirstPers.get();
+        return disableFirstPers.getValue();
     }
 }

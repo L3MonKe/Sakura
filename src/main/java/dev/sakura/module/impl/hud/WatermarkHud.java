@@ -25,7 +25,7 @@ public class WatermarkHud extends HudModule {
 
     @Override
     public void onRenderContent() {
-        float s = hudScale.get().floatValue();
+        float s = hudScale.getValue().floatValue();
 
         String text = Sakura.MOD_NAME + " " + Sakura.MOD_VER;
         float fontSize = 30 * s;
@@ -43,7 +43,7 @@ public class WatermarkHud extends HudModule {
                             px, py, pw, ph,
                             (float) (radius * mc.getWindow().getScaleFactor()),
                             new Color(0, 0, 0, 0),
-                            blurStrength.get().floatValue(),
+                            blurStrength.getValue().floatValue(),
                             1.0f
                     ));
         }

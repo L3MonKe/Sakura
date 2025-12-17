@@ -34,7 +34,7 @@ public class NumberValueComponent extends Component {
 
     public NumberValueComponent(NumberValue<? extends Number> setting) {
         this.setting = setting;
-        this.isInteger = setting.get() instanceof Integer;
+        this.isInteger = setting.getValue() instanceof Integer;
         drag.setDirection(Direction.BACKWARDS);
     }
 
@@ -44,7 +44,7 @@ public class NumberValueComponent extends Component {
         float w = getWidth();
         double min = setting.getMin().doubleValue();
         double max = setting.getMax().doubleValue();
-        double current = setting.get().doubleValue();
+        double current = setting.getValue().doubleValue();
 
         anim = RenderUtils.animate(anim, (float) (w * (current - min) / (max - min)), 50);
         float sliderWidth = anim;
@@ -87,7 +87,7 @@ public class NumberValueComponent extends Component {
                 String maxStr = isInteger ? String.valueOf(setting.getMax().intValue()) : String.valueOf(setting.getMax());
                 String currentStr;
                 if (isInteger) {
-                    currentStr = String.valueOf(setting.get().intValue());
+                    currentStr = String.valueOf(setting.getValue().intValue());
                 } else {
                     DecimalFormat df = new DecimalFormat("#0.00");
                     currentStr = df.format(current);
@@ -105,7 +105,7 @@ public class NumberValueComponent extends Component {
 
         if (dragging && !editing) {
             final double difference = max - min;
-            final double value = min + MathUtils.clamp_double((mouseX - getX()) / w, 0, 1) * difference;
+            final double value = min + MathUtils.clamp((mouseX - getX()) / w, 0, 1) * difference;
             setValueFromDouble(MathUtils.incValue(value, setting.getStep().doubleValue()));
         }
         super.render(guiGraphics, mouseX, mouseY, partialTicks);
@@ -114,9 +114,9 @@ public class NumberValueComponent extends Component {
     @SuppressWarnings("unchecked")
     private void setValueFromDouble(double value) {
         if (isInteger) {
-            ((NumberValue<Integer>) setting).set((int) value);
+            ((NumberValue<Integer>) setting).setValue((int) value);
         } else {
-            ((NumberValue<Double>) setting).set(value);
+            ((NumberValue<Double>) setting).setValue(value);
         }
     }
 
@@ -134,9 +134,9 @@ public class NumberValueComponent extends Component {
                 currentEditing = this;
                 editing = true;
                 if (isInteger) {
-                    tempText = String.valueOf(setting.get().intValue());
+                    tempText = String.valueOf(setting.getValue().intValue());
                 } else {
-                    tempText = String.valueOf(setting.get().doubleValue());
+                    tempText = String.valueOf(setting.getValue().doubleValue());
                 }
                 cursorPos = tempText.length();
                 lastBlinkTime = System.currentTimeMillis();

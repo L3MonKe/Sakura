@@ -2,14 +2,16 @@ package dev.sakura.module.impl.combat;
 
 import dev.sakura.Sakura;
 import dev.sakura.events.client.TickEvent;
+import dev.sakura.manager.impl.RotationManager;
 import dev.sakura.module.Category;
 import dev.sakura.module.Module;
 import dev.sakura.utils.client.ChatUtils;
 import dev.sakura.utils.combat.CombatUtil;
 import dev.sakura.utils.entity.EntityUtil;
 import dev.sakura.utils.entity.InventoryUtil;
-import dev.sakura.utils.player.RotationUtil;
+import dev.sakura.utils.rotation.MovementFix;
 import dev.sakura.utils.time.TimerUtil;
+import dev.sakura.utils.vector.Vector2f;
 import dev.sakura.utils.world.BlockPosX;
 import dev.sakura.utils.world.BlockUtil;
 import dev.sakura.values.impl.BoolValue;
@@ -39,7 +41,6 @@ public class Burrow extends Module {
     public static Burrow INSTANCE;
     private final TimerUtil timer = new TimerUtil();
     private final TimerUtil webTimer = new TimerUtil();
-    private final RotationUtil rotation = new RotationUtil();
     private final BoolValue disable = new BoolValue("Disable", true);
     private final NumberValue<Integer> delay = new NumberValue<>("Delay", 500, 0, 1000, 1, () -> !disable.get());
     private final NumberValue<Integer> webTime = new NumberValue<>("WebTime", 0, 0, 500, 1);
@@ -77,7 +78,6 @@ public class Burrow extends Module {
     @Override
     protected void onEnable() {
         Sakura.EVENT_BUS.subscribe(this);
-        rotation.updateRotations();
     }
 
     @Override
@@ -224,7 +224,7 @@ public class Burrow extends Module {
         timer.reset();
         doSwap(block);
         if (this.rotate.get() == RotateMode.Bypass) {
-            rotation.snapAt(rotation.rotationYaw, 90);
+            RotationManager.setRotations(new Vector2f(RotationManager.getYaw(), 89.98f), 10f, MovementFix.NORMAL);
         }
         placeBlock(playerPos, rotateFlag);
         placeBlock(pos1, rotateFlag);
@@ -337,7 +337,7 @@ public class Burrow extends Module {
         if (rotate.get() == RotateMode.None) {
             sendPositionPacket(offPos.getX() + 0.5, mc.player.getY() + 0.1, offPos.getZ() + 0.5, false);
         } else {
-            sendFullPacket(offPos.getX() + 0.5, mc.player.getY() + 0.1, offPos.getZ() + 0.5, rotation.rotationYaw, 90, false);
+            sendFullPacket(offPos.getX() + 0.5, mc.player.getY() + 0.1, offPos.getZ() + 0.5, RotationManager.getYaw(), 89.98f, false);
         }
     }
 
