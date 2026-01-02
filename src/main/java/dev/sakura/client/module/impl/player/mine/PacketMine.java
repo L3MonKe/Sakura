@@ -22,14 +22,18 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.enchantment.Enchantment;
 import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.*;
 
 import java.awt.*;
@@ -47,6 +51,7 @@ public class PacketMine extends Module {
     private final BoolValue strictDirectionConfig = new BoolValue("Strict Direction", "严格方向", false);
     private final EnumValue<RemineMode> remineConfig = new EnumValue<>("Remine", "重挖", RemineMode.Normal);
     private final BoolValue eatingPause = new BoolValue("Eating Pause", "吃东西时暂停", false);
+    private final BoolValue miningFix = new BoolValue("Mining Fix", "挖掘修复", false);
     private final BoolValue doubleBreakConfig = new BoolValue("Double Break", "双重破坏", false);
     private final NumberValue<Integer> mineTicksConfig = new NumberValue<>("Mining Ticks", "挖掘刻数", 20, 5, 60, 1, doubleBreakConfig::get);
     private final NumberValue<Double> rangeConfig = new NumberValue<>("Range", "范围", 4.0, 0.1, 6.0, 0.1);
@@ -61,7 +66,9 @@ public class PacketMine extends Module {
     private final ColorValue doneFullColor = new ColorValue("Done Full", "完成面颜色", new Color(0, 255, 0, 23));
     private final ColorValue doneLineColor = new ColorValue("Done Line", "完成线颜色", new Color(0, 255, 0, 233));
     private final BoolValue debugConfig = new BoolValue("Debug", "调试", false);
+
     private BlockData blockData = null;
+    private BlockData blockData2 = null;
 
     private TimerUtil resetTime = new TimerUtil();
 
@@ -70,18 +77,19 @@ public class PacketMine extends Module {
     }
 
     public static int lerp(int start, int end, double pct) {
-        // 限制百分比在 0.0 到 1.0 之间，防止越界
         pct = Math.max(0.0f, Math.min(1.0f, pct));
 
-        // 使用 Math.round 确保四舍五入到最近的整数，避免始终向下取整导致的抖动
         return Math.toIntExact(Math.round(start + (end - start) * pct));
     }
 
-    // 获取点击方块事件
     @EventHandler
     public void onClickBlock(BlockEvent event) {
-        if (eatingCheck()) return;
         if (blockData == null || event.getBlockPos() != blockData.getCurrentPos()) {
+            if (blockData != null && !mc.world.isAir(blockData.getCurrentPos())) {
+                if (blockData.getCurrentPos() == event.getBlockPos()) return;
+                blockData2 = blockData;
+                if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] Setting fucking blockData2.");
+            }
             if (canBreak(event.getBlockPos())) {
                 if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] Setting fucking blockData.");
                 blockData = new BlockData(
@@ -95,64 +103,89 @@ public class PacketMine extends Module {
     @EventHandler
     public void onTick(TickEvent.Post event) {
         if (mc.player == null || mc.world == null) return; // fuck kong zhi zhen
+        if (eatingCheck()) return;
         if (blockData == null) return;
         if (mc.player.squaredDistanceTo(blockData.getCurrentPos().toCenterPos()) > Math.pow(rangeConfig.get() + 4, 2)) {
             if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] set blockData = null.");
             blockData = null;
+            blockData2 = null;
             return;
         }
-        if (eatingCheck()) return;
         if (mc.world.isAir(blockData.getCurrentPos())) {
             resetTime.reset();
             return;
         }
-        if (System.currentTimeMillis() - blockData.getStartTime() > calcBreakTime(blockData.getCurrentPos(), swapConfig.get() == Swap.SilentAlt)) {
-            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] PASS.");
-            Integer slot = InvUtil.findFastestTool(mc.world.getBlockState(blockData.getCurrentPos()), swapConfig.get() == Swap.SilentAlt).slot();
-            switch (swapConfig.get()) {
-                case Silent:
-                    InvUtil.swap(slot, true);
-                    break;
-                case SilentAlt:
-                    InvUtil.invSwap(slot);
-                    break;
-                case Normal:
-                    InvUtil.swap(slot, false);
-                    break;
-                case Off:
-                    break;
-            }
-            if (rotateConfig.get()) {
-                Managers.ROTATION.setRotations(RotationUtil.calculate(blockData.getCurrentPos()), rotationBackSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
-            }
-            stopMiningInternal(blockData);
-            switch (swapConfig.get()) {
-                case Silent:
-                    InvUtil.swapBack();
-                    break;
-                case SilentAlt:
-                    InvUtil.invSwapBack();
-                    break;
-                default:
-                    break;
-            }
+        if (isReady(blockData)) {
+            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] BLOCK DATA TASKS IS READY.");
+            int slot = InvUtil.findFastestTool(mc.world.getBlockState(blockData.getCurrentPos()), swapConfig.get() == Swap.SilentAlt).slot();
+            performSwap(slot, false);
+            mineTask(blockData);
+            performSwap(slot, true);
 
             if (remineConfig.get() == RemineMode.Normal) {
                 if (resetTime.passedMS(calcBreakTime(blockData.getCurrentPos(), swapConfig.get() == Swap.SilentAlt) + 5000L) && reTry.get()) {
                     hookPos(blockData.getCurrentPos(), true);
                 }
-                blockData = new BlockData(blockData.getCurrentPos(), blockData.getDirection(), System.currentTimeMillis());
             }
             if (remineConfig.get() == RemineMode.OFF)
                 blockData = null;
+        }
+        if (blockData2 != null && isReady(blockData2)) {
+            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] BLOCK DATA2 TASKS IS READY.");
+            int slot = InvUtil.findFastestTool(mc.world.getBlockState(blockData2.getCurrentPos()), swapConfig.get() == Swap.SilentAlt).slot();
+            performSwap(slot, false);
+            mineTask(blockData2);
+            performSwap(slot, true);
+//            hookPos(blockData2.getCurrentPos(), false);
+            blockData2 = null;
+        }
+    }
+
+    private boolean isReady(BlockData data) {
+        return System.currentTimeMillis() - data.getStartTime() > calcBreakTime(data.getCurrentPos(), swapConfig.get() == Swap.SilentAlt);
+    }
+
+    private void mineTask(BlockData data) {
+        if (rotateConfig.get()) {
+            Managers.ROTATION.setRotations(RotationUtil.calculate(data.getCurrentPos()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
+            if (grimConfig.get()) {
+                mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(
+                        mc.player.getX(), mc.player.getY(), mc.player.getZ(), RotationUtil.calculate(data.getCurrentPos()).x, RotationUtil.calculate(data.getCurrentPos()).y, mc.player.isOnGround(), mc.player.horizontalCollision));
+            }
+        }
+        stopMiningInternal(data);
+    }
+
+    private void performSwap(int slot, boolean back) {
+        if (swapConfig.get() == Swap.Off) return;
+
+        if (!back) {
+            switch (swapConfig.get()) {
+                case Silent -> InvUtil.swap(slot, true);
+                case SilentAlt -> InvUtil.invSwap(slot);
+                case Normal -> InvUtil.swap(slot, false);
+            }
+        } else {
+            switch (swapConfig.get()) {
+                case Silent -> InvUtil.swapBack();
+                case SilentAlt -> InvUtil.invSwapBack();
+            }
         }
     }
 
     @EventHandler
     private void onRender3D(Render3DEvent event) {
-        if (blockData == null) return;
-        double progress = (System.currentTimeMillis() - blockData.getStartTime()) / calcBreakTime(blockData.getCurrentPos(), swapConfig.get() == Swap.SilentAlt);
-        Box box = new Box(blockData.getCurrentPos());
+        if (blockData != null) {
+            renderTask(blockData, event.getMatrices());
+        }
+        if (blockData2 != null) {
+            renderTask(blockData2, event.getMatrices());
+        }
+    }
+
+    private void renderTask(BlockData data, MatrixStack matrices) {
+        double progress = (System.currentTimeMillis() - data.getStartTime()) / calcBreakTime(data.getCurrentPos(), swapConfig.get() == Swap.SilentAlt);
+        Box box = new Box(data.getCurrentPos());
         Color lerpedFullColor = new Color(lerp(fullColor.get().getRed(), doneFullColor.get().getRed(), progress),
                 lerp(fullColor.get().getGreen(), doneFullColor.get().getGreen(), progress),
                 lerp(fullColor.get().getBlue(), doneFullColor.get().getBlue(), progress),
@@ -161,8 +194,8 @@ public class PacketMine extends Module {
                 lerp(lineColor.get().getGreen(), doneLineColor.get().getGreen(), progress),
                 lerp(lineColor.get().getBlue(), doneLineColor.get().getBlue(), progress),
                 lerp(lineColor.get().getAlpha(), doneLineColor.get().getAlpha(), progress));
-        Render3DUtil.drawFilledBox(event.getMatrices(), box, lerpedFullColor);
-        Render3DUtil.drawBoxOutline(event.getMatrices(), box, lerpedLineColor.getRGB(), 1f);
+        Render3DUtil.drawFilledBox(matrices, box, lerpedFullColor);
+        Render3DUtil.drawBoxOutline(matrices, box, lerpedLineColor.getRGB(), 1f);
         Vec3d center = new Vec3d(
                 box.minX + (box.maxX - box.minX) * 0.5,
                 box.minY + (box.maxY - box.minY) * 0.5,
@@ -271,7 +304,48 @@ public class PacketMine extends Module {
             side = Direction.getFacing((float) dx, (float) dy, (float) dz);
         }
 
-        Sakura.EVENT_BUS.post(new BlockEvent(blockPos, side));
+        if (doubleBreakConfig.get()) {
+            // https://github.com/GrimAnticheat/Grim/blob/2.0/src/main/java/ac/grim/grimac/checks/impl/misc/FastBreak.java#L76
+            // https://github.com/GrimAnticheat/Grim/blob/2.0/src/main/java/ac/grim/grimac/checks/impl/misc/FastBreak.java#L98
+            if (grimNewConfig.get()) {
+                if (!miningFix.get()) {
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                } else {
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                }
+
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+            } else {
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+            }
+        } else {
+            mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                    PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.getCurrentPos(), side));
+        }
+
+        if (blockPos != blockData2.getCurrentPos())Sakura.EVENT_BUS.post(new BlockEvent(blockPos, side));
     }
 
     public Direction getInteractDirection(final BlockPos blockPos, final boolean strictDirection) {
