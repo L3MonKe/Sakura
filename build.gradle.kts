@@ -74,6 +74,21 @@ dependencies {
     val lwjglVersion = property("nanovg_version")
     implementation(include("org.lwjgl:lwjgl-nanovg:$lwjglVersion")!!)
 
+    // Android平台适配
+    val androidLibs = files(
+        "libs/lwjgl.jar",
+        "libs/lwjgl-glfw.jar",
+        "libs/lwjgl-jemalloc.jar",
+        "libs/lwjgl-openal.jar",
+        "libs/lwjgl-stb.jar",
+        "libs/lwjgl-nanovg.jar",
+        "libs/lwjgl-opengl.jar",
+        "libs/lwjgl-opengles.jar"
+    )
+
+    compileOnly(androidLibs)
+    add("shadow", androidLibs)
+
     // 跨平台 Natives 支持
     val platforms = listOf(
         "natives-windows",

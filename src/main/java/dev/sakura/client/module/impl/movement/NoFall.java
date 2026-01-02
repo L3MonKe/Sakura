@@ -26,7 +26,8 @@ public class NoFall extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null || !isFalling()) return;
+        if (mc.player == null || mc.world == null) return;
+        if (!isFalling()) return;
 
         if (mode.is(Mode.Grim)) {
             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(mc.player.getX(), mc.player.getY() + 0.000000001, mc.player.getZ(), mc.player.getYaw(), mc.player.getPitch(), false, mc.player.horizontalCollision));
