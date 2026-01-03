@@ -73,7 +73,6 @@ public class BlurProgram {
         input.beginWrite(false);
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, buffer.fbo);
         GL30.glBlitFramebuffer(0, 0, buffer.textureWidth, buffer.textureHeight, 0, 0, buffer.textureWidth, buffer.textureHeight, GL30.GL_COLOR_BUFFER_BIT, GL30.GL_LINEAR);
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
         buffer.beginWrite(false);
 
         inputResolution.set((float) buffer.textureWidth, (float) buffer.textureHeight);

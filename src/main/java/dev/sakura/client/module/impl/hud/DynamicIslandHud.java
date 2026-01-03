@@ -1,6 +1,7 @@
 package dev.sakura.client.module.impl.hud;
 
 import dev.sakura.client.Sakura;
+import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.client.ClickGui;
@@ -12,6 +13,7 @@ import dev.sakura.client.utils.render.Shader2DUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.GameMenuScreen;
 
 import java.awt.*;
 import java.time.LocalTime;
@@ -156,7 +158,11 @@ public class DynamicIslandHud extends HudModule {
 
     private void renderBlur(DrawContext context) {
         if (!blur.get()) return;
+        if (mc.currentScreen instanceof ClickGuiScreen || mc.currentScreen instanceof GameMenuScreen) return;
+
         float clampedBlurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
+        if (clampedBlurOpacity <= 0.005f) return;
+
         Shader2DUtil.drawRoundedBlur(
                 context.getMatrices(), animX, animY, animW, animH, getRadius(),
                 new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity
@@ -165,8 +171,11 @@ public class DynamicIslandHud extends HudModule {
 
     private void renderSideBlurs(DrawContext context, float expandProgress) {
         if (!blur.get()) return;
+        if (mc.currentScreen instanceof ClickGuiScreen || mc.currentScreen instanceof GameMenuScreen) return;
 
         float clampedBlurOpacity = Math.max(0f, Math.min(1f, blurOpacity * expandProgress));
+        if (clampedBlurOpacity <= 0.005f) return;
+
         float timeBgX = animX - Size.ELEMENT_SPACING - Size.ELEMENT_WIDTH;
         Shader2DUtil.drawRoundedBlur(
                 context.getMatrices(), timeBgX, animY, Size.ELEMENT_WIDTH, animH, getRadius(),

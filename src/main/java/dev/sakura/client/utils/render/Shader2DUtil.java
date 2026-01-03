@@ -55,9 +55,6 @@ public class Shader2DUtil {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-        RenderSystem.disableDepthTest();
-        RenderSystem.disableCull();
-        RenderSystem.disableScissor();
     }
 
     public static void endRender() {

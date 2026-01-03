@@ -14,6 +14,7 @@ import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.Rect2i;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -30,10 +31,13 @@ public class MixinChatScreen {
     @Shadow
     ChatInputSuggestor chatInputSuggestor;
 
-    private static float inputTargetY = 0;
+    @Unique
     private static float inputCurrentY = 0;
+    @Unique
     private static boolean inputInitialized = false;
+    @Unique
     private static long openTime = 0;
+    @Unique
     private static float inputAlpha = 0f;
 
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V", ordinal = 0))
@@ -45,19 +49,16 @@ public class MixinChatScreen {
 
         if (!inputInitialized) {
             inputCurrentY = mc.getWindow().getScaledHeight();
-            inputTargetY = y1;
             inputInitialized = true;
             openTime = System.currentTimeMillis();
             inputAlpha = 0f;
         }
 
-        inputTargetY = y1;
-
         long elapsed = System.currentTimeMillis() - openTime;
         float progress = Math.min(1.0f, elapsed / 300.0f);
 
         float easedProgress = (float) (1 - Math.pow(1 - progress, 3));
-        inputCurrentY = inputTargetY + (mc.getWindow().getScaledHeight() - inputTargetY) * (1 - easedProgress);
+        inputCurrentY = (float) y1 + (mc.getWindow().getScaledHeight() - (float) y1) * (1 - easedProgress);
 
         inputAlpha = Math.min(1.0f, elapsed / 200.0f);
 
