@@ -59,7 +59,6 @@ public abstract class MixinShaderProgram implements SamplerAccess {
                     }
                 }
             }
-            RenderSystem.activeTexture(GL13.GL_TEXTURE0);
         }
     }
 
