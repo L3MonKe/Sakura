@@ -1,65 +1,69 @@
 package dev.sakura.client.utils.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import dev.sakura.client.shaders.BlurProgram;
+import dev.sakura.client.shaders.BlurShader;
 import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import org.joml.Matrix4f;
-
-import java.awt.*;
 
 public class Shader2DUtil {
-    public static BlurProgram BLUR_PROGRAM;
 
-    public static void init() {
-        BLUR_PROGRAM = new BlurProgram();
+    public static void drawQuadBlur(float x, float y, float width, float height, float blurStrength, float blurOpacity) {
+        BlurShader.use(() -> {
+            BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+            setRectanglePoints(buffer, x, y, x + width, y + height);
+
+            BufferRenderer.drawWithGlobalProgram(buffer.end());
+        });
+        BlurShader.draw(blurStrength);
     }
 
-    public static void drawQuadBlur(MatrixStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
-        BufferBuilder bb = preShaderDraw(matrices, x - 10, y - 10, width + 20, height + 20);
+    public static void drawRoundedBlur(float x, float y, float width, float height, float radius, float blurStrength, float blurOpacity) {
+        BlurShader.use(() -> {
+            BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLES, VertexFormats.POSITION);
 
-        BLUR_PROGRAM.setParameters(x, y, width, height, 0f, new Color(0, 0, 0, 0), blurStrength, blurOpacity);
-        BLUR_PROGRAM.use();
+            float r = Math.min(radius, Math.min(width / 2, height / 2));
 
-        BufferRenderer.drawWithGlobalProgram(bb.end());
-        endRender();
+            addRect(buffer, x, y + r, x + width, y + height - r);
+            addRect(buffer, x + r, y, x + width - r, y + r);
+            addRect(buffer, x + r, y + height - r, x + width - r, y + height);
+
+            int chengdu = 12;
+
+            addCorner(buffer, x + r, y + r, r, 180, 270, chengdu);
+            addCorner(buffer, x + width - r, y + r, r, 270, 360, chengdu);
+            addCorner(buffer, x + width - r, y + height - r, r, 0, 90, chengdu);
+            addCorner(buffer, x + r, y + height - r, r, 90, 180, chengdu);
+
+            BufferRenderer.drawWithGlobalProgram(buffer.end());
+        });
+        BlurShader.draw(blurStrength);
     }
 
-    public static void drawRoundedBlur(MatrixStack matrices, float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
-        blurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
+    private static void addRect(BufferBuilder buffer, float x1, float y1, float x2, float y2) {
+        buffer.vertex(x1, y1, 0); // 左上
+        buffer.vertex(x1, y2, 0); // 左下
+        buffer.vertex(x2, y2, 0); // 右下
 
-        BufferBuilder bb = preShaderDraw(matrices, x - 10, y - 10, width + 20, height + 20);
-        BLUR_PROGRAM.setParameters(x, y, width, height, radius, c1, blurStrenth, blurOpacity);
-        BLUR_PROGRAM.use();
-
-        BufferRenderer.drawWithGlobalProgram(bb.end());
-        endRender();
+        buffer.vertex(x2, y2, 0); // 右下
+        buffer.vertex(x2, y1, 0); // 右上
+        buffer.vertex(x1, y1, 0); // 左上
     }
 
-    public static void setRectanglePoints(BufferBuilder buffer, Matrix4f matrix, float x, float y, float x1, float y1) {
-        buffer.vertex(matrix, x, y, 0);
-        buffer.vertex(matrix, x, y1, 0);
-        buffer.vertex(matrix, x1, y1, 0);
-        buffer.vertex(matrix, x1, y, 0);
+    private static void addCorner(BufferBuilder buffer, float cx, float cy, float r, double startAngle, double endAngle, int segments) {
+        double step = (endAngle - startAngle) / segments;
+
+        for (int i = 0; i < segments; i++) {
+            double a1 = Math.toRadians(startAngle + step * i);
+            double a2 = Math.toRadians(startAngle + step * (i + 1));
+
+            buffer.vertex(cx, cy, 0);
+            buffer.vertex(cx + (float) Math.cos(a1) * r, cy + (float) Math.sin(a1) * r, 0);
+            buffer.vertex(cx + (float) Math.cos(a2) * r, cy + (float) Math.sin(a2) * r, 0);
+        }
     }
 
-    public static BufferBuilder preShaderDraw(MatrixStack matrices, float x, float y, float width, float height) {
-        beginRender();
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-        setRectanglePoints(buffer, matrix, x, y, x + width, y + height);
-        return buffer;
-    }
-
-    public static void beginRender() {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-    }
-
-    public static void endRender() {
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableBlend();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+    public static void setRectanglePoints(BufferBuilder buffer, float x, float y, float x1, float y1) {
+        buffer.vertex(x, y, 0);
+        buffer.vertex(x, y1, 0);
+        buffer.vertex(x1, y1, 0);
+        buffer.vertex(x1, y, 0);
     }
 }

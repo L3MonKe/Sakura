@@ -160,9 +160,8 @@ public class NameTags extends Module {
             float scaledBoxX = posX - (totalWidth / 2 * finalScale);
             float scaledBoxY = posY - (totalHeight * finalScale);
 
-            Shader2DUtil.drawRoundedBlur(context.getMatrices(),
+            Shader2DUtil.drawRoundedBlur(
                     scaledBoxX, scaledBoxY, scaledWidth, scaledHeight, scaledRadius,
-                    new Color(0, 0, 0, 0),
                     blurStrength.get().floatValue(), 1.0f
             );
         }

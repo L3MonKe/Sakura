@@ -144,7 +144,7 @@ public final class AccountAddAccountScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        Shader2DUtil.drawQuadBlur(context.getMatrices(), 0, 0, width, height, 10, 0.5f);
+        Shader2DUtil.drawQuadBlur(0, 0, width, height, 10, 0.5f);
 
         float panelWidth = 300;
         float panelHeight = 260;

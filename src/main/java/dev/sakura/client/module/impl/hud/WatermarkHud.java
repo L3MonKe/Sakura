@@ -11,6 +11,7 @@ import dev.sakura.client.values.Value;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.NumberValue;
+import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
 
@@ -25,7 +26,7 @@ public class WatermarkHud extends HudModule {
     }
 
     @Override
-    public void onRenderContent() {
+    public void onRender(DrawContext context) {
         float s = hudScale.get().floatValue();
 
         String text = Sakura.MOD_NAME + " " + Sakura.MOD_VER;
@@ -37,11 +38,13 @@ public class WatermarkHud extends HudModule {
         this.height = fontH + 10 * s;
 
         if (backgroundBlur.get()) {
-            NanoVGRenderer.INSTANCE.withRawCoords(() -> Shader2DUtil.drawRoundedBlur(getMatrix(), x, y, width, height, 4f * s, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 1.0f));
+            Shader2DUtil.drawRoundedBlur(x, y, width, height, 4f * s, blurStrength.get().floatValue(), 1.0f);
         }
 
-        NanoVGHelper.drawRoundRectBloom(x, y, width, height, 4 * s, backgroundColor.get());
-        NanoVGHelper.drawGradientRRect(x - 2 * s, y, 2 * s, height, 0, ClickGui.color(0), ClickGui.color2(0));
-        NanoVGHelper.drawString(text, x + 2.5f * s, y + fontH, fontLoader, fontSize, new Color(255, 255, 255, 255));
+        NanoVGRenderer.INSTANCE.draw(vg -> {
+            NanoVGHelper.drawRoundRectBloom(x, y, width, height, 4 * s, backgroundColor.get());
+            NanoVGHelper.drawGradientRRect(x - 2 * s, y, 2 * s, height, 0, ClickGui.color(0), ClickGui.color2(0));
+            NanoVGHelper.drawString(text, x + 2.5f * s, y + fontH, fontLoader, fontSize, new Color(255, 255, 255, 255));
+        });
     }
 }

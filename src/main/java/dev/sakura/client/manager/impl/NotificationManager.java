@@ -77,7 +77,7 @@ public class NotificationManager {
         float width = Math.min(Math.max(minWidth, textWidth), maxWidth);
 
         if (blur) {
-            Shader2DUtil.drawRoundedBlur(matrices, x, y, width, height, 0, new Color(0, 0, 0, 0), blurStrength, 1.0f);
+            Shader2DUtil.drawRoundedBlur(x, y, width, height, 0, blurStrength, 1.0f);
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
@@ -102,7 +102,7 @@ public class NotificationManager {
                 Notification notification = notifications.get(i);
                 float[] bounds = notification.getBounds(x, y + offsetY, maxWidth, leftAligned);
                 if (bounds != null) {
-                    Shader2DUtil.drawRoundedBlur(matrices, bounds[0], bounds[1], bounds[2], bounds[3], 0, new Color(0, 0, 0, 0), blurStrength, 1.0f);
+                    Shader2DUtil.drawRoundedBlur(bounds[0], bounds[1], bounds[2], bounds[3], 0, blurStrength, 1.0f);
                     offsetY += bounds[3] + 4.0f;
                 }
             }
@@ -125,7 +125,7 @@ public class NotificationManager {
                     offsetY += height;
                 }
             }
-        }, true);
+        });
     }
 
     public static class Notification {

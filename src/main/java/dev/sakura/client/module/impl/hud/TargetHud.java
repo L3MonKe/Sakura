@@ -119,10 +119,8 @@ public class TargetHud extends HudModule {
         float targetHealth = target.getHealth();
         animatedHealth = MathHelper.lerp(0.1f, animatedHealth, targetHealth);
 
-        this.currentContext = context;
-
         if (hudBlur.get()) {
-            Shader2DUtil.drawRoundedBlur(context.getMatrices(), x, y, width, height, RADIUS, hudColor.get(), hudBlurStrength.get().floatValue(), 0.9f);
+            Shader2DUtil.drawRoundedBlur(x, y, width, height, RADIUS, hudBlurStrength.get().floatValue(), 0.9f);
         }
 
         final LivingEntity finalTarget = target;
@@ -149,10 +147,8 @@ public class TargetHud extends HudModule {
             relativeY = y / gameHeight;
         }
 
-        this.currentContext = context;
-
         if (hudBlur.get()) {
-            Shader2DUtil.drawRoundedBlur(context.getMatrices(), x, y, width, height, RADIUS, hudColor.get(), hudBlurStrength.get().floatValue(), 0.9f);
+            Shader2DUtil.drawRoundedBlur(x, y, width, height, RADIUS, hudBlurStrength.get().floatValue(), 0.9f);
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
@@ -174,10 +170,6 @@ public class TargetHud extends HudModule {
 
             NanoVGHelper.drawRect(x, y, width, height, dragging ? new Color(100, 100, 255, 80) : new Color(0, 0, 0, 50));
         });
-    }
-
-    @Override
-    public void onRenderContent() {
     }
 
     private void renderHudContent(long vg, LivingEntity target) {

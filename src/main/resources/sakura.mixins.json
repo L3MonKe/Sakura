@@ -13,10 +13,12 @@
     "accessor.IEntityTrackingSection",
     "accessor.IEntityVelocityUpdateS2CPacket",
     "accessor.IExplosionS2CPacket",
+    "accessor.IGameRenderer",
     "accessor.IHorseScreenHandler",
     "accessor.IMinecraftClient",
     "accessor.IParticle",
     "accessor.IPlayerMoveC2SPacket",
+    "accessor.IPostEffectProcessor",
     "accessor.ISuggestionWindow",
     "client.MixinAbstractClientPlayerEntity",
     "client.MixinChatInputSuggestor",
@@ -52,12 +54,10 @@
     "render.MixinPlayerEntityRenderer",
     "render.MixinRenderTickCounter",
     "render.MixinScreen",
-    "render.MixinShaderLoader",
     "render.MixinSplashOverlay",
     "render.MixinTitleScreen",
     "render.MixinWindow",
-    "render.MixinWorldRenderer",
-    "shader.MixinShaderProgram"
+    "render.MixinWorldRenderer"
   ],
   "injectors": {
     "defaultRequire": 1

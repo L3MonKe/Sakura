@@ -6,7 +6,6 @@ import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.gui.hud.HudEditorScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
-import dev.sakura.client.utils.render.Shader2DUtil;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.IEventBus;
 import net.fabricmc.api.ClientModInitializer;
@@ -128,10 +127,6 @@ public class Sakura implements ClientModInitializer {
 
         // 初始化HudEditor
         HUDEDITOR = new HudEditorScreen();
-
-
-        // 初始化Shaders
-        Shader2DUtil.init();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("正在保存配置并且关闭游戏!");

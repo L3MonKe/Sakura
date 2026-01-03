@@ -194,7 +194,7 @@ public final class AccountSelectorScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        Shader2DUtil.drawQuadBlur(context.getMatrices(), 0, 0, width, height, 10, 0.5f);
+        Shader2DUtil.drawQuadBlur(0, 0, width, height, 10, 0.5f);
 
         super.render(context, mouseX, mouseY, delta);
 

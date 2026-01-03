@@ -12,6 +12,7 @@ import dev.sakura.client.utils.render.Shader2DUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.Packet;
@@ -206,7 +207,7 @@ public class NotifyHud extends HudModule {
     }
 
     @Override
-    public void onRenderContent() {
+    public void onRender(DrawContext context) {
         if (mc.player == null) return;
 
         if (deathNotify.get()) {
@@ -243,30 +244,26 @@ public class NotifyHud extends HudModule {
         this.y = baseY;
 
         if (blur.get()) {
-            NanoVGRenderer.INSTANCE.withRawCoords(() -> {
-                float currentY = baseY;
-                for (int i = notifications.size() - 1; i >= 0; i--) {
-                    NotifyEntry entry = notifications.get(i);
-                    float slideOffset = entry.getSlideOffset();
-                    float alpha = entry.getAlpha();
+            float currentY = baseY;
+            for (int i = notifications.size() - 1; i >= 0; i--) {
+                NotifyEntry entry = notifications.get(i);
+                float slideOffset = entry.getSlideOffset();
+                float alpha = entry.getAlpha();
 
-                    if (alpha > 0.01f) {
-                        float notifyX = screenWidth - PADDING - slideOffset;
-                        if (alpha > 0.1f) {
-                            Shader2DUtil.drawRoundedBlur(
-                                    getMatrix(),
-                                    notifyX, currentY,
-                                    NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT,
-                                    RADIUS,
-                                    new Color(0, 0, 0, 0),
-                                    blurStrength.get().floatValue() * alpha,
-                                    alpha
-                            );
-                        }
-                        currentY -= (NOTIFICATION_HEIGHT + PADDING) * alpha;
+                if (alpha > 0.01f) {
+                    float notifyX = screenWidth - PADDING - slideOffset;
+                    if (alpha > 0.1f) {
+                        Shader2DUtil.drawRoundedBlur(
+                                notifyX, currentY,
+                                NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT,
+                                RADIUS,
+                                blurStrength.get().floatValue() * alpha,
+                                alpha
+                        );
                     }
+                    currentY -= (NOTIFICATION_HEIGHT + PADDING) * alpha;
                 }
-            });
+            }
         }
 
         float currentY = baseY;
@@ -277,7 +274,8 @@ public class NotifyHud extends HudModule {
 
             if (alpha > 0.01f) {
                 float notifyX = screenWidth - PADDING - slideOffset;
-                renderContent(entry, notifyX, currentY, alpha);
+                float finalCurrentY = currentY;
+                NanoVGRenderer.INSTANCE.draw(vg -> renderContent(entry, notifyX, finalCurrentY, alpha));
                 currentY -= (NOTIFICATION_HEIGHT + PADDING) * alpha;
             }
         }

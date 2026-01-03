@@ -79,13 +79,11 @@ public class DynamicIslandHud extends HudModule {
     }
 
     @Override
-    public void onRenderContent() {
+    public void onRender(DrawContext context) {
         update();
-        NanoVGRenderer.INSTANCE.withRawCoords(() -> {
-            renderBlur(currentContext);
-            renderSideBlurs(currentContext, 1f);
-        });
-        renderContent();
+        renderBlur(context);
+        renderSideBlurs(context, 1f);
+        NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
     }
 
     private void update() {
@@ -164,8 +162,8 @@ public class DynamicIslandHud extends HudModule {
         if (clampedBlurOpacity <= 0.005f) return;
 
         Shader2DUtil.drawRoundedBlur(
-                context.getMatrices(), animX, animY, animW, animH, getRadius(),
-                new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity
+                animX, animY, animW, animH, getRadius(),
+                blurStrength.get().floatValue(), clampedBlurOpacity
         );
     }
 
@@ -178,13 +176,13 @@ public class DynamicIslandHud extends HudModule {
 
         float timeBgX = animX - Size.ELEMENT_SPACING - Size.ELEMENT_WIDTH;
         Shader2DUtil.drawRoundedBlur(
-                context.getMatrices(), timeBgX, animY, Size.ELEMENT_WIDTH, animH, getRadius(),
-                new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity
+                timeBgX, animY, Size.ELEMENT_WIDTH, animH, getRadius(),
+                blurStrength.get().floatValue(), clampedBlurOpacity
         );
         float nameBgX = animX + animW + Size.ELEMENT_SPACING;
         Shader2DUtil.drawRoundedBlur(
-                context.getMatrices(), nameBgX, animY, Size.ELEMENT_WIDTH, animH, getRadius(),
-                new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity
+                nameBgX, animY, Size.ELEMENT_WIDTH, animH, getRadius(),
+                blurStrength.get().floatValue(), clampedBlurOpacity
         );
     }
 

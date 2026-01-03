@@ -208,7 +208,7 @@ public class MainMenuScreen extends Screen {
             float scaledW = button.width * buttonScale;
             float scaledH = button.height * buttonScale;
 
-            Shader2DUtil.drawRoundedBlur(context.getMatrices(), scaledX, scaledY, scaledW, scaledH, 4 * buttonScale, new Color(0, 0, 0, 0), 20f, finalAlpha);
+            Shader2DUtil.drawRoundedBlur(scaledX, scaledY, scaledW, scaledH, 4 * buttonScale, 20f, finalAlpha);
         }
     }
 

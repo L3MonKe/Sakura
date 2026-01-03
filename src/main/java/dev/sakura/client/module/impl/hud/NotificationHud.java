@@ -4,12 +4,12 @@ import dev.sakura.client.Sakura;
 import dev.sakura.client.manager.impl.NotificationManager;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.client.HudEditor;
-import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.values.Value;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
+import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
 
@@ -28,33 +28,31 @@ public class NotificationHud extends HudModule {
     }
 
     @Override
-    public void onRenderContent() {
-        NanoVGRenderer.INSTANCE.withRawCoords(() -> {
-            if (Sakura.MODULES.getModule(HudEditor.class).isEnabled()) {
-                float[] size = NotificationManager.renderPreview(
-                        getMatrix(),
-                        x, y,
-                        aligned.is(AlignedEnum.LEFT),
-                        primaryColorConfig.get(),
-                        backgroundColorConfig.get(),
-                        maxWidthConfig.get().floatValue(),
-                        backgroundBlur.get(),
-                        blurStrength.get().floatValue()
-                );
-                width = size[0];
-                height = size[1];
-            } else {
-                NotificationManager.render(
-                        getMatrix(),
-                        x, y,
-                        aligned.is(AlignedEnum.LEFT),
-                        primaryColorConfig.get(),
-                        backgroundColorConfig.get(),
-                        maxWidthConfig.get().floatValue(),
-                        backgroundBlur.get(),
-                        blurStrength.get().floatValue()
-                );
-            }
-        });
+    public void onRender(DrawContext context) {
+        if (Sakura.MODULES.getModule(HudEditor.class).isEnabled()) {
+            float[] size = NotificationManager.renderPreview(
+                    context.getMatrices(),
+                    x, y,
+                    aligned.is(AlignedEnum.LEFT),
+                    primaryColorConfig.get(),
+                    backgroundColorConfig.get(),
+                    maxWidthConfig.get().floatValue(),
+                    backgroundBlur.get(),
+                    blurStrength.get().floatValue()
+            );
+            width = size[0];
+            height = size[1];
+        } else {
+            NotificationManager.render(
+                    context.getMatrices(),
+                    x, y,
+                    aligned.is(AlignedEnum.LEFT),
+                    primaryColorConfig.get(),
+                    backgroundColorConfig.get(),
+                    maxWidthConfig.get().floatValue(),
+                    backgroundBlur.get(),
+                    blurStrength.get().floatValue()
+            );
+        }
     }
 }
