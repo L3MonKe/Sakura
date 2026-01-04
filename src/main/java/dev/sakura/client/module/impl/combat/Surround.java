@@ -125,7 +125,7 @@ public class Surround extends Module {
         if (targets.isEmpty()) {
             if (rotate.get()) {
                 Vector2f current = new Vector2f(mc.player.getYaw(), mc.player.getPitch());
-                Managers.ROTATION.setRotations(current, rotationBackSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
+                Managers.ROTATION.setRotations(current, rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Highest);
             }
             return;
         }

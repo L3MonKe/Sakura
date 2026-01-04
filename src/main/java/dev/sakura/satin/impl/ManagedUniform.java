@@ -8,7 +8,6 @@ import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.joml.Vector4f;
 
-
 public final class ManagedUniform extends ManagedUniformBase implements
         Uniform1i, Uniform2i, Uniform3i, Uniform4i,
         Uniform1f, Uniform2f, Uniform3f, Uniform4f,

@@ -245,7 +245,7 @@ public class Burrow extends Module {
         timer.reset();
         doSwap(block);
         if (this.rotate.get() == RotateMode.Bypass) {
-            Managers.ROTATION.setRotations(new Vector2f(Managers.ROTATION.getYaw(), 89.98f), 10f, MovementFix.NORMAL, RotationManager.Priority.Highest);
+            Managers.ROTATION.setRotations(new Vector2f(Managers.ROTATION.getYaw(), 89.98f), 10f, MovementFix.OFF, RotationManager.Priority.Highest);
         }
         placeBlock(playerPos, rotateFlag);
         placeBlock(pos1, rotateFlag);

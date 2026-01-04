@@ -29,7 +29,7 @@ public class BlurProgram {
 
     private Framebuffer input;
 
-    public static final ManagedCoreShader BLUR = ShaderEffectManager.getInstance().manageCoreShader(Identifier.of("sakura", "core/blur"), VertexFormats.POSITION);
+    public static final ManagedCoreShader BLUR = ShaderEffectManager.getInstance().manageCoreShader(Identifier.of("sakura", "core/blur"), VertexFormats.POSITION_COLOR);
 
     public BlurProgram() {
         this.inputResolution = BLUR.findUniform2f("InputResolution");

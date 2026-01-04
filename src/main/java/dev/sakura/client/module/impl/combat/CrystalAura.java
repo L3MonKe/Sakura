@@ -139,7 +139,7 @@ public class CrystalAura extends Module {
         if (target == null) {
             renderPos = null;
             if (rotate.get()) {
-                Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
             }
             return;
         }
@@ -155,7 +155,7 @@ public class CrystalAura extends Module {
         }
 
         if (!isRotating && rotate.get()) {
-            Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
         }
     }
 
@@ -273,7 +273,7 @@ public class CrystalAura extends Module {
         if (bestCrystal != null) {
             if (rotate.get()) {
                 Vector2f rotation = RotationUtil.calculate(bestCrystal.getPos());
-                Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
                 isRotating = true;
             }
 
@@ -322,7 +322,7 @@ public class CrystalAura extends Module {
                 if (breakTimer.delay(getAttackDelay(target))) {
                     if (rotate.get()) {
                         Vector2f rotation = RotationUtil.calculate(blockingCrystal.getPos());
-                        Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                        Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
                         isRotating = true;
                     }
 
@@ -352,7 +352,7 @@ public class CrystalAura extends Module {
 
             if (rotate.get()) {
                 Vector2f rotation = RotationUtil.calculate(bestPos.toCenterPos().add(0, 0.5, 0));
-                Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
                 isRotating = true;
             }
 

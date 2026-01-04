@@ -79,7 +79,7 @@ public class AutoPearl extends Module {
             Managers.ROTATION.setRotations(
                     new Vector2f(mc.player.getYaw(), mc.player.getPitch()),
                     rotationSpeed.get() * 10,
-                    MovementFix.NORMAL,
+                    MovementFix.OFF,
                     RotationManager.Priority.High
             );
         }

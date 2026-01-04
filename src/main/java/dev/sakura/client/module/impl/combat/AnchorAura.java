@@ -97,7 +97,7 @@ public class AnchorAura extends Module {
             doAnchor(currentPos);
         }
         if (!isRotating && rotate.get()) {
-            Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
         }
     }
 
@@ -204,7 +204,7 @@ public class AnchorAura extends Module {
                 switched = true;
             }
             if (rotate.get()) {
-                Managers.ROTATION.setRotations(RotationUtil.calculate(pos.offset(side)), rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                Managers.ROTATION.setRotations(RotationUtil.calculate(pos.offset(side)), rotationSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
                 isRotating = true;
             }
             BlockHitResult hitResult = new BlockHitResult(pos.toCenterPos(), side, pos, false);

@@ -365,7 +365,7 @@ public class RotationManager {
 
     public void lookAt(Vec3d target, double speed, Priority priority) {
         Vector2f rotation = RotationUtil.calculate(target);
-        setRotations(rotation, speed, MovementFix.NORMAL, priority);
+        setRotations(rotation, speed, MovementFix.OFF, priority);
     }
 
     public boolean isLookingAt(BlockPos pos, Direction side) {

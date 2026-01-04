@@ -275,7 +275,7 @@ public class KillAura extends Module {
                 }
             }
 
-            Managers.ROTATION.setRotations(desired, 100, MovementFix.NORMAL, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(desired, 100, MovementFix.OFF, RotationManager.Priority.Medium);
             if (!silentRotate.get()) {
                 mc.player.setYaw(desired.x);
                 mc.player.setPitch(desired.y);

@@ -77,7 +77,7 @@ public class WebAura extends Module {
             }
         }
         if (!isRotating && rotate.get()) {
-            Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
         }
     }
 
@@ -101,7 +101,7 @@ public class WebAura extends Module {
             }
         }
         if (rotate.get()) {
-            Managers.ROTATION.setRotations(RotationUtil.calculate(pos.toCenterPos()), rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(RotationUtil.calculate(pos.toCenterPos()), rotationSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
             isRotating = true;
         }
         BlockHitResult hitResult = new BlockHitResult(pos.toCenterPos(), Direction.UP, pos, false);
