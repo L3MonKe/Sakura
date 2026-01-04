@@ -3,7 +3,6 @@ package dev.sakura.client.module.impl.hud;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.utils.color.ColorUtil;
@@ -13,7 +12,6 @@ import dev.sakura.client.values.Value;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
@@ -45,7 +43,7 @@ public class FPSHud extends HudModule {
     }
 
     @Override
-    public void onRender(DrawContext context) {
+    public void onRenderContent() {
         float s = hudScale.get().floatValue();
 
         if (timer.delay(delay.get().floatValue())) {
@@ -57,7 +55,7 @@ public class FPSHud extends HudModule {
         int font = FontLoader.bold(14);
         float fontSize = 14 * s;
 
-        NanoVGRenderer.INSTANCE.draw(vg -> NanoVGHelper.drawString(text, x + 2 * s, y + fontSize, font, fontSize, new Color(calculateColor())));
+        NanoVGHelper.drawString(text, x + 2 * s, y + fontSize, font, fontSize, new Color(calculateColor()));
 
         width = NanoVGHelper.getTextWidth(text, font, fontSize) + 4 * s;
         height = NanoVGHelper.getFontHeight(font, fontSize) + 4 * s;

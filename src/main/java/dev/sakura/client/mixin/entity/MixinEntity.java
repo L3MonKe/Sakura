@@ -6,6 +6,7 @@ import dev.sakura.client.events.player.MoveEvent;
 import dev.sakura.client.events.player.RayTraceEvent;
 import dev.sakura.client.events.player.StrafeEvent;
 import dev.sakura.client.events.player.UpdateVelocityEvent;
+import dev.sakura.client.module.impl.render.Glow;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.util.math.MathHelper;
@@ -39,9 +40,23 @@ public abstract class MixinEntity {
         }
     }
 
+    @Inject(method = "isGlowing", at = @At("HEAD"), cancellable = true)
+    private void onIsGlowing(CallbackInfoReturnable<Boolean> cir) {
+        if (Glow.INSTANCE != null && Glow.INSTANCE.shouldGlow((Entity) (Object) this) && Glow.INSTANCE.useNativeGlow()) {
+            cir.setReturnValue(true);
+        }
+    }
+
+    @Inject(method = "getTeamColorValue", at = @At("HEAD"), cancellable = true)
+    private void onGetTeamColorValue(CallbackInfoReturnable<Integer> cir) {
+        if (Glow.INSTANCE != null && Glow.INSTANCE.shouldGlow((Entity) (Object) this) && Glow.INSTANCE.useNativeGlow()) {
+            cir.setReturnValue(Glow.INSTANCE.getGlowColor((Entity) (Object) this));
+        }
+    }
+
     @Redirect(method = "getRotationVec", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getRotationVector(FF)Lnet/minecraft/util/math/Vec3d;"))
     private Vec3d redirectGetRotationVector(Entity instance, float pitch, float yaw) {
-        if (instance == mc.player) {
+        if ((Object) instance == mc.player) {
             RayTraceEvent event = new RayTraceEvent(instance, yaw, pitch);
             Sakura.EVENT_BUS.post(event);
             return this.getRotationVector(event.getPitch(), event.getYaw());

@@ -80,6 +80,7 @@ public class ModuleManager {
         add(new CameraClip());
         add(new Crystal());
         add(new Fullbright());
+        add(new Glow());
         add(new Hat());
         add(new JumpCircles());
         add(new NameTags());

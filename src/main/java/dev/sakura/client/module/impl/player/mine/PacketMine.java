@@ -345,7 +345,7 @@ public class PacketMine extends Module {
                     PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.getCurrentPos(), side));
         }
 
-        if (blockPos != blockData2.getCurrentPos()) Sakura.EVENT_BUS.post(new BlockEvent(blockPos, side));
+        if (blockPos != blockData2.getCurrentPos())Sakura.EVENT_BUS.post(new BlockEvent(blockPos, side));
     }
 
     public Direction getInteractDirection(final BlockPos blockPos, final boolean strictDirection) {

@@ -58,6 +58,7 @@ public class HotbarHud extends HudModule {
         HudEditor editor = Sakura.MODULES.getModule(HudEditor.class);
         if (editor != null && editor.isEnabled()) return;
 
+        this.currentContext = context;
         updateAnimation();
         calculateLayout();
         renderBloom(context);
@@ -76,6 +77,7 @@ public class HotbarHud extends HudModule {
             relativeY = y / gameHeight;
         }
 
+        this.currentContext = context;
         updateAnimation();
         calculateLayout();
         renderBloom(context);
@@ -85,6 +87,10 @@ public class HotbarHud extends HudModule {
                     dragging ? new Color(100, 100, 255, 80) : new Color(0, 0, 0, 50));
         });
         renderItems(context);
+    }
+
+    @Override
+    public void onRenderContent() {
     }
 
     private void updateAnimation() {

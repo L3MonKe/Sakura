@@ -68,6 +68,7 @@ public class ClickGuiScreen extends Screen {
         if (ClickGui.backgroundBlur.get()) {
             float blurStrength = ClickGui.blurStrength.get().floatValue();
             Shader2DUtil.drawQuadBlur(
+                    guiGraphics.getMatrices(),
                     0, 0,
                     mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(),
                     blurStrength,

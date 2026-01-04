@@ -47,6 +47,7 @@ public class KeyStrokesHud extends HudModule {
         HudEditor editor = Sakura.MODULES.getModule(HudEditor.class);
         if (editor != null && editor.isEnabled()) return;
 
+        this.currentContext = context;
         calculateLayout();
         renderBlur(context);
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
@@ -63,6 +64,7 @@ public class KeyStrokesHud extends HudModule {
             relativeY = y / gameHeight;
         }
 
+        this.currentContext = context;
         calculateLayout();
         renderBlur(context);
         NanoVGRenderer.INSTANCE.draw(vg -> {
@@ -70,6 +72,10 @@ public class KeyStrokesHud extends HudModule {
             NanoVGHelper.drawRect(x, y, width, height,
                     dragging ? new Color(100, 100, 255, 80) : new Color(0, 0, 0, 50));
         });
+    }
+
+    @Override
+    public void onRenderContent() {
     }
 
     private void calculateLayout() {
@@ -97,25 +103,25 @@ public class KeyStrokesHud extends HudModule {
 
         float blurValue = blurStrength.get().floatValue();
 
-        Shader2DUtil.drawRoundedBlur(
+        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
                 x + width / 2f - size / 2f, y, size, size, radius,
-                blurValue, 1.0f);
+                new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(
+        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
                 x, y + increment, size, size, radius,
-                blurValue, 1.0f);
+                new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(
+        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
                 x + increment, y + increment, size, size, radius,
-                blurValue, 1.0f);
+                new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(
+        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
                 x + increment * 2, y + increment, size, size, radius,
-                blurValue, 1.0f);
+                new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(
+        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
                 x, y + increment * 2, width, size, radius,
-                blurValue, 1.0f);
+                new Color(0, 0, 0, 0), blurValue, 1.0f);
     }
 
     private void renderContent() {
