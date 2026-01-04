@@ -1,7 +1,7 @@
-package dev.sakura.client.shaders.satin.impl;
+package dev.sakura.satin.impl;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.shaders.satin.api.uniform.*;
+import dev.sakura.satin.api.uniform.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.ResourceFactory;
 import net.minecraft.util.Identifier;

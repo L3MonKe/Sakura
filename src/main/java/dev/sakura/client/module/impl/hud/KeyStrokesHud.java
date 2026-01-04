@@ -47,7 +47,6 @@ public class KeyStrokesHud extends HudModule {
         HudEditor editor = Sakura.MODULES.getModule(HudEditor.class);
         if (editor != null && editor.isEnabled()) return;
 
-        this.currentContext = context;
         calculateLayout();
         renderBlur(context);
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
@@ -64,7 +63,6 @@ public class KeyStrokesHud extends HudModule {
             relativeY = y / gameHeight;
         }
 
-        this.currentContext = context;
         calculateLayout();
         renderBlur(context);
         NanoVGRenderer.INSTANCE.draw(vg -> {
@@ -72,10 +70,6 @@ public class KeyStrokesHud extends HudModule {
             NanoVGHelper.drawRect(x, y, width, height,
                     dragging ? new Color(100, 100, 255, 80) : new Color(0, 0, 0, 50));
         });
-    }
-
-    @Override
-    public void onRenderContent() {
     }
 
     private void calculateLayout() {

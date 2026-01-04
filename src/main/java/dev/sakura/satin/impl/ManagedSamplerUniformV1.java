@@ -1,6 +1,7 @@
-package dev.sakura.client.shaders.satin.impl;
+package dev.sakura.satin.impl;
 
 import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.texture.AbstractTexture;
 
 public final class ManagedSamplerUniformV1 extends ManagedSamplerUniformBase {
@@ -26,7 +27,7 @@ public final class ManagedSamplerUniformV1 extends ManagedSamplerUniformBase {
     @Override
     protected void set(Object value) {
         SamplerAccess[] targets = this.targets;
-        if (targets.length > 0) {
+        if (targets.length > 0 && this.cachedValue != value) {
             int textureId = -1;
             if (value instanceof Framebuffer fb) {
                 textureId = fb.getColorAttachment();
@@ -37,7 +38,7 @@ public final class ManagedSamplerUniformV1 extends ManagedSamplerUniformBase {
             }
             if (textureId != -1) {
                 for (SamplerAccess target : targets) {
-                    target.sakura$addSamplerTexture(this.name, textureId);
+                    ((ShaderProgram) target).addSamplerTexture(this.name, textureId);
                 }
             }
             this.cachedValue = value;

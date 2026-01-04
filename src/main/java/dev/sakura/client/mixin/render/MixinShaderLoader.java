@@ -1,6 +1,6 @@
 package dev.sakura.client.mixin.render;
 
-import dev.sakura.client.shaders.satin.impl.ReloadableShaderEffectManager;
+import dev.sakura.satin.impl.ReloadableShaderEffectManager;
 import net.minecraft.client.gl.ShaderLoader;
 import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.profiler.Profiler;

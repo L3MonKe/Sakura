@@ -125,7 +125,7 @@ public class NotificationManager {
                     offsetY += height;
                 }
             }
-        }, true);
+        });
     }
 
     public static class Notification {

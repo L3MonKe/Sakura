@@ -102,7 +102,7 @@ public class ModuleListHud extends HudModule {
     @Override
     public void renderInGame(DrawContext context) {
         if (isHudEditorOpen()) return;
-        this.currentContext = context;
+
         update();
         ensureWithinScreenBounds();
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
@@ -111,7 +111,7 @@ public class ModuleListHud extends HudModule {
     @Override
     public void renderInEditor(DrawContext context, float mouseX, float mouseY) {
         handleDrag(mouseX, mouseY);
-        this.currentContext = context;
+
         update();
         NanoVGRenderer.INSTANCE.draw(vg -> {
             float scaledWidth = currentWidth * hudScale.get().floatValue();
@@ -125,10 +125,6 @@ public class ModuleListHud extends HudModule {
 
     public float getRadius() {
         return radius.get().floatValue();
-    }
-
-    @Override
-    public void onRenderContent() {
     }
 
     private boolean isHudEditorOpen() {

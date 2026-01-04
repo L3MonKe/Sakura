@@ -1,46 +1,33 @@
 package dev.sakura.client.module;
 
-import com.google.gson.annotations.Expose;
-import com.google.gson.annotations.SerializedName;
 import dev.sakura.client.Sakura;
+import dev.sakura.client.gui.hud.HudEditorScreen;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-public abstract class HudModule extends Module {
-    @Expose
-    @SerializedName("hudX")
+public class HudModule extends Module {
     protected float x;
-
-    @Expose
-    @SerializedName("hudY")
     protected float y;
 
     protected float width = 50;
     protected float height = 20;
 
+    protected float relativeX;
+    protected float relativeY;
+
     protected boolean dragging = false;
     protected float dragX, dragY;
-    protected DrawContext currentContext;
-
-    @Expose
-    @SerializedName("relativeX")
-    protected float relativeX = 0f;
-
-    @Expose
-    @SerializedName("relativeY")
-    protected float relativeY = 0f;
-
-    protected final MinecraftClient mc;
 
     private final float defaultX;
     private final float defaultY;
+
+    protected final MinecraftClient mc;
 
     public HudModule(String englishName, @Nullable String chineseName, float defaultX, float defaultY) {
         super(englishName, chineseName, null);
@@ -53,15 +40,7 @@ public abstract class HudModule extends Module {
         this.mc = MinecraftClient.getInstance();
     }
 
-    /**
-     * 子类实现此方法进行绘制
-     * 坐标系已自动缩放，直接使用MC逻辑坐标（与mouseX/mouseY一致）
-     */
-    public abstract void onRenderContent();
-
-    private void onRender(DrawContext context) {
-        this.currentContext = context;
-        NanoVGRenderer.INSTANCE.draw(vg -> onRenderContent());
+    public void onRender(DrawContext context) {
     }
 
     public void renderInEditor(DrawContext context, float mouseX, float mouseY) {
@@ -82,24 +61,10 @@ public abstract class HudModule extends Module {
     }
 
     public void renderInGame(DrawContext context) {
-        HudEditor hudEditor = Sakura.MODULES.getModule(HudEditor.class);
-        if (hudEditor != null && hudEditor.isEnabled()) {
+        if (Sakura.MODULES.getModule(HudEditor.class).isEnabled() && mc.currentScreen instanceof HudEditorScreen) {
             return;
         }
         onRender(context);
-    }
-
-    @FunctionalInterface
-    protected interface PixelDrawer {
-        void draw(float pixelX, float pixelY, float pixelW, float pixelH);
-    }
-
-    protected DrawContext getContext() {
-        return currentContext;
-    }
-
-    protected MatrixStack getMatrix() {
-        return currentContext.getMatrices();
     }
 
     @Override

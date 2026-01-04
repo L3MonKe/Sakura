@@ -37,16 +37,16 @@ public class Shader2DUtil {
     }
 
     public static void setRectanglePoints(BufferBuilder buffer, Matrix4f matrix, float x, float y, float x1, float y1) {
-        buffer.vertex(matrix, x, y, 0);
-        buffer.vertex(matrix, x, y1, 0);
-        buffer.vertex(matrix, x1, y1, 0);
-        buffer.vertex(matrix, x1, y, 0);
+        buffer.vertex(matrix, x, y, 0).color(1f, 1f, 1f, 1f);
+        buffer.vertex(matrix, x, y1, 0).color(1f, 1f, 1f, 1f);
+        buffer.vertex(matrix, x1, y1, 0).color(1f, 1f, 1f, 1f);
+        buffer.vertex(matrix, x1, y, 0).color(1f, 1f, 1f, 1f);
     }
 
     public static BufferBuilder preShaderDraw(MatrixStack matrices, float x, float y, float width, float height) {
         beginRender();
         Matrix4f matrix = matrices.peek().getPositionMatrix();
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
         setRectanglePoints(buffer, matrix, x, y, x + width, y + height);
         return buffer;
     }

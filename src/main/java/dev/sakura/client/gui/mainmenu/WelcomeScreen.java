@@ -309,11 +309,13 @@ public class WelcomeScreen extends Screen {
                 buffer.put(bytes);
                 buffer.flip();
 
-                client.execute(() -> {
-                    long vg = NanoVGRenderer.INSTANCE.getContext();
-                    pi8Texture = nvgCreateImageMem(vg, 0, buffer);
-                    isImageLoading = false;
-                });
+                if (client != null) {
+                    client.execute(() -> {
+                        long vg = NanoVGRenderer.INSTANCE.getContext();
+                        pi8Texture = nvgCreateImageMem(vg, 0, buffer);
+                        isImageLoading = false;
+                    });
+                }
             } catch (Exception e) {
                 isImageLoading = false;
             }

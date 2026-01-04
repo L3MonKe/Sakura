@@ -1,9 +1,9 @@
-package dev.sakura.client.shaders.satin.impl;
+package dev.sakura.satin.impl;
 
 import com.google.common.base.Preconditions;
 import dev.sakura.client.Sakura;
-import dev.sakura.client.shaders.satin.api.ManagedCoreShader;
-import dev.sakura.client.shaders.satin.api.uniform.SamplerUniform;
+import dev.sakura.satin.api.ManagedCoreShader;
+import dev.sakura.satin.api.uniform.SamplerUniform;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Defines;
 import net.minecraft.client.gl.ShaderProgram;

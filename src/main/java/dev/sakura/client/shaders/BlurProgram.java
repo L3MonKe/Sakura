@@ -1,13 +1,12 @@
 package dev.sakura.client.shaders;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.sakura.client.shaders.satin.api.ManagedCoreShader;
-import dev.sakura.client.shaders.satin.api.ShaderEffectManager;
-import dev.sakura.client.shaders.satin.api.uniform.SamplerUniform;
-import dev.sakura.client.shaders.satin.api.uniform.Uniform1f;
-import dev.sakura.client.shaders.satin.api.uniform.Uniform2f;
-import dev.sakura.client.shaders.satin.api.uniform.Uniform4f;
-import net.minecraft.client.MinecraftClient;
+import dev.sakura.satin.api.ManagedCoreShader;
+import dev.sakura.satin.api.ShaderEffectManager;
+import dev.sakura.satin.api.uniform.SamplerUniform;
+import dev.sakura.satin.api.uniform.Uniform1f;
+import dev.sakura.satin.api.uniform.Uniform2f;
+import dev.sakura.satin.api.uniform.Uniform4f;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.SimpleFramebuffer;
 import net.minecraft.client.render.VertexFormats;
@@ -51,13 +50,13 @@ public class BlurProgram {
 
     public void setParameters(float x, float y, float width, float height, float r, Color c1, float blurStrenth, float blurOpacity) {
         if (input == null) {
-            input = new SimpleFramebuffer(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight(), false);
+            input = new SimpleFramebuffer(mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), false);
         }
 
-        float i = (float) mc.getWindow().getScaleFactor();
-        radius.set(r * i);
-        uLocation.set(x * i, -y * i + mc.getWindow().getScaledHeight() * i - height * i);
-        uSize.set(width * i, height * i);
+        float factor = (float) mc.getWindow().getScaleFactor();
+        radius.set(r * factor);
+        uLocation.set(x * factor, -y * factor + mc.getWindow().getScaledHeight() * factor - height * factor);
+        uSize.set(width * factor, height * factor);
         brightness.set(blurOpacity);
         quality.set(blurStrenth);
         color1.set(c1.getRed() / 255f, c1.getGreen() / 255f, c1.getBlue() / 255f, 1f);
@@ -65,15 +64,16 @@ public class BlurProgram {
     }
 
     public void use() {
-        if (input != null && (input.textureWidth != mc.getWindow().getFramebufferWidth() || input.textureHeight != mc.getWindow().getFramebufferHeight()))
-            input.resize(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight());
-
-        var buffer = MinecraftClient.getInstance().getFramebuffer();
+        var buffer = mc.getFramebuffer();
 
         input.beginWrite(false);
         GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, buffer.fbo);
         GL30.glBlitFramebuffer(0, 0, buffer.textureWidth, buffer.textureHeight, 0, 0, buffer.textureWidth, buffer.textureHeight, GL30.GL_COLOR_BUFFER_BIT, GL30.GL_LINEAR);
         buffer.beginWrite(false);
+
+        if (input != null && (input.textureWidth != mc.getWindow().getFramebufferWidth() || input.textureHeight != mc.getWindow().getFramebufferHeight())) {
+            input.resize(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight());
+        }
 
         inputResolution.set((float) buffer.textureWidth, (float) buffer.textureHeight);
         sampler.set(input.getColorAttachment());
