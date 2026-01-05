@@ -6,6 +6,7 @@ import dev.sakura.client.events.input.MoveInputEvent;
 import dev.sakura.client.events.packet.PacketEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.module.impl.combat.AntiBotBJD;
 import dev.sakura.client.utils.player.MovementUtil;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -133,10 +134,9 @@ public class VelocityBJD extends Module {
 
         if (mode.is(Mode.NoXZ)) {
             if (stage == VelocityStage.ATTACK) {
-                if (mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player) {
+                if (mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player && !AntiBotBJD.isBot(player)) {
                     double motionXZ = 1.0;
-                    int times = Math.max(1, attacks.get());
-                    for (int i = 0; i < times; i++) {
+                    for (int i = 0; i < attacks.get(); i++) {
                         if (mc.player.isSprinting()) mc.player.setSprinting(false);
                         mc.interactionManager.attackEntity(mc.player, target);
                         mc.player.swingHand(Hand.MAIN_HAND);
@@ -180,7 +180,7 @@ public class VelocityBJD extends Module {
         if (mc.player == null || mc.world == null) return;
 
         if (mode.is(Mode.NoXZ)) {
-            if (stage == VelocityStage.DELAY && velocity != null && mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player) {
+            if (stage == VelocityStage.DELAY && velocity != null && mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player && !AntiBotBJD.isBot(player)) {
                 event.setForward(1);
                 event.setStrafe(0);
                 stage = VelocityStage.ATTACK;

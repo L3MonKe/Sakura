@@ -128,20 +128,18 @@ public class Scaffold extends Module {
     public void place() {
         if (!onAir()) return;
 
+        BlockPos targetPos = blockCache.position.offset(blockCache.facing);
+        if (!mc.world.getBlockState(targetPos).isReplaceable()) return;
+
         boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position, false);
         FindItemResult item = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
 
         if (!item.found()) return;
 
+        InvUtil.swap(item.isOffhand() ? mc.player.getInventory().selectedSlot : item.slot(), swapMode.is(SwapMode.Silent));
+
         if (hasRotated) {
-            BlockPos targetPos = blockCache.position.offset(blockCache.facing);
-            if (!mc.world.getBlockState(targetPos).isReplaceable()) return;
             if (!mc.world.getOtherEntities(null, new Box(targetPos)).isEmpty()) return;
-
-            int slot = item.isOffhand() ? mc.player.getInventory().selectedSlot : item.slot();
-
-            //todo:加settings
-            InvUtil.swap(slot, swapMode.is(SwapMode.Silent));
 
             ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockCache.position, blockCache.facing), blockCache.facing, blockCache.position, false));
 
@@ -212,11 +210,11 @@ public class Scaffold extends Module {
     }
 
     private Rotation getRotation(BlockCache blockCache) {
-        Rotation calculate = onAir() ? RotationUtil.calculate(getVec3(blockCache.position, blockCache.facing)) : RotationUtil.calculate(blockCache.position.toCenterPos());
-        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
+        Rotation rotation = onAir() ? RotationUtil.calculate(getVec3(blockCache.position, blockCache.facing)) : RotationUtil.calculate(blockCache.position.toCenterPos());
+        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), rotation.pitch);
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, false);
         if (hasRotated) return reverseYaw;
-        else return calculate;
+        else return rotation;
     }
 
     private boolean onAir() {

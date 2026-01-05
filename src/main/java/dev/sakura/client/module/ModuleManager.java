@@ -28,14 +28,13 @@ import java.util.stream.Collectors;
 import static dev.sakura.client.Sakura.mc;
 
 public class ModuleManager {
-    private enum ClickGuiScope {Always, OnlyWhenBjdOff, OnlyWhenBjdOn}
-
     private final Map<Class<? extends Module>, Module> modules = new LinkedHashMap<>();
     private final Map<Class<? extends Module>, ClickGuiScope> clickGuiScopes = new HashMap<>();
 
     private void init() {
         // Combat
         add(new AnchorAura());
+        addBjd(new AntiBotBJD());
         add(new AutoPot());
         add(new AutoTotem());
         add(new AutoTrap());
@@ -48,14 +47,14 @@ public class ModuleManager {
 
         // Movement
         add(new ArmorFly());
-        add(new AutoSprint());
+        addAll(new AutoSprint());
         add(new ElytraFly());
         add(new HoleSnap());
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());
         add(new Phase());
-        add(new Scaffold());
+        addAll(new Scaffold());
         add(new Speed());
         add(new Step());
         add(new Velocity());
@@ -67,13 +66,15 @@ public class ModuleManager {
         add(new AutoPearl());
         add(new Blink());
         add(new BowBomb());
-        add(new FakePlayer());
+        addBjd(new DisablerBJD());
+        addAll(new FakePlayer());
+        addBjd(new GhostHand());
         add(new InventorySort());
         add(new NoRotate());
         add(new PacketEat());
         add(new PacketMine());
         add(new Replenish());
-        add(new TimerModule());
+        addAll(new TimerModule());
 
         // Render
         addAll(new AspectRatio());
@@ -100,20 +101,19 @@ public class ModuleManager {
 
         // HUD
         add(new DynamicIslandHud());
-        addAll(new FPSHud());
-        addAll(new HotbarHud());
-        addAll(new KeyStrokesHud());
-        addAll(new ModuleListHud());
-        addAll(new MSHud());
-        addAll(new NotificationHud());
-        addAll(new NotifyHud());
-        addAll(new TargetHud());
-        addAll(new WatermarkHud());
+        add(new FPSHud());
+        add(new HotbarHud());
+        add(new KeyStrokesHud());
+        add(new ModuleListHud());
+        add(new MSHud());
+        add(new NotificationHud());
+        add(new NotifyHud());
+        add(new TargetHud());
+        add(new WatermarkHud());
     }
 
     public ModuleManager() {
         Sakura.EVENT_BUS.subscribe(this);
-
         init();
     }
 
@@ -267,5 +267,11 @@ public class ModuleManager {
                 module.renderInGame(event.getContext());
             }
         }
+    }
+
+    private enum ClickGuiScope {
+        Always,
+        OnlyWhenBjdOff,
+        OnlyWhenBjdOn
     }
 }
