@@ -8,7 +8,7 @@ import dev.sakura.client.utils.player.MovementUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.RaytraceUtil;
 import dev.sakura.client.utils.rotation.RotationUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
@@ -19,14 +19,14 @@ import net.minecraft.util.math.Vec3d;
 import java.util.function.Function;
 
 public class RotationManager {
-    private static final Vector2f offset = new Vector2f(0, 0);
-    public static Vector2f rotations, lastRotations = new Vector2f(0, 0), targetRotations, lastServerRotations;
+    private static final Rotation offset = new Rotation(0, 0);
+    public static Rotation rotations, lastRotations = new Rotation(0, 0), targetRotations, lastServerRotations;
     private static final MinecraftClient mc = MinecraftClient.getInstance();
     private static boolean active;
     private static boolean smoothed;
     private static double rotationSpeed;
     private static MovementFix correctMovement;
-    private static Function<Vector2f, Boolean> raycast;
+    private static Function<Rotation, Boolean> raycast;
     private static float randomAngle;
 
     private static float renderPitch;
@@ -58,23 +58,23 @@ public class RotationManager {
         }
     }
 
-    public void setRotations(final Vector2f rotations, final double rotationSpeed) {
+    public void setRotations(final Rotation rotations, final double rotationSpeed) {
         setRotations(rotations, rotationSpeed, MovementFix.OFF, null, Priority.Lowest);
     }
 
-    public void setRotations(final Vector2f rotations, final double rotationSpeed, final MovementFix correctMovement) {
+    public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement) {
         setRotations(rotations, rotationSpeed, correctMovement, null, Priority.Lowest);
     }
 
-    public void setRotations(final Vector2f rotations, final double rotationSpeed, final MovementFix correctMovement, Priority priority) {
+    public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, Priority priority) {
         setRotations(rotations, rotationSpeed, correctMovement, null, priority);
     }
 
     /*
      * This method must be called on Pre Update Event to work correctly
      */
-    public void setRotations(final Vector2f rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Vector2f, Boolean> raycast, Priority priority) {
-        if (rotations == null || Double.isNaN(rotations.x) || Double.isNaN(rotations.y) || Double.isInfinite(rotations.x) || Double.isInfinite(rotations.y))
+    public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Rotation, Boolean> raycast, Priority priority) {
+        if (rotations == null || Double.isNaN(rotations.yaw) || Double.isNaN(rotations.pitch) || Double.isInfinite(rotations.yaw) || Double.isInfinite(rotations.pitch))
             return;
         if (active && priority.priority < RotationManager.priority) return;
 
@@ -94,62 +94,63 @@ public class RotationManager {
     }
 
     public boolean inFov(float yaw, float pitch, double fov) {
-        return MathHelper.angleBetween(yaw, rotations.x) + Math.abs(pitch - rotations.y) <= fov;
+        return MathHelper.angleBetween(yaw, rotations.yaw) + Math.abs(pitch - rotations.pitch) <= fov;
     }
 
     private void smooth() {
         if (!smoothed) {
-            float targetYaw = targetRotations.x;
-            float targetPitch = targetRotations.y;
+            float targetYaw = targetRotations.yaw;
+            float targetPitch = targetRotations.pitch;
 
-            if (raycast != null && (Math.abs(targetYaw - rotations.x) > 5 || Math.abs(targetPitch - rotations.y) > 5)) {
-                final Vector2f trueTargetRotations = new Vector2f(targetRotations.x, targetRotations.y);
+            if (raycast != null && (Math.abs(targetYaw - rotations.yaw) > 5 || Math.abs(targetPitch - rotations.pitch) > 5)) {
+                final Rotation trueTargetRotations = new Rotation(targetRotations.yaw, targetRotations.pitch);
 
                 double speed = (Math.random() * Math.random() * Math.random()) * 20;
                 randomAngle += (float) ((20 + (float) (Math.random() - 0.5) * (Math.random() * Math.random() * Math.random() * 360)) * (mc.player.age / 10 % 2 == 0 ? -1 : 1));
 
                 if (Float.isNaN(randomAngle) || Float.isInfinite(randomAngle)) randomAngle = 0;
 
-                offset.x = ((float) (offset.x + -MathHelper.sin((float) Math.toRadians(randomAngle)) * speed));
-                offset.y = ((float) (offset.y + MathHelper.cos((float) Math.toRadians(randomAngle)) * speed));
+                offset.yaw = ((float) (offset.yaw + -MathHelper.sin((float) Math.toRadians(randomAngle)) * speed));
+                offset.pitch = ((float) (offset.pitch + MathHelper.cos((float) Math.toRadians(randomAngle)) * speed));
 
-                if (Float.isNaN(offset.x) || Float.isInfinite(offset.x)) offset.x = 0;
-                if (Float.isNaN(offset.y) || Float.isInfinite(offset.y)) offset.y = 0;
+                if (Float.isNaN(offset.yaw) || Float.isInfinite(offset.yaw)) offset.yaw = 0;
+                if (Float.isNaN(offset.pitch) || Float.isInfinite(offset.pitch)) offset.pitch = 0;
 
-                targetYaw += offset.x;
-                targetPitch += offset.y;
+                targetYaw += offset.yaw;
+                targetPitch += offset.pitch;
 
-                if (!raycast.apply(new Vector2f(targetYaw, targetPitch))) {
-                    randomAngle = (float) Math.toDegrees(Math.atan2(trueTargetRotations.x - targetYaw, targetPitch - trueTargetRotations.y)) - 180;
+                if (!raycast.apply(new Rotation(targetYaw, targetPitch))) {
+                    randomAngle = (float) Math.toDegrees(Math.atan2(trueTargetRotations.yaw - targetYaw, targetPitch - trueTargetRotations.pitch)) - 180;
                     if (Float.isNaN(randomAngle)) randomAngle = 0;
 
-                    targetYaw -= offset.x;
-                    targetPitch -= offset.y;
+                    targetYaw -= offset.yaw;
+                    targetPitch -= offset.pitch;
 
-                    offset.x = ((float) (offset.x + -MathHelper.sin((float) Math.toRadians(randomAngle)) * speed));
-                    offset.y = ((float) (offset.y + MathHelper.cos((float) Math.toRadians(randomAngle)) * speed));
+                    offset.yaw = ((float) (offset.yaw + -MathHelper.sin((float) Math.toRadians(randomAngle)) * speed));
+                    offset.pitch = ((float) (offset.pitch + MathHelper.cos((float) Math.toRadians(randomAngle)) * speed));
 
-                    if (Float.isNaN(offset.x) || Float.isInfinite(offset.x)) offset.x = 0;
-                    if (Float.isNaN(offset.y) || Float.isInfinite(offset.y)) offset.y = 0;
+                    if (Float.isNaN(offset.yaw) || Float.isInfinite(offset.yaw)) offset.yaw = 0;
+                    if (Float.isNaN(offset.pitch) || Float.isInfinite(offset.pitch)) offset.pitch = 0;
 
-                    targetYaw = targetYaw + offset.x;
-                    targetPitch = targetPitch + offset.y;
+                    targetYaw = targetYaw + offset.yaw;
+                    targetPitch = targetPitch + offset.pitch;
                 }
 
-                if (!raycast.apply(new Vector2f(targetYaw, targetPitch))) {
-                    offset.x = 0;
-                    offset.y = 0;
+                if (!raycast.apply(new Rotation(targetYaw, targetPitch))) {
+                    offset.yaw = 0;
+                    offset.pitch = 0;
 
-                    targetYaw = (float) (targetRotations.x + Math.random() * 2);
-                    targetPitch = (float) (targetRotations.y + Math.random() * 2);
+                    targetYaw = (float) (targetRotations.yaw + Math.random() * 2);
+                    targetPitch = (float) (targetRotations.pitch + Math.random() * 2);
                 }
             }
 
-            rotations = RotationUtil.smooth(new Vector2f(targetYaw, targetPitch),
+            rotations = RotationUtil.smooth(new Rotation(targetYaw, targetPitch),
                     rotationSpeed + Math.random());
 
-            if (Float.isNaN(rotations.x) || Float.isInfinite(rotations.x)) rotations.x = mc.player.getYaw();
-            if (Float.isNaN(rotations.y) || Float.isInfinite(rotations.y)) rotations.y = mc.player.getPitch();
+            if (Float.isNaN(rotations.yaw) || Float.isInfinite(rotations.yaw)) rotations.yaw = mc.player.getYaw();
+            if (Float.isNaN(rotations.pitch) || Float.isInfinite(rotations.pitch))
+                rotations.pitch = mc.player.getPitch();
         }
 
         smoothed = true;
@@ -172,18 +173,18 @@ public class RotationManager {
     }
 
     public float getYaw() {
-        if (active) return rotations.x;
+        if (active) return rotations.yaw;
         else return mc.player.getYaw();
     }
 
     public float getPitch() {
-        if (active) return rotations.y;
+        if (active) return rotations.pitch;
         else return mc.player.getPitch();
     }
 
-    public Vector2f getRotation() {
+    public Rotation getRotation() {
         if (active) return rotations;
-        else return new Vector2f(mc.player.getYaw(), mc.player.getPitch());
+        else return new Rotation(mc.player.getYaw(), mc.player.getPitch());
     }
 
     public float[] getRotation(Vec3d vec) {
@@ -203,7 +204,7 @@ public class RotationManager {
     @EventHandler
     private void onPlayerTick(PlayerTickEvent event) {
         if (!active || rotations == null || lastRotations == null || targetRotations == null || lastServerRotations == null) {
-            rotations = lastRotations = targetRotations = lastServerRotations = new Vector2f(mc.player.getYaw(), mc.player.getPitch());
+            rotations = lastRotations = targetRotations = lastServerRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
         }
 
         if (active) {
@@ -211,7 +212,7 @@ public class RotationManager {
         }
 
         if (correctMovement == MovementFix.BACKWARDS_SPRINT && active) {
-            if (Math.abs(rotations.x % 360 - Math.toDegrees(MovementUtil.getDirection()) % 360) > 45) {
+            if (Math.abs(rotations.yaw % 360 - Math.toDegrees(MovementUtil.getDirection()) % 360) > 45) {
                 mc.options.sprintKey.setPressed(false);
                 mc.player.setSprinting(false);
             }
@@ -224,7 +225,7 @@ public class RotationManager {
             /*
              * Calculating movement fix
              */
-            final float yaw = rotations.x;
+            final float yaw = rotations.yaw;
             MovementUtil.fixMovement(event, yaw);
         }
     }
@@ -232,22 +233,22 @@ public class RotationManager {
     @EventHandler
     private void onRaytrace(RayTraceEvent event) {
         if (active && rotations != null) {
-            event.setYaw(rotations.x);
-            event.setPitch(rotations.y);
+            event.setYaw(rotations.yaw);
+            event.setPitch(rotations.pitch);
         }
     }
 
     @EventHandler
     private void onStrafe(StrafeEvent event) {
         if (active && (correctMovement == MovementFix.NORMAL || correctMovement == MovementFix.TRADITIONAL) && rotations != null) {
-            event.setYaw(rotations.x);
+            event.setYaw(rotations.yaw);
         }
     }
 
     @EventHandler
     private void onJump(JumpRotationEvent event) {
         if (active && (correctMovement == MovementFix.NORMAL || correctMovement == MovementFix.TRADITIONAL || correctMovement == MovementFix.BACKWARDS_SPRINT) && rotations != null) {
-            event.setYaw(rotations.x);
+            event.setYaw(rotations.yaw);
         }
     }
 
@@ -255,8 +256,8 @@ public class RotationManager {
     private void onMotion(MotionEvent event) {
         if (event.getType() == EventType.PRE) {
             if (active && rotations != null) {
-                float yaw = rotations.x;
-                float pitch = rotations.y;
+                float yaw = rotations.yaw;
+                float pitch = rotations.pitch;
 
                 if (Float.isNaN(yaw) || Float.isInfinite(yaw)) yaw = mc.player.getYaw();
                 if (Float.isNaN(pitch) || Float.isInfinite(pitch)) pitch = mc.player.getPitch();
@@ -265,10 +266,10 @@ public class RotationManager {
                 event.setYaw(yaw);
                 event.setPitch(pitch);
 
-                lastServerRotations = new Vector2f(yaw, pitch);
+                lastServerRotations = new Rotation(yaw, pitch);
                 setRenderRotation(yaw, pitch);
 
-                if (Math.abs((rotations.x - mc.player.getYaw()) % 360) < 1 && Math.abs((rotations.y - mc.player.getPitch())) < 1) {
+                if (Math.abs((rotations.yaw - mc.player.getYaw()) % 360) < 1 && Math.abs((rotations.pitch - mc.player.getPitch())) < 1) {
                     active = false;
                     priority = 0;
 
@@ -277,10 +278,10 @@ public class RotationManager {
 
                 lastRotations = rotations;
             } else {
-                lastRotations = new Vector2f(mc.player.getYaw(), mc.player.getPitch());
+                lastRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             }
 
-            targetRotations = new Vector2f(mc.player.getYaw(), mc.player.getPitch());
+            targetRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             smoothed = false;
         }
     }
@@ -297,12 +298,12 @@ public class RotationManager {
 
     private void correctDisabledRotations() {
         if (mc.player == null || lastRotations == null) return;
-        final Vector2f rotations = new Vector2f(mc.player.getYaw(), mc.player.getPitch());
-        final Vector2f fixedRotations = RotationUtil.resetRotation(RotationUtil.applySensitivityPatch(rotations, lastRotations));
+        final Rotation rotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+        final Rotation fixedRotations = RotationUtil.resetRotation(RotationUtil.applySensitivityPatch(rotations, lastRotations));
 
-        if (fixedRotations != null && !Float.isNaN(fixedRotations.x) && !Float.isNaN(fixedRotations.y)) {
-            mc.player.setYaw(fixedRotations.x);
-            mc.player.setPitch(MathHelper.clamp(fixedRotations.y, -90.0f, 90.0f));
+        if (fixedRotations != null && !Float.isNaN(fixedRotations.yaw) && !Float.isNaN(fixedRotations.pitch)) {
+            mc.player.setYaw(fixedRotations.yaw);
+            mc.player.setPitch(MathHelper.clamp(fixedRotations.pitch, -90.0f, 90.0f));
         }
     }
 
@@ -364,7 +365,7 @@ public class RotationManager {
     }
 
     public void lookAt(Vec3d target, double speed, Priority priority) {
-        Vector2f rotation = RotationUtil.calculate(target);
+        Rotation rotation = RotationUtil.calculate(target);
         setRotations(rotation, speed, MovementFix.OFF, priority);
     }
 

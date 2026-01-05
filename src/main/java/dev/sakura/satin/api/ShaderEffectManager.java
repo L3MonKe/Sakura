@@ -6,9 +6,6 @@ import net.minecraft.util.Identifier;
 
 import java.util.function.Consumer;
 
-/**
- * Manages shader effects for the mod.
- */
 public interface ShaderEffectManager {
     static ShaderEffectManager getInstance() {
         return ReloadableShaderEffectManager.INSTANCE;

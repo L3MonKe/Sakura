@@ -7,7 +7,7 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
@@ -77,7 +77,7 @@ public class AutoPearl extends Module {
             setState(false);
         } else {
             Managers.ROTATION.setRotations(
-                    new Vector2f(mc.player.getYaw(), mc.player.getPitch()),
+                    new Rotation(mc.player.getYaw(), mc.player.getPitch()),
                     rotationSpeed.get() * 10,
                     MovementFix.OFF,
                     RotationManager.Priority.High

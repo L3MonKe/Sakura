@@ -5,14 +5,18 @@ import dev.sakura.client.gui.clickgui.panel.CategoryPanel;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;
+import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.utils.animations.Animation;
 import dev.sakura.client.utils.animations.Direction;
 import dev.sakura.client.utils.animations.impl.EaseOutSine;
+import dev.sakura.client.utils.animations.impl.SmoothStepAnimation;
+import dev.sakura.client.utils.render.RenderUtil;
 import dev.sakura.client.utils.render.Shader2DUtil;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -25,6 +29,9 @@ public class ClickGuiScreen extends Screen {
     private final List<CategoryPanel> panels = new ArrayList<>();
     public int scroll;
     private DrawContext currentContext;
+    private float bjdBoxX, bjdBoxY, bjdBoxW, bjdBoxH;
+    private float bjdToggleX, bjdToggleY, bjdToggleW, bjdToggleH;
+    private final SmoothStepAnimation bjdToggleAnimation = new SmoothStepAnimation(175, 1);
 
     public ClickGuiScreen() {
         super(Text.literal("ClickGui"));
@@ -64,6 +71,23 @@ public class ClickGuiScreen extends Screen {
             }
         }
 
+        float guiScale = (float) ClickGui.getGuiScale();
+        float baseFontSize = (float) ClickGui.getFontSize();
+        float sw = mc.getWindow().getScaledWidth();
+        float sh = mc.getWindow().getScaledHeight();
+        float margin = 10 * guiScale;
+        float padding = 6 * guiScale;
+
+        bjdBoxH = 24 * guiScale;
+        bjdBoxW = 165 * guiScale;
+        bjdBoxX = sw - bjdBoxW - margin;
+        bjdBoxY = sh - bjdBoxH - margin;
+
+        bjdToggleW = 22 * guiScale;
+        bjdToggleH = 10 * guiScale;
+        bjdToggleX = bjdBoxX + bjdBoxW - padding - bjdToggleW;
+        bjdToggleY = bjdBoxY + (bjdBoxH - bjdToggleH) / 2f;
+
         // 应用背景模糊在NanoVG绘制之外
         if (ClickGui.backgroundBlur.get()) {
             float blurStrength = ClickGui.blurStrength.get().floatValue();
@@ -79,11 +103,51 @@ public class ClickGuiScreen extends Screen {
         NanoVGRenderer.INSTANCE.draw(canvas -> NanoVGHelper.drawRect(0, 0, mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), new Color(18, 18, 18, 50)));
 
         panels.forEach(panel -> panel.render(guiGraphics, mouseX, mouseY, partialTicks));
+
+        bjdToggleAnimation.setDirection(ClickGui.bjdOnly.get() ? Direction.FORWARDS : Direction.BACKWARDS);
+
+        NanoVGRenderer.INSTANCE.draw(vg -> {
+            Color bg = ClickGui.backgroundColor.get();
+            Color boxBg = new Color(bg.getRed(), bg.getGreen(), bg.getBlue(), 110);
+            Color outline = new Color(255, 255, 255, 160);
+            float radius = 6 * guiScale;
+            float stroke = 0.8f * guiScale;
+
+            NanoVGHelper.drawRoundRect(bjdBoxX, bjdBoxY, bjdBoxW, bjdBoxH, radius, boxBg);
+            NanoVGHelper.drawRoundRectOutline(bjdBoxX, bjdBoxY, bjdBoxW, bjdBoxH, radius, stroke, outline);
+
+            float textSize = baseFontSize * 0.75f;
+            NanoVGHelper.drawText(ClickGui.language.is(ClickGui.Language.Chinese) ? "显示布吉岛模块" : "Show 78 IsLand", bjdBoxX + padding, bjdBoxY + bjdBoxH / 2f, FontLoader.regular(textSize), textSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, Color.WHITE);
+
+            float toggleRadius = 5 * guiScale;
+            float circleRadius = 4 * guiScale;
+            float circleStartX = bjdToggleX + 5 * guiScale;
+            float circleTravel = bjdToggleW - 10 * guiScale;
+            NanoVGHelper.drawRoundRect(
+                    bjdToggleX,
+                    bjdToggleY,
+                    bjdToggleW,
+                    bjdToggleH,
+                    toggleRadius,
+                    ClickGui.bjdOnly.get() ? ClickGui.color(0).darker() : new Color(70, 70, 70)
+            );
+            NanoVGHelper.drawCircle(
+                    circleStartX + (circleTravel * bjdToggleAnimation.getOutput().floatValue()),
+                    bjdToggleY + bjdToggleH / 2f,
+                    circleRadius,
+                    ClickGui.bjdOnly.get() ? Color.WHITE : new Color(150, 150, 150)
+            );
+        });
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (currentContext != null) {
+            if (mouseButton == 0 && RenderUtil.isHovering(bjdToggleX, bjdToggleY, bjdToggleW, bjdToggleH, mouseX, mouseY)) {
+                ClickGui.bjdOnly.set(!ClickGui.bjdOnly.get());
+                return true;
+            }
+
             int finalMouseY = (int) mouseY;
             boolean handled = false;
             for (CategoryPanel panel : panels) {

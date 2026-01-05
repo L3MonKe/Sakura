@@ -6,7 +6,7 @@ import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.MovementUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
@@ -53,7 +53,7 @@ public class AutoSprint extends Module {
                 && !mc.player.isHoldingOntoLadder()
                 && !mc.player.hasStatusEffect(StatusEffects.BLINDNESS)) {
             if (mode.is(Mode.Rotation)) {
-                Managers.ROTATION.setRotations(new Vector2f(getSprintYaw(mc.player.getYaw()), Managers.ROTATION.getPitch()), rotationSpeed.get());
+                Managers.ROTATION.setRotations(new Rotation(getSprintYaw(mc.player.getYaw()), Managers.ROTATION.getPitch()), rotationSpeed.get());
             }
         }
     }

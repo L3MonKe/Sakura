@@ -12,7 +12,7 @@ import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.RaytraceUtil;
 import dev.sakura.client.utils.time.TimerUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.utils.world.BlockUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
@@ -124,7 +124,7 @@ public class Surround extends Module {
 
         if (targets.isEmpty()) {
             if (rotate.get()) {
-                Vector2f current = new Vector2f(mc.player.getYaw(), mc.player.getPitch());
+                Rotation current = new Rotation(mc.player.getYaw(), mc.player.getPitch());
                 Managers.ROTATION.setRotations(current, rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Highest);
             }
             return;

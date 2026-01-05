@@ -1,6 +1,6 @@
 package dev.sakura.client.utils.rotation;
 
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.Entity;
@@ -19,11 +19,8 @@ import java.util.function.Predicate;
 import static dev.sakura.client.Sakura.mc;
 
 public class RaytraceUtil {
-    /**
-     * Helper to convert Vector2f rotation (yaw, pitch) to a direction vector.
-     */
-    public static Vec3d getRotationVector(Vector2f rotation) {
-        return getRotationVector(rotation.x, rotation.y);
+    public static Vec3d getRotationVector(Rotation rotation) {
+        return getRotationVector(rotation.yaw, rotation.pitch);
     }
 
     public static Vec3d getRotationVector(float yaw, float pitch) {
@@ -47,7 +44,7 @@ public class RaytraceUtil {
         return result;
     }
 
-    public static EntityHitResult rayTraceEntity(double range, Vector2f rotation, Predicate<Entity> filter) {
+    public static EntityHitResult rayTraceEntity(double range, Rotation rotation, Predicate<Entity> filter) {
         if (mc.cameraEntity == null) return null;
         Entity entity = mc.cameraEntity;
 
@@ -67,7 +64,7 @@ public class RaytraceUtil {
         );
     }
 
-    public static BlockHitResult rayTraceBlock(double range, Vector2f rotation, BlockPos pos, BlockState state) {
+    public static BlockHitResult rayTraceBlock(double range, Rotation rotation, BlockPos pos, BlockState state) {
         if (mc.cameraEntity == null || mc.world == null || mc.player == null) return null;
         Entity entity = mc.cameraEntity;
 
@@ -79,11 +76,11 @@ public class RaytraceUtil {
         return state.getOutlineShape(mc.world, pos, ShapeContext.of(mc.player)).raycast(start, end, pos);
     }
 
-    public static BlockHitResult rayCast(Vector2f rotation, double range) {
+    public static BlockHitResult rayCast(Rotation rotation, double range) {
         return rayCast(rotation, range, false, 1.0f);
     }
 
-    public static BlockHitResult rayCast(Vector2f rotation, double range, boolean includeFluids, float tickDelta) {
+    public static BlockHitResult rayCast(Rotation rotation, double range, boolean includeFluids, float tickDelta) {
         if (mc.player == null) return null;
         return rayCast(range, includeFluids, mc.player.getCameraPosVec(tickDelta), getRotationVector(rotation), mc.cameraEntity);
     }
@@ -118,11 +115,11 @@ public class RaytraceUtil {
     /**
      * Allows you to check if your enemy is behind a wall
      */
-    public static boolean facingEnemy(Entity toEntity, double range, Vector2f rotation) {
+    public static boolean facingEnemy(Entity toEntity, double range, Rotation rotation) {
         return rayTraceEntity(range, rotation, entity -> entity == toEntity) != null;
     }
 
-    public static boolean facingEnemy(Entity fromEntity, Entity toEntity, Vector2f rotation, double range, double wallsRange) {
+    public static boolean facingEnemy(Entity fromEntity, Entity toEntity, Rotation rotation, double range, double wallsRange) {
         Vec3d cameraVec = fromEntity.getEyePos();
         Vec3d rotationVec = getRotationVector(rotation);
 
@@ -143,11 +140,11 @@ public class RaytraceUtil {
         return distance <= rangeSquared && canSeePointFrom(cameraVec, entityHitResult.getPos()) || distance <= wallsRangeSquared;
     }
 
-    public static boolean overBlock(final Vector2f rotation, final Direction direction, final BlockPos pos, final boolean strict) {
+    public static boolean overBlock(final Rotation rotation, final Direction direction, final BlockPos pos, final boolean strict) {
         if (mc.player == null || mc.world == null) return false;
 
-        float yaw = rotation.x;
-        float pitch = rotation.y;
+        float yaw = rotation.yaw;
+        float pitch = rotation.pitch;
 
         Vec3d cameraPos = mc.player.getCameraPosVec(1.0F);
         Vec3d rotationVec = Vec3d.fromPolar(pitch, yaw);

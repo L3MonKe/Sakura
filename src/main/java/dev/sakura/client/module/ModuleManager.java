@@ -28,12 +28,12 @@ import java.util.stream.Collectors;
 import static dev.sakura.client.Sakura.mc;
 
 public class ModuleManager {
-    private final Map<Class<? extends Module>, Module> modules;
+    private enum ClickGuiScope {Always, OnlyWhenBjdOff, OnlyWhenBjdOn}
 
-    public ModuleManager() {
-        modules = new LinkedHashMap<>();
-        Sakura.EVENT_BUS.subscribe(this);
+    private final Map<Class<? extends Module>, Module> modules = new LinkedHashMap<>();
+    private final Map<Class<? extends Module>, ClickGuiScope> clickGuiScopes = new HashMap<>();
 
+    private void init() {
         // Combat
         add(new AnchorAura());
         add(new AutoPot());
@@ -44,7 +44,6 @@ public class ModuleManager {
         add(new KillAura());
         add(new SelfTrap());
         add(new Surround());
-        add(new Velocity());
         add(new WebAura());
 
         // Movement
@@ -59,6 +58,8 @@ public class ModuleManager {
         add(new Scaffold());
         add(new Speed());
         add(new Step());
+        add(new Velocity());
+        addBjd(new VelocityBJD());
 
         // Player
         add(new AntiHunger());
@@ -75,42 +76,48 @@ public class ModuleManager {
         add(new TimerModule());
 
         // Render
-        add(new AspectRatio());
-        add(new Atmosphere());
-        add(new CameraClip());
+        addAll(new AspectRatio());
+        addAll(new Atmosphere());
+        addAll(new CameraClip());
         add(new Crystal());
-        add(new Fullbright());
-        add(new Glow());
-        add(new Hat());
-        add(new JumpCircles());
-        add(new NameTags());
-        add(new NoRender());
-        add(new SwingAnimation());
-        add(new TargetESP());
-        add(new TotemParticles());
-        add(new ViewModel());
-        add(new XRay());
+        addAll(new Fullbright());
+        addAll(new Glow());
+        addAll(new Hat());
+        addAll(new JumpCircles());
+        addAll(new NameTags());
+        addAll(new NoRender());
+        addAll(new SwingAnimation());
+        addAll(new TargetESP());
+        addAll(new TotemParticles());
+        addAll(new ViewModel());
+        addAll(new XRay());
 
         // Client
-        add(new Capes());
-        add(new Chat());
-        add(new ClickGui());
-        add(new HudEditor());
+        addAll(new Capes());
+        addAll(new Chat());
+        addAll(new ClickGui());
+        addAll(new HudEditor());
 
         // HUD
         add(new DynamicIslandHud());
-        add(new FPSHud());
-        add(new HotbarHud());
-        add(new KeyStrokesHud());
-        add(new ModuleListHud());
-        add(new MSHud());
-        add(new NotificationHud());
-        add(new NotifyHud());
-        add(new TargetHud());
-        add(new WatermarkHud());
+        addAll(new FPSHud());
+        addAll(new HotbarHud());
+        addAll(new KeyStrokesHud());
+        addAll(new ModuleListHud());
+        addAll(new MSHud());
+        addAll(new NotificationHud());
+        addAll(new NotifyHud());
+        addAll(new TargetHud());
+        addAll(new WatermarkHud());
     }
 
-    private void add(Module module) {
+    public ModuleManager() {
+        Sakura.EVENT_BUS.subscribe(this);
+
+        init();
+    }
+
+    private void register(Module module, ClickGuiScope clickGuiScope) {
         for (final Field field : module.getClass().getDeclaredFields()) {
             try {
                 field.setAccessible(true);
@@ -120,6 +127,28 @@ public class ModuleManager {
             }
         }
         modules.put(module.getClass(), module);
+        clickGuiScopes.put(module.getClass(), clickGuiScope);
+    }
+
+    public void add(Module module) {
+        register(module, ClickGuiScope.OnlyWhenBjdOff);
+    }
+
+    public void addAll(Module module) {
+        register(module, ClickGuiScope.Always);
+    }
+
+    public void addBjd(Module module) {
+        register(module, ClickGuiScope.OnlyWhenBjdOn);
+    }
+
+    public boolean isNotVisible(Module module, boolean bjdOnlyEnabled) {
+        ClickGuiScope scope = clickGuiScopes.getOrDefault(module.getClass(), ClickGuiScope.OnlyWhenBjdOff);
+        return switch (scope) {
+            case Always -> false;
+            case OnlyWhenBjdOff -> bjdOnlyEnabled;
+            case OnlyWhenBjdOn -> !bjdOnlyEnabled;
+        };
     }
 
     public Collection<Module> getAllModules() {

@@ -13,7 +13,7 @@ import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.utils.world.BlockUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
@@ -97,7 +97,7 @@ public class AnchorAura extends Module {
             doAnchor(currentPos);
         }
         if (!isRotating && rotate.get()) {
-            Managers.ROTATION.setRotations(new Vector2f(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(new Rotation(mc.player.getYaw(), mc.player.getPitch()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
         }
     }
 

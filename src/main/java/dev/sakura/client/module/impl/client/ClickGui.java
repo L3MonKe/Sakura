@@ -40,6 +40,7 @@ public class ClickGui extends Module {
 
     public static Value<Boolean> backgroundBlur = new BoolValue("Background Blur", "背景模糊", true);
     public static Value<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 8.0, 1.0, 20.0, 0.5, () -> backgroundBlur.get());
+    public static final Value<Boolean> bjdOnly = new BoolValue("BJD Only", "布吉岛筛选", false, () -> false);
 
     public ClickGui() {
         super("ClickGui", "点击GUI", Category.Client);

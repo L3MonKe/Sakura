@@ -150,7 +150,7 @@ public class PacketMine extends Module {
             Managers.ROTATION.setRotations(RotationUtil.calculate(data.getCurrentPos()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
             if (grimConfig.get()) {
                 mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(
-                        mc.player.getX(), mc.player.getY(), mc.player.getZ(), RotationUtil.calculate(data.getCurrentPos()).x, RotationUtil.calculate(data.getCurrentPos()).y, mc.player.isOnGround(), mc.player.horizontalCollision));
+                        mc.player.getX(), mc.player.getY(), mc.player.getZ(), RotationUtil.calculate(data.getCurrentPos()).yaw, RotationUtil.calculate(data.getCurrentPos()).pitch, mc.player.isOnGround(), mc.player.horizontalCollision));
             }
         }
         stopMiningInternal(data);

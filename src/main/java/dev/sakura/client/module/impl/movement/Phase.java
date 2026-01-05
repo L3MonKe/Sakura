@@ -13,7 +13,7 @@ import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.player.MovementUtil;
 import dev.sakura.client.utils.time.TimerUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -156,7 +156,7 @@ public class Phase extends Module {
         FindItemResult pearl;
 
         if (!yawStep.get()) {
-            Managers.ROTATION.setRotations(new Vector2f(Managers.ROTATION.getRotation(targetPos)[0], 89f), rotationSpeed.get());
+            Managers.ROTATION.setRotations(new Rotation(Managers.ROTATION.getRotation(targetPos)[0], 89f), rotationSpeed.get());
         }
 
         if (mc.player.getMainHandStack().getItem() == Items.ENDER_PEARL) {

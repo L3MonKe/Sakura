@@ -16,7 +16,7 @@ import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.RaytraceUtil;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
@@ -264,21 +264,21 @@ public class KillAura extends Module {
 
         if (rotateEnabled.get() && rotate.get() != Rotate.None) {
             Vec3d attackVec = getAttackVec(target);
-            Vector2f desired = RotationUtil.calculate(attackVec);
+            Rotation desired = RotationUtil.calculate(attackVec);
 
             if (yawStep.get()) {
                 float currentYaw = Managers.ROTATION.getYaw();
-                float diff = MathHelper.wrapDegrees(desired.x - currentYaw);
+                float diff = MathHelper.wrapDegrees(desired.yaw - currentYaw);
                 float limit = yawStepLimit.get();
                 if (Math.abs(diff) > limit) {
-                    desired = new Vector2f(currentYaw + MathHelper.clamp(diff, -limit, limit), desired.y);
+                    desired = new Rotation(currentYaw + MathHelper.clamp(diff, -limit, limit), desired.pitch);
                 }
             }
 
             Managers.ROTATION.setRotations(desired, 100, MovementFix.OFF, RotationManager.Priority.Medium);
             if (!silentRotate.get()) {
-                mc.player.setYaw(desired.x);
-                mc.player.setPitch(desired.y);
+                mc.player.setYaw(desired.yaw);
+                mc.player.setPitch(desired.pitch);
             }
 
             double walls = wallRange.get();
@@ -338,7 +338,7 @@ public class KillAura extends Module {
 
 
         double walls = wallRange.get();
-        Vector2f rayRot = RotationManager.lastServerRotations != null ? RotationManager.lastServerRotations : Managers.ROTATION.getRotation();
+        Rotation rayRot = RotationManager.lastServerRotations != null ? RotationManager.lastServerRotations : Managers.ROTATION.getRotation();
 
         if (strictHit.get() && !target.getBoundingBox().contains(eyePos)) {
             EntityHitResult hit = RaytraceUtil.rayTraceEntity(range.get(), rayRot, e -> isValidTarget(eyePos, e, true));

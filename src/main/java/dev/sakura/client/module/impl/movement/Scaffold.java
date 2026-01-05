@@ -13,16 +13,13 @@ import dev.sakura.client.utils.player.MovementUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.RaytraceUtil;
 import dev.sakura.client.utils.rotation.RotationUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.block.AirBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.FallingBlock;
-import net.minecraft.block.FluidBlock;
+import net.minecraft.block.*;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
@@ -84,13 +81,11 @@ public class Scaffold extends Module {
                 yLevel = (int) Math.floor(mc.player.getY()) - 1;
                 airTicks = 0;
                 blockCache = null;
-                Vector2f rotation = new Vector2f(mc.player.getYaw(), mc.player.getPitch());
-                MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
-                Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
+                Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+                Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
             } else {
                 if (airTicks >= tellyTick.get() && blockCache != null) {
-                    MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
-                    Managers.ROTATION.setRotations(getRotation(blockCache), rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                    Managers.ROTATION.setRotations(getRotation(blockCache), rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
                     place();
                 }
                 airTicks++;
@@ -131,8 +126,12 @@ public class Scaffold extends Module {
     }
 
     public void place() {
+        if (!onAir()) return;
+
         boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position, false);
         FindItemResult item = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
+
+        if (!item.found()) return;
 
         if (hasRotated) {
             BlockPos targetPos = blockCache.position.offset(blockCache.facing);
@@ -212,12 +211,18 @@ public class Scaffold extends Module {
         return false;
     }
 
-    public Vector2f getRotation(BlockCache blockCache) {
-        Vector2f calculate = RotationUtil.calculate(getVec3(blockCache.position, blockCache.facing));
-        Vector2f reverseYaw = new Vector2f(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.y);
+    private Rotation getRotation(BlockCache blockCache) {
+        Rotation calculate = onAir() ? RotationUtil.calculate(getVec3(blockCache.position, blockCache.facing)) : RotationUtil.calculate(blockCache.position.toCenterPos());
+        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, false);
         if (hasRotated) return reverseYaw;
         else return calculate;
+    }
+
+    private boolean onAir() {
+        Vec3d baseVec = mc.player.getEyePos();
+        BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
+        return mc.world.getBlockState(base).getBlock() instanceof AirBlock || mc.world.getBlockState(base).getBlock() instanceof LilyPadBlock;
     }
 
     @Override

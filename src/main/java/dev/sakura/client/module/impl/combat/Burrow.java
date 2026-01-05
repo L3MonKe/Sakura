@@ -13,7 +13,7 @@ import dev.sakura.client.utils.entity.EntityUtil;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.time.TimerUtil;
-import dev.sakura.client.utils.vector.Vector2f;
+import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.utils.world.BlockUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
@@ -245,7 +245,7 @@ public class Burrow extends Module {
         timer.reset();
         doSwap(block);
         if (this.rotate.get() == RotateMode.Bypass) {
-            Managers.ROTATION.setRotations(new Vector2f(Managers.ROTATION.getYaw(), 89.98f), 10f, MovementFix.OFF, RotationManager.Priority.Highest);
+            Managers.ROTATION.setRotations(new Rotation(Managers.ROTATION.getYaw(), 89.98f), 10f, MovementFix.OFF, RotationManager.Priority.Highest);
         }
         placeBlock(playerPos, rotateFlag);
         placeBlock(pos1, rotateFlag);
