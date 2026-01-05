@@ -56,13 +56,6 @@ public class NanoVGHelper {
     }
 
     /**
-     * 绘制字符串
-     */
-    public static float drawString(String text, float x, float y, int font, Color color) {
-        return drawText(text, x, y, font, 18, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE, color);
-    }
-
-    /**
      * 绘制字符串（带边界测量）
      */
     public static float drawStringBounds(String text, float x, float y, int font, float size, Color color) {
