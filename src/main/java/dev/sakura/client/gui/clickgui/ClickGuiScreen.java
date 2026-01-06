@@ -117,7 +117,7 @@ public class ClickGuiScreen extends Screen {
             NanoVGHelper.drawRoundRectOutline(bjdBoxX, bjdBoxY, bjdBoxW, bjdBoxH, radius, stroke, outline);
 
             float textSize = baseFontSize * 0.75f;
-            NanoVGHelper.drawText(ClickGui.language.is(ClickGui.Language.Chinese) ? "显示布吉岛模块" : "Show 78 IsLand", bjdBoxX + padding, bjdBoxY + bjdBoxH / 2f, FontLoader.regular(textSize), textSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, Color.WHITE);
+            NanoVGHelper.drawString(ClickGui.language.is(ClickGui.Language.Chinese) ? "显示布吉岛模块" : "Show 78 IsLand", bjdBoxX + padding, bjdBoxY + bjdBoxH / 2f, FontLoader.regular(textSize), textSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, Color.WHITE);
 
             float toggleRadius = 5 * guiScale;
             float circleRadius = 4 * guiScale;

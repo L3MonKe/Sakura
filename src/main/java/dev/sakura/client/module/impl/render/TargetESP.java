@@ -51,10 +51,6 @@ public class TargetESP extends Module {
 
     public TargetESP() {
         super("TargetESP", "目标ESP", Category.Render);
-        this.values.add(mode);
-        this.values.add(imageMode);
-        this.values.add(circleSpeed);
-        this.values.add(onlyPlayer);
     }
 
     @Override

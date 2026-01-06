@@ -171,7 +171,7 @@ public class MainMenuScreen extends Screen {
 
             if (mc.getSession() != null) {
                 String loggedInText = "Logged in as: " + mc.getSession().getUsername();
-                NanoVGHelper.drawText(loggedInText, this.width - 5, 5, FontLoader.regular(18), 18,
+                NanoVGHelper.drawString(loggedInText, this.width - 5, 5, FontLoader.regular(18), 18,
                         NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_TOP, new Color(255, 255, 255, (int) (255 * finalTransitionProgress)));
             }
 

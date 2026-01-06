@@ -47,10 +47,10 @@ public class SakuraSearchField extends TextFieldWidget {
             // Text
             String text = getText();
             if (text.isEmpty() && !isFocused()) {
-                NanoVGHelper.drawText(placeholderText, getX() + 5, getY() + getHeight() / 2f,
+                NanoVGHelper.drawString(placeholderText, getX() + 5, getY() + getHeight() / 2f,
                         FontLoader.regular(16), 16, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, SakuraTheme.TEXT_SECONDARY);
             } else {
-                NanoVGHelper.drawText(text, getX() + 5, getY() + getHeight() / 2f,
+                NanoVGHelper.drawString(text, getX() + 5, getY() + getHeight() / 2f,
                         FontLoader.regular(16), 16, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, SakuraTheme.TEXT);
 
                 // Simple Cursor

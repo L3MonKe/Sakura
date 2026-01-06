@@ -114,16 +114,16 @@ public final class AccountEncryptionScreen extends Screen {
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
             // 标题
-            NanoVGHelper.drawText("Encrypt Accounts (" + Managers.ACCOUNT.getAccounts().size() + ")", width / 2f, panelY + 25, FontLoader.regular(24), 24, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, Color.BLACK);
+            NanoVGHelper.drawString("Encrypt Accounts (" + Managers.ACCOUNT.getAccounts().size() + ")", width / 2f, panelY + 25, FontLoader.regular(24), 24, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, Color.BLACK);
 
             // 验证指示器
             Color statusColor = isPasswordSecure(passwordTextField.getText()) ? Color.GREEN : Color.RED;
-            NanoVGHelper.drawText("*", passwordTextField.getX() - 10, passwordTextField.getY() + (passwordTextField.getHeight() / 2f), FontLoader.regular(18), 18, NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_MIDDLE, statusColor);
+            NanoVGHelper.drawString("*", passwordTextField.getX() - 10, passwordTextField.getY() + (passwordTextField.getHeight() / 2f), FontLoader.regular(18), 18, NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_MIDDLE, statusColor);
 
             // 要求列表 - 更紧凑的布局
             float reqY = passwordTextField.getY() + passwordTextField.getHeight() + 10; // Reduced gap from 15 to 10
             // 间距从 15 减少到 10
-            NanoVGHelper.drawText("Minimum Requirements:", passwordTextField.getX(), reqY, FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, Color.BLACK);
+            NanoVGHelper.drawString("Minimum Requirements:", passwordTextField.getX(), reqY, FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, Color.BLACK);
 
             reqY += 18; // 间距从 20 减少到 18
             String password = passwordTextField.getText();
@@ -163,7 +163,7 @@ public final class AccountEncryptionScreen extends Screen {
         NanoVG.nvgFill(vg);
 
         // 用于紧凑列表的较小字体大小
-        NanoVGHelper.drawText(text, x, y, FontLoader.regular(14), 14, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, SakuraTheme.TEXT_SECONDARY);
+        NanoVGHelper.drawString(text, x, y, FontLoader.regular(14), 14, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, SakuraTheme.TEXT_SECONDARY);
     }
 
     private boolean isPasswordSecure(final String password) {

@@ -163,10 +163,10 @@ public final class AccountAddAccountScreen extends Screen {
             // 如果可能的话，在邮箱输入框左侧绘制一个小点或图标代替文本星号，或者直接使用星号
             // 使用现有逻辑但清理了位置
             float inputX = email.getX();
-            NanoVGHelper.drawText("*", inputX - 10, email.getY() + (email.getHeight() / 2f), FontLoader.regular(18), 18, NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_MIDDLE, statusColor);
+            NanoVGHelper.drawString("*", inputX - 10, email.getY() + (email.getHeight() / 2f), FontLoader.regular(18), 18, NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_MIDDLE, statusColor);
 
             // 标题
-            NanoVGHelper.drawText("Add Account", width / 2f, panelY + 25, FontLoader.regular(24), 24, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, Color.BLACK);
+            NanoVGHelper.drawString("Add Account", width / 2f, panelY + 25, FontLoader.regular(24), 24, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, Color.BLACK);
         });
 
         super.render(context, mouseX, mouseY, delta);

@@ -72,7 +72,7 @@ public class GhostHand extends Module {
 
         BlockPos bestPos = null;
         Vec3d bestHit = null;
-        double bestDist = 0.0;
+        double bestDist = Double.MAX_VALUE;
 
         for (BlockPos pos : BlockPos.iterate(min, max)) {
             BlockState state = mc.world.getBlockState(pos);

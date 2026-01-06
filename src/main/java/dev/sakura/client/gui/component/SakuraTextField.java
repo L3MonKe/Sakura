@@ -53,11 +53,11 @@ public class SakuraTextField extends TextFieldWidget {
             String displayString = isPassword ? "*".repeat(text.length()) : text;
 
             if (text.isEmpty() && !isFocused() && !placeholderText.isEmpty()) {
-                NanoVGHelper.drawText(placeholderText, getX() + 5, getY() + getHeight() / 2f,
+                NanoVGHelper.drawString(placeholderText, getX() + 5, getY() + getHeight() / 2f,
                         FontLoader.regular(16), 16, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, SakuraTheme.TEXT_SECONDARY);
             } else {
                 // Determine text color based on focus/state
-                NanoVGHelper.drawText(displayString, getX() + 5, getY() + getHeight() / 2f,
+                NanoVGHelper.drawString(displayString, getX() + 5, getY() + getHeight() / 2f,
                         FontLoader.regular(16), 16, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, SakuraTheme.TEXT);
 
                 // Cursor

@@ -1,8 +1,10 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.impl.render.AspectRatio;
 import dev.sakura.client.module.impl.render.NoRender;
+import dev.sakura.client.module.impl.render.Shaders;
 import dev.sakura.client.utils.math.FrameRateCounter;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
@@ -14,6 +16,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import static dev.sakura.client.Sakura.mc;
 
 @Mixin(GameRenderer.class)
 public class MixinGameRenderer {
@@ -29,6 +33,13 @@ public class MixinGameRenderer {
     @Inject(method = "render", at = @At("TAIL"))
     private void postHudRenderHook(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
         FrameRateCounter.INSTANCE.recordFrame();
+    }
+
+    @Inject(method = "renderWorld", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/GameRenderer;renderHand(Lnet/minecraft/client/render/Camera;FLorg/joml/Matrix4f;)V", shift = At.Shift.AFTER))
+    private void postRender3dHook(RenderTickCounter tickCounter, CallbackInfo ci) {
+        Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
+        if (shaders == null || !shaders.isEnabled() || mc.world == null) return;
+        Managers.SHADER.renderShaders();
     }
 
     @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true)

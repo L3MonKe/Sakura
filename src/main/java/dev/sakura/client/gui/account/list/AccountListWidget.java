@@ -99,7 +99,7 @@ public final class AccountListWidget extends AlwaysSelectedEntryListWidget<Accou
 
                     float fontSize = 18f;
                     float textX = x + 24;
-                    NanoVGHelper.drawText(entry.getAccount().username(), textX, y + height / 2f, FontLoader.regular(fontSize), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, color);
+                    NanoVGHelper.drawString(entry.getAccount().username(), textX, y + height / 2f, FontLoader.regular(fontSize), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, color);
 
                     // Draw account typeccount type
                     float usernameWidth = NanoVGHelper.getTextWidth(entry.getAccount().username(), FontLoader.regular(fontSize), fontSize);
@@ -108,7 +108,7 @@ public final class AccountListWidget extends AlwaysSelectedEntryListWidget<Accou
                     float typeX = textX + usernameWidth + 8;
                     float typeFontSize = 14f;
 
-                    NanoVGHelper.drawText(typeText, typeX, y + height / 2f, FontLoader.regular(typeFontSize), typeFontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, typeColor);
+                    NanoVGHelper.drawString(typeText, typeX, y + height / 2f, FontLoader.regular(typeFontSize), typeFontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, typeColor);
                 }
             }
             NanoVG.nvgResetScissor(vg);

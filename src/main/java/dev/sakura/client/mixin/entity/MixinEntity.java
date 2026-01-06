@@ -6,7 +6,7 @@ import dev.sakura.client.events.player.MoveEvent;
 import dev.sakura.client.events.player.RayTraceEvent;
 import dev.sakura.client.events.player.StrafeEvent;
 import dev.sakura.client.events.player.UpdateVelocityEvent;
-import dev.sakura.client.module.impl.render.Glow;
+import dev.sakura.client.module.impl.render.Shaders;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.util.math.MathHelper;
@@ -41,16 +41,10 @@ public abstract class MixinEntity {
     }
 
     @Inject(method = "isGlowing", at = @At("HEAD"), cancellable = true)
-    private void onIsGlowing(CallbackInfoReturnable<Boolean> cir) {
-        if (Glow.INSTANCE != null && Glow.INSTANCE.shouldGlow((Entity) (Object) this) && Glow.INSTANCE.useNativeGlow()) {
-            cir.setReturnValue(true);
-        }
-    }
-
-    @Inject(method = "getTeamColorValue", at = @At("HEAD"), cancellable = true)
-    private void onGetTeamColorValue(CallbackInfoReturnable<Integer> cir) {
-        if (Glow.INSTANCE != null && Glow.INSTANCE.shouldGlow((Entity) (Object) this) && Glow.INSTANCE.useNativeGlow()) {
-            cir.setReturnValue(Glow.INSTANCE.getGlowColor((Entity) (Object) this));
+    public void isGlowingHook(CallbackInfoReturnable<Boolean> cir) {
+        Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
+        if (shaders.isEnabled()) {
+            cir.setReturnValue(shaders.shouldRender((Entity) (Object) this));
         }
     }
 

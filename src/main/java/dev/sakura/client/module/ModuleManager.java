@@ -82,11 +82,11 @@ public class ModuleManager {
         addAll(new CameraClip());
         add(new Crystal());
         addAll(new Fullbright());
-        addAll(new Glow());
         addAll(new Hat());
         addAll(new JumpCircles());
         addAll(new NameTags());
         addAll(new NoRender());
+        addAll(new Shaders());
         addAll(new SwingAnimation());
         addAll(new TargetESP());
         addAll(new TotemParticles());

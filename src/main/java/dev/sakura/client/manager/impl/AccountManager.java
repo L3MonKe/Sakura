@@ -11,7 +11,7 @@ import java.util.List;
 
 import static dev.sakura.client.Sakura.mc;
 
-public final class AccountManager {
+public class AccountManager {
     public static final MSAAuthenticator MSA_AUTHENTICATOR = new MSAAuthenticator();
     private final List<MinecraftAccount> accounts = new LinkedList<>();
 

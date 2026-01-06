@@ -211,13 +211,13 @@ public final class AccountSelectorScreen extends Screen {
 
                 NanoVGHelper.drawRoundRectOutline(popupX, popupY, popupWidth, popupHeight, SakuraTheme.ROUNDING, 1.5f, new Color(0, 0, 0, 50));
 
-                NanoVGHelper.drawText("Delete Account?", popupX + popupWidth / 2.0f, popupY + 15, FontLoader.bold(18.0f), 18.0f, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP, SakuraTheme.TEXT);
+                NanoVGHelper.drawString("Delete Account?", popupX + popupWidth / 2.0f, popupY + 15, FontLoader.bold(18.0f), 18.0f, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP, SakuraTheme.TEXT);
 
                 String name = accountToDelete != null ? accountToDelete.getAccount().username() : "Unknown";
                 Color secondaryText = new Color(SakuraTheme.TEXT.getRed(), SakuraTheme.TEXT.getGreen(), SakuraTheme.TEXT.getBlue(), (int) (255 * 0.8f));
 
-                NanoVGHelper.drawText("Are you sure you want to remove", popupX + popupWidth / 2.0f, popupY + 45, FontLoader.regular(14.0f), 14.0f, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP, secondaryText);
-                NanoVGHelper.drawText("'" + name + "'?", popupX + popupWidth / 2.0f, popupY + 60, FontLoader.regular(14.0f), 14.0f, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP, secondaryText);
+                NanoVGHelper.drawString("Are you sure you want to remove", popupX + popupWidth / 2.0f, popupY + 45, FontLoader.regular(14.0f), 14.0f, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP, secondaryText);
+                NanoVGHelper.drawString("'" + name + "'?", popupX + popupWidth / 2.0f, popupY + 60, FontLoader.regular(14.0f), 14.0f, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP, secondaryText);
             });
 
             confirmDeleteButton.render(context, mouseX, mouseY, delta);
