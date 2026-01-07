@@ -13,8 +13,8 @@ import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.module.impl.combat.AntiBotBJD;
 import dev.sakura.client.module.impl.combat.AutoPot;
+import dev.sakura.client.module.impl.combat.AutoSnowball;
 import dev.sakura.client.module.impl.combat.KillAura;
-import dev.sakura.client.module.impl.combat.KillAuraBJD;
 import dev.sakura.client.module.impl.hud.*;
 import dev.sakura.client.module.impl.movement.*;
 import dev.sakura.client.module.impl.player.*;
@@ -39,7 +39,7 @@ public class ModuleManager {
         addBjd(new AntiBotBJD());
         add(new AutoPot());
         add(new KillAura());
-        add(new KillAuraBJD());
+        add(new AutoSnowball());
 
         // Movement
         addAll(new AutoSprint());
@@ -67,6 +67,8 @@ public class ModuleManager {
         add(new PacketMine());
         add(new Replenish());
         addAll(new TimerModule());
+        add(new InventoryManager());
+        add(new ChestStealer());
 
         // Render
         addAll(new AspectRatio());
