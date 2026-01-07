@@ -76,9 +76,8 @@ public class WelcomeScreen extends Screen {
             panel.setY(0);
             panel.setOpened(true);
 
-            // 预览展开脚手架，甲飞和水晶模型
             for (ModuleComponent component : panel.getModuleComponents()) {
-                if (component.getModule().getEnglishName().equalsIgnoreCase("Scaffold") || component.getModule().getEnglishName().equalsIgnoreCase("ArmorFly") || component.getModule().getEnglishName().equalsIgnoreCase("Crystal")) {
+                if (component.getModule().getEnglishName().equalsIgnoreCase("Scaffold") || component.getModule().getEnglishName().equalsIgnoreCase("Crystal")) {
                     component.setOpened(true);
                 } else if (Math.random() > 0.9) {
                     component.setPreviewEnabled(true);

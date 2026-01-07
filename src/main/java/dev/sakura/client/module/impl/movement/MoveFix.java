@@ -80,8 +80,7 @@ public class MoveFix extends Module {
     @EventHandler(priority = -999)
     public void onMoveInput(MoveInputEvent event) {
         if (!grim.get()) return;
-        if (Sakura.MODULES.getModule(HoleSnap.class).isEnabled()) return;
-        if (mc.player.isRiding() /*TODO:|| Freecam.INSTANCE.isOn()*/)
+        if (mc.player.isRiding())
             return;
 
         float mF = event.getForward();

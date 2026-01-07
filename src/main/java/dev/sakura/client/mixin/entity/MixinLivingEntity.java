@@ -8,7 +8,6 @@ import dev.sakura.client.events.player.JumpEvent;
 import dev.sakura.client.events.player.JumpRotationEvent;
 import dev.sakura.client.events.player.SprintEvent;
 import dev.sakura.client.events.player.TravelEvent;
-import dev.sakura.client.module.impl.movement.ElytraFly;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -20,7 +19,6 @@ import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -48,9 +46,6 @@ public abstract class MixinLivingEntity extends Entity {
     public AttributeContainer getAttributes() {
         return null;
     }
-
-    @Unique
-    private boolean previousElytra = false;
 
     @Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
     public void setSprintingHook(boolean sprinting, CallbackInfo ci) {
@@ -87,16 +82,6 @@ public abstract class MixinLivingEntity extends Entity {
             TravelEvent event = new TravelEvent(EventType.POST, movementInput);
             Sakura.EVENT_BUS.post(event);
         }
-    }
-
-    @Inject(method = "isGliding", at = @At("TAIL"), cancellable = true)
-    private void recastOnLand(CallbackInfoReturnable<Boolean> cir) {
-        if ((Object) this != mc.player) return;
-        boolean elytra = cir.getReturnValue();
-        if (previousElytra && !elytra && ElytraFly.INSTANCE != null && ElytraFly.INSTANCE.isEnabled() && ElytraFly.INSTANCE.isBounceMode()) {
-            cir.setReturnValue(ElytraFly.recastElytra(MinecraftClient.getInstance().player));
-        }
-        previousElytra = elytra;
     }
 
     @Redirect(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getYaw()F"))

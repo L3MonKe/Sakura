@@ -76,14 +76,14 @@ public class AutoSprint extends Module {
                     if (MoveFix.isActive()) {
                         return mc.player.input.movementForward == 1;
                     } else {
-                        return HoleSnap.isActive() || mc.options.forwardKey.isPressed() && MathHelper.angleBetween(mc.player.getYaw(), Managers.ROTATION.getYaw()) < 40;
+                        return mc.options.forwardKey.isPressed() && MathHelper.angleBetween(mc.player.getYaw(), Managers.ROTATION.getYaw()) < 40;
                     }
                 }
                 case Rotation -> {
                     if (MoveFix.isActive()) {
                         return mc.player.input.movementForward == 1;
                     } else {
-                        return HoleSnap.isActive() || MathHelper.angleBetween(getSprintYaw(mc.player.getYaw()), Managers.ROTATION.getYaw()) < 40;
+                        return MathHelper.angleBetween(getSprintYaw(mc.player.getYaw()), Managers.ROTATION.getYaw()) < 40;
                     }
                 }
                 case Rage -> {

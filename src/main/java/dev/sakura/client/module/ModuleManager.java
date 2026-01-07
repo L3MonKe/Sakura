@@ -33,28 +33,16 @@ public class ModuleManager {
 
     private void init() {
         // Combat
-        add(new AnchorAura());
         addBjd(new AntiBotBJD());
         add(new AutoPot());
-        add(new AutoTotem());
-        add(new AutoTrap());
-        add(new Burrow());
-        add(new CrystalAura());
         add(new KillAura());
-        add(new SelfTrap());
-        add(new Surround());
-        add(new WebAura());
         add(new KillAuraBJD());
 
         // Movement
-        add(new ArmorFly());
         addAll(new AutoSprint());
-        add(new ElytraFly());
-        add(new HoleSnap());
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());
-        add(new Phase());
         addAll(new Scaffold());
         add(new Speed());
         add(new Step());

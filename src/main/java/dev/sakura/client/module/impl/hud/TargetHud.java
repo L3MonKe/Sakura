@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.events.render.Render3DEvent;
 import dev.sakura.client.module.HudModule;
-import dev.sakura.client.module.impl.combat.CrystalAura;
 import dev.sakura.client.module.impl.combat.KillAura;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
@@ -86,14 +85,6 @@ public class TargetHud extends HudModule {
             Entity target = killAura.getCurrentTarget();
             if (target instanceof LivingEntity living) {
                 return living;
-            }
-        }
-
-        CrystalAura crystalAura = Sakura.MODULES.getModule(CrystalAura.class);
-        if (crystalAura != null && crystalAura.isEnabled()) {
-            PlayerEntity target = crystalAura.getCurrentTarget();
-            if (target != null) {
-                return target;
             }
         }
 

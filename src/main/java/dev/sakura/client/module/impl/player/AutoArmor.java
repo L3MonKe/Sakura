@@ -4,7 +4,6 @@ import dev.sakura.client.events.client.TickEvent;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.module.impl.movement.ElytraFly;
 import dev.sakura.client.utils.player.MovementUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -31,7 +30,6 @@ public class AutoArmor extends Module {
 
     private final BoolValue noMove = new BoolValue("NoMove", "移动时不换", false);
     private final NumberValue<Integer> delay = new NumberValue<>("Delay", "延迟", 3, 0, 10, 1);
-    private final BoolValue autoElytra = new BoolValue("AutoElytra", "自动鞘翅", true);
     private final BoolValue snowBug = new BoolValue("SnowBug", "雪球漏洞", true);
 
     private int tickDelay = 0;
@@ -85,25 +83,6 @@ public class AutoArmor extends Module {
                         continue;
                     }
                     if (stack.isOf(Items.LEATHER_BOOTS)) {
-                        entry.getValue()[2] = s;
-                        continue;
-                    }
-                }
-
-                if (autoElytra.get() && entry.getKey() == EquipmentSlot.CHEST
-                        && ElytraFly.INSTANCE != null && ElytraFly.INSTANCE.isEnabled()) {
-
-                    ItemStack chestStack = mc.player.getInventory().getStack(38);
-                    if (!chestStack.isEmpty() && chestStack.isOf(Items.ELYTRA) && isElytraUsable(chestStack)) {
-                        continue;
-                    }
-                    if (entry.getValue()[2] != -1) {
-                        ItemStack foundStack = mc.player.getInventory().getStack(entry.getValue()[2]);
-                        if (!foundStack.isEmpty() && foundStack.isOf(Items.ELYTRA) && isElytraUsable(foundStack)) {
-                            continue;
-                        }
-                    }
-                    if (stack.isOf(Items.ELYTRA) && isElytraUsable(stack)) {
                         entry.getValue()[2] = s;
                         continue;
                     }

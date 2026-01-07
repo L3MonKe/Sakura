@@ -6,7 +6,6 @@ import dev.sakura.client.events.entity.AttackEvent;
 import dev.sakura.client.events.render.Render3DEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.module.impl.combat.CrystalAura;
 import dev.sakura.client.module.impl.combat.KillAura;
 import dev.sakura.client.utils.animations.Animation;
 import dev.sakura.client.utils.animations.Direction;
@@ -37,7 +36,6 @@ public class TargetESP extends Module {
     private final NumberValue<Float> circleSpeed = new NumberValue<>("Circle Speed", "圆圈速度", 2.0F, 0.1F, 5.0F, 0.1F);
     private final BoolValue onlyPlayer = new BoolValue("Only Player", "仅玩家", true);
     private KillAura killAura;
-    private CrystalAura crystalAura;
     private LivingEntity target;
     private final TimerUtil timerUtil = new TimerUtil();
     private final Animation alphaAnim = new DecelerateAnimation(400, 1);
@@ -57,7 +55,6 @@ public class TargetESP extends Module {
     public void onEnable() {
         target = null;
         killAura = Sakura.MODULES.getModule(KillAura.class);
-        crystalAura = Sakura.MODULES.getModule(CrystalAura.class);
         super.onEnable();
     }
 
@@ -79,25 +76,12 @@ public class TargetESP extends Module {
             target = living;
             alphaAnim.setDirection(Direction.FORWARDS);
             timerUtil.reset();
-        } else if (crystalAura.isEnabled() && crystalAura.getCurrentTarget() != null) {
-            target = crystalAura.getCurrentTarget();
-            alphaAnim.setDirection(Direction.FORWARDS);
-            timerUtil.reset();
         }
 
         if (timerUtil.passedMS(100)) {
             alphaAnim.setDirection(Direction.BACKWARDS);
             if (alphaAnim.isDone())
                 target = null;
-        }
-    }
-
-    @EventHandler
-    public void onRender2D(Render3DEvent event) {
-        if (target != null && mode.get() == Mode.Image) {
-            // 2D渲染逻辑，用于在屏幕上的目标位置显示图像标记
-            // 这里可以根据目标在屏幕上的位置渲染2D图像
-            // 暂时留空，具体实现需要根据项目架构来确定
         }
     }
 
@@ -123,7 +107,6 @@ public class TargetESP extends Module {
             }
 
             if (mode.get() == Mode.Ghost) {
-                // Ghost mode implementation - rendering ghost effect around the target
                 MatrixStack matrices = event.getMatrices();
                 matrices.push();
 
@@ -149,7 +132,6 @@ public class TargetESP extends Module {
 
                 matrices.translate(interpolated.x, interpolated.y, interpolated.z);
 
-                // 渲染多个粒子效果
                 for (int i = 0; i < length; i++) {
                     double angle = 0.15f * (System.currentTimeMillis() - lastTime - (i * distance)) / (speed);
                     double s = Math.sin(angle) * radius;
@@ -166,32 +148,31 @@ public class TargetESP extends Module {
                     Matrix4f matrix = matrices.peek().getPositionMatrix();
 
                     double animOutput = alphaAnim.getOutput();
-                    Color color = new Color(255, 255, 255, (int) (animOutput * 255));
 
+                    Color color = new Color(255, 255, 255, (int) (animOutput * 255 * 0.7));
                     float r = color.getRed() / 255.0F;
                     float g = color.getGreen() / 255.0F;
                     float b = color.getBlue() / 255.0F;
                     float a = color.getAlpha() / 255.0F;
 
-                    // 绘制一个简单的四边形
-                    buffer.vertex(matrix, -0.5f, 0.5f, 0.0f).color(r, g, b, a);
-                    buffer.vertex(matrix, 0.5f, 0.5f, 0.0f).color(r, g, b, a);
-                    buffer.vertex(matrix, 0.5f, -0.5f, 0.0f).color(r, g, b, a);
-                    buffer.vertex(matrix, -0.5f, -0.5f, 0.0f).color(r, g, b, a);
+                    buffer.vertex(matrix, -0.5f, -0.5f, 0).color(r, g, b, a);
+                    buffer.vertex(matrix, 0.5f, -0.5f, 0).color(r, g, b, a);
+                    buffer.vertex(matrix, 0.5f, 0.5f, 0).color(r, g, b, a);
+                    buffer.vertex(matrix, -0.5f, 0.5f, 0).color(r, g, b, a);
 
                     BufferRenderer.drawWithGlobalProgram(buffer.end());
 
                     matrices.pop();
                 }
 
-                RenderSystem.enableDepthTest();
                 RenderSystem.enableCull();
+                RenderSystem.enableDepthTest();
                 RenderSystem.disableBlend();
+
                 matrices.pop();
             }
 
             if (mode.get() == Mode.Image) {
-                // Image mode implementation - rendering textures
                 MatrixStack matrices = event.getMatrices();
                 matrices.push();
 
@@ -201,7 +182,6 @@ public class TargetESP extends Module {
 
                 Vec3d camPos = mc.getEntityRenderDispatcher().camera.getPos();
 
-                // 根据imageMode选择纹理
                 Identifier texture = switch (imageMode.get()) {
                     case Rectangle -> rectangle;
                     case QuadStapple -> quadstapple;
@@ -209,12 +189,10 @@ public class TargetESP extends Module {
                     case TriangleStipple -> trianglestipple;
                 };
 
-                // 绑定纹理并渲染
                 RenderSystem.setShaderTexture(0, texture);
                 RenderSystem.enableBlend();
                 RenderSystem.defaultBlendFunc();
                 RenderSystem.enableDepthTest();
-
                 RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX);
 
                 Tessellator tessellator = Tessellator.getInstance();
@@ -226,7 +204,6 @@ public class TargetESP extends Module {
 
                 Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-                // 绘制纹理矩形
                 float width = 1.0f;
                 float height = 1.0f;
 
@@ -325,19 +302,18 @@ public class TargetESP extends Module {
 
             float time = (float) ((((System.currentTimeMillis() - lastTime) / 1500F))
                     + (Math.sin((((System.currentTimeMillis() - lastTime) / 1500F))) / 10f));
-            float alpha = 0.5f; // 简化版本，没有Shaders支持
+            float alpha = 0.5f;
             float pl = 0;
             boolean fa = false;
 
             for (int iteration = 0; iteration < 3; iteration++) {
                 for (float i = time * 360; i < time * 360 + 90; i += 2) {
                     float max = time * 360 + 90;
-                    float dc = (float) (i - (time * 360 - 45)) / (max - (time * 360 - 45)); // 简化的normalize函数
+                    float dc = (float) (i - (time * 360 - 45)) / (max - (time * 360 - 45));
                     float rf = 0.6f;
                     double radians = Math.toRadians(i);
                     double plY = pl + Math.sin(radians * 1.2f) * 0.1f;
 
-                    // 设置渲染状态
                     RenderSystem.enableBlend();
                     RenderSystem.defaultBlendFunc();
                     RenderSystem.disableCull();
@@ -348,13 +324,10 @@ public class TargetESP extends Module {
 
                     Vec3d camPos = mc.getEntityRenderDispatcher().camera.getPos();
 
-                    // 移动到目标位置
                     matrices.translate(markerX - camPos.x, markerY - camPos.y, markerZ - camPos.z);
 
-                    // 根据相机方向旋转
                     matrices.multiply(mc.getEntityRenderDispatcher().camera.getRotation());
 
-                    // 绘制点
                     Tessellator tessellator = Tessellator.getInstance();
                     BufferBuilder buffer = tessellator.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
                     RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
@@ -365,7 +338,7 @@ public class TargetESP extends Module {
                             * (Math.max(fa ? 0.25f : 0.15f, fa ? dc : (1f + (0.4f - dc)) / 2f) + 0.45f);
                     float size = q * (2f + ((0.5f - alpha) * 2));
 
-                    Color color = new Color(255, 255, 255, (int) (alphaAnim.getOutput() * 255)); // 简化颜色
+                    Color color = new Color(255, 255, 255, (int) (alphaAnim.getOutput() * 255));
 
                     float r = color.getRed() / 255.0F;
                     float g = color.getGreen() / 255.0F;
@@ -377,7 +350,6 @@ public class TargetESP extends Module {
 
                     float halfSize = size / 2f;
 
-                    // 绘制一个正方形作为点
                     buffer.vertex(matrix, cosX - halfSize, (float) plY - 0.7f - halfSize, sinZ).color(r, g, b, a);
                     buffer.vertex(matrix, cosX + halfSize, (float) plY - 0.7f - halfSize, sinZ).color(r, g, b, a);
                     buffer.vertex(matrix, cosX + halfSize, (float) plY - 0.7f + halfSize, sinZ).color(r, g, b, a);
