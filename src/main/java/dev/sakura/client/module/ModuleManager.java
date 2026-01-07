@@ -44,6 +44,7 @@ public class ModuleManager {
         add(new SelfTrap());
         add(new Surround());
         add(new WebAura());
+        add(new KillAuraBJD());
 
         // Movement
         add(new ArmorFly());
