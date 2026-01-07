@@ -40,10 +40,20 @@ public class MixinWorldRenderer {
     private void replaceShaderHook(PostEffectProcessor instance, FrameGraphBuilder builder, int textureWidth, int textureHeight, PostEffectProcessor.FramebufferSet framebufferSet) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
         if (shaders.isEnabled() && mc.world != null) {
-            if (Managers.SHADER.fullNullCheck()) return;
-            Managers.SHADER.setupShader(shaders.mode.get(), Managers.SHADER.getShaderOutline(shaders.mode.get()));
+            if (Managers.SHADER.fullNullCheck()) {
+                instance.render(builder, textureWidth, textureHeight, framebufferSet);
+                return;
+            }
+            PostEffectProcessor effect = Managers.SHADER.getShaderOutline(shaders.mode.get());
+            if (effect == null) {
+                instance.render(builder, textureWidth, textureHeight, framebufferSet);
+                return;
+            }
+            Managers.SHADER.setupShader(shaders.mode.get(), effect);
+            effect.render(builder, textureWidth, textureHeight, framebufferSet);
+            instance.render(builder, textureWidth, textureHeight, framebufferSet);
         } else {
-            instance.render(tickDelta);
+            instance.render(builder, textureWidth, textureHeight, framebufferSet);
         }
     }
 

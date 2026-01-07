@@ -50,7 +50,7 @@ public abstract class MixinEntity {
 
     @Redirect(method = "getRotationVec", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getRotationVector(FF)Lnet/minecraft/util/math/Vec3d;"))
     private Vec3d redirectGetRotationVector(Entity instance, float pitch, float yaw) {
-        if ((Object) instance == mc.player) {
+        if (instance == mc.player) {
             RayTraceEvent event = new RayTraceEvent(instance, yaw, pitch);
             Sakura.EVENT_BUS.post(event);
             return this.getRotationVector(event.getPitch(), event.getYaw());

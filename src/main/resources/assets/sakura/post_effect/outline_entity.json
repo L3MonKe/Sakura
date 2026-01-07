@@ -1,0 +1,30 @@
+{
+  "targets": {
+    "swap": {}
+  },
+  "passes": [
+    {
+      "program": "sakura:post/outline",
+      "inputs": [
+        {
+          "sampler_name": "InSampler",
+          "target": "minecraft:entity_outline",
+          "bilinear": true
+        }
+      ],
+      "output": "swap",
+      "uniforms": []
+    },
+    {
+      "program": "minecraft:post/blit",
+      "inputs": [
+        {
+          "sampler_name": "DiffuseSampler",
+          "target": "swap",
+          "bilinear": true
+        }
+      ],
+      "output": "minecraft:entity_outline"
+    }
+  ]
+}

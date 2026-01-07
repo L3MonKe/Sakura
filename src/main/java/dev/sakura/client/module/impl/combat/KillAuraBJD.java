@@ -1,22 +1,17 @@
 package dev.sakura.client.module.impl.combat;
 
 
-import baritone.api.event.events.RenderEvent;
-import baritone.api.utils.RotationUtils;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.player.PlayerTickEvent;
 import dev.sakura.client.events.render.Render3DEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.module.ModuleManager;
 import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.module.impl.player.Blink;
 import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
-import dev.sakura.client.utils.rotation.RaytraceUtil;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.values.impl.NumberValue;
@@ -29,7 +24,6 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 
-import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
@@ -51,7 +45,7 @@ public class KillAuraBJD extends Module {
         boolean scaffoldEnable = Sakura.MODULES.getModule(Scaffold.class).isEnabled();
         boolean blinkEnable = Sakura.MODULES.getModule(Blink.class).isEnabled();
         //AttackCrystal attackCrystal = Naven.getInstance().getModuleManager().getModule(AttackCrystal.class);
-        if (mc.player == null || mc.world == null || scaffoldEnable  || blinkEnable)
+        if (mc.player == null || mc.world == null || scaffoldEnable || blinkEnable)
             return;
 
         findTarget();
@@ -114,13 +108,12 @@ public class KillAuraBJD extends Module {
 
     @EventHandler
     public void onRender(Render3DEvent event) {
-        MatrixStack poseStack = event.getMatrices();
+        if (targets == null || targets.isEmpty()) return;
         for (Entity entity : targets) {
-            if (entity.equals(target)){
+            if (entity.equals(target)) {
                 Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB());
                 Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB(), 2f);
-            }
-            else {
+            } else {
                 Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB());
                 Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB(), 2f);
             }
