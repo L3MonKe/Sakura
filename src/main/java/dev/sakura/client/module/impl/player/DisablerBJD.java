@@ -46,7 +46,7 @@ public class DisablerBJD extends Module {
 
     @EventHandler
     private void onPacketSend(PacketEvent event) {
-        if (event.getType() != EventType.SEND || mc.player == null || mc.world == null) return;
+        if (event.getType() != EventType.SEND || nullCheck()) return;
 
         if (grimDuplicateRotPlace.get()) {
             if (event.getPacket() instanceof PlayerMoveC2SPacket packet && packet.changesLook()) {

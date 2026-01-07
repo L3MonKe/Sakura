@@ -102,7 +102,7 @@ public class PacketMine extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Post event) {
-        if (mc.player == null || mc.world == null) return; // fuck kong zhi zhen
+        if (nullCheck()) return; // fuck kong zhi zhen
         if (eatingCheck()) return;
         if (blockData == null) return;
         if (mc.player.squaredDistanceTo(blockData.getCurrentPos().toCenterPos()) > Math.pow(rangeConfig.get() + 4, 2)) {

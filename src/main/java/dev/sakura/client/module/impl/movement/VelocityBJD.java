@@ -66,7 +66,7 @@ public class VelocityBJD extends Module {
 
     @EventHandler
     public void onPacket(PacketEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (event.getType() != EventType.RECEIVE) return;
 
         switch (mode.get()) {
@@ -130,7 +130,7 @@ public class VelocityBJD extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (mode.is(Mode.NoXZ)) {
             if (stage == VelocityStage.ATTACK) {
@@ -162,7 +162,7 @@ public class VelocityBJD extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Post event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (!mode.is(Mode.NoXZ)) return;
 
         if (stage == VelocityStage.CLEAR) {
@@ -177,7 +177,7 @@ public class VelocityBJD extends Module {
 
     @EventHandler
     public void onMoveInput(MoveInputEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (mode.is(Mode.NoXZ)) {
             if (stage == VelocityStage.DELAY && velocity != null && mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player && !AntiBotBJD.isBot(player)) {

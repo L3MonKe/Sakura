@@ -81,7 +81,7 @@ public class Velocity extends Module {
 
     @EventHandler
     public void onVelocity(EntityVelocityUpdateEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if ((mc.player.isTouchingWater() || mc.player.isSubmergedInWater() || mc.player.isInLava()) && pauseInLiquid.get())
             return;
@@ -98,7 +98,7 @@ public class Velocity extends Module {
 
     @EventHandler
     public void onReceivePacket(PacketEvent event) {
-        if (mc.player == null || mc.world == null || event.getType() != EventType.RECEIVE) return;
+        if (nullCheck() || event.getType() != EventType.RECEIVE) return;
 
         if ((mc.player.isTouchingWater() || mc.player.isSubmergedInWater() || mc.player.isInLava()) && pauseInLiquid.get())
             return;
@@ -156,7 +156,7 @@ public class Velocity extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if ((mc.player.isTouchingWater() || mc.player.isSubmergedInWater() || mc.player.isInLava()) && pauseInLiquid.get())
             return;

@@ -58,7 +58,7 @@ public class NoSlow extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (inventoryMove.get() && checkScreen()) {
             final long handle = mc.getWindow().getHandle();
@@ -86,7 +86,7 @@ public class NoSlow extends Module {
 
     @EventHandler
     public void onSlowdown(SlowdownEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         boolean isBow = mc.player.getMainHandStack().getItem() instanceof BowItem || mc.player.getMainHandStack().getItem() instanceof CrossbowItem;
         boolean slowTick = mc.player.getItemUseTimeLeft() % 3 == 0;

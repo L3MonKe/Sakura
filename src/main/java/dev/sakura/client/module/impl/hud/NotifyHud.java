@@ -96,7 +96,7 @@ public class NotifyHud extends HudModule {
 
     @EventHandler
     public void onPacket(PacketEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (event.getType() == EventType.SEND && packetWarning.get()) {
             handlePacketSend();

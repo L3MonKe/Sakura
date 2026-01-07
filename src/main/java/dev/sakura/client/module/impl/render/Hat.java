@@ -55,7 +55,7 @@ public class Hat extends Module {
 
     @EventHandler
     public void onRender3D(Render3DEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (this.lastSize != this.size.get() || this.lastPoints != this.points.get()) {
             this.lastSize = this.size.get();

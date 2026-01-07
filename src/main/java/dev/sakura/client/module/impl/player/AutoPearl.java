@@ -33,7 +33,7 @@ public class AutoPearl extends Module {
 
     @Override
     protected void onEnable() {
-        if (mc.player == null || mc.world == null) {
+        if (nullCheck()) {
             setState(false);
             return;
         }
@@ -53,7 +53,7 @@ public class AutoPearl extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (!rotation.get()) return;
 

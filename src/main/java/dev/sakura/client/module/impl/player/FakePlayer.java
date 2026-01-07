@@ -43,7 +43,7 @@ public class FakePlayer extends Module {
 
     @Override
     protected void onEnable() {
-        if (mc.player == null || mc.world == null) {
+        if (nullCheck()) {
             setState(false);
             return;
         }
@@ -111,7 +111,7 @@ public class FakePlayer extends Module {
 
     @EventHandler
     private void onPacket(PacketEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (event.getType() != EventType.RECEIVE) return;
         if (fakePlayer == null) return;
 

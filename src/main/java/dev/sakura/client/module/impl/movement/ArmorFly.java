@@ -36,7 +36,7 @@ public class ArmorFly extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (noGround.get() && mc.player.isOnGround()) return;
 
         if (silentSwapEquipElytra()) {

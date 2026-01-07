@@ -42,7 +42,7 @@ public class GhostHand extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (mc.currentScreen != null) return;
 
         boolean pressed = mc.options.useKey.isPressed();

@@ -610,7 +610,6 @@ public class ModuleListHud extends HudModule {
 
     @Override
     public void onDisable() {
-        super.onDisable();
         if (iconImage != -1) {
             NanoVGHelper.deleteTexture(iconImage);
             iconImage = -1;

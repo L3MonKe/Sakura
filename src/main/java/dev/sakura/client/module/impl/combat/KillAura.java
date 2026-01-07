@@ -200,7 +200,7 @@ public class KillAura extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         prevCircleStep = circleStep;
         circleStep += 0.15f;
@@ -317,7 +317,7 @@ public class KillAura extends Module {
     @EventHandler
     public void onMotion(MotionEvent event) {
         if (event.getType() != EventType.POST) return;
-        if (!pendingAttack || pendingTarget == null || mc.player == null || mc.world == null) return;
+        if (!pendingAttack || pendingTarget == null || nullCheck()) return;
 
         Entity target = pendingTarget;
         boolean skipCooldown = pendingSkipCooldown;

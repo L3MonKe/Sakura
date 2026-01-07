@@ -15,7 +15,7 @@ public class NoRotate extends Module {
 
     @EventHandler
     private void onReceivePacket(PacketEvent event) {
-        if (event.getType() != EventType.RECEIVE || mc.player == null || mc.world == null) return;
+        if (event.getType() != EventType.RECEIVE || nullCheck()) return;
 
         if (event.getPacket() instanceof PlayerPositionLookS2CPacket packet) {
             PlayerPosition oldPosition = packet.change();

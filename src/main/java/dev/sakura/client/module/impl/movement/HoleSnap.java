@@ -50,7 +50,7 @@ public class HoleSnap extends Module {
 
     @Override
     protected void onEnable() {
-        if (mc.player == null || mc.world == null) {
+        if (nullCheck()) {
             setState(false);
             return;
         }
@@ -85,7 +85,7 @@ public class HoleSnap extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         holePos = HoleUtil.getHole(range.get().floatValue(), doubleHole.get(), anyHole.get(), includeUp.get());
         if (holePos == null) {

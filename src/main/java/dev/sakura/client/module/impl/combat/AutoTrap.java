@@ -68,7 +68,7 @@ public class AutoTrap extends Module {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     private void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         PlayerEntity target = getTarget(range.get());
         if (target == null) {

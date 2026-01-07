@@ -101,7 +101,7 @@ public class Speed extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         setSuffix(mode.get().name());
 
@@ -131,7 +131,7 @@ public class Speed extends Module {
 
     @EventHandler
     public void onMove(MoveEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (!MovementUtil.isMoving() && airStop.get() && mode.get() != Mode.GrimCollide) {
             MovementUtil.setMotionX(0);

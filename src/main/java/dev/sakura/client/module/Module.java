@@ -41,6 +41,10 @@ public class Module {
         this.values.add(this.hidden);
     }
 
+    protected boolean nullCheck() {
+        return mc.player == null || mc.world == null;
+    }
+
     protected void onEnable() {
     }
 

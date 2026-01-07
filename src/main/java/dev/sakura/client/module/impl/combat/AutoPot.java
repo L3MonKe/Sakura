@@ -87,7 +87,7 @@ public class AutoPot extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         setSuffix(page.get().name());
 

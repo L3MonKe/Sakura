@@ -1,7 +1,6 @@
 #version 150
 
-uniform sampler2D InSampler;
-uniform sampler2D MaskSampler;
+uniform sampler2D DiffuseSampler;
 in vec2 texCoord;
 in vec2 oneTexel;
 out vec4 fragColor;
@@ -65,43 +64,35 @@ vec3 getColor(vec4 centerCol) {
 }
 
 void main() {
-    vec4 sceneCol = texture(InSampler, texCoord);
-    vec4 centerCol = texture(MaskSampler, texCoord);
+    vec4 centerCol = texture(DiffuseSampler, texCoord);
 
     if (centerCol.a != 0) {
-        vec3 fillRgb = getColor(centerCol);
-        vec3 outRgb = mix(sceneCol.rgb, fillRgb, clamp(alpha2, 0.0, 1.0));
-        fragColor = vec4(outRgb, 1.0);
-        return;
-    }
+        fragColor = vec4(getColor(centerCol), alpha2);
+    } else {
+        float alphaOutline = 0;
+        vec3 colorFinal = vec3(-1);
 
-    float alphaOutline = 0.0;
-    bool found = false;
-    for (int x = -quality; x < quality; x++) {
-        for (int y = -quality; y < quality; y++) {
-            vec2 offset = vec2(x, y);
-            vec2 coord = texCoord + offset * oneTexel;
-            vec4 t = texture(MaskSampler, coord);
+        for (int x = -quality; x < quality; x++) {
+            for (int y = -quality; y < quality; y++) {
 
-            if (t.a != 0.0) {
-                found = true;
+                vec2 offset = vec2(x, y);
+                vec2 coord = texCoord + offset * oneTexel;
+                vec4 t = texture(DiffuseSampler, coord);
+
+                if (t.a != 0)
                 if (alpha0 == -1.0) {
-                    alphaOutline += alpha1 * 255.0 > 0 ? max(0.0, (lineWidth - distance(vec2(x, y), vec2(0))) / (alpha1 * 255.0)) : 1.0;
-                } else {
-                    alphaOutline = alpha0;
-                    x = quality;
-                    break;
+                    alphaOutline += alpha1 * 255.0 > 0 ? max(0, (lineWidth - distance(vec2(x, y), vec2(0))) / (alpha1 * 255.0)) : 1;
+                }
+                else {
+                    fragColor = vec4(getColor(centerCol), alpha0);
+                    return;
                 }
             }
         }
-    }
 
-    if (!found || alphaOutline <= 0.0) {
-        fragColor = vec4(sceneCol.rgb, 1.0);
-        return;
+        if (alphaOutline > 0) {
+            colorFinal = getColor(centerCol);
+        }
+        fragColor = vec4(colorFinal, alphaOutline);
     }
-
-    vec3 outlineRgb = getColor(centerCol);
-    vec3 outRgb = mix(sceneCol.rgb, outlineRgb, clamp(alphaOutline, 0.0, 1.0));
-    fragColor = vec4(outRgb, 1.0);
 }

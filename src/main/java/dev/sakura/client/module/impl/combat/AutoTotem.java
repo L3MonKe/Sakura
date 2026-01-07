@@ -61,7 +61,7 @@ public class AutoTotem extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null || mc.interactionManager == null) return;
+        if (nullCheck() || mc.interactionManager == null) return;
 
         setSuffix(String.valueOf(countTotems()));
 
@@ -134,7 +134,7 @@ public class AutoTotem extends Module {
 
     @EventHandler
     public void onPacket(PacketEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (event.getType() != EventType.RECEIVE) return;
 
         if (event.getPacket() instanceof ScreenHandlerSlotUpdateS2CPacket packet

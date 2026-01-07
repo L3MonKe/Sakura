@@ -55,7 +55,7 @@ public class BowBomb extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (!mc.player.isUsingItem() || mc.player.getActiveItem().getItem() != Items.BOW) {
             activeTimer.reset();
@@ -91,7 +91,7 @@ public class BowBomb extends Module {
     protected void onPacketSend(PacketEvent event) {
         if (event.getType() != EventType.SEND) return;
 
-        if (mc.player == null || mc.world == null || !delayTimer.passedSecond(delay.get()) || !activeTimer.passedSecond(activeTime.get()) || !active)
+        if (nullCheck() || !delayTimer.passedSecond(delay.get()) || !activeTimer.passedSecond(activeTime.get()) || !active)
             return;
         if (event.getPacket() instanceof PlayerActionC2SPacket packet && packet.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM) {
             send = true;

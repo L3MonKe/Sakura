@@ -113,7 +113,7 @@ public class ElytraFly extends Module {
 
     @EventHandler
     public void onTickPre(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         ItemStack chestStack = mc.player.getEquippedStack(EquipmentSlot.CHEST);
         hasElytra = isElytraUsable(chestStack);
@@ -146,7 +146,7 @@ public class ElytraFly extends Module {
 
     @EventHandler
     public void onTickPost(TickEvent.Post event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (mode.is(Mode.Bounce) && hasElytra) {
             if (autoJump.get()) mc.options.jumpKey.setPressed(true);
@@ -180,7 +180,7 @@ public class ElytraFly extends Module {
 
     @EventHandler
     public void onMove(MoveEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (!hasElytra) return;
 
         if (mc.player.isGliding() && autoStop.get()) {
@@ -226,7 +226,7 @@ public class ElytraFly extends Module {
 
     @EventHandler
     public void onTravel(TravelEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (mode.is(Mode.Bounce) && hasElytra) {
             if (event.isPre()) {

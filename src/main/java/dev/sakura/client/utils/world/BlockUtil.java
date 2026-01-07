@@ -1,11 +1,17 @@
 package dev.sakura.client.utils.world;
 
+import dev.sakura.client.utils.entity.EntityUtil;
 import net.minecraft.block.*;
+import net.minecraft.entity.ExperienceOrbEntity;
+import net.minecraft.entity.ItemEntity;
+import net.minecraft.entity.projectile.ArrowEntity;
+import net.minecraft.entity.projectile.thrown.ExperienceBottleEntity;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
@@ -14,11 +20,7 @@ import java.util.List;
 
 import static dev.sakura.client.Sakura.mc;
 
-//todo:这个傻逼alien137的东西有个鸡巴用
-
 public class BlockUtil {
-    public static List<BlockPos> placedPos = new ArrayList<>();
-
     public static List<BlockPos> getSphere(float range) {
         List<BlockPos> sphere = new ArrayList<>();
         int iRange = (int) Math.ceil(range);
@@ -83,9 +85,17 @@ public class BlockUtil {
         return null;
     }
 
-    @SuppressWarnings("DataFlowIssue")
-    public static boolean solid(BlockPos blockPos) {
-        Block block = mc.world.getBlockState(blockPos).getBlock();
+    public static boolean canPlaceAt(BlockPos pos) {
+        if (!mc.world.getBlockState(pos).isReplaceable()) return false;
+        return !EntityUtil.intersectsWithEntity(new Box(pos), entity -> !(entity instanceof ItemEntity || entity instanceof ExperienceOrbEntity || entity instanceof ExperienceBottleEntity || entity instanceof ArrowEntity));
+    }
+
+    public static boolean solid(BlockState state) {
+        Block block = state.getBlock();
         return !(block instanceof AbstractFireBlock || block instanceof FluidBlock || block instanceof AirBlock);
+    }
+
+    public static boolean solid(BlockPos blockPos) {
+        return solid(mc.world.getBlockState(blockPos));
     }
 }

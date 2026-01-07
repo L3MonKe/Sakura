@@ -23,7 +23,7 @@ public class Replenish extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         for (int i = 0; i < 9; ++i) {
             if (replenish(i)) {

@@ -2,8 +2,7 @@
 
 uniform float time;
 uniform vec2 resolution;
-uniform sampler2D InSampler;
-uniform sampler2D MaskSampler;
+uniform sampler2D DiffuseSampler;
 in vec2 texCoord;
 uniform int quality;
 uniform vec4 color;
@@ -29,7 +28,7 @@ float glowShader() {
 
     for (float x = -quality; x < quality; x++) {
         for (float y = -quality; y < quality; y++) {
-            vec4 currentColor = texture(MaskSampler, texCoord + vec2(texelSize.x * x, texelSize.y * y));
+            vec4 currentColor = texture(DiffuseSampler, texCoord + vec2(texelSize.x * x, texelSize.y * y));
 
             if (currentColor.a != 0)
             alpha += divider > 0 ? max(0.0, (maxSample - distance(vec2(x, y), vec2(0))) / divider) : 1;
@@ -40,8 +39,7 @@ float glowShader() {
 }
 
 void main(){
-    vec4 sceneCol = texture(InSampler, texCoord);
-    vec4 centerCol = texture(MaskSampler, texCoord);
+    vec4 centerCol = texture(DiffuseSampler, texCoord);
 
     vec2 uv=(gl_FragCoord.xy*2.-resolution.xy) / min(resolution.x, resolution.y);
     vec3 finalColor=vec3(0);
@@ -56,18 +54,13 @@ void main(){
     finalColor = vec3(c);
     finalColor *= vec3(color[0],color[1],color[2]);
 
-    float alpha = 0.0;
-    if (centerCol.a != 0.0) {
+    float alpha = 0;
+    if (centerCol.a != 0) {
         alpha = color[3];
     } else {
         alpha = glowShader();
     }
 
-    if (alpha <= 0.0) {
-        fragColor = vec4(sceneCol.rgb, 1.0);
-        return;
-    }
 
-    vec3 outRgb = mix(sceneCol.rgb, finalColor, clamp(alpha, 0.0, 1.0));
-    fragColor = vec4(outRgb, 1.0);
+    fragColor = vec4(finalColor, alpha);
 }

@@ -35,7 +35,7 @@ public class Blink extends Module {
     @Override
     protected void onEnable() {
         packetsList.clear();
-        if (mc.player == null || mc.world == null) {
+        if (nullCheck()) {
             setState(false);
             return;
         }
@@ -50,7 +50,7 @@ public class Blink extends Module {
 
     @Override
     protected void onDisable() {
-        if (mc.player == null || mc.world == null) {
+        if (nullCheck()) {
             packetsList.clear();
             return;
         }
@@ -70,7 +70,7 @@ public class Blink extends Module {
 
     @EventHandler
     private void onTick(TickEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (mc.player.isDead()) {
             packetsList.clear();
             setState(false);

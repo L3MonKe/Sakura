@@ -20,6 +20,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static dev.sakura.client.Sakura.mc;
+
 @Mixin(WorldRenderer.class)
 public class MixinWorldRenderer {
     @Inject(method = "render", at = @At(value = "RETURN"))
@@ -34,19 +36,14 @@ public class MixinWorldRenderer {
         RenderSystem.getModelViewStack().popMatrix();
     }
 
-    @Redirect(
-            method = "render(Lnet/minecraft/client/util/ObjectAllocator;Lnet/minecraft/client/render/RenderTickCounter;ZLnet/minecraft/client/render/Camera;Lnet/minecraft/client/render/GameRenderer;Lorg/joml/Matrix4f;Lorg/joml/Matrix4f;)V",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/PostEffectProcessor;render(Lnet/minecraft/client/render/FrameGraphBuilder;IILnet/minecraft/client/gl/PostEffectProcessor$FramebufferSet;)V", ordinal = 0)
-    )
-    private void replaceShaderHook(PostEffectProcessor instance, FrameGraphBuilder frameGraphBuilder, int width, int height, PostEffectProcessor.FramebufferSet framebufferSet) {
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/PostEffectProcessor;render(Lnet/minecraft/client/render/FrameGraphBuilder;IILnet/minecraft/client/gl/PostEffectProcessor$FramebufferSet;)V", ordinal = 0))
+    private void replaceShaderHook(PostEffectProcessor instance, FrameGraphBuilder builder, int textureWidth, int textureHeight, PostEffectProcessor.FramebufferSet framebufferSet) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        if (shaders != null && shaders.isEnabled() && Sakura.mc.world != null) {
-            boolean ok = Managers.SHADER.renderOutlineShader(shaders.mode.get(), Sakura.mc.getRenderTickCounter().getTickDelta(true), frameGraphBuilder, width, height, framebufferSet);
-            if (!ok) {
-                instance.render(frameGraphBuilder, width, height, framebufferSet);
-            }
+        if (shaders.isEnabled() && mc.world != null) {
+            if (Managers.SHADER.fullNullCheck()) return;
+            Managers.SHADER.setupShader(shaders.mode.get(), Managers.SHADER.getShaderOutline(shaders.mode.get()));
         } else {
-            instance.render(frameGraphBuilder, width, height, framebufferSet);
+            instance.render(tickDelta);
         }
     }
 

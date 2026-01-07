@@ -187,7 +187,7 @@ public class Phase extends Module {
     @Override
     public void onEnable() {
         directionVec = null;
-        if (mc.player == null || mc.world == null) {
+        if (nullCheck()) {
             setState(false);
             return;
         }
@@ -220,7 +220,7 @@ public class Phase extends Module {
         if (event.getType() != EventType.SEND) return;
 
         if (mode.is(Mode.Clip)) {
-            if (mc.player == null || mc.world == null || !bypass.get()) return;
+            if (nullCheck() || !bypass.get()) return;
             if (cancel && event.getPacket() instanceof PlayerMoveC2SPacket packet) {
                 if (!insideBlock()) {
                     if (clipMode.get()) {

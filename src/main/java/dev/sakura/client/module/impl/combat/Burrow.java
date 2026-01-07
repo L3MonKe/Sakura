@@ -115,7 +115,7 @@ public class Burrow extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         int blockCount = countBlocks();
         if (NotifyHud.INSTANCE != null && NotifyHud.INSTANCE.isEnabled()) {
@@ -330,7 +330,6 @@ public class Burrow extends Module {
             placePos.add(pos);
             if (BlockUtil.airPlace()) {
                 progress++;
-                BlockUtil.placedPos.add(pos);
                 if (sound.get())
                     mc.world.playSound(mc.player, pos, SoundEvents.BLOCK_STONE_PLACE, SoundCategory.BLOCKS, 1.0F, 0.8F);
                 BlockUtil.clickBlock(pos, Direction.DOWN, rotate, packetPlace.get());
@@ -338,7 +337,6 @@ public class Burrow extends Module {
             Direction side;
             if ((side = BlockUtil.getPlaceSide(pos)) == null) return;
             progress++;
-            BlockUtil.placedPos.add(pos);
             if (sound.get())
                 mc.world.playSound(mc.player, pos, SoundEvents.BLOCK_STONE_PLACE, SoundCategory.BLOCKS, 1.0F, 0.8F);
             BlockUtil.clickBlock(pos.offset(side), side.getOpposite(), rotate, packetPlace.get());

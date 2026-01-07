@@ -52,7 +52,7 @@ public class AntiBotBJD extends Module {
     }
 
     private boolean isBotInternal(PlayerEntity player) {
-        if (mc.player == null || mc.world == null || player == mc.player) return false;
+        if (nullCheck() || player == mc.player) return false;
 
         if (literalNpc.get()) {
             if (mc.getNetworkHandler() == null) return false;

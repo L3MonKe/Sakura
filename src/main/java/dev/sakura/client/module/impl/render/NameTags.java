@@ -69,7 +69,7 @@ public class NameTags extends Module {
 
     @EventHandler
     public void onPacket(PacketEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
         if (event.getType() != EventType.RECEIVE) return;
 
         if (event.getPacket() instanceof EntityStatusS2CPacket packet) {
@@ -84,7 +84,7 @@ public class NameTags extends Module {
 
     @EventHandler(priority = EventPriority.HIGHEST)
     public void onRender2D(Render2DEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         for (PlayerEntity player : mc.world.getPlayers()) {
             if (player == mc.player && !self.get()) continue;

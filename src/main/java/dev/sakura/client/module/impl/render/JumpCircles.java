@@ -63,7 +63,7 @@ public class JumpCircles extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         boolean onGround = mc.player.isOnGround();
 
