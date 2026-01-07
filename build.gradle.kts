@@ -75,7 +75,7 @@ dependencies {
     implementation(include("org.lwjgl:lwjgl-nanovg:$lwjglVersion")!!)
 
     // Android平台适配
-    val androidLibs = files(
+    /*val androidLibs = files(
         "libs/lwjgl.jar",
         "libs/lwjgl-glfw.jar",
         "libs/lwjgl-jemalloc.jar",
@@ -87,7 +87,7 @@ dependencies {
     )
 
     compileOnly(androidLibs)
-    add("shadow", androidLibs)
+    add("shadow", androidLibs)*/
 
     // 跨平台 Natives 支持
     val platforms = listOf(
