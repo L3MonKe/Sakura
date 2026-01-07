@@ -16,7 +16,6 @@ import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.vector.Rotation;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.Hand;
@@ -29,10 +28,11 @@ import java.util.List;
 
 
 public class KillAuraBJD extends Module {
+    private final NumberValue<Double> aimRange = new NumberValue<>("Aim Range", "a", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> cps = new NumberValue<>("CPS", "", 10.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotation Speed", "", 180.0, 1.0, 180.0, 1.0);
+
     public Entity target;
-    private final NumberValue<Float> aimRange = new NumberValue<>("Aim Range", "a", 5.0f, 1.0f, 6.0f, 0.1f);
-    private final NumberValue<Float> cps = new NumberValue<>("CPS", "", 10f, 1f, 20f, 1f);
-    private final NumberValue<Float> rotateSpeed = new NumberValue<>("Rotation Speed", "", 180f, 1f, 180f, 1f);
     private List<Entity> targets;
     private long lastAttackTime = 0;
 
@@ -74,7 +74,7 @@ public class KillAuraBJD extends Module {
     }
 
     private void findTarget() {
-        float range = aimRange.get();
+        float range = aimRange.get().floatValue();
         double rangeSq = range * range;
 
         this.target = null;
@@ -85,11 +85,7 @@ public class KillAuraBJD extends Module {
         List<Entity> candidates = mc.world.getOtherEntities(
                 mc.player,
                 searchBox,
-                e -> e instanceof LivingEntity
-                        && e != mc.player
-                        && e.isAlive()
-                        && !e.isSpectator()
-                        && !AntiBotBJD.isBot(e)
+                e -> e instanceof LivingEntity && e != mc.player && e.isAlive() && !e.isSpectator() && !AntiBotBJD.isBot(e)
         );
 
         targets = candidates;
@@ -110,13 +106,19 @@ public class KillAuraBJD extends Module {
     public void onRender(Render3DEvent event) {
         if (targets == null || targets.isEmpty()) return;
         for (Entity entity : targets) {
+
+            Color s;
+            Color l;
+
             if (entity.equals(target)) {
-                Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB());
-                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB(), 2f);
+                s = new Color(200, 0, 0, 60);
+                l = new Color(200, 0, 0, 60);
             } else {
-                Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB());
-                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB(), 2f);
+                s = new Color(0, 200, 0, 60);
+                l = new Color(0, 200, 0, 60);
             }
+
+            Render3DUtil.drawFullBox(event.getMatrices(), entity.getBoundingBox(), s, l, 2F);
         }
     }
 }

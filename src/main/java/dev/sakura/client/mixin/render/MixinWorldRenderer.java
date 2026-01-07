@@ -51,7 +51,6 @@ public class MixinWorldRenderer {
             }
             Managers.SHADER.setupShader(shaders.mode.get(), effect);
             effect.render(builder, textureWidth, textureHeight, framebufferSet);
-            instance.render(builder, textureWidth, textureHeight, framebufferSet);
         } else {
             instance.render(builder, textureWidth, textureHeight, framebufferSet);
         }
