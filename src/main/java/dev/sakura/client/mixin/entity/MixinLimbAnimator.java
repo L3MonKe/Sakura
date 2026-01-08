@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(LimbAnimator.class)
 public final class MixinLimbAnimator {
-
     @Inject(method = "getSpeed()F", at = @At("HEAD"), cancellable = true)
     private void hookGetSpeed(CallbackInfoReturnable<Float> cir) {
         LimbAnimationEvent limbAnimationEvent = new LimbAnimationEvent();

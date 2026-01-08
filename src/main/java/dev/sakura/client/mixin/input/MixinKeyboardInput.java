@@ -8,17 +8,11 @@ import net.minecraft.util.PlayerInput;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
-/**
- * @Author：Gu-Yuemang
- * @Date：12/7/2025 1:55 PM
- */
 @Mixin(KeyboardInput.class)
 public class MixinKeyboardInput {
-
     @ModifyExpressionValue(method = "tick", at = @At(value = "NEW", target = "(ZZZZZZZ)Lnet/minecraft/util/PlayerInput;"))
     private PlayerInput modifyInput(PlayerInput original) {
-
-        var event = new MoveInputEvent(
+        MoveInputEvent event = new MoveInputEvent(
                 original.forward(),
                 original.backward(),
                 original.left(),
@@ -28,7 +22,6 @@ public class MixinKeyboardInput {
                 original.sprint()
         );
         Sakura.EVENT_BUS.post(event);
-
         return event.toPlayerInput();
     }
 }

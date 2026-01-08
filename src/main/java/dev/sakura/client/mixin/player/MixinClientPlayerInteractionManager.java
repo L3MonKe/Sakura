@@ -12,9 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ClientPlayerInteractionManager.class)
 public class MixinClientPlayerInteractionManager {
-
-    @Inject(method = {"attackBlock"}, at = @At("HEAD"))
-    private void onPlayerClickBlock(final BlockPos pos, final Direction face, final CallbackInfoReturnable<Boolean> info) {
+    @Inject(method = "attackBlock", at = @At("HEAD"))
+    private void onPlayerAttackBlock(final BlockPos pos, final Direction face, final CallbackInfoReturnable<Boolean> info) {
         Sakura.EVENT_BUS.post(new BlockEvent(pos, face));
     }
 }

@@ -37,7 +37,6 @@
     "network.MixinClientPlayNetworkHandler",
     "player.MixinClientPlayerInteractionManager",
     "render.ClientWorldMixin",
-    "render.MixinEndCrystalEntityRenderer",
     "render.MixinBackgroundRenderer",
     "render.MixinBlock",
     "render.MixinBossBarHud",
@@ -45,8 +44,10 @@
     "render.MixinChatHud",
     "render.MixinChatScreen",
     "render.MixinClientWorldProperties",
+    "render.MixinEndCrystalEntityRenderer",
     "render.MixinGameRenderer",
     "render.MixinHeldItemRenderer",
+    "render.MixinHeldItemFeatureRenderer",
     "render.MixinInGameHud",
     "render.MixinInGameOverlayRenderer",
     "render.MixinLightmapTextureManager",
@@ -67,5 +68,8 @@
   },
   "overwrites": {
     "requireAnnotations": true
-  }
+  },
+  "mixins": [
+    "entity.MixinFlowableFluid"
+  ]
 }

@@ -13,6 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinMouse {
     @Inject(method = "onMouseButton", at = @At("HEAD"), cancellable = true)
     private void onMouseButton(long window, int button, int action, int mods, CallbackInfo ci) {
-        if (Sakura.EVENT_BUS.post(new MouseButtonEvent(button, KeyAction.from(action))).isCancelled()) ci.cancel();
+        if (Sakura.EVENT_BUS.post(new MouseButtonEvent(button, KeyAction.from(action))).isCancelled()) {
+            ci.cancel();
+        }
     }
 }

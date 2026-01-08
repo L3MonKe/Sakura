@@ -13,7 +13,7 @@ import java.util.Iterator;
 @Mixin(FlowableFluid.class)
 public class MixinFlowableFluid {
     @Redirect(method = "getVelocity", at = @At(value = "INVOKE", target = "Ljava/util/Iterator;hasNext()Z", ordinal = 0))
-    private boolean getVelocity_hasNext(Iterator<Direction> var9) {
+    private boolean redirectVelocity(Iterator<Direction> var9) {
         Velocity velocity = Sakura.MODULES.getModule(Velocity.class);
         if (velocity.isEnabled() && velocity.waterPush.get()) {
             return false;
