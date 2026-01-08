@@ -92,7 +92,7 @@ public class NoSlow extends Module {
         boolean slowTick = mc.player.getItemUseTimeLeft() % 3 == 0;
 
         switch (mode.get()) {
-            case Normal -> event.setSlowdown(false);
+            case Cancel -> event.setSlowdown(false);
 
             case GrimTick -> {
                 if (!isBow) {
@@ -151,8 +151,7 @@ public class NoSlow extends Module {
                 Packet<?> p = packets.poll();
                 mc.getNetworkHandler().sendPacket(p);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (Exception ignored) {
         }
     }
 
@@ -162,6 +161,8 @@ public class NoSlow extends Module {
     }
 
     public enum Mode {
-        GrimBlink, GrimTick, Normal
+        Cancel,
+        GrimBlink,
+        GrimTick
     }
 }

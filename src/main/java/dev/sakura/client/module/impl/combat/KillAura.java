@@ -31,18 +31,20 @@ import java.awt.*;
 import java.util.List;
 
 public class KillAura extends Module {
-    private Entity target;
-    private final NumberValue<Float> aimRange = new NumberValue<>("AimRange", "瞄准范围", 5.0f, 1.0f, 6.0f, 0.1f);
-    private final NumberValue<Float> cps = new NumberValue<>("CPS", "攻击速度", 10f, 1f, 20f, 1f);
-    private final NumberValue<Float> rotateSpeed = new NumberValue<>("RotateSpeed", "转向速度", 180f, 1f, 180f, 1f);
-    private final BoolValue teamCheck = new BoolValue("TeamCheck", "队伍检测", true);
-    private final BoolValue render = new BoolValue("Render", "渲染", true);
-    private List<Entity> targets;
-    private long lastAttackTime = 0;
-
     public KillAura() {
         super("KillAura", "杀戮光环", Category.Combat);
     }
+
+    private final NumberValue<Float> aimRange = new NumberValue<>("AimRange", "瞄准范围", 5.0f, 1.0f, 6.0f, 0.1f);
+    private final NumberValue<Float> cps = new NumberValue<>("CPS", "攻击速度", 10f, 1f, 20f, 1f);
+    private final NumberValue<Float> rotateSpeed = new NumberValue<>("RotateSpeed", "转向速度", 180f, 1f, 180f, 1f);
+    private final BoolValue teamCheck = new BoolValue("Team Check", "队伍检测", true);
+    private final BoolValue render = new BoolValue("Render", "渲染", true);
+
+    private List<Entity> targets;
+    private Entity target;
+
+    private long lastAttackTime = 0;
 
     @Override
     protected void onDisable() {

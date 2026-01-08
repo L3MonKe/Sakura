@@ -48,7 +48,6 @@ public class CategoryPanel implements IComponent {
 
         float componentOffsetY = headerHeight;
         for (ModuleComponent component : moduleComponents) {
-            if (Sakura.MODULES.isNotVisible(component.getModule(), bjdOnlyEnabled)) continue;
             component.setX(x);
             component.setY(y + componentOffsetY);
             component.setWidth(scaledWidth);
@@ -66,7 +65,6 @@ public class CategoryPanel implements IComponent {
         });
 
         for (ModuleComponent component : moduleComponents) {
-            if (Sakura.MODULES.isNotVisible(component.getModule(), bjdOnlyEnabled)) continue;
             if (openAnimation.getOutput() > 0.7f) {
                 component.render(guiGraphics, mouseX, mouseY, partialTicks);
             }
@@ -91,7 +89,6 @@ public class CategoryPanel implements IComponent {
 
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (Sakura.MODULES.isNotVisible(component.getModule(), ClickGui.bjdOnly.get())) continue;
             if (component.mouseClicked(mouseX, mouseY, mouseButton)) {
                 handled = true;
             }
@@ -104,7 +101,6 @@ public class CategoryPanel implements IComponent {
     public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (Sakura.MODULES.isNotVisible(component.getModule(), ClickGui.bjdOnly.get())) continue;
             if (component.keyPressed(keyCode, scanCode, modifiers)) {
                 handled = true;
             }
@@ -116,7 +112,6 @@ public class CategoryPanel implements IComponent {
     public boolean charTyped(char chr, int modifiers) {
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (Sakura.MODULES.isNotVisible(component.getModule(), ClickGui.bjdOnly.get())) continue;
             if (component.charTyped(chr, modifiers)) {
                 handled = true;
             }
@@ -130,7 +125,6 @@ public class CategoryPanel implements IComponent {
 
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (Sakura.MODULES.isNotVisible(component.getModule(), ClickGui.bjdOnly.get())) continue;
             if (component.mouseReleased(mouseX, mouseY, state)) {
                 handled = true;
             }

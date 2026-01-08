@@ -1,29 +1,14 @@
 package dev.sakura.client.module.impl.render;
 
-import dev.sakura.client.events.render.Render3DEvent;
-import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.ShaderManager;
-import dev.sakura.client.mixin.accessor.IGameRenderer;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.ColorValue;
-import dev.sakura.client.values.impl.EnumValue;
-import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.decoration.EndCrystalEntity;
-import net.minecraft.entity.player.PlayerEntity;
-
-import java.awt.*;
 
 public class Shaders extends Module {
     public Shaders() {
         super("Shaders", "着色器", Category.Render);
     }
 
-
-    private final BoolValue hands = new BoolValue("Hands", "小手手", true);
+    /*private final BoolValue hands = new BoolValue("Hands", "小手手", true);
     private final BoolValue players = new BoolValue("Players", "玩家", true);
     private final BoolValue self = new BoolValue("Self", "自个儿", true, players::get);
     //private final BoolValue friends = new BoolValue("Friends", "队友", true);
@@ -90,6 +75,5 @@ public class Shaders extends Module {
 
     @Override
     public void onDisable() {
-        Managers.SHADER.reloadShaders();
-    }
+    }*/
 }

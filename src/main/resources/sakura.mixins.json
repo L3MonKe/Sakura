@@ -37,7 +37,7 @@
     "network.MixinClientPlayNetworkHandler",
     "player.MixinClientPlayerInteractionManager",
     "render.ClientWorldMixin",
-    "render.EndCrystalEntityRendererMixin",
+    "render.MixinEndCrystalEntityRenderer",
     "render.MixinBackgroundRenderer",
     "render.MixinBlock",
     "render.MixinBossBarHud",

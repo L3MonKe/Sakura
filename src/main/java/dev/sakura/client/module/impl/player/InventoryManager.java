@@ -25,6 +25,8 @@ import net.minecraft.screen.slot.SlotActionType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class InventoryManager extends Module {
     private final TimerUtil timer = new TimerUtil();
@@ -64,10 +66,14 @@ public class InventoryManager extends Module {
         if (autoArmor.get()) handleAutoArmor();
         if (swordSort.get()) sortItem(swordSlot.get() - 1, this::isSword, this::getSwordScore);
         if (blockSort.get()) sortBlock(blockSlot.get() - 1);
-        if (pickaxeSort.get()) sortItem(pickaxeSlot.get() - 1, stack -> stack.getItem() instanceof PickaxeItem, this::getToolScore);
-        if (axeSort.get()) sortItem(axeSlot.get() - 1, stack -> stack.getItem() instanceof AxeItem && !isSharpnessAxe(stack), this::getToolScore);
-        if (goldenAppleSort.get()) sortItem(goldenAppleSlot.get() - 1, stack -> stack.isOf(Items.GOLDEN_APPLE) || stack.isOf(Items.ENCHANTED_GOLDEN_APPLE), stack -> stack.isOf(Items.ENCHANTED_GOLDEN_APPLE) ? 1000f : (float) stack.getCount());
-        if (pearlSort.get()) sortItem(pearlSlot.get() - 1, stack -> stack.isOf(Items.ENDER_PEARL), stack -> (float) stack.getCount());
+        if (pickaxeSort.get())
+            sortItem(pickaxeSlot.get() - 1, stack -> stack.getItem() instanceof PickaxeItem, this::getToolScore);
+        if (axeSort.get())
+            sortItem(axeSlot.get() - 1, stack -> stack.getItem() instanceof AxeItem && !isSharpnessAxe(stack), this::getToolScore);
+        if (goldenAppleSort.get())
+            sortItem(goldenAppleSlot.get() - 1, stack -> stack.isOf(Items.GOLDEN_APPLE) || stack.isOf(Items.ENCHANTED_GOLDEN_APPLE), stack -> stack.isOf(Items.ENCHANTED_GOLDEN_APPLE) ? 1000f : (float) stack.getCount());
+        if (pearlSort.get())
+            sortItem(pearlSlot.get() - 1, stack -> stack.isOf(Items.ENDER_PEARL), stack -> (float) stack.getCount());
         if (waterSort.get()) sortItem(waterSlot.get() - 1, stack -> stack.isOf(Items.WATER_BUCKET), stack -> 1f);
         handleOffhand();
         if (throwUseless.get()) throwUselessItems();
@@ -122,7 +128,7 @@ public class InventoryManager extends Module {
         }
     }
 
-    private void sortItem(int targetSlot, java.util.function.Predicate<ItemStack> filter, java.util.function.Function<ItemStack, Float> scorer) {
+    private void sortItem(int targetSlot, Predicate<ItemStack> filter, Function<ItemStack, Float> scorer) {
         ItemStack currentStack = mc.player.getInventory().getStack(targetSlot);
         int bestSlot = -1;
         float bestScore = filter.test(currentStack) ? scorer.apply(currentStack) : -1;

@@ -6,7 +6,6 @@ import dev.sakura.client.events.player.MoveEvent;
 import dev.sakura.client.events.player.RayTraceEvent;
 import dev.sakura.client.events.player.StrafeEvent;
 import dev.sakura.client.events.player.UpdateVelocityEvent;
-import dev.sakura.client.module.impl.render.Shaders;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.util.math.MathHelper;
@@ -17,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static dev.sakura.client.Sakura.mc;
 
@@ -37,14 +35,6 @@ public abstract class MixinEntity {
             float f = MathHelper.sin(yaw * 0.017453292F);
             float g = MathHelper.cos(yaw * 0.017453292F);
             return new Vec3d(vec3d.x * (double) g - vec3d.z * (double) f, vec3d.y, vec3d.z * (double) g + vec3d.x * (double) f);
-        }
-    }
-
-    @Inject(method = "isGlowing", at = @At("HEAD"), cancellable = true)
-    public void isGlowingHook(CallbackInfoReturnable<Boolean> cir) {
-        Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        if (shaders.isEnabled()) {
-            cir.setReturnValue(shaders.shouldRender((Entity) (Object) this));
         }
     }
 

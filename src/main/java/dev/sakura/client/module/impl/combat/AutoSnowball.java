@@ -14,15 +14,14 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 
 public class AutoSnowball extends Module {
-
-    private final NumberValue<Double> throwsPerSecond = new NumberValue<>("ThrowsPerSec", "每秒发射", 5.0, 1.0, 20.0, 0.5);
-
-    private final TimerUtil throwTimer = new TimerUtil();
-    private final TimerUtil swapTimer = new TimerUtil();
-
     public AutoSnowball() {
         super("AutoSnowball", "自动雪球", Category.Combat);
     }
+
+    private final NumberValue<Double> throwsPerSecond = new NumberValue<>("Throws Per Sec", "每秒发射", 5.0, 1.0, 20.0, 0.5);
+
+    private final TimerUtil throwTimer = new TimerUtil();
+    private final TimerUtil swapTimer = new TimerUtil();
 
     @Override
     public void onEnable() {
@@ -35,7 +34,7 @@ public class AutoSnowball extends Module {
         if (nullCheck()) return;
 
         KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
-        if (killAura == null || !killAura.isEnabled() || killAura.getCurrentTarget() == null) return;
+        if (!killAura.isEnabled() || killAura.getCurrentTarget() == null) return;
 
         ItemStack offhand = mc.player.getOffHandStack();
 

@@ -14,8 +14,8 @@ import java.util.BitSet;
 import java.util.Collection;
 import java.util.Objects;
 
-public class AntiBotBJD extends Module {
-    public AntiBotBJD() {
+public class AntiBot extends Module {
+    public AntiBot() {
         super("AntiBot", "防假人", Category.Combat);
     }
 
@@ -46,7 +46,7 @@ public class AntiBotBJD extends Module {
     }
 
     public static boolean isBot(PlayerEntity player) {
-        AntiBotBJD antiBot = Sakura.MODULES == null ? null : Sakura.MODULES.getModule(AntiBotBJD.class);
+        AntiBot antiBot = Sakura.MODULES == null ? null : Sakura.MODULES.getModule(AntiBot.class);
         if (antiBot == null || !antiBot.isEnabled()) return false;
         return antiBot.isBotInternal(player);
     }
