@@ -43,6 +43,7 @@ public class Scaffold extends Module {
     private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, telly::get);
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 0, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, telly::get);
+    private final NumberValue<Integer> rotationHoldValue = new NumberValue<>("Rotation Hold Ticks", "落地保留转头", 2, 0, 10, 1, telly::get);
     private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", false);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
     private final BoolValue shrink = new BoolValue("Shrink", "收缩", true, render::get);
@@ -52,6 +53,7 @@ public class Scaffold extends Module {
     private int yLevel;
     private BlockCache blockCache;
     private int airTicks;
+    private int rotationHoldTicks;
 
     public Scaffold() {
         super("Scaffold", "自动搭路", Category.Movement);
@@ -61,11 +63,11 @@ public class Scaffold extends Module {
         double x = (double) pos.getX() + 0.5;
         double y = (double) pos.getY() + 0.5;
         double z = (double) pos.getZ() + 0.5;
-        if (face == Direction.UP || face == Direction.DOWN) {
+        if (face != Direction.UP && face != Direction.DOWN) {
+            y += 0.08;
+        } else {
             x += MathUtil.getRandom(0.3, -0.3);
             z += MathUtil.getRandom(0.3, -0.3);
-        } else {
-            y += MathUtil.getRandom(0.3, -0.3);
         }
         if (face == Direction.WEST || face == Direction.EAST) {
             z += MathUtil.getRandom(0.3, -0.3);
@@ -87,18 +89,24 @@ public class Scaffold extends Module {
             if (mc.player.isOnGround()) {
                 yLevel = (int) Math.floor(mc.player.getY()) - 1;
                 airTicks = 0;
-                blockCache = null;
+                rotationHoldTicks = 0;
                 Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
                 Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
             } else {
-                if (airTicks >= tellyTick.get() && blockCache != null) {
-                    Managers.ROTATION.setRotations(getRotation(blockCache), rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                if (onAir() && airTicks >= tellyTick.get() && blockCache != null) {
+                    Rotation rotation = getRotation(blockCache);
+                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
                     place();
+                } else if (!onAir() && rotationHoldTicks > 0 && blockCache != null) {
+                    Rotation rotation = getRotation(blockCache);
+                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                    rotationHoldTicks--;
                 }
                 airTicks++;
             }
-        } else if (blockCache != null) {
-            Managers.ROTATION.setRotations(getRotation(blockCache), rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+        } else if (onAir() && blockCache != null) {
+            Rotation rotation = getRotation(blockCache);
+            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
             place();
         }
 
@@ -132,6 +140,8 @@ public class Scaffold extends Module {
     }
 
     public void place() {
+        if (!onAir()) return;
+
         boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position, false);
         if (!hasRotated) return;
 
@@ -169,11 +179,12 @@ public class Scaffold extends Module {
             }
         }
 
-        ActionResult result = mc.interactionManager.interactBlock(mc.player, hand, new BlockHitResult(getVec3(blockCache.position, blockCache.facing), blockCache.facing, blockCache.position, false));
+        ActionResult result = mc.interactionManager.interactBlock(mc.player, hand, new BlockHitResult(blockCache.hitVec, blockCache.facing, blockCache.position, false));
 
         if (result.isAccepted()) {
             if (swingHand.get()) mc.player.swingHand(hand);
             else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
+            if (telly.get()) rotationHoldTicks = rotationHoldValue.get();
         }
 
         if (invSwapped) {
@@ -234,19 +245,28 @@ public class Scaffold extends Module {
                     continue;
                 }
 
-                blockCache = new BlockCache(baseBlockPos, dir.getOpposite());
+                blockCache = new BlockCache(baseBlockPos, dir.getOpposite(), getVec3(baseBlockPos, dir.getOpposite()));
                 return true;
             }
         }
         return false;
     }
 
+    private boolean onAir() {
+        Vec3d baseVec = mc.player.getEyePos();
+        BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
+        return !mc.world.getBlockState(base).hasSolidTopSurface(mc.world, base, mc.player);
+    }
+
     private Rotation getRotation(BlockCache blockCache) {
-        Rotation calculate = RotationUtil.calculate(getVec3(blockCache.position, blockCache.facing));
-        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
+        Rotation rotations = onAir()
+                ? RotationUtil.calculate(new Vec3d(blockCache.position.getX(), blockCache.position.getY(), blockCache.position.getZ()), blockCache.facing)
+                : RotationUtil.calculate(blockCache.position);
+
+        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), rotations.pitch);
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, false);
         if (hasRotated) return reverseYaw;
-        else return calculate;
+        return rotations;
     }
 
     @Override
@@ -266,6 +286,6 @@ public class Scaffold extends Module {
         Silent
     }
 
-    private record BlockCache(BlockPos position, Direction facing) {
+    private record BlockCache(BlockPos position, Direction facing, Vec3d hitVec) {
     }
 }
