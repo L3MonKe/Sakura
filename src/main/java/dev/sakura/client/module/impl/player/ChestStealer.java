@@ -255,7 +255,9 @@ public class ChestStealer extends Module {
 
     private boolean hasItem(Item item) {
         for (int i = 0; i < 36; i++) {
-            if (mc.player.getInventory().getStack(i).isOf(item)) return true;
+            if (mc.player.getInventory().getStack(i).isOf(item)) {
+                return true;
+            }
         }
         return false;
     }

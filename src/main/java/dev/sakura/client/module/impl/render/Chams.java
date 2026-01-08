@@ -1,106 +1,34 @@
 package dev.sakura.client.module.impl.render;
 
-import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.sakura.client.events.render.item.HeldItemRendererEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.render.*;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.render.entity.state.LivingEntityRenderState;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.EntityPose;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.RotationAxis;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import dev.sakura.client.values.impl.BoolValue;
+import dev.sakura.client.values.impl.ColorValue;
+import meteordevelopment.orbit.EventHandler;
+
+import java.awt.*;
 
 public class Chams extends Module {
     public Chams() {
         super("Chams", "产慕斯", Category.Render);
     }
 
-    private static final int COLOR = 0x80FFFFFF;
+    public final BoolValue handItems = new BoolValue("Hand Items", "手上东西", false);
+    private final ColorValue handItemsColor = new ColorValue("Hand Items Color", "手上东西颜色", new Color(0x9317DE5D, true), handItems::get);
 
-    public void renderPlayer(PlayerEntity player, LivingEntityRenderState state, MatrixStack matrices, int light, EntityModel<?> model, CallbackInfo ci) {
-        if (player == mc.player) {
-            return;
+    public final BoolValue players = new BoolValue("Players", "玩家", false);
+    public final ColorValue playerColor = new ColorValue("Player Color", "玩家颜色", new Color(0x932DD8E8, true), players::get);
+    public final BoolValue playerTexture = new BoolValue("Player Texture", "玩家图片", true, players::get);
+    public final BoolValue simple = new BoolValue("Simple", "单一", false, players::get);
+
+    public final BoolValue alternativeBlending = new BoolValue("Alternative Blending", "何意味", true);
+
+    @EventHandler
+    public void onRenderHands(HeldItemRendererEvent event) {
+        if (handItems.get()) {
+            RenderSystem.setShaderColor(handItemsColor.get().getRed() / 255f, handItemsColor.get().getGreen() / 255f, handItemsColor.get().getBlue() / 255f, handItemsColor.get().getAlpha() / 255f);
         }
-
-        RenderSystem.enableBlend();
-        RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE);
-
-        RenderSystem.enableCull();
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
-        Identifier texture = ((AbstractClientPlayerEntity) player).getSkinTextures().texture();
-
-        RenderSystem.setShaderTexture(0, texture);
-        RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_ENTITY_TRANSLUCENT);
-
-        matrices.push();
-        setupTransformsState(state, matrices);
-        matrices.scale(-1.0f, -1.0f, 1.0f);
-        matrices.scale(0.9375f, 0.9375f, 0.9375f);
-        matrices.translate(0.0f, -1.501f, 0.0f);
-
-        @SuppressWarnings({"rawtypes", "unchecked"})
-        EntityModel<LivingEntityRenderState> typedModel = (EntityModel) model;
-        typedModel.setAngles(state);
-        int overlay = LivingEntityRenderer.getOverlay(state, 0.0f);
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
-        typedModel.render(matrices, buffer, light, overlay, COLOR);
-        BuiltBuffer builtBuffer = buffer.endNullable();
-        if (builtBuffer != null) {
-            BufferRenderer.drawWithGlobalProgram(builtBuffer);
-        }
-
-        matrices.pop();
-
-        RenderSystem.depthMask(true);
-        RenderSystem.enableDepthTest();
-        RenderSystem.disableCull();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableBlend();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-
-    }
-
-    private void setupTransformsState(LivingEntityRenderState state, MatrixStack matrices) {
-        if (!state.isInPose(EntityPose.SLEEPING)) {
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(180.0F - state.bodyYaw));
-        }
-
-        if (state.deathTime > 0) {
-            float f = (state.deathTime - 1.0F) / 20.0F * 1.6F;
-            f = MathHelper.sqrt(f);
-            if (f > 1.0F) {
-                f = 1.0F;
-            }
-
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(f * 90.0F));
-        } else if (state.usingRiptide) {
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-90.0F - state.pitch));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(state.age * -75.0F));
-        } else if (state.isInPose(EntityPose.SLEEPING)) {
-            Direction direction = state.sleepingDirection;
-            float g = direction != null ? getYaw(direction) : state.bodyYaw;
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(g));
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(90.0F));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(270.0F));
-        }
-    }
-
-    private static float getYaw(Direction direction) {
-        return switch (direction) {
-            case NORTH -> 270.0f;
-            case SOUTH -> 90.0f;
-            case EAST -> 180.0f;
-            default -> 0.0f;
-        };
     }
 }

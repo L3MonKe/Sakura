@@ -1,61 +1,71 @@
 package dev.sakura.client.mixin.render;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.mojang.blaze3d.systems.RenderSystem;
+import dev.sakura.client.Sakura;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.impl.render.Chams;
-import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.gl.ShaderProgramKeys;
+import net.minecraft.client.render.*;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.render.entity.state.LivingEntityRenderState;
+import net.minecraft.client.render.entity.state.PlayerEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
-import static dev.sakura.client.Sakura.MODULES;
+import java.awt.*;
+
 import static dev.sakura.client.Sakura.mc;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>> {
-    @Shadow
-    protected M model;
 
-    @Unique
-    private static final ThreadLocal<LivingEntity> sakura$renderingEntity = new ThreadLocal<>();
+    @Redirect(method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/model/EntityModel;render(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumer;III)V"))
+    private void redirectRender(M model, MatrixStack matrices, VertexConsumer vertices, int light, int overlay, int color, S state) {
+        Chams chams = Sakura.MODULES.getModule(Chams.class);
 
-    @Inject(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At("HEAD"))
-    private void sakura$storeEntity(T entity, S state, float tickDelta, CallbackInfo ci) {
-        sakura$renderingEntity.set(entity);
-    }
+        if (chams.isEnabled() && chams.players.get() && state instanceof PlayerEntityRenderState playerState && chams.alternativeBlending.get()) {
+            Color c = chams.playerColor.get();
+            float r = c.getRed() / 255f;
+            float g = c.getGreen() / 255f;
+            float b = c.getBlue() / 255f;
+            float a = c.getAlpha() / 255f;
 
-    @Inject(method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("HEAD"), cancellable = true)
-    private void sakura$renderChams(S state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        LivingEntity entity = sakura$renderingEntity.get();
-        if (!(entity instanceof PlayerEntity player)) {
-            return;
+            RenderSystem.disableDepthTest();
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
+            RenderSystem.setShaderColor(r, g, b, a);
+
+            Identifier texture = playerState.skinTextures.texture();
+            RenderSystem.setShaderTexture(0, texture);
+            RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_ENTITY_TRANSLUCENT);
+
+            BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR_TEXTURE_OVERLAY_LIGHT_NORMAL);
+
+            model.render(matrices, buffer, light, overlay, color);
+
+            BuiltBuffer builtBuffer = buffer.endNullable();
+            if (builtBuffer != null) {
+                BufferRenderer.drawWithGlobalProgram(builtBuffer);
+            }
+
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+            RenderSystem.enableDepthTest();
+
+            if (chams.playerTexture.get()) {
+                return;
+            }
         }
 
-        Chams chams = MODULES.getModule(Chams.class);
-        if (chams == null || !chams.isEnabled()) {
-            return;
-        }
-
-        chams.renderPlayer(player, state, matrices, light, this.model, ci);
-        if (ci.isCancelled()) {
-            sakura$renderingEntity.remove();
-        }
-    }
-
-    @Inject(method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("TAIL"))
-    private void sakura$clearEntity(S state, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        sakura$renderingEntity.remove();
+        model.render(matrices, vertices, light, overlay, color);
     }
 
     @ModifyExpressionValue(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;clampBodyYaw(Lnet/minecraft/entity/LivingEntity;FF)F"))
