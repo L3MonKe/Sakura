@@ -70,9 +70,6 @@ public class RotationManager {
         setRotations(rotations, rotationSpeed, correctMovement, null, priority);
     }
 
-    /*
-     * This method must be called on Pre Update Event to work correctly
-     */
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Rotation, Boolean> raycast, Priority priority) {
         if (rotations == null || Double.isNaN(rotations.yaw) || Double.isNaN(rotations.pitch) || Double.isInfinite(rotations.yaw) || Double.isInfinite(rotations.pitch))
             return;
@@ -222,9 +219,6 @@ public class RotationManager {
     @EventHandler
     private void onMoveInput(MoveInputEvent event) {
         if (active && correctMovement == MovementFix.NORMAL && rotations != null) {
-            /*
-             * Calculating movement fix
-             */
             final float yaw = rotations.yaw;
             MovementUtil.fixMovement(event, yaw);
         }
@@ -285,16 +279,6 @@ public class RotationManager {
             smoothed = false;
         }
     }
-
-//    @EventHandler
-//    public void onAnimation(RotationAnimationEvent e) {
-//        if (rotations != null && rotations != null) {
-//            e.setYaw(rotations.x);
-//            e.setLastYaw(rotations.x);
-//            e.setPitch(rotations.y);
-//            e.setLastPitch(rotations.y);
-//        }
-//    }
 
     private void correctDisabledRotations() {
         if (mc.player == null || lastRotations == null) return;

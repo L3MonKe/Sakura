@@ -128,6 +128,30 @@ tasks.named<RemapJarTask>("remapJar") {
     inputFile.set(tasks.named<ShadowJar>("shadowJar").get().archiveFile)
 }
 
+val isMyHome = run {
+    val userHome = System.getProperty("user.home") ?: ""
+    val normalized = userHome.replace('\\', '/')
+    userHome == "L3MonKe" || normalized.endsWith("/L3MonKe")
+}
+
+val minecraftModsDir = file("C:/Users/L3MonKe/Desktop/MC/.minecraft/versions/1.21.4-Fabric 0.18.2/mods")
+
+val copyJarToMinecraftMods = tasks.register<Copy>("copyJarToMinecraftMods") {
+    group = "distribution"
+
+    val remapJar = tasks.named<RemapJarTask>("remapJar")
+    dependsOn(remapJar)
+
+    onlyIf { isMyHome }
+
+    from(remapJar.flatMap { it.archiveFile })
+    into(minecraftModsDir)
+}
+
+tasks.named("build") {
+    finalizedBy(copyJarToMinecraftMods)
+}
+
 tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }

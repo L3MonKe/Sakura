@@ -1,8 +1,8 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.Sakura;
 import dev.sakura.client.events.EventType;
 import dev.sakura.client.events.client.TickEvent;
+import dev.sakura.client.events.input.MoveInputEvent;
 import dev.sakura.client.events.packet.PacketEvent;
 import dev.sakura.client.events.player.SlowdownEvent;
 import dev.sakura.client.module.Category;
@@ -15,8 +15,7 @@ import net.minecraft.client.gui.screen.DeathScreen;
 import net.minecraft.client.gui.screen.ingame.SignEditScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
-import net.minecraft.item.BowItem;
-import net.minecraft.item.CrossbowItem;
+import net.minecraft.item.*;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.common.CommonPongC2SPacket;
 import net.minecraft.network.packet.c2s.play.*;
@@ -27,33 +26,57 @@ import java.util.Queue;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class NoSlow extends Module {
-    public final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.GrimBlink);
-    public final BoolValue inventoryMove = new BoolValue("InventoryMove", "背包移动", true);
+    public NoSlow() {
+        super("NoSlow", "无减速", Category.Movement);
+    }
+
+    public enum Mode {
+        Cancel("Cancel"),
+        GrimBlink("GrimBlink"),
+        GrimTick("GrimTick"),
+        Heypixel2_3("Heypixel 2/3"),
+        Grim50("Grim50%"),
+        Grim1_3("Grim 1/3"),
+        Jump("Jump");
+
+        private final String displayName;
+
+        Mode(String displayName) {
+            this.displayName = displayName;
+        }
+    }
+
+    public final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Grim50);
+    public final BoolValue inventoryMove = new BoolValue("InventoryMove", "背包移动", false);
     public final BoolValue arrowMove = new BoolValue("ArrowMove", "箭头移动", false);
+    public final BoolValue food = new BoolValue("Food", "食物", true, this::isBjdMode);
+    public final BoolValue bow = new BoolValue("Bow", "弓", true, this::isBjdMode);
+    public final BoolValue crossbow = new BoolValue("Crossbow", "弩", true, this::isBjdMode);
 
     private boolean blink;
     private final Queue<Packet<?>> packets = new LinkedBlockingQueue<>();
+    private int onGroundTick;
 
-    public NoSlow() {
-        super("NoSlow", "无减速", Category.Movement);
+    private boolean isBjdMode() {
+        return mode.is(Mode.Heypixel2_3) || mode.is(Mode.Grim50) || mode.is(Mode.Grim1_3) || mode.is(Mode.Jump);
     }
 
     @Override
     protected void onEnable() {
         packets.clear();
-        Sakura.EVENT_BUS.subscribe(this);
+        onGroundTick = 0;
     }
 
     @Override
     protected void onDisable() {
         blink = false;
+        onGroundTick = 0;
         blink();
-        Sakura.EVENT_BUS.unsubscribe(this);
     }
 
     @Override
     public String getSuffix() {
-        return mode.get().name();
+        return mode.get().displayName;
     }
 
     @EventHandler
@@ -82,26 +105,39 @@ public class NoSlow extends Module {
                 mc.player.setPitch(MathHelper.clamp(pitch, -90.0f, 90.0f));
             }
         }
+
+        if (mc.player.isOnGround()) {
+            onGroundTick++;
+        } else {
+            onGroundTick = 0;
+        }
     }
 
     @EventHandler
     public void onSlowdown(SlowdownEvent event) {
         if (nullCheck()) return;
 
-        boolean isBow = mc.player.getMainHandStack().getItem() instanceof BowItem || mc.player.getMainHandStack().getItem() instanceof CrossbowItem;
+        boolean isBowItem = mc.player.getMainHandStack().getItem() instanceof BowItem || mc.player.getMainHandStack().getItem() instanceof CrossbowItem;
         boolean slowTick = mc.player.getItemUseTimeLeft() % 3 == 0;
+
+        if (isBjdMode()) {
+            if (checkFood() && mc.player.getItemUseTimeLeft() > 30) return;
+            if (!food.get() && checkFood()) return;
+            if (!bow.get() && checkItem(Items.BOW)) return;
+            if (!crossbow.get() && checkItem(Items.CROSSBOW)) return;
+        }
 
         switch (mode.get()) {
             case Cancel -> event.setSlowdown(false);
 
             case GrimTick -> {
-                if (!isBow) {
+                if (!isBowItem) {
                     if (slowTick) event.setSlowdown(false);
                 }
             }
 
             case GrimBlink -> {
-                if (!isBow) {
+                if (!isBowItem) {
                     if (mc.player.getItemUseTime() > 0 && mc.player.getItemUseTime() < 12) {
                         if (slowTick) event.setSlowdown(false);
                     } else if (mc.player.getItemUseTime() >= 12) {
@@ -110,7 +146,45 @@ public class NoSlow extends Module {
                     }
                 }
             }
+
+            case Grim50 -> {
+                if (mc.player.getItemUseTimeLeft() % 2 == 0 && mc.player.getItemUseTimeLeft() <= 30) {
+                    event.setSlowdown(false);
+                    if (!mc.player.isSprinting()) mc.player.setSprinting(true);
+                }
+            }
+
+            case Grim1_3 -> {
+                if (mc.player.getItemUseTimeLeft() % 3 == 0 && (!checkFood() || mc.player.getItemUseTimeLeft() <= 30)) {
+                    event.setSlowdown(false);
+                    if (!mc.player.isSprinting()) mc.player.setSprinting(true);
+                }
+            }
+
+            case Heypixel2_3 -> {
+                if (mc.player.getItemUseTimeLeft() % 3 != 0 && (!checkFood() || mc.player.getItemUseTimeLeft() <= 30)) {
+                    event.setSlowdown(false);
+                    if (!mc.player.isSprinting()) mc.player.setSprinting(true);
+                }
+            }
+
+            case Jump -> {
+                if (onGroundTick == 1 && mc.player.getItemUseTimeLeft() <= 30) {
+                    event.setSlowdown(false);
+                    if (!mc.player.isSprinting()) mc.player.setSprinting(true);
+                }
+            }
         }
+    }
+
+    @EventHandler
+    public void onMoveInput(MoveInputEvent event) {
+        if (nullCheck()) return;
+        if (mode.get() != Mode.Jump) return;
+        if (!mc.player.isOnGround()) return;
+        if (!mc.player.isUsingItem()) return;
+        if (event.getForward() == 0 && event.getStrafe() == 0) return;
+        event.setJump(true);
     }
 
     @EventHandler
@@ -160,9 +234,20 @@ public class NoSlow extends Module {
                 || mc.currentScreen instanceof SignEditScreen || mc.currentScreen instanceof DeathScreen);
     }
 
-    public enum Mode {
-        Cancel,
-        GrimBlink,
-        GrimTick
+    private boolean checkFood() {
+        ItemStack mainHandItem = mc.player.getMainHandStack();
+        ItemStack offhandItem = mc.player.getOffHandStack();
+        return mainHandItem.isOf(Items.GOLDEN_APPLE)
+                || offhandItem.isOf(Items.GOLDEN_APPLE)
+                || mainHandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE)
+                || offhandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE)
+                || mainHandItem.isOf(Items.POTION)
+                || offhandItem.isOf(Items.POTION);
+    }
+
+    private boolean checkItem(Item item) {
+        ItemStack mainHandItem = mc.player.getMainHandStack();
+        ItemStack offhandItem = mc.player.getOffHandStack();
+        return mainHandItem.isOf(item) || offhandItem.isOf(item);
     }
 }

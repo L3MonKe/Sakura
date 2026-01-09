@@ -21,7 +21,7 @@ public class AutoHeypixel extends Module {
         super("AutoHeypixel", "自动岛吉吉", Category.Client);
     }
 
-    public final BoolValue autoScreenshot = new BoolValue("Auto Screenshot", "自动截图", true);
+    private final BoolValue autoScreenshot = new BoolValue("Auto Screenshot", "自动截图", true);
 
     @EventHandler
     public void onPacket(PacketEvent event) {
@@ -30,7 +30,7 @@ public class AutoHeypixel extends Module {
 
         Packet<?> packet = event.getPacket();
         if (packet instanceof TitleS2CPacket(Text text)) {
-            if (text.getString().contains("胜利") && autoScreenshot.get()) {
+            if (autoScreenshot.get() && text.getString().contains("胜利")) {
                 CompletableFuture.runAsync(() -> {
                     try {
                         TimeUnit.SECONDS.sleep(1);

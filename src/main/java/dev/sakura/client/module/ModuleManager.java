@@ -47,7 +47,6 @@ public class ModuleManager {
         add(new Speed());
         add(new Step());
         add(new Velocity());
-        add(new VelocityBJD());
 
         // Player
         add(new AntiHunger());

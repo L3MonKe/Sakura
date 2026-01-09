@@ -36,15 +36,14 @@ import net.minecraft.util.math.Vec3d;
 import java.awt.*;
 
 public class Scaffold extends Module {
-    private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Silent);
+    private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
     private final BoolValue telly = new BoolValue("Telly", "Telly搭路", false);
     private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 1, 0, 8, 1, telly::get);
     private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, telly::get);
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, telly::get);
-    //private final NumberValue<Integer> rotationHoldValue = new NumberValue<>("Rotation Hold Ticks", "落地保留转头", 2, 0, 10, 1, telly::get);
-    private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", false);
+    private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
     private final BoolValue shrink = new BoolValue("Shrink", "收缩", true, render::get);
     private final ColorValue sideColor = new ColorValue("Side Color", "侧面颜色", new Color(255, 183, 197, 100), render::get);
@@ -53,7 +52,6 @@ public class Scaffold extends Module {
     private int yLevel;
     private BlockCache blockCache;
     private int airTicks;
-    //private int rotationHoldTicks;
 
     public Scaffold() {
         super("Scaffold", "自动搭路", Category.Movement);
@@ -89,7 +87,6 @@ public class Scaffold extends Module {
             if (mc.player.isOnGround()) {
                 yLevel = (int) Math.floor(mc.player.getY()) - 1;
                 airTicks = 0;
-                //rotationHoldTicks = 0;
                 Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
                 Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
             } else {
@@ -97,10 +94,9 @@ public class Scaffold extends Module {
                     Rotation rotation = getRotation(blockCache);
                     Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
                     place();
-                } else if (!onAir() /*&& rotationHoldTicks > 0*/ && blockCache != null) {
+                } else if (!onAir() && blockCache != null) {
                     Rotation rotation = getRotation(blockCache);
                     Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-                    //rotationHoldTicks--;
                 }
                 airTicks++;
             }
@@ -184,7 +180,6 @@ public class Scaffold extends Module {
         if (result.isAccepted()) {
             if (swingHand.get()) mc.player.swingHand(hand);
             else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
-            //if (telly.get()) rotationHoldTicks = rotationHoldValue.get();
         }
 
         if (invSwapped) {

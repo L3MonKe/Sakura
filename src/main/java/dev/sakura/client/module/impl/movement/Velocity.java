@@ -5,27 +5,44 @@ import dev.sakura.client.events.client.TickEvent;
 import dev.sakura.client.events.entity.BlockPushEvent;
 import dev.sakura.client.events.entity.EntityPushEvent;
 import dev.sakura.client.events.entity.EntityVelocityUpdateEvent;
+import dev.sakura.client.events.input.MoveInputEvent;
 import dev.sakura.client.events.packet.PacketEvent;
+import dev.sakura.client.events.render.Render3DEvent;
 import dev.sakura.client.mixin.accessor.IEntityVelocityUpdateS2CPacket;
 import dev.sakura.client.mixin.accessor.IExplosionS2CPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.module.impl.combat.AntiBot;
 import dev.sakura.client.utils.entity.EntityUtil;
+import dev.sakura.client.utils.player.MovementUtil;
+import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.PlayerPosition;
 import net.minecraft.entity.projectile.FishingBobberEntity;
+import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
-import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
-import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
+import net.minecraft.network.packet.s2c.common.CommonPingS2CPacket;
+import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
+import net.minecraft.network.packet.s2c.play.*;
+import net.minecraft.util.Hand;
+import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
+import java.awt.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Velocity extends Module {
     public Velocity() {
@@ -33,13 +50,27 @@ public class Velocity extends Module {
     }
 
     public enum Mode {
-        Custom, Grim, Wall
+        Custom,
+        BBTTGrim,
+        Wall,
+        Legit,
+        NoXZ
     }
 
-    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Custom);
+    private enum VelocityStage {
+        NONE,
+        DELAY,
+        ATTACK,
+        CLEAR,
+        LAG
+    }
+
+    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.NoXZ);
     private final NumberValue<Double> horizontal = new NumberValue<>("Horizontal", "水平", 0.0, 0.0, 100.0, 1.0, () -> mode.is(Mode.Custom));
     private final NumberValue<Double> vertical = new NumberValue<>("Vertical", "垂直", 0.0, 0.0, 100.0, 1.0, () -> mode.is(Mode.Custom));
-    public final BoolValue flagInWall = new BoolValue("Flag In Wall", "墙内标记", false, () -> mode.is(Mode.Grim) || mode.is(Mode.Wall));
+    private final NumberValue<Integer> attacks = new NumberValue<>("Attack Counts", "攻击计数", 4, 1, 5, 1, () -> mode.is(Mode.NoXZ));
+    private final NumberValue<Double> alinkTime = new NumberValue<>("Max Alink Time", "最大啊领克时间", 2500.0, 50.0, 10000.0, 50.0, () -> mode.is(Mode.NoXZ));
+    public final BoolValue flagInWall = new BoolValue("Flag In Wall", "墙内标记", false, () -> mode.is(Mode.BBTTGrim) || mode.is(Mode.Wall));
     public final BoolValue noExplosions = new BoolValue("No Explosions", "无爆炸", false);
     public final BoolValue pauseInLiquid = new BoolValue("Pause In Liquid", "液体中暂停", false);
     public final BoolValue waterPush = new BoolValue("No Water Push", "无水推", false);
@@ -49,11 +80,44 @@ public class Velocity extends Module {
 
     private final TimerUtil timer = new TimerUtil();
     private boolean flag;
+    private final Queue<Packet<? super ClientPlayPacketListener>> packets = new ConcurrentLinkedQueue<>();
+    private final Map<Entity, Vec3d> targets = new HashMap<>();
+    private boolean lag;
+    private boolean jump;
+    private Vec3d velocity;
+    private long velocityTime;
+    private PlayerEntity target;
+    private VelocityStage stage = VelocityStage.NONE;
+
+    @Override
+    protected void onEnable() {
+        jump = false;
+        lag = false;
+        targets.clear();
+        target = null;
+        stage = VelocityStage.NONE;
+    }
+
+    @Override
+    protected void onDisable() {
+        jump = false;
+        lag = false;
+        targets.clear();
+        target = null;
+        stage = VelocityStage.NONE;
+        clear(true);
+    }
 
     @Override
     public String getSuffix() {
         if (mode.is(Mode.Custom)) {
             return horizontal.get().intValue() + "%, " + vertical.get().intValue() + "%";
+        }
+        if (mode.is(Mode.NoXZ)) {
+            if (stage == VelocityStage.DELAY) {
+                return mode.get().name() + " Alink " + ((System.currentTimeMillis() - velocityTime) / 50) + "Ticks";
+            }
+            return mode.get().name();
         }
         return mode.get().name();
     }
@@ -74,7 +138,9 @@ public class Velocity extends Module {
 
     @EventHandler
     public void onPacketEvent(PacketEvent event) {
-        if (event.getType() == EventType.RECEIVE && event.getPacket() instanceof PlayerPositionLookS2CPacket) {
+        if ((mode.is(Mode.BBTTGrim) || mode.is(Mode.Wall))
+                && event.getType() == EventType.RECEIVE
+                && event.getPacket() instanceof PlayerPositionLookS2CPacket) {
             timer.reset();
         }
     }
@@ -86,7 +152,7 @@ public class Velocity extends Module {
         if ((mc.player.isTouchingWater() || mc.player.isSubmergedInWater() || mc.player.isInLava()) && pauseInLiquid.get())
             return;
 
-        if (mode.is(Mode.Grim) || mode.is(Mode.Wall)) {
+        if (mode.is(Mode.BBTTGrim) || mode.is(Mode.Wall)) {
             if (!timer.passedMS(100)) {
                 return;
             }
@@ -111,15 +177,83 @@ public class Velocity extends Module {
             }
         }
 
-        if (mode.is(Mode.Grim) || mode.is(Mode.Wall)) {
+        if (mode.is(Mode.NoXZ)) {
+            Packet<?> p = event.getPacket();
+
+            if (p instanceof PlayerPositionLookS2CPacket && stage == VelocityStage.NONE) {
+                lag = true;
+                return;
+            }
+
+            if (p instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
+                if (stage == VelocityStage.NONE) {
+                    if (!lag) {
+                        stage = VelocityStage.DELAY;
+                        velocityTime = System.currentTimeMillis();
+                        event.cancel();
+                        velocity = new Vec3d(packet.getVelocityX() / 8000.0, packet.getVelocityY() / 8000.0, packet.getVelocityZ() / 8000.0);
+                    } else {
+                        lag = false;
+                    }
+                    return;
+                } else {
+                    velocity = new Vec3d(packet.getVelocityX() / 8000.0, packet.getVelocityY() / 8000.0, packet.getVelocityZ() / 8000.0);
+                    stage = VelocityStage.LAG;
+                    event.cancel();
+                    return;
+                }
+            }
+
+            if (stage == VelocityStage.NONE) {
+                return;
+            }
+
+            if (p instanceof PlayerPositionLookS2CPacket) {
+                stage = VelocityStage.LAG;
+                return;
+            }
+
+            if (p instanceof LookAtS2CPacket) {
+                stage = VelocityStage.LAG;
+                return;
+            }
+
+            if (p instanceof DisconnectS2CPacket || p instanceof PlayerRespawnS2CPacket) {
+                clear(false);
+                return;
+            }
+
+            if (!(p instanceof CommonPingS2CPacket) && !(p instanceof EntityS2CPacket) && !(p instanceof EntityPositionS2CPacket)) {
+                return;
+            }
+
+            if (p instanceof EntityS2CPacket entityPacket) {
+                updateTargetPosition(entityPacket);
+            } else if (p instanceof EntityPositionS2CPacket positionPacket) {
+                updateTargetPosition(positionPacket);
+            }
+
+            packets.add((Packet<? super ClientPlayPacketListener>) p);
+            event.cancel();
+            return;
+        }
+
+        if (mode.is(Mode.Legit)) {
+            if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
+                jump = true;
+            }
+            return;
+        }
+
+        if (mode.is(Mode.BBTTGrim) || mode.is(Mode.Wall)) {
             if (!timer.passedMS(100)) {
                 return;
             }
 
             if (mode.is(Mode.Wall) && !EntityUtil.isInsideBlock()) return;
 
-            if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket explosion) {
-                ((IExplosionS2CPacket) explosion).setPlayerKnockback(Optional.empty());
+            if (event.getPacket() instanceof ExplosionS2CPacket) {
+                ((IExplosionS2CPacket) event.getPacket()).setPlayerKnockback(Optional.empty());
                 flag = true;
             }
         } else {
@@ -163,12 +297,145 @@ public class Velocity extends Module {
 
         if (flag) {
             if (timer.passedMS(100) && (flagInWall.get() || !EntityUtil.isInsideBlock())) {
-                //Zenith.ROTATION.snapBack();
-                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK,
-                        mc.player.isCrawling() ? mc.player.getBlockPos() : mc.player.getBlockPos().up(), Direction.DOWN));
-                //mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, BlockPos.ofFloored(mc.player.getPos()), mc.player.getHorizontalFacing().getOpposite()));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, mc.player.isCrawling() ? mc.player.getBlockPos() : mc.player.getBlockPos().up(), Direction.DOWN));
             }
             flag = false;
         }
+    }
+
+    @EventHandler
+    public void onRender3D(Render3DEvent event) {
+        if (nullCheck()) return;
+        if (targets.isEmpty()) return;
+        if (!mode.is(Mode.NoXZ)) return;
+        if (stage == VelocityStage.NONE) return;
+
+        for (Map.Entry<Entity, Vec3d> entry : targets.entrySet()) {
+            Entity entity = entry.getKey();
+            if (!(entity instanceof PlayerEntity)) continue;
+
+            Vec3d pos = entry.getValue();
+            double width = entity.getWidth();
+            double height = entity.getHeight();
+
+            Box box = new Box(
+                    pos.x - width / 2.0, pos.y, pos.z - width / 2.0,
+                    pos.x + width / 2.0, pos.y + height, pos.z + width / 2.0
+            );
+
+            int rgb = entity.equals(target) ? new Color(200, 0, 0, 60).getRGB() : new Color(0, 200, 0, 60).getRGB();
+            Render3DUtil.drawFullBox(event.getMatrices(), box, rgb, rgb, 2f);
+        }
+    }
+
+    @EventHandler
+    public void onTickBJDPre(TickEvent.Pre event) {
+        if (nullCheck()) return;
+        if (!mode.is(Mode.NoXZ)) return;
+
+        if (stage == VelocityStage.ATTACK) {
+            if (mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
+                double motionXZ = 1.0;
+                for (int i = 0; i < attacks.get(); i++) {
+                    if (mc.player.isSprinting()) mc.player.setSprinting(false);
+                    mc.interactionManager.attackEntity(mc.player, target);
+                    mc.player.swingHand(Hand.MAIN_HAND);
+                    motionXZ *= 0.6;
+                }
+                if (velocity != null) {
+                    mc.player.setVelocity(velocity.x * motionXZ, velocity.y, velocity.z * motionXZ);
+                }
+                stage = VelocityStage.CLEAR;
+            }
+        } else if (stage == VelocityStage.DELAY && System.currentTimeMillis() - velocityTime >= alinkTime.get()) {
+            if (velocity != null) {
+                mc.player.setVelocity(velocity);
+            }
+            stage = VelocityStage.CLEAR;
+        }
+
+        if (lag && mc.player.hurtTime == 0) lag = false;
+    }
+
+    @EventHandler
+    public void onTickBJDPost(TickEvent.Post event) {
+        if (nullCheck()) return;
+        if (!mode.is(Mode.NoXZ)) return;
+
+        if (stage == VelocityStage.CLEAR) {
+            clear(true);
+        } else if (stage == VelocityStage.LAG) {
+            if (velocity != null) {
+                mc.player.setVelocity(velocity);
+            }
+            clear(true);
+        }
+    }
+
+    @EventHandler
+    public void onMoveInput(MoveInputEvent event) {
+        if (nullCheck()) return;
+
+        if (mode.is(Mode.NoXZ)) {
+            if (stage == VelocityStage.DELAY && velocity != null && mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
+                event.setForward(1);
+                event.setStrafe(0);
+                stage = VelocityStage.ATTACK;
+                this.target = player;
+            }
+        }
+
+        if (jump) {
+            if (mc.player.isOnGround() && MovementUtil.isMoving()) {
+                event.setJump(true);
+            }
+            jump = false;
+        }
+    }
+
+    private void clear(boolean handle) {
+        lag = false;
+        stage = VelocityStage.NONE;
+        targets.clear();
+        target = null;
+
+        if (!handle) {
+            packets.clear();
+            return;
+        }
+
+        while (!packets.isEmpty()) {
+            Packet<? super ClientPlayPacketListener> packet = packets.poll();
+            if (packet != null && mc.getNetworkHandler() != null) {
+                packet.apply(mc.getNetworkHandler());
+            }
+        }
+    }
+
+    private void updateTargetPosition(EntityS2CPacket packet) {
+        if (mc.world == null) return;
+        Entity entity = packet.getEntity(mc.world);
+        if (entity == null) return;
+
+        Vec3d currentPos = targets.getOrDefault(entity, entity.getPos());
+        if (packet.isPositionChanged()) {
+            double dx = packet.getDeltaX() / 4096.0;
+            double dy = packet.getDeltaY() / 4096.0;
+            double dz = packet.getDeltaZ() / 4096.0;
+            targets.put(entity, currentPos.add(dx, dy, dz));
+        } else {
+            targets.putIfAbsent(entity, currentPos);
+        }
+    }
+
+    private void updateTargetPosition(EntityPositionS2CPacket packet) {
+        if (mc.world == null) return;
+        Entity entity = mc.world.getEntityById(packet.entityId());
+        if (entity == null) return;
+
+        Vec3d currentPos = targets.getOrDefault(entity, entity.getPos());
+        PlayerPosition current = new PlayerPosition(currentPos, entity.getVelocity(), entity.getYaw(), entity.getPitch());
+        PlayerPosition applied = PlayerPosition.apply(current, packet.change(), packet.relatives());
+        targets.put(entity, applied.position());
     }
 }
