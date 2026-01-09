@@ -24,7 +24,7 @@ public class Disabler extends Module {
     }
 
     private final BoolValue logging = new BoolValue("Logging", "日志", false);
-    private final BoolValue disAim360 = new BoolValue("Disable Loyisa Aim 360", "防止Loyisa抽风 强迫症最爱", false);
+    //private final BoolValue disAim360 = new BoolValue("Disable Loyisa Aim 360", "防止Loyisa抽风 强迫症最爱", false);
     private final BoolValue acaaimstep = new BoolValue("ACAAimStep", "AimStep", false);
     private final BoolValue acaperfectrotation = new BoolValue("ACAPerfectRotation", "完美转向修正", false);
     private final BoolValue grimDuplicateRotPlace = new BoolValue("Grim Duplicate Rototation Place", "重复转向放置", false);
@@ -119,14 +119,14 @@ public class Disabler extends Module {
             this.lastPitch = currentPitch;
         }
 
-        if (disAim360.get()) {
+        /*if (disAim360.get()) {
             if (event.getPacket() instanceof PlayerMoveC2SPacket packet && packet.changesLook()) {
                 float yaw = packet.getYaw(0.0f);
                 if (yaw < 360.0f && yaw > -360.0f) {
                     ((IPlayerMoveC2SPacket) packet).setYaw(yaw + 720.0f);
                 }
             }
-        }
+        }*/
     }
 
     private void log(String message) {
