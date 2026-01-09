@@ -11,6 +11,7 @@ import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.effect.StatusEffects;
+import net.minecraft.item.BlockItem;
 import net.minecraft.util.math.MathHelper;
 
 public class AutoSprint extends Module {
@@ -25,7 +26,7 @@ public class AutoSprint extends Module {
         Rotation
     }
 
-    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Rage);
+    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Grim);
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 0, 10, 1, () -> mode.is(Mode.Rotation));
 
     @Override
@@ -38,7 +39,7 @@ public class AutoSprint extends Module {
         if (mc.world == null || mc.player == null) return;
 
         if (mode.get() == Mode.PressKey) {
-            mc.options.sprintKey.setPressed(true);
+            mc.options.sprintKey.setPressed(!shouldPauseSprinting());
         } else {
             mc.player.setSprinting(shouldSprint());
         }
@@ -65,6 +66,7 @@ public class AutoSprint extends Module {
     }
 
     private boolean shouldSprint() {
+        if (shouldPauseSprinting()) return false;
         if ((mc.player.getHungerManager().getFoodLevel() > 6 || mc.player.isCreative())
                 && MovementUtil.isMoving()
                 && !mc.player.isSneaking()
@@ -92,6 +94,13 @@ public class AutoSprint extends Module {
             }
         }
         return false;
+    }
+
+    private boolean shouldPauseSprinting() {
+        if (!isEnabled(Scaffold.class)) {
+            return false;
+        }
+        return mc.player.getMainHandStack().getItem() instanceof BlockItem || mc.player.getOffHandStack().getItem() instanceof BlockItem;
     }
 
     public float getSprintYaw(float yaw) {

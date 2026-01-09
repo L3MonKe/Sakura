@@ -38,10 +38,10 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
 import java.awt.*;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class Velocity extends Module {
@@ -81,7 +81,7 @@ public class Velocity extends Module {
     private final TimerUtil timer = new TimerUtil();
     private boolean flag;
     private final Queue<Packet<? super ClientPlayPacketListener>> packets = new ConcurrentLinkedQueue<>();
-    private final Map<Entity, Vec3d> targets = new HashMap<>();
+    private final Map<Entity, Vec3d> targets = new ConcurrentHashMap<>();
     private boolean lag;
     private boolean jump;
     private Vec3d velocity;
