@@ -7,10 +7,7 @@ import dev.sakura.client.events.misc.KeyEvent;
 import dev.sakura.client.events.render.Render2DEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.NotificationManager;
-import dev.sakura.client.module.impl.client.Capes;
-import dev.sakura.client.module.impl.client.Chat;
-import dev.sakura.client.module.impl.client.ClickGui;
-import dev.sakura.client.module.impl.client.HudEditor;
+import dev.sakura.client.module.impl.client.*;
 import dev.sakura.client.module.impl.combat.AntiBot;
 import dev.sakura.client.module.impl.combat.AutoPot;
 import dev.sakura.client.module.impl.combat.AutoSnowball;
@@ -32,7 +29,6 @@ import static dev.sakura.client.Sakura.mc;
 
 public class ModuleManager {
     private final Map<Class<? extends Module>, Module> modules = new LinkedHashMap<>();
-    private final Map<Class<? extends Module>, ClickGuiScope> clickGuiScopes = new HashMap<>();
 
     private void init() {
         // Combat
@@ -42,15 +38,16 @@ public class ModuleManager {
         add(new AutoSnowball());
 
         // Movement
-        addAll(new AutoSprint());
+        add(new AutoSprint());
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());
-        addAll(new Scaffold());
+        add(new Phase());
+        add(new Scaffold());
         add(new Speed());
         add(new Step());
         add(new Velocity());
-        addBjd(new VelocityBJD());
+        add(new VelocityBJD());
 
         // Player
         add(new AntiHunger());
@@ -59,38 +56,40 @@ public class ModuleManager {
         add(new Blink());
         add(new BowBomb());
         add(new DisablerBJD());
-        addAll(new FakePlayer());
+        add(new FakePlayer());
         add(new GhostHand());
         add(new InventorySort());
         add(new NoRotate());
         add(new PacketEat());
         add(new PacketMine());
         add(new Replenish());
-        addAll(new TimerModule());
+        add(new TimerModule());
         add(new InventoryManager());
         add(new ChestStealer());
 
         // Render
-        addAll(new AspectRatio());
-        addAll(new Atmosphere());
-        addAll(new CameraClip());
+        add(new AspectRatio());
+        add(new Atmosphere());
+        add(new CameraClip());
+        add(new Chams());
         add(new Crystal());
-        addAll(new Fullbright());
-        addAll(new Hat());
-        addAll(new JumpCircles());
-        addAll(new NameTags());
-        addAll(new NoRender());
-        addAll(new Shaders());
-        addAll(new SwingAnimation());
-        addAll(new TotemParticles());
-        addAll(new ViewModel());
-        addAll(new XRay());
+        add(new Fullbright());
+        add(new Hat());
+        add(new JumpCircles());
+        add(new NameTags());
+        add(new NoRender());
+        add(new Shaders());
+        add(new SwingAnimation());
+        add(new TotemParticles());
+        add(new ViewModel());
+        add(new XRay());
 
         // Client
-        addAll(new Capes());
-        addAll(new Chat());
-        addAll(new ClickGui());
-        addAll(new HudEditor());
+        add(new AutoHeypixel());
+        add(new Capes());
+        add(new Chat());
+        add(new ClickGui());
+        add(new HudEditor());
 
         // HUD
         add(new DynamicIslandHud());
@@ -110,7 +109,7 @@ public class ModuleManager {
         init();
     }
 
-    private void register(Module module, ClickGuiScope clickGuiScope) {
+    private void add(Module module) {
         for (final Field field : module.getClass().getDeclaredFields()) {
             try {
                 field.setAccessible(true);
@@ -120,28 +119,6 @@ public class ModuleManager {
             }
         }
         modules.put(module.getClass(), module);
-        clickGuiScopes.put(module.getClass(), clickGuiScope);
-    }
-
-    public void add(Module module) {
-        register(module, ClickGuiScope.OnlyWhenBjdOff);
-    }
-
-    public void addAll(Module module) {
-        register(module, ClickGuiScope.Always);
-    }
-
-    public void addBjd(Module module) {
-        register(module, ClickGuiScope.OnlyWhenBjdOn);
-    }
-
-    public boolean isNotVisible(Module module, boolean bjdOnlyEnabled) {
-        ClickGuiScope scope = clickGuiScopes.getOrDefault(module.getClass(), ClickGuiScope.OnlyWhenBjdOff);
-        return switch (scope) {
-            case Always -> false;
-            case OnlyWhenBjdOff -> bjdOnlyEnabled;
-            case OnlyWhenBjdOn -> !bjdOnlyEnabled;
-        };
     }
 
     public Collection<Module> getAllModules() {
@@ -260,11 +237,5 @@ public class ModuleManager {
                 module.renderInGame(event.getContext());
             }
         }
-    }
-
-    private enum ClickGuiScope {
-        Always,
-        OnlyWhenBjdOff,
-        OnlyWhenBjdOn
     }
 }
