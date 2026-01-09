@@ -24,7 +24,7 @@ public class Disabler extends Module {
     }
 
     private final BoolValue logging = new BoolValue("Logging", "日志", false);
-    private final BoolValue disAim360 = new BoolValue("Disable Aim 360", "防止抽风转头", false);
+    private final BoolValue disAim360 = new BoolValue("Disable Loyisa Aim 360", "防止Loyisa抽风 强迫症最爱", false);
     private final BoolValue acaaimstep = new BoolValue("ACAAimStep", "AimStep", false);
     private final BoolValue acaperfectrotation = new BoolValue("ACAPerfectRotation", "完美转向修正", false);
     private final BoolValue grimDuplicateRotPlace = new BoolValue("Grim Duplicate Rototation Place", "重复转向放置", false);
