@@ -93,7 +93,9 @@ public class Scaffold extends Module {
                 if (onAir() && airTicks >= tellyTick.get() && blockCache != null) {
                     Rotation rotation = getRotation(blockCache);
                     Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-                    place();
+                    if (isRotationReady(rotation)) {
+                        place();
+                    }
                 } else if (!onAir() && blockCache != null) {
                     Rotation rotation = getRotation(blockCache);
                     Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
@@ -103,7 +105,9 @@ public class Scaffold extends Module {
         } else if (onAir() && blockCache != null) {
             Rotation rotation = getRotation(blockCache);
             Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-            place();
+            if (isRotationReady(rotation)) {
+                place();
+            }
         }
 
         if (swapMode.is(SwapMode.Silent)) {
@@ -262,6 +266,15 @@ public class Scaffold extends Module {
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, false);
         if (hasRotated) return reverseYaw;
         return rotations;
+    }
+
+    // 更严格的转头检查powered by gemini
+    private boolean isRotationReady(Rotation target) {
+        Rotation current = Managers.ROTATION.getRotation();
+        float yawDiff = MathHelper.angleBetween(current.yaw, target.yaw);
+        float pitchDiff = Math.abs(current.pitch - target.pitch);
+        float tolerance = (float) Math.max(1, 11 - rotationSpeed.get());
+        return yawDiff <= tolerance && pitchDiff <= tolerance;
     }
 
     @Override

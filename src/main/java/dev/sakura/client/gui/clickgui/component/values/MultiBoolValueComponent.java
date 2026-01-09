@@ -17,10 +17,6 @@ import java.awt.*;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @Author：Gu-Yuemang
- * @Date：2025/11/14 19:54
- */
 public class MultiBoolValueComponent extends Component {
     private static final Color WHITE = new Color(255, 255, 255);
     private static final Color GRAY = new Color(150, 150, 150);
