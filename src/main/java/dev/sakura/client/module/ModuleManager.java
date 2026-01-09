@@ -54,7 +54,8 @@ public class ModuleManager {
         add(new AutoPearl());
         add(new Blink());
         add(new BowBomb());
-        add(new DisablerBJD());
+        add(new Disabler());
+        add(new GrimFly());
         add(new FakePlayer());
         add(new GhostHand());
         add(new InventorySort());

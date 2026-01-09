@@ -15,15 +15,16 @@ import net.minecraft.util.math.MathHelper;
 
 import java.util.Random;
 
-public class DisablerBJD extends Module {
+public class Disabler extends Module {
     private static final double[] PERFECT_PATTERNS = new double[]{0.1, 0.25};
     private static final double EPSILON = 1.0E-10;
 
-    public DisablerBJD() {
+    public Disabler() {
         super("Disabler", "禁用器", Category.Player);
     }
 
     private final BoolValue logging = new BoolValue("Logging", "日志", false);
+    private final BoolValue disAim360 = new BoolValue("Disable Aim 360", "防止抽风转头", false);
     private final BoolValue acaaimstep = new BoolValue("ACAAimStep", "AimStep", false);
     private final BoolValue acaperfectrotation = new BoolValue("ACAPerfectRotation", "完美转向修正", false);
     private final BoolValue grimDuplicateRotPlace = new BoolValue("Grim Duplicate Rototation Place", "重复转向放置", false);
@@ -116,6 +117,15 @@ public class DisablerBJD extends Module {
 
             this.lastYaw = currentYaw;
             this.lastPitch = currentPitch;
+        }
+
+        if (disAim360.get()) {
+            if (event.getPacket() instanceof PlayerMoveC2SPacket packet && packet.changesLook()) {
+                float yaw = packet.getYaw(0.0f);
+                if (yaw < 360.0f && yaw > -360.0f) {
+                    ((IPlayerMoveC2SPacket) packet).setYaw(yaw + 720.0f);
+                }
+            }
         }
     }
 
