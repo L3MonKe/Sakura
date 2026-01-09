@@ -116,7 +116,7 @@ public class ModuleManager {
                 field.setAccessible(true);
                 final Object obj = field.get(module);
                 if (obj instanceof Value<?>) module.getValues().add((Value<?>) obj);
-            } catch (IllegalAccessException ignored) {
+            }catch (IllegalAccessException ignored) {
             }
         }
         modules.put(module.getClass(), module);
