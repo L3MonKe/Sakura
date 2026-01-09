@@ -8,10 +8,7 @@ import dev.sakura.client.events.render.Render2DEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.NotificationManager;
 import dev.sakura.client.module.impl.client.*;
-import dev.sakura.client.module.impl.combat.AntiBot;
-import dev.sakura.client.module.impl.combat.AutoPot;
-import dev.sakura.client.module.impl.combat.AutoSnowball;
-import dev.sakura.client.module.impl.combat.KillAura;
+import dev.sakura.client.module.impl.combat.*;
 import dev.sakura.client.module.impl.hud.*;
 import dev.sakura.client.module.impl.movement.*;
 import dev.sakura.client.module.impl.player.*;
@@ -47,6 +44,7 @@ public class ModuleManager {
         add(new Speed());
         add(new Step());
         add(new Velocity());
+        add(new VelocityRubberband());
 
         // Player
         add(new AntiHunger());
@@ -54,8 +52,7 @@ public class ModuleManager {
         add(new AutoPearl());
         add(new Blink());
         add(new BowBomb());
-        add(new Disabler());
-        add(new GrimFly());
+        add(new DisablerBJD());
         add(new FakePlayer());
         add(new GhostHand());
         add(new InventorySort());
