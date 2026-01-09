@@ -1,6 +1,5 @@
 package dev.sakura;
 
-import dev.sakura.lemonchat.client.ChatClient;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -15,7 +14,7 @@ public class Loader implements IMixinConfigPlugin {
     public void onLoad(String mixinPackage) {
         if (loaded) return;
 
-        ChatClient.main(null);
+        //ChatClient.main(null);
 
         loaded = true;
     }

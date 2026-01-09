@@ -7,7 +7,6 @@ import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -29,7 +28,7 @@ public class HudModule extends Module {
 
     protected final MinecraftClient mc;
 
-    public HudModule(String englishName, @Nullable String chineseName, float defaultX, float defaultY) {
+    public HudModule(String englishName, String chineseName, float defaultX, float defaultY) {
         super(englishName, chineseName, null);
         this.defaultX = defaultX;
         this.defaultY = defaultY;
