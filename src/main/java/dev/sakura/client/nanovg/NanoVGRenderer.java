@@ -60,6 +60,10 @@ public class NanoVGRenderer {
         inFrame = true;
 
         float scale = (float) MinecraftClient.getInstance().getWindow().getScaleFactor();
+        if (MinecraftClient.IS_SYSTEM_MAC) {
+            scale /= 2;
+        }
+
         nvgSave(vg);
         nvgScale(vg, scale, scale);
         scaled = true;
