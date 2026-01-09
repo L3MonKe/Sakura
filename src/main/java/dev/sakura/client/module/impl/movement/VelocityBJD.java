@@ -20,7 +20,6 @@ import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.common.CommonPingS2CPacket;
 import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
-import net.minecraft.network.packet.s2c.common.KeepAliveS2CPacket;
 import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
@@ -62,7 +61,7 @@ public class VelocityBJD extends Module {
     private Vec3d velocity;
     private long velocityTime;
     private PlayerEntity target;
-    private VelocityStage stage = VelocityStage.NONE;
+    private VelocityStage stage;
 
     @Override
     protected void onEnable() {
@@ -71,7 +70,6 @@ public class VelocityBJD extends Module {
         targets.clear();
         target = null;
         stage = VelocityStage.NONE;
-        packets.clear();
     }
 
     @Override
@@ -134,10 +132,7 @@ public class VelocityBJD extends Module {
                     return;
                 }
 
-                if (!(p instanceof KeepAliveS2CPacket)
-                        && !(p instanceof CommonPingS2CPacket)
-                        && !(p instanceof EntityS2CPacket)
-                        && !(p instanceof EntityPositionS2CPacket)) {
+                if (!(p instanceof CommonPingS2CPacket) && !(p instanceof EntityS2CPacket) && !(p instanceof EntityPositionS2CPacket)) {
                     return;
                 }
 
@@ -217,7 +212,6 @@ public class VelocityBJD extends Module {
     @EventHandler
     public void onTick(TickEvent.Post event) {
         if (nullCheck()) return;
-        if (!mode.is(Mode.NoXZ)) return;
 
         if (stage == VelocityStage.CLEAR) {
             clear(true);
@@ -264,10 +258,7 @@ public class VelocityBJD extends Module {
         while (!packets.isEmpty()) {
             Packet<? super ClientPlayPacketListener> packet = packets.poll();
             if (packet != null && mc.getNetworkHandler() != null) {
-                try {
-                    packet.apply(mc.getNetworkHandler());
-                } catch (RuntimeException ignored) {
-                }
+                packet.apply(mc.getNetworkHandler());
             }
         }
     }

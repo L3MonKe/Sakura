@@ -24,7 +24,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 
 import java.awt.*;
@@ -35,9 +34,9 @@ public class KillAura extends Module {
         super("KillAura", "杀戮光环", Category.Combat);
     }
 
-    private final NumberValue<Float> aimRange = new NumberValue<>("AimRange", "瞄准范围", 5.0f, 1.0f, 6.0f, 0.1f);
-    private final NumberValue<Float> cps = new NumberValue<>("CPS", "攻击速度", 10f, 1f, 20f, 1f);
-    private final NumberValue<Float> rotateSpeed = new NumberValue<>("RotateSpeed", "转向速度", 180f, 1f, 180f, 1f);
+    private final NumberValue<Double> aimRange = new NumberValue<>("Aim Range", "瞄准范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> cps = new NumberValue<>("CPS", "攻击速度", 10.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Integer> rotateSpeed = new NumberValue<>("Rotation Speed", "转向速度", 10, 1, 10, 1);
     private final BoolValue teamCheck = new BoolValue("Team Check", "队伍检测", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
 
@@ -59,6 +58,7 @@ public class KillAura extends Module {
     @EventHandler
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
+
         boolean scaffoldEnable = Sakura.MODULES.getModule(Scaffold.class).isEnabled();
         boolean blinkEnable = Sakura.MODULES.getModule(Blink.class).isEnabled();
         if (scaffoldEnable || blinkEnable) return;
@@ -68,9 +68,24 @@ public class KillAura extends Module {
         if (target != null) {
             Rotation calculate = RotationUtil.calculate(target);
             Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
-            HitResult hitResult = mc.crosshairTarget;
-            if (hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target))
+            if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
                 attackTarget();
+            }
+        }
+    }
+
+    @EventHandler
+    public void onRender(Render3DEvent event) {
+        if (!render.get()) return;
+        if (targets == null || targets.isEmpty()) return;
+        for (Entity entity : targets) {
+            if (entity.equals(target)) {
+                Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB());
+                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB(), 2f);
+            } else {
+                Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB());
+                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB(), 2f);
+            }
         }
     }
 
@@ -86,7 +101,7 @@ public class KillAura extends Module {
     }
 
     private void findTarget() {
-        float range = aimRange.get();
+        double range = aimRange.get();
         double rangeSq = range * range;
 
         this.target = null;
@@ -94,15 +109,7 @@ public class KillAura extends Module {
 
         Box searchBox = mc.player.getBoundingBox().expand(range);
 
-        List<Entity> candidates = mc.world.getOtherEntities(
-                mc.player,
-                searchBox,
-                e -> e instanceof LivingEntity
-                        && e != mc.player
-                        && e.isAlive()
-                        && !e.isSpectator()
-                        && isEnemy(e)
-        );
+        List<Entity> candidates = mc.world.getOtherEntities(mc.player, searchBox, e -> e instanceof LivingEntity && e != mc.player && e.isAlive() && !e.isSpectator() && isEnemy(e));
 
         targets = candidates;
 
@@ -139,20 +146,5 @@ public class KillAura extends Module {
             }
         }
         return -1;
-    }
-
-    @EventHandler
-    public void onRender(Render3DEvent event) {
-        if (!render.get()) return;
-        if (targets == null || targets.isEmpty()) return;
-        for (Entity entity : targets) {
-            if (entity.equals(target)) {
-                Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB());
-                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB(), 2f);
-            } else {
-                Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB());
-                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB(), 2f);
-            }
-        }
     }
 }
