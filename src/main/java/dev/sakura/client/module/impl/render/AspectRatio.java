@@ -10,5 +10,5 @@ public class AspectRatio extends Module {
         super("AspectRatio", "画面比例", Category.Render);
     }
 
-    public NumberValue<Double> ratio = new NumberValue<>("Ratio", "比例", 1.78, 0.0, 5.0, 0.01);
+    public NumberValue<Double> ratio = new NumberValue<>("Ratio", "比例", 1.78, 0.01, 5.0, 0.01);
 }

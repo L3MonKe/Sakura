@@ -1,12 +1,12 @@
 package dev.sakura.lemonchat.network;
 
 import com.google.gson.Gson;
-import dev.sakura.lemonchat.utils.Mth;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.handler.codec.DecoderException;
 import io.netty.handler.codec.EncoderException;
 import io.netty.util.ByteProcessor;
+import net.minecraft.util.math.MathHelper;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -298,7 +298,7 @@ public class PacketByteBuf extends ByteBuf {
     }
 
     public BitSet readBitSet(int size) {
-        byte[] bs = new byte[Mth.ceilDiv(size, 8)];
+        byte[] bs = new byte[MathHelper.ceilDiv(size, 8)];
         this.readBytes(bs);
         return BitSet.valueOf(bs);
     }
@@ -309,7 +309,7 @@ public class PacketByteBuf extends ByteBuf {
             throw new EncoderException("BitSet is larger than expected size (" + len + ">" + size + ")");
         } else {
             byte[] bs = bitSet.toByteArray();
-            this.writeBytes(Arrays.copyOf(bs, Mth.ceilDiv(size, 8)));
+            this.writeBytes(Arrays.copyOf(bs, MathHelper.ceilDiv(size, 8)));
         }
     }
 

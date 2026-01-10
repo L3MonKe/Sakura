@@ -13,6 +13,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.timeout.TimeoutException;
 import net.minecraft.client.session.Session;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.MathHelper;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -213,8 +214,8 @@ public class ClientSession extends SimpleChannelInboundHandler<Packet> {
     }
 
     protected void tickSecond() {
-        this.averageSentPackets = Mth.lerp(0.75F, (float) this.sentPackets, this.averageSentPackets);
-        this.averageReceivedPackets = Mth.lerp(0.75F, (float) this.receivedPackets, this.averageReceivedPackets);
+        this.averageSentPackets = MathHelper.lerp(0.75F, (float) this.sentPackets, this.averageSentPackets);
+        this.averageReceivedPackets = MathHelper.lerp(0.75F, (float) this.receivedPackets, this.averageReceivedPackets);
         this.sentPackets = 0;
         this.receivedPackets = 0;
     }

@@ -154,24 +154,24 @@ public class RotationUtil {
             yaw = lastYaw + move.yaw;
             pitch = lastPitch + move.pitch;
 
-            if (Math.abs(move.yaw) + Math.abs(move.pitch) > 0.0001) {
-                yaw += (Math.random() - 0.5) / 1000;
-                pitch -= Math.random() / 200;
+            for (int i = 1; i <= (int) (mc.getCurrentFps() / 20f + Math.random() * 10); ++i) {
+                if (Math.abs(move.yaw) + Math.abs(move.pitch) > 0.0001) {
+                    yaw += (Math.random() - 0.5) / 1000;
+                    pitch -= Math.random() / 200;
+                }
+
+                final Rotation rotations = new Rotation(yaw, pitch);
+                final Rotation fixedRotations = applySensitivityPatch(rotations);
+
+                yaw = shortestYaw(lastYaw, fixedRotations.yaw);
+                pitch = Math.max(-90, Math.min(90, fixedRotations.pitch));
             }
-
-            /*
-             * Fixing GCD
-             */
-            final Rotation rotations = new Rotation(yaw, pitch);
-            final Rotation fixedRotations = RotationUtil.applySensitivityPatch(rotations);
-
-            /*
-             * Setting rotations
-             */
-            yaw = MathHelper.wrapDegrees(fixedRotations.yaw);
-            pitch = Math.max(-90, Math.min(90, fixedRotations.pitch));
         }
 
         return new Rotation(yaw, pitch);
+    }
+
+    private static float shortestYaw(float from, float to) {
+        return from + MathHelper.wrapDegrees(to - from);
     }
 }
