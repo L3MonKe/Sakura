@@ -37,8 +37,7 @@ public class MixinPlayerListHud {
 
     @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;ILnet/minecraft/scoreboard/Scoreboard;Lnet/minecraft/scoreboard/ScoreboardObjective;)V", at = @At("HEAD"), cancellable = true)
     private void onRender(DrawContext context, int scaledWindowWidth, Scoreboard scoreboard, ScoreboardObjective objective, CallbackInfo ci) {
-        DynamicIslandHud dynamicIsland = Sakura.MODULES.getModule(DynamicIslandHud.class);
-        if (dynamicIsland == null || !dynamicIsland.isEnabled()) return;
+        if (!Sakura.MODULES.getModule(DynamicIslandHud.class).isEnabled()) return;
         if (!mc.options.playerListKey.isPressed()) return;
 
         List<PlayerListEntry> entries = mc.getNetworkHandler() == null ? List.of() : List.copyOf(mc.getNetworkHandler().getPlayerList());

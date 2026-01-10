@@ -194,16 +194,6 @@ public class MovementUtil {
         event.setStrafe(closestStrafe);
     }
 
-    public static double getMotionX() {
-        if (mc.player == null) return 0;
-        return mc.player.getVelocity().x;
-    }
-
-    public static double getMotionZ() {
-        if (mc.player == null) return 0;
-        return mc.player.getVelocity().z;
-    }
-
     public static float getTickDelta() {
         return mc.getRenderTickCounter().getTickDelta(true);
     }

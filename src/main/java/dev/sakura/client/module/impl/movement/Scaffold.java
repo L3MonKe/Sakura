@@ -57,23 +57,9 @@ public class Scaffold extends Module {
         super("Scaffold", "自动搭路", Category.Movement);
     }
 
-    public static Vec3d getVec3(BlockPos pos, Direction face) {
-        double x = (double) pos.getX() + 0.5;
-        double y = (double) pos.getY() + 0.5;
-        double z = (double) pos.getZ() + 0.5;
-        if (face != Direction.UP && face != Direction.DOWN) {
-            y += 0.08;
-        } else {
-            x += MathUtil.getRandom(0.3, -0.3);
-            z += MathUtil.getRandom(0.3, -0.3);
-        }
-        if (face == Direction.WEST || face == Direction.EAST) {
-            z += MathUtil.getRandom(0.3, -0.3);
-        }
-        if (face == Direction.SOUTH || face == Direction.NORTH) {
-            x += MathUtil.getRandom(0.3, -0.3);
-        }
-        return new Vec3d(x, y, z);
+    @Override
+    public String getSuffix() {
+        return telly.get() ? "Telly" : "Normal";
     }
 
     @EventHandler
@@ -93,9 +79,7 @@ public class Scaffold extends Module {
                 if (onAir() && airTicks >= tellyTick.get() && blockCache != null) {
                     Rotation rotation = getRotation(blockCache);
                     Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-                    if (isRotationReady(rotation)) {
-                        place();
-                    }
+                    place();
                 } else if (!onAir() && blockCache != null) {
                     Rotation rotation = getRotation(blockCache);
                     Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
@@ -105,9 +89,7 @@ public class Scaffold extends Module {
         } else if (onAir() && blockCache != null) {
             Rotation rotation = getRotation(blockCache);
             Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-            if (isRotationReady(rotation)) {
-                place();
-            }
+            place();
         }
 
         if (swapMode.is(SwapMode.Silent)) {
@@ -120,6 +102,25 @@ public class Scaffold extends Module {
         if (mc.player.isOnGround() && MovementUtil.isMoving() && telly.get() && !mc.options.jumpKey.isPressed()) {
             mc.player.jump();
         }
+    }
+
+    public static Vec3d getVec3(BlockPos pos, Direction face) {
+        double x = (double) pos.getX() + 0.5;
+        double y = (double) pos.getY() + 0.5;
+        double z = (double) pos.getZ() + 0.5;
+        if (face != Direction.UP && face != Direction.DOWN) {
+            y += 0.08;
+        } else {
+            x += MathUtil.getRandom(0.3, -0.3);
+            z += MathUtil.getRandom(0.3, -0.3);
+        }
+        if (face == Direction.WEST || face == Direction.EAST) {
+            z += MathUtil.getRandom(0.3, -0.3);
+        }
+        if (face == Direction.SOUTH || face == Direction.NORTH) {
+            x += MathUtil.getRandom(0.3, -0.3);
+        }
+        return new Vec3d(x, y, z);
     }
 
     public int getYLevel() {
@@ -266,15 +267,6 @@ public class Scaffold extends Module {
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, false);
         if (hasRotated) return reverseYaw;
         return rotations;
-    }
-
-    // 更严格的转头检查powered by gemini
-    private boolean isRotationReady(Rotation target) {
-        Rotation current = Managers.ROTATION.getRotation();
-        float yawDiff = MathHelper.angleBetween(current.yaw, target.yaw);
-        float pitchDiff = Math.abs(current.pitch - target.pitch);
-        float tolerance = (float) Math.max(1, 11 - rotationSpeed.get());
-        return yawDiff <= tolerance && pitchDiff <= tolerance;
     }
 
     @Override
