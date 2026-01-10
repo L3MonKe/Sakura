@@ -80,7 +80,7 @@ public class RotationUtil {
 
     public static Rotation applySensitivityPatch(final Rotation rotation) {
         final Rotation previousRotation = new Rotation(((IEntity) mc.player).getPrevYaw(), ((IEntity) mc.player).getPrevPitch());
-        final float mouseSensitivity = (float) (mc.options.getMouseSensitivity().getValue() * (1 + Math.random() / 10000000) * 0.6F + 0.2F);
+        final float mouseSensitivity = (float) (mc.options.getMouseSensitivity().getValue() * 0.6F + 0.2F);
         final double multiplier = mouseSensitivity * mouseSensitivity * mouseSensitivity * 8.0F * 0.15D;
         final float yaw = previousRotation.yaw + (float) (Math.round((rotation.yaw - previousRotation.yaw) / multiplier) * multiplier);
         final float pitch = previousRotation.pitch + (float) (Math.round((rotation.pitch - previousRotation.pitch) / multiplier) * multiplier);
@@ -88,7 +88,7 @@ public class RotationUtil {
     }
 
     public static Rotation applySensitivityPatch(final Rotation rotation, final Rotation previousRotation) {
-        final float mouseSensitivity = (float) (mc.options.getMouseSensitivity().getValue() * (1 + Math.random() / 10000000) * 0.6F + 0.2F);
+        final float mouseSensitivity = (float) (mc.options.getMouseSensitivity().getValue() * 0.6F + 0.2F);
         final double multiplier = mouseSensitivity * mouseSensitivity * mouseSensitivity * 8.0F * 0.15D;
         final float yaw = previousRotation.yaw + (float) (Math.round((rotation.yaw - previousRotation.yaw) / multiplier) * multiplier);
         final float pitch = previousRotation.pitch + (float) (Math.round((rotation.pitch - previousRotation.pitch) / multiplier) * multiplier);
@@ -123,6 +123,9 @@ public class RotationUtil {
             final double deltaPitch = (targetRotation.pitch - lastRotation.pitch);
 
             final double distance = Math.sqrt(deltaYaw * deltaYaw + deltaPitch * deltaPitch);
+            if (distance < 1.0E-6) {
+                return new Rotation(0, 0);
+            }
             final double distributionYaw = Math.abs(deltaYaw / distance);
             final double distributionPitch = Math.abs(deltaPitch / distance);
 
@@ -149,15 +152,22 @@ public class RotationUtil {
         final float lastPitch = lastRotation.pitch;
 
         if (speed != 0) {
-            Rotation move = move(targetRotation, speed);
+            Rotation move = move(lastRotation, targetRotation, speed);
 
             yaw = lastYaw + move.yaw;
             pitch = lastPitch + move.pitch;
 
-            for (int i = 1; i <= (int) (mc.getCurrentFps() / 20f + Math.random() * 10); ++i) {
-                if (Math.abs(move.yaw) + Math.abs(move.pitch) > 0.0001) {
-                    yaw += (Math.random() - 0.5) / 1000;
-                    pitch -= Math.random() / 200;
+            float motion = Math.abs(move.yaw) + Math.abs(move.pitch);
+            int iterations;
+            if (motion < 0.02f) iterations = 1;
+            else if (motion < 0.2f) iterations = 2;
+            else if (motion < 2.0f) iterations = 3;
+            else iterations = 4;
+
+            for (int i = 0; i < iterations; i++) {
+                if (motion > 0.0001f) {
+                    yaw += (float) MathUtil.getRandom(-0.0006, 0.0006);
+                    pitch += (float) MathUtil.getRandom(-0.0035, 0.0035);
                 }
 
                 final Rotation rotations = new Rotation(yaw, pitch);

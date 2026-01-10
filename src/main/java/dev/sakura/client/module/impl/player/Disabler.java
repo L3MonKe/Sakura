@@ -9,7 +9,6 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.BoolValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
-import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.math.MathHelper;
 
@@ -51,10 +50,11 @@ public class Disabler extends Module {
 
         if (grimDuplicateRotPlace.get()) {
             if (event.getPacket() instanceof PlayerMoveC2SPacket packet && packet.changesLook()) {
-                float originalYaw = packet.getYaw(0.0f);
+                IPlayerMoveC2SPacket accessor = (IPlayerMoveC2SPacket) packet;
+                float originalYaw = accessor.getYaw();
 
                 if (originalYaw < 360.0f && originalYaw > -360.0f) {
-                    ((IPlayerMoveC2SPacket) packet).setYaw(originalYaw + 720.0f);
+                    accessor.setYaw(originalYaw + 720.0f);
                 }
 
                 float lastPlayerYaw = this.playerYaw;
@@ -66,20 +66,20 @@ public class Disabler extends Module {
                     float xDiff = Math.abs(this.deltaYaw - this.lastPlacedDeltaYaw);
                     if (xDiff < 1.0E-4f) {
                         log("Disabling DuplicateRotPlace!");
-                        ((IPlayerMoveC2SPacket) packet).setYaw(originalYaw + 0.002f);
+                        accessor.setYaw(originalYaw + 0.002f);
                     }
                 }
-            } else if ((event.getPacket() instanceof PlayerInteractBlockC2SPacket || event.getPacket() instanceof PlayerInteractItemC2SPacket) && this.rotated) {
+            } else if (event.getPacket() instanceof PlayerInteractBlockC2SPacket && this.rotated) {
                 this.lastPlacedDeltaYaw = this.deltaYaw;
                 this.rotated = false;
             }
         }
 
-        if ((acaaimstep.get() || acaperfectrotation.get() || roundRotation.get())
-                && event.getPacket() instanceof PlayerMoveC2SPacket movePacket
-                && movePacket.changesLook()) {
-            float currentYaw = movePacket.getYaw(0.0f);
-            float currentPitch = movePacket.getPitch(0.0f);
+        if ((acaaimstep.get() || acaperfectrotation.get())
+                && event.getPacket() instanceof PlayerMoveC2SPacket movePacket) {
+            IPlayerMoveC2SPacket accessor = (IPlayerMoveC2SPacket) movePacket;
+            float currentYaw = accessor.getYaw();
+            float currentPitch = accessor.getPitch();
 
             boolean modified = false;
 
@@ -110,20 +110,20 @@ public class Disabler extends Module {
             }
 
             if (modified) {
-                IPlayerMoveC2SPacket accessor = (IPlayerMoveC2SPacket) movePacket;
                 accessor.setYaw(currentYaw);
                 accessor.setPitch(MathHelper.clamp(currentPitch, -90.0f, 90.0f));
             }
 
-            this.lastYaw = currentYaw;
-            this.lastPitch = currentPitch;
+            this.lastYaw = accessor.getYaw();
+            this.lastPitch = accessor.getPitch();
         }
 
         if (disAim360.get()) {
             if (event.getPacket() instanceof PlayerMoveC2SPacket packet && packet.changesLook()) {
-                float yaw = packet.getYaw(0.0f);
+                IPlayerMoveC2SPacket accessor = (IPlayerMoveC2SPacket) packet;
+                float yaw = accessor.getYaw();
                 if (yaw < 360.0f && yaw > -360.0f) {
-                    ((IPlayerMoveC2SPacket) packet).setYaw(yaw + 720.0f);
+                    accessor.setYaw(yaw + 720.0f);
                 }
             }
         }

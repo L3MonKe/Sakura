@@ -1,6 +1,8 @@
 package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.events.client.TickEvent;
+import dev.sakura.client.events.input.MouseButtonEvent;
+import dev.sakura.client.events.misc.KeyAction;
 import dev.sakura.client.events.player.StrafeEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
@@ -20,6 +22,7 @@ import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.FallingBlock;
 import net.minecraft.item.BlockItem;
@@ -37,6 +40,7 @@ import java.awt.*;
 
 public class Scaffold extends Module {
     private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
+    private final BoolValue swapBack = new BoolValue("SwapBack", "停用还原", true, () -> swapMode.is(SwapMode.Normal));
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
     private final BoolValue telly = new BoolValue("Telly", "Telly搭路", false);
     private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 1, 0, 8, 1, telly::get);
@@ -52,9 +56,18 @@ public class Scaffold extends Module {
     private int yLevel;
     private BlockCache blockCache;
     private int airTicks;
+    private boolean shouldSwapBack;
 
     public Scaffold() {
         super("Scaffold", "自动搭路", Category.Movement);
+
+        ClientTickEvents.START_CLIENT_TICK.register(minecraftClient -> {
+            if (minecraftClient.player == null || minecraftClient.world == null) return;
+            if (!shouldSwapBack) return;
+
+            shouldSwapBack = false;
+            InvUtil.swapBack();
+        });
     }
 
     @Override
@@ -63,8 +76,21 @@ public class Scaffold extends Module {
     }
 
     @EventHandler
+    public void onMouseButton(MouseButtonEvent event) {
+        if (mc.currentScreen != null) return;
+        if (event.getButton() == 0 && event.getAction() == KeyAction.Press) {
+            event.setCancelled(true);
+            mc.options.attackKey.setPressed(false);
+        }
+    }
+
+    @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
+
+        if (mc.options.attackKey.isPressed()) {
+            mc.options.attackKey.setPressed(false);
+        }
 
         getBlockInfo();
 
@@ -175,7 +201,8 @@ public class Scaffold extends Module {
                 FindItemResult item = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
                 if (!item.found()) return;
 
-                InvUtil.swap(item.isOffhand() ? mc.player.getInventory().selectedSlot : item.slot(), swapMode.is(SwapMode.Silent));
+                boolean remember = swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get());
+                InvUtil.swap(item.isOffhand() ? mc.player.getInventory().selectedSlot : item.slot(), remember);
                 hand = item.getHand();
             }
         }
@@ -272,10 +299,15 @@ public class Scaffold extends Module {
     @Override
     protected void onEnable() {
         blockCache = null;
+        shouldSwapBack = false;
+        mc.options.attackKey.setPressed(false);
     }
 
     @Override
     protected void onDisable() {
+        if (swapMode.is(SwapMode.Normal) && swapBack.get()) {
+            shouldSwapBack = true;
+        }
         blockCache = null;
     }
 
