@@ -300,7 +300,6 @@ public class Scaffold extends Module {
     protected void onEnable() {
         blockCache = null;
         shouldSwapBack = false;
-        mc.options.attackKey.setPressed(false);
     }
 
     @Override
