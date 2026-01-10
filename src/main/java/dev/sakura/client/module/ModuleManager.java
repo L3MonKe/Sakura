@@ -59,13 +59,12 @@ public class ModuleManager {
         add(new GrimFly());
         add(new FakePlayer());
         add(new GhostHand());
-        add(new InventorySort());
         add(new NoRotate());
         add(new PacketEat());
         add(new PacketMine());
         add(new Replenish());
         add(new TimerModule());
-        add(new InventoryManager());
+        add(new InvManager());
         add(new ChestStealer());
 
         // Render

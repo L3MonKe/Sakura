@@ -112,10 +112,6 @@ public class RotationUtil {
         return new Rotation(yaw, pitch);
     }
 
-    public static Rotation move(final Rotation targetRotation, final double speed) {
-        return move(RotationManager.lastRotations, targetRotation, speed);
-    }
-
     public static Rotation move(final Rotation lastRotation, final Rotation targetRotation, double speed) {
         if (speed != 0) {
 
