@@ -74,9 +74,9 @@ public class Velocity extends Module {
     public final BoolValue noExplosions = new BoolValue("No Explosions", "无爆炸", false);
     public final BoolValue pauseInLiquid = new BoolValue("Pause In Liquid", "液体中暂停", false);
     public final BoolValue waterPush = new BoolValue("No Water Push", "无水推", false);
-    public final BoolValue entityPush = new BoolValue("No Entity Push", "无实体推", true);
-    public final BoolValue blockPush = new BoolValue("No Block Push", "无方块推", true);
-    public final BoolValue fishBob = new BoolValue("No Fish Bob", "无鱼漂", true);
+    public final BoolValue entityPush = new BoolValue("No Entity Push", "无实体推", false);
+    public final BoolValue blockPush = new BoolValue("No Block Push", "无方块推", false);
+    public final BoolValue fishBob = new BoolValue("No Fish Bob", "无鱼漂", false);
 
     private final TimerUtil timer = new TimerUtil();
     private boolean flag;
