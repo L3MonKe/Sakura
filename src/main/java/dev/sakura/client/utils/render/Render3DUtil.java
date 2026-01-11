@@ -318,10 +318,6 @@ public class Render3DUtil {
     }
 
     public static Vec3d worldToScreen(Vec3d vec) {
-        return worldToScreen(vec, -1);
-    }
-
-    public static Vec3d worldToScreen(Vec3d vec, float scale) {
         var camera = mc.gameRenderer.getCamera();
         int width = mc.getWindow().getScaledWidth();
         int height = mc.getWindow().getScaledHeight();
@@ -352,7 +348,6 @@ public class Render3DUtil {
         float screenX = width / 2f + (dotLeft / dotLook) / (tanHalfFov * aspectRatio) * (width / 2f);
         float screenY = height / 2f - (dotUp / dotLook) / tanHalfFov * (height / 2f);
 
-        double scaleFactor = (scale == -1) ? (1.0 / dotLook) : scale;
-        return new Vec3d(screenX, screenY, scaleFactor);
+        return new Vec3d(screenX, screenY, 1.0 / dotLook);
     }
 }
