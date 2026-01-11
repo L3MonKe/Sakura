@@ -292,17 +292,12 @@ public class Render3DUtil {
     }
 
     public static void drawText(String text, @NotNull Vec3d pos, double offX, double offY, double textOffset, @NotNull Color color) {
-        drawText(text, pos, offX, offY, textOffset, color, -1);
-    }
-
-    public static void drawText(String text, @NotNull Vec3d pos, double offX, double offY, double textOffset, @NotNull Color color, float scale) {
-        Vec3d screenPos = worldToScreen(pos.add(offX, offY, 0), scale);
+        Vec3d screenPos = worldToScreen(pos.add(offX, offY, 0));
         if (screenPos != null) {
             float finalScale = (float) screenPos.z;
-            if (scale == -1) {
-                finalScale *= 5.0f;
-                finalScale = Math.max(finalScale, 0.5f);
-            }
+
+            finalScale *= 5.0f;
+            finalScale = Math.max(finalScale, 0.5f);
 
             float s = finalScale;
 

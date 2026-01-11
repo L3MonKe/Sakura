@@ -20,6 +20,7 @@ import net.minecraft.util.Hand;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class InvManager extends Module {
     public InvManager() {
@@ -57,8 +58,7 @@ public class InvManager extends Module {
 
     private final TimerUtil timer = new TimerUtil();
 
-    private int currentOffhandSlot = -1;
-    private Item currentOffhandItem = null;
+    private long nextDelayMs = 0L;
     private final List<Slot> gappleStackSlots = new ArrayList<>();
     private final List<Slot> throwableStackSlots = new ArrayList<>();
     private final List<Slot> protectedSlots = new ArrayList<>();
@@ -69,324 +69,369 @@ public class InvManager extends Module {
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if ((mode.is(Mode.InvOpen) && mc.currentScreen instanceof InventoryScreen)
-                || (mode.is(Mode.NoMove) && !MovementUtil.isMoving())
-                || mode.is(Mode.Always)) {
+        boolean shouldRun =
+                (mode.is(Mode.InvOpen) && mc.currentScreen instanceof InventoryScreen)
+                        || (mode.is(Mode.NoMove) && !MovementUtil.isMoving())
+                        || mode.is(Mode.Always);
+        if (!shouldRun) {
+            timer.reset();
+            nextDelayMs = 0L;
+            currentBestBlockSlot = null;
+            return;
+        }
 
-            List<Slot> itemSlots = mc.player.playerScreenHandler.slots.stream().filter(Slot::hasStack).filter(slot -> slot.id > 4).toList();
-            List<Slot> unnecessarySlots = new ArrayList<>();
+        List<Slot> unnecessarySlots = new ArrayList<>();
 
-            gappleStackSlots.clear();
-            throwableStackSlots.clear();
-            protectedSlots.clear();
+        gappleStackSlots.clear();
+        throwableStackSlots.clear();
+        protectedSlots.clear();
 
-            Slot bestSwordSlot = null;
-            Slot bestBlockSlot = null;
-            Slot bestFoodSlot = null;
-            Slot[] bestArmorSlots = new Slot[4];
-            Slot bestBowSlot = null;
-            Slot bestEnderPearlSlot = null;
-            Slot bestFishingRodSlot = null;
-            Slot bestAxeSlot = null;
-            Slot bestPickaxeSlot = null;
-            Slot bestBucketSlot = null;
+        Slot bestSwordSlot = null;
+        Slot bestBlockSlot = null;
+        Slot bestFoodSlot = null;
+        Slot[] bestArmorSlots = new Slot[4];
+        Slot bestBowSlot = null;
+        Slot bestEnderPearlSlot = null;
+        Slot bestFishingRodSlot = null;
+        Slot bestAxeSlot = null;
+        Slot bestPickaxeSlot = null;
+        Slot bestBucketSlot = null;
 
-            for (Slot slot : itemSlots) {
-                Item item = slot.getStack().getItem();
+        for (Slot slot : mc.player.playerScreenHandler.slots) {
+            if (!slot.hasStack()) continue;
+            if (slot.id < 9 || slot.id > 44) continue;
 
-                if (isProtectedItem(slot.getStack())) {
-                    protectedSlots.add(slot);
-                    continue;
+            ItemStack stack = slot.getStack();
+            Item item = stack.getItem();
+
+            if (isProtectedItem(stack)) {
+                protectedSlots.add(slot);
+                continue;
+            }
+
+            if (item == Items.TNT && keepTNT.get()) {
+                continue;
+            }
+
+            if (isGapple(item)) {
+                gappleStackSlots.add(slot);
+            } else if (isThrowableItem(stack)) {
+                throwableStackSlots.add(slot);
+            }
+
+            if (item instanceof SwordItem) {
+                if (bestSwordSlot == null || InvUtil.getDamage(stack) > InvUtil.getDamage(bestSwordSlot.getStack())) {
+                    unnecessarySlots.add(bestSwordSlot);
+                    bestSwordSlot = slot;
+                } else {
+                    unnecessarySlots.add(slot);
                 }
+            } else if (item instanceof ArmorItem armorItem) {
+                int targetSlot = switch (armorItem.getDefaultStack().get(DataComponentTypes.EQUIPPABLE).slot()) {
+                    case HEAD -> 0;
+                    case CHEST -> 1;
+                    case LEGS -> 2;
+                    case FEET -> 3;
+                    default -> -1;
+                };
+                if (targetSlot < 0 || targetSlot >= bestArmorSlots.length) continue;
 
-                if (slot.getStack().getItem() == Items.TNT && keepTNT.get()) {
-                    continue;
+                Slot bestArmorSlot = bestArmorSlots[targetSlot];
+                if (bestArmorSlot == null || InvUtil.getDamage(stack) > InvUtil.getDamage(bestArmorSlot.getStack())) {
+                    unnecessarySlots.add(bestArmorSlot);
+                    bestArmorSlots[targetSlot] = slot;
+                } else {
+                    unnecessarySlots.add(slot);
                 }
+            } else if (item instanceof BlockItem && InvUtil.isBlockPlaceable(item.getDefaultStack())) {
+                if (bestBlockSlot == null) {
+                    bestBlockSlot = slot;
+                } else {
+                    int currentCount = bestBlockSlot.getStack().getCount();
+                    int newCount = stack.getCount();
 
-                if (item == Items.GOLDEN_APPLE || item == Items.ENCHANTED_GOLDEN_APPLE) {
-                    gappleStackSlots.add(slot);
-                } else if (isThrowableItem(slot.getStack())) {
-                    throwableStackSlots.add(slot);
-                }
-
-                if (item instanceof SwordItem) {
-                    if (bestSwordSlot == null || InvUtil.getDamage(slot.getStack()) > InvUtil.getDamage(bestSwordSlot.getStack())) {
-                        unnecessarySlots.add(bestSwordSlot);
-                        bestSwordSlot = slot;
-                    } else {
-                        unnecessarySlots.add(slot);
-                    }
-                } else if (item instanceof ArmorItem armorItem) {
-                    int targetSlot = switch (armorItem.getDefaultStack().get(DataComponentTypes.EQUIPPABLE).slot()) {
-                        case HEAD -> 0;
-                        case CHEST -> 1;
-                        case LEGS -> 2;
-                        case FEET -> 3;
-                        default -> -1;
-                    };
-                    if (targetSlot < 0 || targetSlot >= bestArmorSlots.length) {
-                        continue;
-                    }
-                    Slot bestArmorSlot = bestArmorSlots[targetSlot];
-                    if (bestArmorSlot == null || InvUtil.getDamage(slot.getStack()) > InvUtil.getDamage(bestArmorSlot.getStack())) {
-                        unnecessarySlots.add(bestArmorSlot);
-                        bestArmorSlots[targetSlot] = slot;
-                    } else {
-                        unnecessarySlots.add(slot);
-                    }
-                } else if (item instanceof BlockItem && InvUtil.isBlockPlaceable(item.getDefaultStack())) {
-                    if (bestBlockSlot == null) {
-                        bestBlockSlot = slot;
-                    } else {
-                        int currentCount = bestBlockSlot.getStack().getCount();
-                        int newCount = slot.getStack().getCount();
-
-                        if (currentBestBlockSlot != null && currentBestBlockSlot.hasStack() &&
-                                currentBestBlockSlot.getStack().getItem() instanceof BlockItem &&
-                                InvUtil.getBlockIndex() > blocks.get()) {
-                            if (slot.id == currentBestBlockSlot.id) {
-                                bestBlockSlot = slot;
-                            } else if (newCount > currentBestBlockSlot.getStack().getCount() + 10) {
-                                unnecessarySlots.add(bestBlockSlot);
-                                bestBlockSlot = slot;
-                                currentBestBlockSlot = slot;
-                            } else {
-                                unnecessarySlots.add(slot);
-                            }
-                        } else {
-                            if (newCount > currentCount && InvUtil.getBlockIndex() > blocks.get()) {
-                                unnecessarySlots.add(bestBlockSlot);
-                                bestBlockSlot = slot;
-                                currentBestBlockSlot = slot;
-                            } else if (newCount == currentCount) {
-                                if (currentBestBlockSlot != null && currentBestBlockSlot.id == bestBlockSlot.id) {
-                                    unnecessarySlots.add(slot);
-                                } else {
-                                    if (slot.id < bestBlockSlot.id) {
-                                        unnecessarySlots.add(bestBlockSlot);
-                                        bestBlockSlot = slot;
-                                        currentBestBlockSlot = slot;
-                                    } else {
-                                        unnecessarySlots.add(slot);
-                                    }
-                                }
-                            } else {
-                                if (InvUtil.getBlockIndex() > blocks.get()) {
-                                    unnecessarySlots.add(slot);
-                                }
-                            }
-                        }
-                    }
-                } else if (item instanceof AxeItem) {
-                    if (bestAxeSlot == null || InvUtil.getDamage(slot.getStack()) > InvUtil.getDamage(bestAxeSlot.getStack())) {
-                        unnecessarySlots.add(bestAxeSlot);
-                        bestAxeSlot = slot;
-                    } else {
-                        unnecessarySlots.add(slot);
-                    }
-                } else if (item instanceof PickaxeItem) {
-                    if (bestPickaxeSlot == null || InvUtil.getDamage(slot.getStack()) > InvUtil.getDamage(bestPickaxeSlot.getStack())) {
-                        unnecessarySlots.add(bestPickaxeSlot);
-                        bestPickaxeSlot = slot;
-                    } else {
-                        unnecessarySlots.add(slot);
-                    }
-                } else if (item instanceof BowItem) {
-                    if (bestBowSlot == null || InvUtil.getDamage(slot.getStack()) > InvUtil.getDamage(bestBowSlot.getStack())) {
-                        unnecessarySlots.add(bestBowSlot);
-                        bestBowSlot = slot;
-                    } else {
-                        unnecessarySlots.add(slot);
-                    }
-                } else if (item instanceof FishingRodItem) {
-                    if (bestFishingRodSlot == null) {
-                        bestFishingRodSlot = slot;
-                    } else {
-                        unnecessarySlots.add(slot);
-                    }
-                } else if (item instanceof EnderPearlItem) {
-                    if (bestEnderPearlSlot == null || slot.getStack().getCount() > bestEnderPearlSlot.getStack().getCount()) {
-                        unnecessarySlots.add(bestEnderPearlSlot);
-                        bestEnderPearlSlot = slot;
-                    } else {
-                        unnecessarySlots.add(slot);
-                    }
-                } else if (item.getComponents().contains(DataComponentTypes.FOOD)) {
-                    if (item == Items.GOLDEN_APPLE || item == Items.ENCHANTED_GOLDEN_APPLE) {
-                        if (bestFoodSlot == null) {
-                            bestFoodSlot = slot;
-                        } else {
-                            Item currentBest = bestFoodSlot.getStack().getItem();
-                            if (item == Items.ENCHANTED_GOLDEN_APPLE && currentBest == Items.GOLDEN_APPLE) {
-                                bestFoodSlot = slot;
-                            } else if (item == Items.ENCHANTED_GOLDEN_APPLE && currentBest == Items.ENCHANTED_GOLDEN_APPLE) {
-                                bestFoodSlot = slot;
-                            } else if (item == Items.GOLDEN_APPLE && currentBest == Items.GOLDEN_APPLE) {
-                                bestFoodSlot = slot;
-                            }
-                        }
-                    } else {
-                        if (bestFoodSlot == null) {
-                            bestFoodSlot = slot;
+                    if (currentBestBlockSlot != null && currentBestBlockSlot.hasStack()
+                            && currentBestBlockSlot.getStack().getItem() instanceof BlockItem
+                            && InvUtil.getBlockIndex() > blocks.get()) {
+                        if (slot.id == currentBestBlockSlot.id) {
+                            bestBlockSlot = slot;
+                        } else if (newCount > currentBestBlockSlot.getStack().getCount() + 10) {
+                            unnecessarySlots.add(bestBlockSlot);
+                            bestBlockSlot = slot;
+                            currentBestBlockSlot = slot;
                         } else {
                             unnecessarySlots.add(slot);
                         }
+                    } else {
+                        if (newCount > currentCount && InvUtil.getBlockIndex() > blocks.get()) {
+                            unnecessarySlots.add(bestBlockSlot);
+                            bestBlockSlot = slot;
+                            currentBestBlockSlot = slot;
+                        } else if (newCount == currentCount) {
+                            if (currentBestBlockSlot != null && currentBestBlockSlot.id == bestBlockSlot.id) {
+                                unnecessarySlots.add(slot);
+                            } else {
+                                if (slot.id < bestBlockSlot.id) {
+                                    unnecessarySlots.add(bestBlockSlot);
+                                    bestBlockSlot = slot;
+                                    currentBestBlockSlot = slot;
+                                } else {
+                                    unnecessarySlots.add(slot);
+                                }
+                            }
+                        } else {
+                            if (InvUtil.getBlockIndex() > blocks.get()) {
+                                unnecessarySlots.add(slot);
+                            }
+                        }
                     }
-                } else if (item == Items.WATER_BUCKET) {
-                    if (bestBucketSlot == null) {
-                        bestBucketSlot = slot;
+                }
+            } else if (item instanceof AxeItem) {
+                if (bestAxeSlot == null || InvUtil.getDamage(stack) > InvUtil.getDamage(bestAxeSlot.getStack())) {
+                    unnecessarySlots.add(bestAxeSlot);
+                    bestAxeSlot = slot;
+                } else {
+                    unnecessarySlots.add(slot);
+                }
+            } else if (item instanceof PickaxeItem) {
+                if (bestPickaxeSlot == null || InvUtil.getDamage(stack) > InvUtil.getDamage(bestPickaxeSlot.getStack())) {
+                    unnecessarySlots.add(bestPickaxeSlot);
+                    bestPickaxeSlot = slot;
+                } else {
+                    unnecessarySlots.add(slot);
+                }
+            } else if (item instanceof BowItem) {
+                if (bestBowSlot == null || InvUtil.getDamage(stack) > InvUtil.getDamage(bestBowSlot.getStack())) {
+                    unnecessarySlots.add(bestBowSlot);
+                    bestBowSlot = slot;
+                } else {
+                    unnecessarySlots.add(slot);
+                }
+            } else if (item instanceof FishingRodItem) {
+                if (bestFishingRodSlot == null) {
+                    bestFishingRodSlot = slot;
+                } else {
+                    unnecessarySlots.add(slot);
+                }
+            } else if (item instanceof EnderPearlItem) {
+                if (bestEnderPearlSlot == null || stack.getCount() > bestEnderPearlSlot.getStack().getCount()) {
+                    unnecessarySlots.add(bestEnderPearlSlot);
+                    bestEnderPearlSlot = slot;
+                } else {
+                    unnecessarySlots.add(slot);
+                }
+            } else if (item.getComponents().contains(DataComponentTypes.FOOD)) {
+                if (isGapple(item)) {
+                    if (bestFoodSlot == null) {
+                        bestFoodSlot = slot;
+                    } else {
+                        Item currentBest = bestFoodSlot.getStack().getItem();
+                        if (item == Items.ENCHANTED_GOLDEN_APPLE && currentBest == Items.GOLDEN_APPLE) {
+                            bestFoodSlot = slot;
+                        } else if (item == Items.ENCHANTED_GOLDEN_APPLE && currentBest == Items.ENCHANTED_GOLDEN_APPLE) {
+                            bestFoodSlot = slot;
+                        } else if (item == Items.GOLDEN_APPLE && currentBest == Items.GOLDEN_APPLE) {
+                            bestFoodSlot = slot;
+                        }
+                    }
+                } else {
+                    if (bestFoodSlot == null) {
+                        bestFoodSlot = slot;
                     } else {
                         unnecessarySlots.add(slot);
                     }
                 }
-            }
-
-            if (currentBestBlockSlot != null && (!currentBestBlockSlot.hasStack() ||
-                    !(currentBestBlockSlot.getStack().getItem() instanceof BlockItem))) {
-                currentBestBlockSlot = null;
-            }
-
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
-                for (Slot slot : unnecessarySlots) {
-                    if (slot != null && !isProtectedItem(slot.getStack())) {
-                        if (slot.getStack().getItem() instanceof BlockItem) {
-                            if (InvUtil.getBlockIndex() > blocks.get()) {
-                                click(slot, 1, SlotActionType.THROW);
-                                timer.reset();
-                                return;
-                            }
-                        } else {
-                            click(slot, 1, SlotActionType.THROW);
-                            timer.reset();
-                            return;
-                        }
-                    }
+            } else if (item == Items.WATER_BUCKET) {
+                if (bestBucketSlot == null) {
+                    bestBucketSlot = slot;
+                } else {
+                    unnecessarySlots.add(slot);
                 }
             }
+        }
 
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
-                for (Slot slot : protectedSlots) {
-                    if (slot.id >= 36 && slot.id <= 44) {
-                        for (int i = 9; i < 36; i++) {
-                            Slot backpackSlot = mc.player.playerScreenHandler.slots.get(i);
-                            if (!backpackSlot.hasStack()) {
-                                click(slot, i, SlotActionType.SWAP);
-                                break;
-                            }
-                        }
-                        timer.reset();
-                        return;
-                    }
-                }
-            }
-
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
-                for (int i = 0; i < bestArmorSlots.length; i++) {
-                    Slot slot = bestArmorSlots[i];
-                    if (slot != null) {
-                        if (!isArmorEquipped(i, slot)) {
-                            click(slot, 0, SlotActionType.QUICK_MOVE);
-                            timer.reset();
-                            return;
-                        }
-                    }
-                }
-            }
-
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
-                if (bestSwordSlot != null && bestSwordSlot.getStack().getItem() instanceof SwordItem) {
-                    int targetSlotId = 36 + slotSword.get() - 1;
-                    if (bestSwordSlot.id != targetSlotId) {
-                        click(bestSwordSlot, slotSword.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestBlockSlot != null && bestBlockSlot.getStack().getItem() instanceof BlockItem) {
-                    int targetSlotId = 36 + slotBlock.get() - 1;
-                    if (bestBlockSlot.id != targetSlotId && InvUtil.isBlockPlaceable(bestBlockSlot.getStack()) &&
-                            InvUtil.getBlockIndex() > blocks.get()) {
-                        click(bestBlockSlot, slotBlock.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestFoodSlot != null && bestFoodSlot.getStack().getItem().getComponents().contains(DataComponentTypes.FOOD)) {
-                    int targetSlotId = 36 + slotFood.get() - 1;
-                    if (bestFoodSlot.id != targetSlotId) {
-                        click(bestFoodSlot, slotFood.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestEnderPearlSlot != null && bestEnderPearlSlot.getStack().getItem() instanceof EnderPearlItem) {
-                    int targetSlotId = 36 + slotPearl.get() - 1;
-                    if (bestEnderPearlSlot.id != targetSlotId) {
-                        click(bestEnderPearlSlot, slotPearl.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestFishingRodSlot != null && bestFishingRodSlot.getStack().getItem() instanceof FishingRodItem) {
-                    int targetSlotId = 36 + slotFishingRod.get() - 1;
-                    if (bestFishingRodSlot.id != targetSlotId) {
-                        click(bestFishingRodSlot, slotFishingRod.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestBowSlot != null && bestBowSlot.getStack().getItem() instanceof BowItem) {
-                    int targetSlotId = 36 + slotBow.get() - 1;
-                    if (bestBowSlot.id != targetSlotId) {
-                        click(bestBowSlot, slotBow.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestAxeSlot != null && bestAxeSlot.getStack().getItem() instanceof AxeItem) {
-                    int targetSlotId = 36 + slotAxe.get() - 1;
-                    if (bestAxeSlot.id != targetSlotId) {
-                        click(bestAxeSlot, slotAxe.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestPickaxeSlot != null && bestPickaxeSlot.getStack().getItem() instanceof PickaxeItem) {
-                    int targetSlotId = 36 + slotPickaxe.get() - 1;
-                    if (bestPickaxeSlot.id != targetSlotId) {
-                        click(bestPickaxeSlot, slotPickaxe.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-
-                if (bestBucketSlot != null && bestBucketSlot.getStack().getItem() == Items.WATER_BUCKET) {
-                    int targetSlotId = 36 + slotBucket.get() - 1;
-                    if (bestBucketSlot.id != targetSlotId && slotBucket.get() > 0) {
-                        click(bestBucketSlot, slotBucket.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
-                        return;
-                    }
-                }
-                timer.reset();
-                return;
-            }
-
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
-                manageOffhand();
-                timer.reset();
-            }
-        } else {
-            timer.reset();
+        if (currentBestBlockSlot != null && (currentBestBlockSlot.id < 9 || currentBestBlockSlot.id > 44
+                || !currentBestBlockSlot.hasStack()
+                || !(currentBestBlockSlot.getStack().getItem() instanceof BlockItem))) {
             currentBestBlockSlot = null;
         }
+
+        if (!readyToAct()) return;
+
+        if (tryDropUnnecessary(unnecessarySlots)) return;
+        if (tryMoveProtected()) return;
+        if (tryEquipArmor(bestArmorSlots)) return;
+        if (trySwapHotbar(bestSwordSlot, bestBlockSlot, bestFoodSlot, bestEnderPearlSlot, bestFishingRodSlot, bestBowSlot, bestAxeSlot, bestPickaxeSlot, bestBucketSlot))
+            return;
+        if (manageOffhand()) return;
+    }
+
+    private boolean readyToAct() {
+        if (nextDelayMs <= 0L) {
+            nextDelayMs = randomDelayMs();
+        }
+        return timer.passedMS(nextDelayMs);
+    }
+
+    private void markActed() {
+        timer.reset();
+        nextDelayMs = randomDelayMs();
+    }
+
+    private long randomDelayMs() {
+        int min = Math.max(0, delay.getMin());
+        int max = Math.max(min, delay.get());
+        if (max == min) return max;
+        return ThreadLocalRandom.current().nextLong((long) min, (long) max + 1L);
+    }
+
+    private boolean tryDropUnnecessary(List<Slot> unnecessarySlots) {
+        for (Slot slot : unnecessarySlots) {
+            if (slot == null) continue;
+            if (slot.id < 9 || slot.id > 44) continue;
+            if (!slot.hasStack()) continue;
+            if (isProtectedItem(slot.getStack())) continue;
+
+            if (slot.getStack().getItem() instanceof BlockItem) {
+                if (InvUtil.getBlockIndex() <= blocks.get()) continue;
+            }
+
+            click(slot, 1, SlotActionType.THROW);
+            markActed();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean tryMoveProtected() {
+        for (Slot slot : protectedSlots) {
+            if (slot.id < 36 || slot.id > 44) continue;
+            for (int i = 9; i < 36; i++) {
+                Slot backpackSlot = mc.player.playerScreenHandler.slots.get(i);
+                if (!backpackSlot.hasStack()) {
+                    click(slot, i, SlotActionType.SWAP);
+                    markActed();
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean tryEquipArmor(Slot[] bestArmorSlots) {
+        for (int i = 0; i < bestArmorSlots.length; i++) {
+            Slot slot = bestArmorSlots[i];
+            if (slot == null) continue;
+            if (isArmorEquipped(i, slot)) continue;
+            click(slot, 0, SlotActionType.QUICK_MOVE);
+            markActed();
+            return true;
+        }
+        return false;
+    }
+
+    private boolean trySwapHotbar(
+            Slot bestSwordSlot,
+            Slot bestBlockSlot,
+            Slot bestFoodSlot,
+            Slot bestEnderPearlSlot,
+            Slot bestFishingRodSlot,
+            Slot bestBowSlot,
+            Slot bestAxeSlot,
+            Slot bestPickaxeSlot,
+            Slot bestBucketSlot
+    ) {
+        int swordIndex = slotSword.get() - 1;
+        if (bestSwordSlot != null && swordIndex >= 0 && swordIndex < 9 && bestSwordSlot.getStack().getItem() instanceof SwordItem) {
+            int targetSlotId = 36 + swordIndex;
+            if (bestSwordSlot.id != targetSlotId) {
+                click(bestSwordSlot, swordIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int blockIndex = slotBlock.get() - 1;
+        if (bestBlockSlot != null && blockIndex >= 0 && blockIndex < 9 && bestBlockSlot.getStack().getItem() instanceof BlockItem) {
+            int targetSlotId = 36 + blockIndex;
+            if (bestBlockSlot.id != targetSlotId && InvUtil.isBlockPlaceable(bestBlockSlot.getStack()) && InvUtil.getBlockIndex() > blocks.get()) {
+                click(bestBlockSlot, blockIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int foodIndex = slotFood.get() - 1;
+        if (bestFoodSlot != null && foodIndex >= 0 && foodIndex < 9 && bestFoodSlot.getStack().getItem().getComponents().contains(DataComponentTypes.FOOD)) {
+            int targetSlotId = 36 + foodIndex;
+            if (bestFoodSlot.id != targetSlotId) {
+                click(bestFoodSlot, foodIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int pearlIndex = slotPearl.get() - 1;
+        if (bestEnderPearlSlot != null && pearlIndex >= 0 && pearlIndex < 9 && bestEnderPearlSlot.getStack().getItem() instanceof EnderPearlItem) {
+            int targetSlotId = 36 + pearlIndex;
+            if (bestEnderPearlSlot.id != targetSlotId) {
+                click(bestEnderPearlSlot, pearlIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int rodIndex = slotFishingRod.get() - 1;
+        if (bestFishingRodSlot != null && rodIndex >= 0 && rodIndex < 9 && bestFishingRodSlot.getStack().getItem() instanceof FishingRodItem) {
+            int targetSlotId = 36 + rodIndex;
+            if (bestFishingRodSlot.id != targetSlotId) {
+                click(bestFishingRodSlot, rodIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int bowIndex = slotBow.get() - 1;
+        if (bestBowSlot != null && bowIndex >= 0 && bowIndex < 9 && bestBowSlot.getStack().getItem() instanceof BowItem) {
+            int targetSlotId = 36 + bowIndex;
+            if (bestBowSlot.id != targetSlotId) {
+                click(bestBowSlot, bowIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int axeIndex = slotAxe.get() - 1;
+        if (bestAxeSlot != null && axeIndex >= 0 && axeIndex < 9 && bestAxeSlot.getStack().getItem() instanceof AxeItem) {
+            int targetSlotId = 36 + axeIndex;
+            if (bestAxeSlot.id != targetSlotId) {
+                click(bestAxeSlot, axeIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int pickaxeIndex = slotPickaxe.get() - 1;
+        if (bestPickaxeSlot != null && pickaxeIndex >= 0 && pickaxeIndex < 9 && bestPickaxeSlot.getStack().getItem() instanceof PickaxeItem) {
+            int targetSlotId = 36 + pickaxeIndex;
+            if (bestPickaxeSlot.id != targetSlotId) {
+                click(bestPickaxeSlot, pickaxeIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        int bucketIndex = slotBucket.get() - 1;
+        if (bestBucketSlot != null && bucketIndex >= 0 && bucketIndex < 9 && bestBucketSlot.getStack().getItem() == Items.WATER_BUCKET) {
+            int targetSlotId = 36 + bucketIndex;
+            if (bestBucketSlot.id != targetSlotId) {
+                click(bestBucketSlot, bucketIndex, SlotActionType.SWAP);
+                markActed();
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private boolean isProtectedItem(ItemStack stack) {
@@ -395,108 +440,104 @@ public class InvManager extends Module {
                 (item == Items.TOTEM_OF_UNDYING);
     }
 
-    private void manageOffhand() {
+    private boolean manageOffhand() {
         OffhandMode mode = offHandMode.get();
-        if (mode == OffhandMode.None) return;
+        if (mode == OffhandMode.None) return false;
 
         Slot offhandSlot = getOffhandSlot();
-        if (offhandSlot == null) return;
+        if (offhandSlot == null) return false;
 
         ItemStack offhandStack = offhandSlot.getStack();
 
         if (mode == OffhandMode.Gapple) {
             if (!isGapple(offhandStack.getItem())) {
-                if (!gappleStackSlots.isEmpty()) {
-                    gappleStackSlots.sort((slot1, slot2) -> {
-                        Item item1 = slot1.getStack().getItem();
-                        Item item2 = slot2.getStack().getItem();
-
-                        if (item1 == Items.ENCHANTED_GOLDEN_APPLE && item2 != Items.ENCHANTED_GOLDEN_APPLE) {
-                            return -1;
-                        } else if (item1 != Items.ENCHANTED_GOLDEN_APPLE && item2 == Items.ENCHANTED_GOLDEN_APPLE) {
-                            return 1;
-                        }
-                        return Integer.compare(slot2.getStack().getCount(), slot1.getStack().getCount());
-                    });
-
-                    Slot bestGappleSlot = gappleStackSlots.get(0);
-                    if (bestGappleSlot.id != 45) {
-                        if (offhandStack.isEmpty()) {
-                            putItemInSlotOFF(45, bestGappleSlot.id);
-                        } else {
-                            putItemInSlotOFF(bestGappleSlot.id, 45);
-                        }
-                        currentOffhandSlot = 45;
-                        currentOffhandItem = bestGappleSlot.getStack().getItem();
-                        timer.reset();
-                    }
+                Slot bestGappleSlot = findBestGappleSlot();
+                if (bestGappleSlot != null && bestGappleSlot.id != 45) {
+                    putItemInSlotOFF(bestGappleSlot.id, 45);
+                    markActed();
+                    return true;
                 }
             }
         } else if (mode == OffhandMode.Throwable) {
             if (!isThrowableItem(offhandStack)) {
-                if (!throwableStackSlots.isEmpty()) {
-                    throwableStackSlots.sort((slot1, slot2) -> {
-                        ItemStack item1 = slot1.getStack();
-                        ItemStack item2 = slot2.getStack();
-                        int priority1 = getThrowablePriority(item1);
-                        int priority2 = getThrowablePriority(item2);
-
-                        if (priority1 != priority2) {
-                            return Integer.compare(priority2, priority1);
-                        }
-                        return Integer.compare(item2.getCount(), item1.getCount());
-                    });
-
-                    Slot bestThrowableSlot = throwableStackSlots.get(0);
-                    if (bestThrowableSlot.id != 45) {
-                        if (offhandStack.isEmpty()) {
-                            putItemInSlotOFF(45, bestThrowableSlot.id);
-                        } else {
-                            putItemInSlotOFF(bestThrowableSlot.id, 45);
-                        }
-                        currentOffhandSlot = 45;
-                        currentOffhandItem = bestThrowableSlot.getStack().getItem();
-                        timer.reset();
-                    }
+                Slot bestThrowableSlot = findBestThrowableSlot();
+                if (bestThrowableSlot != null && bestThrowableSlot.id != 45) {
+                    putItemInSlotOFF(bestThrowableSlot.id, 45);
+                    markActed();
+                    return true;
                 }
             }
-        }
-    }
-
-    private boolean isBetterGapple(ItemStack newStack, ItemStack currentStack) {
-        Item newItem = newStack.getItem();
-        Item currentItem = currentStack.getItem();
-
-        if (newItem == Items.ENCHANTED_GOLDEN_APPLE && currentItem != Items.ENCHANTED_GOLDEN_APPLE) {
-            return true;
-        } else if (newItem != Items.ENCHANTED_GOLDEN_APPLE && currentItem == Items.ENCHANTED_GOLDEN_APPLE) {
-            return false;
-        }
-
-        if (newStack.getCount() > currentStack.getCount()) {
-            return true;
-        } else if (newStack.getCount() < currentStack.getCount()) {
-            return false;
-        }
-
-        return Math.random() < 0.5;
-    }
-
-    private boolean isBetterThrowable(ItemStack newStack, ItemStack currentStack) {
-        int newPriority = getThrowablePriority(newStack);
-        int currentPriority = getThrowablePriority(currentStack);
-
-        if (newPriority > currentPriority) {
-            return true;
-        } else if (newPriority == currentPriority) {
-            return newStack.getCount() > currentStack.getCount();
         }
         return false;
     }
 
-    private void putItemInSlotOFF(int slot, int slotIn) {
-        mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, slot, 0, SlotActionType.PICKUP, mc.player);
-        mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, slotIn, 0, SlotActionType.PICKUP, mc.player);
+    private Slot findBestGappleSlot() {
+        Slot best = null;
+        for (Slot slot : gappleStackSlots) {
+            if (slot == null || !slot.hasStack()) continue;
+            Item item = slot.getStack().getItem();
+            if (!isGapple(item)) continue;
+
+            if (best == null) {
+                best = slot;
+                continue;
+            }
+
+            Item bestItem = best.getStack().getItem();
+            if (item == Items.ENCHANTED_GOLDEN_APPLE && bestItem != Items.ENCHANTED_GOLDEN_APPLE) {
+                best = slot;
+                continue;
+            }
+            if (item != Items.ENCHANTED_GOLDEN_APPLE && bestItem == Items.ENCHANTED_GOLDEN_APPLE) {
+                continue;
+            }
+
+            int count = slot.getStack().getCount();
+            int bestCount = best.getStack().getCount();
+            if (count > bestCount || (count == bestCount && slot.id < best.id)) {
+                best = slot;
+            }
+        }
+        return best;
+    }
+
+    private Slot findBestThrowableSlot() {
+        Slot best = null;
+        for (Slot slot : throwableStackSlots) {
+            if (slot == null || !slot.hasStack()) continue;
+            ItemStack stack = slot.getStack();
+            if (!isThrowableItem(stack)) continue;
+
+            if (best == null) {
+                best = slot;
+                continue;
+            }
+
+            int priority = getThrowablePriority(stack);
+            ItemStack bestStack = best.getStack();
+            int bestPriority = getThrowablePriority(bestStack);
+            if (priority > bestPriority) {
+                best = slot;
+                continue;
+            }
+            if (priority < bestPriority) {
+                continue;
+            }
+
+            int count = stack.getCount();
+            int bestCount = bestStack.getCount();
+            if (count > bestCount || (count == bestCount && slot.id < best.id)) {
+                best = slot;
+            }
+        }
+        return best;
+    }
+
+    private void putItemInSlotOFF(int fromSlotId, int toSlotId) {
+        int syncId = mc.player.currentScreenHandler.syncId;
+        mc.interactionManager.clickSlot(syncId, fromSlotId, 0, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(syncId, toSlotId, 0, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(syncId, fromSlotId, 0, SlotActionType.PICKUP, mc.player);
     }
 
     private boolean isGapple(Item item) {
@@ -504,10 +545,14 @@ public class InvManager extends Module {
     }
 
     private Slot getOffhandSlot() {
-        return mc.player.playerScreenHandler.slots.stream()
-                .filter(slot -> slot.id == 45)
-                .findFirst()
-                .orElse(null);
+        if (mc.player.playerScreenHandler.slots.size() > 45) {
+            Slot slot = mc.player.playerScreenHandler.slots.get(45);
+            if (slot != null && slot.id == 45) return slot;
+        }
+        for (Slot slot : mc.player.playerScreenHandler.slots) {
+            if (slot.id == 45) return slot;
+        }
+        return null;
     }
 
     private boolean isThrowableItem(ItemStack stack) {
@@ -527,10 +572,6 @@ public class InvManager extends Module {
         if (swing.get() && type == SlotActionType.THROW) {
             mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
         }
-    }
-
-    public static double randomBetween(double min, double max) {
-        return (max + (min - max) * Math.random());
     }
 
     private boolean isArmorEquipped(int index, Slot slot) {
@@ -563,8 +604,7 @@ public class InvManager extends Module {
 
     @Override
     protected void onDisable() {
-        currentOffhandSlot = -1;
-        currentOffhandItem = null;
+        nextDelayMs = 0L;
         currentBestBlockSlot = null;
         gappleStackSlots.clear();
         throwableStackSlots.clear();
