@@ -6,6 +6,7 @@ import com.zeta.client.events.entity.AttackEvent;
 import com.zeta.client.events.input.HandleInputEvent;
 import com.zeta.client.shaders.WindowResizeCallback;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.RunArgs;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.Window;
 import net.minecraft.entity.Entity;
@@ -27,6 +28,11 @@ public class MixinMinecraftClient {
     @Shadow
     @Final
     private Window window;
+
+    @Inject(method = "<init>(Lnet/minecraft/client/RunArgs;)V", at = @At("TAIL"))
+    private void onInit(RunArgs args, CallbackInfo ci) {
+        Zeta.init((MinecraftClient) (Object) this);
+    }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void onPreTick(CallbackInfo info) {

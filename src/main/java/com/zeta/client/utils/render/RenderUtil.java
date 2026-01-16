@@ -2,11 +2,11 @@ package com.zeta.client.utils.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.zeta.client.utils.color.ColorUtil;
-import com.zeta.client.utils.math.MathUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.MathHelper;
 import org.joml.Matrix4f;
 
 import java.awt.*;
@@ -103,6 +103,6 @@ public class RenderUtil {
     }
 
     public static float animate(float end, float start, float multiple) {
-        return (1 - MathUtil.clamp((float) (deltaTime() * multiple), 0, 1)) * end + MathUtil.clamp((float) (deltaTime() * multiple), 0, 1) * start;
+        return (1 - MathHelper.clamp((float) (deltaTime() * multiple), 0, 1)) * end + MathHelper.clamp((float) (deltaTime() * multiple), 0, 1) * start;
     }
 }

@@ -69,14 +69,6 @@ public class MathUtil {
         return MathHelper.wrapDegrees((float) yawToLocation);
     }
 
-    public static float lerp(final float a, final float b, final float c) {
-        return a + c * (b - a);
-    }
-
-    public static double lerp(double old, double newVal, double amount) {
-        return (1.0 - amount) * old + amount * newVal;
-    }
-
     public static double interpolateReverse(final double current, final double previous, final double multiplier) {
         return previous + (current - previous) * multiplier;
     }
@@ -103,24 +95,6 @@ public class MathUtil {
                 interpolateReverse(currentVector.getY(), previousVector.getY(), multiplier),
                 interpolateReverse(currentVector.getZ(), previousVector.getZ(), multiplier)
         );
-    }
-
-    public static double linearInterpolate(double min, double max, double norm) {
-        return (max - min) * norm + min;
-    }
-
-    // --- Clamps ---
-
-    public static float clamp(float num, float min, float max) {
-        return num < min ? min : Math.min(num, max);
-    }
-
-    public static double clamp(double num, double min, double max) {
-        return num < min ? min : Math.min(num, max);
-    }
-
-    public static int clamp(int num, int min, int max) {
-        return num < min ? min : Math.min(num, max);
     }
 
     // --- Randoms ---

@@ -2,6 +2,7 @@ package com.zeta.client.mixin.render;
 
 import com.zeta.client.gui.mainmenu.MainMenuScreen;
 import com.zeta.client.shaders.SplashShader;
+import com.zeta.client.utils.animations.AnimationUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.SplashOverlay;
@@ -56,10 +57,16 @@ public class MixinSplashOverlay {
     private long sakura$startTime = -1L;
 
     @Unique
+    private long sakura$handoffStartTime = -1L;
+
+    @Unique
     private MainMenuScreen mainMenuScreen = null;
 
     @Unique
     private static final float PROGRESS_SMOOTH_SPEED = 0.3f;
+
+    @Unique
+    private static final long HANDOFF_DURATION_MS = 1400L;
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void onRenderHead(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
@@ -96,17 +103,17 @@ public class MixinSplashOverlay {
         float fadeOut = 0f;
 
         if (SplashShader.getInstance().isTransitionStarted()) {
-            float transitionProgress = SplashShader.getInstance().getTransitionProgress();
-            zoom = 1.0f + transitionProgress * transitionProgress * 25.0f;
-            if (transitionProgress > 0.3f) {
-                fadeOut = (transitionProgress - 0.3f) / 0.7f;
-                fadeOut = fadeOut * fadeOut;
-            }
+            float p = sakura$handoffStartTime <= 0L ? 0f : (float) (currentTime - sakura$handoffStartTime) / (float) HANDOFF_DURATION_MS;
+            p = MathHelper.clamp(p, 0f, 1f);
+
+            zoom = 1.0f + 0.35f * AnimationUtil.easeOutCubic(p);
+            fadeOut = AnimationUtil.easeInOutCubic(AnimationUtil.smoothstep(0.05f, 1.0f, p));
 
             if (mainMenuScreen != null) {
                 if (mainMenuScreen.width != width || mainMenuScreen.height != height) {
                     mainMenuScreen.init(this.client, width, height);
                 }
+                mainMenuScreen.setEntranceProgress(p);
                 mainMenuScreen.render(context, 0, 0, delta);
             } else if (this.client.currentScreen != null) {
                 this.client.currentScreen.render(context, 0, 0, delta);
@@ -117,7 +124,7 @@ public class MixinSplashOverlay {
             SplashShader.getInstance().render(width, height, sakura$displayProgress, fadeOut, zoom);
         }
 
-        if (fadeOutProgress >= 2.0F || SplashShader.getInstance().isTransitionComplete()) {
+        if (fadeOutProgress >= 2.0F || (sakura$handoffStartTime > 0L && currentTime - sakura$handoffStartTime >= HANDOFF_DURATION_MS)) {
             this.client.setOverlay(null);
             if (mainMenuScreen != null) {
                 this.client.setScreen(mainMenuScreen);
@@ -125,6 +132,7 @@ public class MixinSplashOverlay {
             }
             SplashShader.getInstance().cleanup();
             shaderInitialized = false;
+            sakura$handoffStartTime = -1L;
         }
 
         if (this.reloadCompleteTime == -1L && this.reload.isComplete() && sakura$displayProgress >= 0.95f && (!this.reloading || fadeInProgress >= 2.0F)) {
@@ -137,6 +145,7 @@ public class MixinSplashOverlay {
 
             this.reloadCompleteTime = Util.getMeasuringTimeMs();
             SplashShader.getInstance().startTransition();
+            sakura$handoffStartTime = this.reloadCompleteTime;
 
             if (!this.reloading) {
                 mainMenuScreen = new MainMenuScreen();

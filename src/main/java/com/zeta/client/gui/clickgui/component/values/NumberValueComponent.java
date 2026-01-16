@@ -12,6 +12,7 @@ import com.zeta.client.utils.math.MathUtil;
 import com.zeta.client.utils.render.RenderUtil;
 import com.zeta.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -111,7 +112,7 @@ public class NumberValueComponent extends Component {
 
         if (dragging && !editing) {
             final double difference = max - min;
-            final double value = min + MathUtil.clamp((mouseX - getX()) / w, 0, 1) * difference;
+            final double value = min + MathHelper.clamp((mouseX - getX()) / w, 0, 1) * difference;
             setValueFromDouble(MathUtil.incValue(value, setting.getStep().doubleValue()));
         }
         super.render(guiGraphics, mouseX, mouseY, partialTicks);

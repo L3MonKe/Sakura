@@ -3,8 +3,7 @@
   "minVersion": "0.8",
   "package": "com.zeta.client.mixin",
   "compatibilityLevel": "JAVA_21",
-  "refmap": "Sakura-refmap.json",
-  "plugin": "com.zeta.Loader",
+  "plugin": "com.zeta.MixinPlugin",
   "client": [
     "MixinMain",
     "accessor.IAccessorBundlePacket",

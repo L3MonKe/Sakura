@@ -10,6 +10,7 @@ import com.zeta.client.utils.animations.Direction;
 import com.zeta.client.utils.animations.impl.EaseOutSine;
 import com.zeta.client.values.impl.ColorValue;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -105,12 +106,12 @@ public class ColorValueComponent extends Component {
                 pickerX = Math.max(Math.min(panelX + panelWidth - 2, pickerX), panelX - 2);
 
                 if (pickingHue) {
-                    setting.setHue(clamp01((mouseY - hueY) / panelHeight));
+                    setting.setHue(MathHelper.clamp((mouseY - hueY) / panelHeight, 0f, 1f));
                 }
 
                 if (pickingOthers) {
-                    setting.setBrightness(clamp01(1 - ((mouseY - panelY) / panelHeight)));
-                    setting.setSaturation(clamp01((mouseX - panelX) / panelWidth));
+                    setting.setBrightness(MathHelper.clamp(1 - ((mouseY - panelY) / panelHeight), 0f, 1f));
+                    setting.setSaturation(MathHelper.clamp((mouseX - panelX) / panelWidth, 0f, 1f));
                 }
 
                 float rowsStartY = panelY + panelHeight + 6 * scale;
@@ -137,23 +138,23 @@ public class ColorValueComponent extends Component {
 
                 if (setting.allowAlpha()) {
                     int a = Math.max(0, Math.min(255, Math.round(alphaValue * 255.0f)));
-                    drawAlphaRow(rowX, aY, rowWidth, labelWidth, sliderX, sliderWidth, inputWidth, rowHeight, "A", EditField.A, a, new Color(r, g, b));
+                    drawAlphaRow(rowX, aY, rowWidth, labelWidth, sliderX, sliderWidth, inputWidth, rowHeight, a, new Color(r, g, b));
                 }
 
                 if (pickingR) {
-                    int newR = Math.round(255.0f * clamp01((mouseX - sliderX) / sliderWidth));
+                    int newR = Math.round(255.0f * MathHelper.clamp((mouseX - sliderX) / sliderWidth, 0f, 1f));
                     setColorRGB(newR, g, b);
                 }
                 if (pickingG) {
-                    int newG = Math.round(255.0f * clamp01((mouseX - sliderX) / sliderWidth));
+                    int newG = Math.round(255.0f * MathHelper.clamp((mouseX - sliderX) / sliderWidth, 0f, 1f));
                     setColorRGB(r, newG, b);
                 }
                 if (pickingB) {
-                    int newB = Math.round(255.0f * clamp01((mouseX - sliderX) / sliderWidth));
+                    int newB = Math.round(255.0f * MathHelper.clamp((mouseX - sliderX) / sliderWidth, 0f, 1f));
                     setColorRGB(r, g, newB);
                 }
                 if (pickingA && setting.allowAlpha()) {
-                    float newAlpha = clamp01((mouseX - sliderX) / sliderWidth);
+                    float newAlpha = MathHelper.clamp((mouseX - sliderX) / sliderWidth, 0f, 1f);
                     setting.setAlpha(newAlpha);
                 }
 
@@ -297,7 +298,7 @@ public class ColorValueComponent extends Component {
         NanoVGHelper.drawGradientRRect2(sliderX, barY, sliderWidth, barHeight, radius, startColor, endColor);
 
         float t = (value - min) / (float) (max - min);
-        float filled = sliderWidth * clamp01(t);
+        float filled = sliderWidth * MathHelper.clamp(t, 0f, 1f);
         drawRightMask(sliderX, barY, sliderWidth, barHeight, radius, filled, new Color(0, 0, 0, 120));
 
         float handleX = sliderX + filled;
@@ -336,24 +337,23 @@ public class ColorValueComponent extends Component {
         }
     }
 
-    private void drawAlphaRow(float rowX, float rowY, float rowWidth, float labelWidth, float sliderX, float sliderWidth, float inputWidth, float rowHeight,
-                              String label, EditField field, int value, Color baseRgb) {
+    private void drawAlphaRow(float rowX, float rowY, float rowWidth, float labelWidth, float sliderX, float sliderWidth, float inputWidth, float rowHeight, int value, Color baseRgb) {
         float barHeight = 6 * scale;
         float barY = rowY + (rowHeight - barHeight) / 2f;
         float radius = 2.5f * scale;
 
         float labelFontSize = (float) ClickGui.getFontSize() * 0.6f;
-        NanoVGHelper.drawString(label, rowX, rowY + rowHeight / 2f + 2 * scale, FontLoader.regular(labelFontSize), labelFontSize, new Color(210, 210, 210));
+        NanoVGHelper.drawString("A", rowX, rowY + rowHeight / 2f + 2 * scale, FontLoader.regular(labelFontSize), labelFontSize, new Color(210, 210, 210));
 
         NanoVGHelper.drawRoundRect(sliderX, barY, sliderWidth, barHeight, radius, new Color(20, 20, 20, 180));
-        float inset = 1.0f * scale;
+        float inset = scale;
         drawCheckerboardRounded(sliderX + inset, barY + inset, Math.max(0.0f, sliderWidth - inset * 2), Math.max(0.0f, barHeight - inset * 2), Math.max(0.0f, radius - inset));
         NanoVGHelper.drawGradientRRect2(sliderX, barY, sliderWidth, barHeight, radius,
                 new Color(baseRgb.getRed(), baseRgb.getGreen(), baseRgb.getBlue(), 0),
                 new Color(baseRgb.getRed(), baseRgb.getGreen(), baseRgb.getBlue(), 255));
         NanoVGHelper.drawRoundRectOutline(sliderX, barY, sliderWidth, barHeight, radius, 0.75f * scale, new Color(0, 0, 0, 120));
 
-        float filled = sliderWidth * clamp01(value / 255.0f);
+        float filled = sliderWidth * MathHelper.clamp(value / 255.0f, 0f, 1f);
         drawRightMask(sliderX, barY, sliderWidth, barHeight, radius, filled, new Color(0, 0, 0, 120));
 
         float handleX = sliderX + filled;
@@ -365,7 +365,7 @@ public class ColorValueComponent extends Component {
         float inputHeight = 12 * scale;
         float inputY = rowY + (rowHeight - inputHeight) / 2f;
 
-        if (editField == field) {
+        if (editField == EditField.A) {
             NanoVGHelper.drawRoundRect(inputX, inputY, inputWidth, inputHeight, 2 * scale, new Color(60, 60, 80));
             NanoVGHelper.drawRoundRectOutline(inputX, inputY, inputWidth, inputHeight, 2 * scale, 0.75f * scale, new Color(100, 100, 150));
 
@@ -397,30 +397,6 @@ public class ColorValueComponent extends Component {
         Color newColor = new Color(r, g, b, (int) (currentAlpha * 255));
         setting.set(newColor);
         setting.setAlpha(currentAlpha);
-    }
-
-    private void drawCheckerboard(float x, float y, float width, float height) {
-        NanoVGHelper.drawRect(x, y, width, height, new Color(200, 200, 200));
-
-        int squareSize = 4;
-        boolean white = true;
-        for (int i = 0; i < width; i += squareSize) {
-            for (int j = 0; j < height; j += squareSize) {
-                if (!white) {
-                    Color color = new Color(150, 150, 150);
-                    float drawWidth = Math.min(squareSize, width - i);
-                    float drawHeight = Math.min(squareSize, height - j);
-
-                    if (i > 2 && i < width - 2 || j > 0 && j < height - 0) {
-                        NanoVGHelper.drawRect(x + i, y + j, drawWidth, drawHeight, color);
-                    }
-                }
-                white = !white;
-            }
-            if (height / squareSize % 2 == 0) {
-                white = !white;
-            }
-        }
     }
 
     private void drawCheckerboardRounded(float x, float y, float width, float height, float radius) {
@@ -749,9 +725,5 @@ public class ColorValueComponent extends Component {
 
     private boolean isHovering(double x, double y, double width, double height, double mouseX, double mouseY) {
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
-    }
-
-    private float clamp01(double v) {
-        return (float) Math.max(0.0, Math.min(1.0, v));
     }
 }

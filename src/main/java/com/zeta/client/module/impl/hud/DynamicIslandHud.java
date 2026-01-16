@@ -17,6 +17,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.GameMode;
 
 import java.awt.*;
@@ -196,14 +197,14 @@ public class DynamicIslandHud extends HudModule {
 
         if (phase == Phase.TAB_EXPAND) {
             if (tabDt < Timing.TAB_TRANSITION) {
-                float mergeT = clamp(tabDt / (Timing.TAB_TRANSITION * 0.45f), 0f, 1f);
-                float expandT = clamp((tabDt - Timing.TAB_TRANSITION * 0.25f) / (Timing.TAB_TRANSITION * 0.75f), 0f, 1f);
+                float mergeT = MathHelper.clamp(tabDt / (Timing.TAB_TRANSITION * 0.45f), 0f, 1f);
+                float expandT = MathHelper.clamp((tabDt - Timing.TAB_TRANSITION * 0.25f) / (Timing.TAB_TRANSITION * 0.75f), 0f, 1f);
                 float mergeP = easeOut(mergeT);
                 float expandP = easeOut(expandT);
                 tabMergeProgress = mergeP;
                 setPhase(Phase.TAB_EXPAND, expandP,
-                        lerp(Size.BASE_W, tabTargetW, mergeP),
-                        lerp(Size.BASE_H, tabTargetH, expandP),
+                        MathHelper.lerp(mergeP, Size.BASE_W, tabTargetW),
+                        MathHelper.lerp(expandP, Size.BASE_H, tabTargetH),
                         1f);
             } else {
                 tabMergeProgress = 1f;
@@ -211,14 +212,14 @@ public class DynamicIslandHud extends HudModule {
             }
         } else if (phase == Phase.TAB_COLLAPSE) {
             if (tabDt < Timing.TAB_TRANSITION) {
-                float mergeT = clamp(1f - (tabDt / (Timing.TAB_TRANSITION * 0.45f)), 0f, 1f);
-                float expandT = clamp(1f - ((tabDt - Timing.TAB_TRANSITION * 0.10f) / (Timing.TAB_TRANSITION * 0.90f)), 0f, 1f);
+                float mergeT = MathHelper.clamp(1f - (tabDt / (Timing.TAB_TRANSITION * 0.45f)), 0f, 1f);
+                float expandT = MathHelper.clamp(1f - ((tabDt - Timing.TAB_TRANSITION * 0.10f) / (Timing.TAB_TRANSITION * 0.90f)), 0f, 1f);
                 float mergeP = easeOut(mergeT);
                 float expandP = easeOut(expandT);
                 tabMergeProgress = mergeP;
                 setPhase(Phase.TAB_COLLAPSE, expandP,
-                        lerp(Size.BASE_W, tabTargetW, mergeP),
-                        lerp(Size.BASE_H, tabTargetH, expandP),
+                        MathHelper.lerp(mergeP, Size.BASE_W, tabTargetW),
+                        MathHelper.lerp(expandP, Size.BASE_H, tabTargetH),
                         1f);
             } else {
                 tabMergeProgress = 0f;
@@ -234,9 +235,9 @@ public class DynamicIslandHud extends HudModule {
             } else if (dt < Timing.EXPAND) {
                 float p = easeOut(dt / (float) Timing.EXPAND);
                 setPhase(Phase.EXPANDING, p,
-                        lerp(Size.BASE_W, targetExpandedWidth, p),
-                        lerp(Size.BASE_H, Size.EXPANDED_H, p),
-                        lerp(1f, 1f, p));
+                        MathHelper.lerp(p, Size.BASE_W, targetExpandedWidth),
+                        MathHelper.lerp(p, Size.BASE_H, Size.EXPANDED_H),
+                        MathHelper.lerp(p, 1f, 1f));
             } else if (dt < Timing.EXPAND + Timing.DISPLAY) {
                 float p = (dt - Timing.EXPAND) / (float) Timing.DISPLAY;
                 setPhase(Phase.DISPLAY, p, targetExpandedWidth, Size.EXPANDED_H, 1f);
@@ -246,8 +247,8 @@ public class DynamicIslandHud extends HudModule {
             } else {
                 float p = easeOut((dt - Timing.EXPAND - Timing.DISPLAY - Timing.COLLAPSE_1) / (float) Timing.COLLAPSE_2);
                 setPhase(Phase.COLLAPSE_2, p,
-                        lerp(targetExpandedWidth, Size.BASE_W, p),
-                        lerp(Size.EXPANDED_H, Size.BASE_H, p),
+                        MathHelper.lerp(p, targetExpandedWidth, Size.BASE_W),
+                        MathHelper.lerp(p, Size.EXPANDED_H, Size.BASE_H),
                         1f);
             }
         }
@@ -312,9 +313,9 @@ public class DynamicIslandHud extends HudModule {
         float clampedBlurOpacity = Math.max(0f, Math.min(1f, blurOpacity * opacity));
         float timeBgX = animX - Size.ELEMENT_SPACING - Size.ELEMENT_WIDTH;
         if (phase == Phase.TAB_EXPAND) {
-            timeBgX = lerp(timeBgX, animX, tabMergeProgress);
+            timeBgX = MathHelper.lerp(tabMergeProgress, timeBgX, animX);
         } else if (phase == Phase.TAB_COLLAPSE) {
-            timeBgX = lerp(timeBgX, animX, tabMergeProgress);
+            timeBgX = MathHelper.lerp(tabMergeProgress, timeBgX, animX);
         }
 
         Shader2DUtil.drawRoundedBlur(
@@ -323,9 +324,9 @@ public class DynamicIslandHud extends HudModule {
         );
         float nameBgX = animX + animW + Size.ELEMENT_SPACING;
         if (phase == Phase.TAB_EXPAND) {
-            nameBgX = lerp(nameBgX, animX + animW - Size.ELEMENT_WIDTH, tabMergeProgress);
+            nameBgX = MathHelper.lerp(tabMergeProgress, nameBgX, animX + animW - Size.ELEMENT_WIDTH);
         } else if (phase == Phase.TAB_COLLAPSE) {
-            nameBgX = lerp(nameBgX, animX + animW - Size.ELEMENT_WIDTH, tabMergeProgress);
+            nameBgX = MathHelper.lerp(tabMergeProgress, nameBgX, animX + animW - Size.ELEMENT_WIDTH);
         }
 
         Shader2DUtil.drawRoundedBlur(
@@ -430,9 +431,9 @@ public class DynamicIslandHud extends HudModule {
         float timeBgX = animX - Size.ELEMENT_SPACING - Size.ELEMENT_WIDTH;
 
         if (phase == Phase.TAB_EXPAND) {
-            timeBgX = lerp(timeBgX, animX, tabMergeProgress);
+            timeBgX = MathHelper.lerp(tabMergeProgress, timeBgX, animX);
         } else if (phase == Phase.TAB_COLLAPSE) {
-            timeBgX = lerp(timeBgX, animX, tabMergeProgress);
+            timeBgX = MathHelper.lerp(tabMergeProgress, timeBgX, animX);
         }
 
         if (enableBloom.get()) {
@@ -448,9 +449,9 @@ public class DynamicIslandHud extends HudModule {
         float nameBgX = animX + animW + Size.ELEMENT_SPACING;
 
         if (phase == Phase.TAB_EXPAND) {
-            nameBgX = lerp(nameBgX, animX + animW - Size.ELEMENT_WIDTH, tabMergeProgress);
+            nameBgX = MathHelper.lerp(tabMergeProgress, nameBgX, animX + animW - Size.ELEMENT_WIDTH);
         } else if (phase == Phase.TAB_COLLAPSE) {
-            nameBgX = lerp(nameBgX, animX + animW - Size.ELEMENT_WIDTH, tabMergeProgress);
+            nameBgX = MathHelper.lerp(tabMergeProgress, nameBgX, animX + animW - Size.ELEMENT_WIDTH);
         }
 
         if (enableBloom.get()) {
@@ -605,14 +606,6 @@ public class DynamicIslandHud extends HudModule {
 
     private long elaTab() {
         return tabStartTime == -1L ? 0 : System.currentTimeMillis() - tabStartTime;
-    }
-
-    private static float lerp(float a, float b, float t) {
-        return a + (b - a) * t;
-    }
-
-    private static float clamp(float v, float min, float max) {
-        return Math.max(min, Math.min(max, v));
     }
 
     private static float easeOut(float t) {

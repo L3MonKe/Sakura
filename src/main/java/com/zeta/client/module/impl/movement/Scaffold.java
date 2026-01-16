@@ -112,7 +112,7 @@ public class Scaffold extends Module {
                 }
                 airTicks++;
             }
-        } else if (onAir() && blockCache != null) {
+        } else if (blockCache != null) {
             Rotation rotation = getRotation(blockCache);
             Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
             place();

@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.util.List;
 import java.util.Set;
 
-public class Loader implements IMixinConfigPlugin {
+public class MixinPlugin implements IMixinConfigPlugin {
     private boolean loaded = false;
 
     @Override

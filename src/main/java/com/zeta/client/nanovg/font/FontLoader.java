@@ -22,6 +22,10 @@ public class FontLoader {
     }
 
     public static int icons(float size) {
+        return FontManager.font("woqubuzaoshuo.ttf", size);
+    }
+
+    public static int newIc(float size) {
         return FontManager.font("icon.ttf", size);
     }
 

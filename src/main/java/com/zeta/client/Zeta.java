@@ -99,36 +99,27 @@ public class Zeta {
     public static ClickGuiScreen CLICKGUI;
     public static HudEditorScreen HUDEDITOR;
 
-    public static void setInstance() {
+    public static void init(MinecraftClient client) {
         LOGGER.info("正在开始初始化!");
 
-        mc = MinecraftClient.getInstance();
+        mc = client;
 
-        // 事件巴士(doge 初始化
         EVENT_BUS.registerLambdaFactory(Zeta.class.getPackageName(), (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
         EXECUTOR = Executors.newFixedThreadPool(1);
 
-        // 初始化Managers
         Managers.init();
 
-        // 初始化Modules
         MODULES = new ModuleManager();
 
-        // 初始化配置文件系统
         CONFIG = new ConfigManager();
 
-        // 初始化Command系统
         COMMAND = new CommandManager();
 
-        // 初始化ClickGui
         CLICKGUI = new ClickGuiScreen();
 
-        // 初始化HudEditor
         HUDEDITOR = new HudEditorScreen();
 
-
-        // 初始化Shaders
         Shader2DUtil.init();
 
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {

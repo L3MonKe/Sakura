@@ -21,7 +21,12 @@ public class SoundManager {
     private SoundEvent registerSound(String name) {
         registerSoundFile(name + ".ogg");
         Identifier id = Identifier.of("zeta", name);
-        return Registry.register(Registries.SOUND_EVENT, id, SoundEvent.of(id));
+        SoundEvent event = SoundEvent.of(id);
+        try {
+            return Registry.register(Registries.SOUND_EVENT, id, event);
+        } catch (IllegalStateException ignored) {
+            return event;
+        }
     }
 
     private void registerSoundFile(String soundFile) {

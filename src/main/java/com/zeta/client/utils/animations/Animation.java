@@ -102,9 +102,5 @@ public abstract class Animation {
         }
     }
 
-
-    //This is where the animation equation should go, for example, a logistic function. Output should range from 0 - 1.
-    //This will take the timer's time as an input, x.
     protected abstract double getEquation(double x);
-
 }
