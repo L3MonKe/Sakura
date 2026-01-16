@@ -256,14 +256,25 @@ public class InvManager extends Module {
             currentBestBlockSlot = null;
         }
 
-        if (!readyToAct()) return;
-
-        if (tryDropUnnecessary(unnecessarySlots)) return;
-        if (tryMoveProtected()) return;
-        if (tryEquipArmor(bestArmorSlots)) return;
-        if (trySwapHotbar(bestSwordSlot, bestBlockSlot, bestFoodSlot, bestEnderPearlSlot, bestFishingRodSlot, bestBowSlot, bestAxeSlot, bestPickaxeSlot, bestBucketSlot))
+        if (!readyToAct()) {
             return;
-        if (manageOffhand()) return;
+        }
+
+        if (tryDropUnnecessary(unnecessarySlots)) {
+            return;
+        }
+        if (tryMoveProtected()) {
+            return;
+        }
+        if (tryEquipArmor(bestArmorSlots)) {
+            return;
+        }
+        if (trySwapHotbar(bestSwordSlot, bestBlockSlot, bestFoodSlot, bestEnderPearlSlot, bestFishingRodSlot, bestBowSlot, bestAxeSlot, bestPickaxeSlot, bestBucketSlot)) {
+            return;
+        }
+        if (manageOffhand()) {
+            return;
+        }
     }
 
     private boolean readyToAct() {
