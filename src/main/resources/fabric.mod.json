@@ -7,11 +7,6 @@
   "authors": [
     "Fin_LemonKe"
   ],
-  "environment": "client",
-  "entrypoints": {
-    "client": [
-    ]
-  },
   "mixins": [
     "zeta.mixins.json"
   ],

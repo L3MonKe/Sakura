@@ -376,7 +376,7 @@ public class MainMenuScreen extends Screen {
     }
 
     private void renderSocialLinks(float centerX, float centerY, float scale, Color color, float opacity) {
-        if (opacity <= 0.01f) {
+        if (opacity <= 0.01f || socialLinks.size() < 4) {
             for (SocialLink link : socialLinks) {
                 link.setBounds(0f, 0f, 0f, 0f);
             }
