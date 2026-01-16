@@ -1,0 +1,34 @@
+{
+  "enable": {
+    "sounds": [
+      {
+        "name": "zeta:augustus/enable",
+        "stream": false
+      }
+    ]
+  },
+  "disable": {
+    "sounds": [
+      {
+        "name": "zeta:augustus/disable",
+        "stream": false
+      }
+    ]
+  },
+  "activate": {
+    "sounds": [
+      {
+        "name": "zeta:jello/activate",
+        "stream": false
+      }
+    ]
+  },
+  "deactivate": {
+    "sounds": [
+      {
+        "name": "zeta:jello/deactivate",
+        "stream": false
+      }
+    ]
+  }
+}

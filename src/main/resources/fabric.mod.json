@@ -1,22 +1,22 @@
 {
   "schemaVersion": 1,
-  "id": "sakura",
+  "id": "zeta",
   "version": "${version}",
-  "name": "Sakura",
-  "description": "Sakura Minecraft cheat client.",
+  "name": "Zeta",
+  "description": "Zeta Minecraft cheat client.",
   "authors": [
     "Fin_LemonKe"
   ],
   "environment": "client",
   "entrypoints": {
     "client": [
-      "dev.sakura.client.Sakura"
+      "com.zeta.ZetaFabric"
     ]
   },
   "mixins": [
-    "sakura.mixins.json"
+    "zeta.mixins.json"
   ],
-  "accessWidener": "sakura.accesswidener",
+  "accessWidener": "zeta.accesswidener",
   "depends": {
     "java": ">=21",
     "fabricloader": ">=0.15.0",
