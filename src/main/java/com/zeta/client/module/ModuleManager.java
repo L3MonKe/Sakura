@@ -1,6 +1,7 @@
 package com.zeta.client.module;
 
 import com.zeta.client.Zeta;
+import com.zeta.client.auth.AuthGate;
 import com.zeta.client.events.input.MouseButtonEvent;
 import com.zeta.client.events.misc.KeyAction;
 import com.zeta.client.events.misc.KeyEvent;
@@ -146,6 +147,7 @@ public class ModuleManager {
     @EventHandler
     public void onKey(KeyEvent event) {
         if (mc.currentScreen != null) return;
+        if (!AuthGate.canToggleModules()) return;
 
         boolean isPress = event.getAction() == KeyAction.Press;
         boolean isRelease = event.getAction() == KeyAction.Release;
@@ -210,6 +212,7 @@ public class ModuleManager {
 
     @EventHandler
     public void onKey(MouseButtonEvent e) {
+        if (!AuthGate.canToggleModules()) return;
         if (e.getAction() == KeyAction.Press) {
             if (e.getButton() == 3 || e.getButton() == 4) {
                 for (Module module : modules.values()) {

@@ -1,6 +1,7 @@
 package com.zeta.client.gui.mainmenu;
 
 import com.zeta.client.Zeta;
+import com.zeta.client.auth.AuthGate;
 import com.zeta.client.gui.account.AccountSelectorScreen;
 import com.zeta.client.module.impl.client.ClickGui;
 import com.zeta.client.nanovg.NanoVGRenderer;
@@ -47,12 +48,19 @@ public class MainMenuScreen extends Screen {
     private static final Color DEV_HIGHLIGHT = new Color(206, 206, 226, 255);
     private static final Color WHITE = new Color(255, 255, 255, 255);
 
-    private static final long LOCAL_ENTRANCE_DURATION_MS = 650L;
+    private static final long LOCAL_ENTRANCE_DURATION_MS = 1250L;
+    private static final long EXTERNAL_ENTRANCE_DURATION_MS = 1400L;
+    private static final long POST_AUTH_INTRO_DURATION_MS = 1500L;
 
     private final List<MainMenuEntry> entries = new ArrayList<>();
     private final List<SocialLink> socialLinks = new ArrayList<>();
     private long localEntranceStartTime = -1L;
     private float externalEntranceProgress = -1f;
+    private float externalEntranceTarget = -1f;
+    private long externalEntranceStartTime = -1L;
+    private boolean postAuthIntroActive = false;
+    private long postAuthIntroStartTime = -1L;
+    private boolean suppressFadeOverlay = false;
 
     public MainMenuScreen() {
         super(Text.of("MainMenuScreen"));
@@ -77,13 +85,25 @@ public class MainMenuScreen extends Screen {
         }
 
         long now = Util.getMeasuringTimeMs();
-        if (externalEntranceProgress >= 0f) {
-            if (externalEntranceProgress >= 0.999f) {
-                localEntranceStartTime = now - LOCAL_ENTRANCE_DURATION_MS;
-                externalEntranceProgress = -1f;
-            } else {
-                localEntranceStartTime = -1L;
-            }
+        if (AuthGate.consumeMainMenuIntro()) {
+            postAuthIntroActive = true;
+            postAuthIntroStartTime = now;
+            suppressFadeOverlay = true;
+            externalEntranceProgress = -1f;
+            externalEntranceTarget = -1f;
+            externalEntranceStartTime = -1L;
+            localEntranceStartTime = -1L;
+            setupEntries();
+            setupSocialLinks();
+            return;
+        } else {
+            postAuthIntroActive = false;
+            postAuthIntroStartTime = -1L;
+            suppressFadeOverlay = false;
+        }
+
+        if (externalEntranceTarget >= 0f) {
+            localEntranceStartTime = -1L;
         } else {
             localEntranceStartTime = now;
         }
@@ -130,11 +150,32 @@ public class MainMenuScreen extends Screen {
     }
 
     public void setEntranceProgress(float p) {
-        this.externalEntranceProgress = MathHelper.clamp(p, 0f, 1f);
+        float v = MathHelper.clamp(p, 0f, 1f);
+        if (externalEntranceTarget < 0f) {
+            externalEntranceStartTime = Util.getMeasuringTimeMs();
+        }
+        this.externalEntranceTarget = v;
     }
 
     private float resolveEntranceProgress() {
-        if (externalEntranceProgress >= 0f) {
+        if (externalEntranceTarget >= 0f) {
+            long now = Util.getMeasuringTimeMs();
+            if (externalEntranceStartTime <= 0L) {
+                externalEntranceStartTime = now;
+            }
+
+            float timeGate = MathHelper.clamp((float) (now - externalEntranceStartTime) / (float) EXTERNAL_ENTRANCE_DURATION_MS, 0f, 1f);
+            timeGate = AnimationUtil.smoothstep(0.0f, 1.0f, timeGate);
+
+            externalEntranceProgress = Math.min(externalEntranceTarget, timeGate);
+
+            if (externalEntranceTarget >= 0.999f && externalEntranceProgress >= 0.999f) {
+                externalEntranceTarget = -1f;
+                externalEntranceProgress = -1f;
+                externalEntranceStartTime = -1L;
+                localEntranceStartTime = now - LOCAL_ENTRANCE_DURATION_MS;
+                return 1f;
+            }
             return externalEntranceProgress;
         }
         long now = Util.getMeasuringTimeMs();
@@ -321,9 +362,24 @@ public class MainMenuScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        long now = Util.getMeasuringTimeMs();
+        if (postAuthIntroActive) {
+            if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
+            float t = MathHelper.clamp((float) (now - postAuthIntroStartTime) / (float) POST_AUTH_INTRO_DURATION_MS, 0f, 1f);
+            float shaderT = AnimationUtil.smoothstep(0.0f, 1.0f, t);
+            MainMenuShader.getSharedInstance().render(this.width, this.height, shaderT);
+            if (t < 0.999f) return;
+            postAuthIntroActive = false;
+            postAuthIntroStartTime = -1L;
+            localEntranceStartTime = now;
+        } else {
+            MainMenuShader.getSharedInstance().render(this.width, this.height, 1.0f);
+        }
+
         float p = resolveEntranceProgress();
-        float bgT = AnimationUtil.easeOutExpo(AnimationUtil.smoothstep(0.0f, 0.45f, p));
-        MainMenuShader.getSharedInstance().render(this.width, this.height, bgT);
+        if (suppressFadeOverlay && p >= 0.999f) {
+            suppressFadeOverlay = false;
+        }
 
         float scale = getScale();
         Layout layout = resolveLayout(scale);
@@ -363,8 +419,8 @@ public class MainMenuScreen extends Screen {
 
             NanoVGHelper.restore();
 
-            boolean fromSplash = externalEntranceProgress >= 0f;
-            if (!fromSplash) {
+            boolean fromSplash = externalEntranceTarget >= 0f || externalEntranceProgress >= 0f;
+            if (!fromSplash && !suppressFadeOverlay) {
                 drawFadeOverlay(p);
             }
 
@@ -427,10 +483,7 @@ public class MainMenuScreen extends Screen {
                 "ZETA Development",
                 "Minecraft 1.21.4",
                 "Changelog :",
-                "* add MainMenu",
-                "* add SplashScreen",
-                "* add KillAura",
-                "* add ClickGui"
+                "* 我不知道写啥"
         );
 
         float fontSize = refFont(15f, scale);

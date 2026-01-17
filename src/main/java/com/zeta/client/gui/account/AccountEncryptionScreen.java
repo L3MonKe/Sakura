@@ -80,7 +80,6 @@ public final class AccountEncryptionScreen extends Screen {
         // 密码输入框
         addDrawableChild(passwordTextField = new SakuraTextField(client.textRenderer, (int) inputX, (int) startY, (int) inputWidth, 24, Text.of("")));
         passwordTextField.setPlaceholder("Enter Password...");
-        passwordTextField.setPasswordMode(true);
 
         float buttonY = panelY + panelHeight - 65;
         float buttonSpacing = 28;

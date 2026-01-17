@@ -1,12 +1,14 @@
 package com.zeta.client.mixin.client;
 
 import com.zeta.client.Zeta;
+import com.zeta.client.auth.AuthGate;
 import com.zeta.client.events.client.TickEvent;
 import com.zeta.client.events.entity.AttackEvent;
 import com.zeta.client.events.input.HandleInputEvent;
 import com.zeta.client.shaders.WindowResizeCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
+import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.util.Window;
 import net.minecraft.entity.Entity;
@@ -26,6 +28,9 @@ public class MixinMinecraftClient {
     public ClientPlayerEntity player;
 
     @Shadow
+    public Screen currentScreen;
+
+    @Shadow
     @Final
     private Window window;
 
@@ -41,7 +46,15 @@ public class MixinMinecraftClient {
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void onPostTick(CallbackInfo info) {
-        Zeta.EVENT_BUS.post(new TickEvent.Post());
+        TickEvent.Post event = new TickEvent.Post();
+        Zeta.EVENT_BUS.post(event);
+    }
+
+    @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
+    private void onSetScreen(Screen screen, CallbackInfo ci) {
+        if (AuthGate.interceptSetScreen((MinecraftClient) (Object) this, screen)) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "handleInputEvents", at = @At(value = "HEAD"))
@@ -55,7 +68,7 @@ public class MixinMinecraftClient {
     }
 
     @Inject(method = "onResolutionChanged", at = @At("TAIL"))
-    private void captureResize(CallbackInfo ci) {
+    private void onResolutionChanged(CallbackInfo ci) {
         WindowResizeCallback.EVENT.invoker().onResized((MinecraftClient) (Object) this, this.window);
     }
 

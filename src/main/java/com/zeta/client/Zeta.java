@@ -1,5 +1,6 @@
 package com.zeta.client;
 
+import com.zeta.client.auth.AuthGate;
 import com.zeta.client.command.CommandManager;
 import com.zeta.client.config.ConfigManager;
 import com.zeta.client.gui.clickgui.ClickGuiScreen;
@@ -104,6 +105,8 @@ public class Zeta {
 
         mc = client;
 
+        AuthGate.init();
+
         EVENT_BUS.registerLambdaFactory(Zeta.class.getPackageName(), (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
         EXECUTOR = Executors.newFixedThreadPool(1);
@@ -113,6 +116,8 @@ public class Zeta {
         MODULES = new ModuleManager();
 
         CONFIG = new ConfigManager();
+
+        AuthGate.enforceLockdown();
 
         COMMAND = new CommandManager();
 

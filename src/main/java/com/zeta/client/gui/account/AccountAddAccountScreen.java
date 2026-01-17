@@ -96,7 +96,6 @@ public final class AccountAddAccountScreen extends Screen {
         // 密码输入框
         addDrawableChild(password = new SakuraTextField(client.textRenderer, (int) inputX, (int) passwordY, (int) inputWidth, 24, Text.of("")));
         password.setPlaceholder("Password (Optional)");
-        password.setPasswordMode(true);
 
         // 添加按钮
         addDrawableChild(new SakuraButton((int) inputX, (int) buttonsY, (int) inputWidth, (int) buttonHeight, "Add", (action) ->

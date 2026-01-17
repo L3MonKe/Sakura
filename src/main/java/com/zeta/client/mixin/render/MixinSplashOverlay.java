@@ -1,5 +1,7 @@
 package com.zeta.client.mixin.render;
 
+import com.zeta.client.auth.AuthGate;
+import com.zeta.client.gui.auth.AuthScreen;
 import com.zeta.client.gui.mainmenu.MainMenuScreen;
 import com.zeta.client.shaders.SplashShader;
 import com.zeta.client.utils.animations.AnimationUtil;
@@ -63,10 +65,22 @@ public class MixinSplashOverlay {
     private MainMenuScreen mainMenuScreen = null;
 
     @Unique
+    private MainMenuScreen authTargetScreen = null;
+
+    @Unique
+    private AuthScreen authScreen = null;
+
+    @Unique
+    private boolean sakura$handoffToMainMenu = false;
+
+    @Unique
     private static final float PROGRESS_SMOOTH_SPEED = 0.3f;
 
     @Unique
-    private static final long HANDOFF_DURATION_MS = 1400L;
+    private static final long HANDOFF_DURATION_MS = 420L;
+
+    @Unique
+    private static final long MIN_DISPLAY_MS = 5000L;
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void onRenderHead(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
@@ -90,12 +104,16 @@ public class MixinSplashOverlay {
         float loadProgress = this.reload.getProgress();
         this.progress = MathHelper.clamp(this.progress * 0.95F + loadProgress * 0.05F, 0.0F, 1.0F);
 
-        float targetProgress = loadProgress;
+        float timeGate = 1.0f;
+        if (!this.reloading && sakura$startTime > 0L) {
+            timeGate = MathHelper.clamp((float) (currentTime - sakura$startTime) / (float) MIN_DISPLAY_MS, 0f, 1f);
+        }
+        float targetProgress = Math.min(loadProgress, timeGate);
 
         sakura$displayProgress += (targetProgress - sakura$displayProgress) * PROGRESS_SMOOTH_SPEED * delta;
         sakura$displayProgress = MathHelper.clamp(sakura$displayProgress, 0f, 1f);
 
-        if (loadProgress >= 1.0f) {
+        if (targetProgress >= 1.0f) {
             sakura$displayProgress += (1f - sakura$displayProgress) * 0.1f;
         }
 
@@ -106,15 +124,23 @@ public class MixinSplashOverlay {
             float p = sakura$handoffStartTime <= 0L ? 0f : (float) (currentTime - sakura$handoffStartTime) / (float) HANDOFF_DURATION_MS;
             p = MathHelper.clamp(p, 0f, 1f);
 
-            zoom = 1.0f + 0.35f * AnimationUtil.easeOutCubic(p);
-            fadeOut = AnimationUtil.easeInOutCubic(AnimationUtil.smoothstep(0.05f, 1.0f, p));
+            float ease = AnimationUtil.easeInOutCubic(p);
+            zoom = 1.0f + 0.12f * AnimationUtil.easeOutCubic(p);
+            fadeOut = AnimationUtil.smoothstep(0.02f, 1.0f, ease);
 
-            if (mainMenuScreen != null) {
-                if (mainMenuScreen.width != width || mainMenuScreen.height != height) {
-                    mainMenuScreen.init(this.client, width, height);
+            if (!this.reloading) {
+                if (sakura$handoffToMainMenu && mainMenuScreen != null) {
+                    if (mainMenuScreen.width != width || mainMenuScreen.height != height) {
+                        mainMenuScreen.init(this.client, width, height);
+                    }
+                    mainMenuScreen.setEntranceProgress(ease);
+                    mainMenuScreen.render(context, 0, 0, delta);
+                } else if (!sakura$handoffToMainMenu && authScreen != null) {
+                    if (authScreen.width != width || authScreen.height != height) {
+                        authScreen.init(this.client, width, height);
+                    }
+                    authScreen.render(context, 0, 0, delta);
                 }
-                mainMenuScreen.setEntranceProgress(p);
-                mainMenuScreen.render(context, 0, 0, delta);
             } else if (this.client.currentScreen != null) {
                 this.client.currentScreen.render(context, 0, 0, delta);
             }
@@ -124,18 +150,25 @@ public class MixinSplashOverlay {
             SplashShader.getInstance().render(width, height, sakura$displayProgress, fadeOut, zoom);
         }
 
-        if (fadeOutProgress >= 2.0F || (sakura$handoffStartTime > 0L && currentTime - sakura$handoffStartTime >= HANDOFF_DURATION_MS)) {
+        if (fadeOutProgress >= 0.6F || (sakura$handoffStartTime > 0L && currentTime - sakura$handoffStartTime >= HANDOFF_DURATION_MS)) {
             this.client.setOverlay(null);
-            if (mainMenuScreen != null) {
-                this.client.setScreen(mainMenuScreen);
-                mainMenuScreen = null;
+            if (!this.reloading) {
+                if (sakura$handoffToMainMenu && mainMenuScreen != null) {
+                    this.client.setScreen(mainMenuScreen);
+                } else {
+                    this.client.setScreen(authScreen != null ? authScreen : new AuthScreen(new MainMenuScreen()));
+                }
             }
+            mainMenuScreen = null;
+            authScreen = null;
+            authTargetScreen = null;
             SplashShader.getInstance().cleanup();
             shaderInitialized = false;
             sakura$handoffStartTime = -1L;
         }
 
-        if (this.reloadCompleteTime == -1L && this.reload.isComplete() && sakura$displayProgress >= 0.95f && (!this.reloading || fadeInProgress >= 2.0F)) {
+        boolean minTimeOk = this.reloading || (sakura$startTime > 0L && currentTime - sakura$startTime >= MIN_DISPLAY_MS);
+        if (this.reloadCompleteTime == -1L && this.reload.isComplete() && sakura$displayProgress >= 0.95f && (!this.reloading || fadeInProgress >= 2.0F) && minTimeOk) {
             try {
                 this.reload.throwException();
                 this.exceptionHandler.accept(Optional.empty());
@@ -148,8 +181,16 @@ public class MixinSplashOverlay {
             sakura$handoffStartTime = this.reloadCompleteTime;
 
             if (!this.reloading) {
-                mainMenuScreen = new MainMenuScreen();
-                mainMenuScreen.init(this.client, width, height);
+                sakura$handoffToMainMenu = AuthGate.isVerified();
+                if (sakura$handoffToMainMenu) {
+                    mainMenuScreen = new MainMenuScreen();
+                    mainMenuScreen.init(this.client, width, height);
+                } else {
+                    mainMenuScreen = null;
+                    authTargetScreen = new MainMenuScreen();
+                    authScreen = new AuthScreen(authTargetScreen);
+                    authScreen.init(this.client, width, height);
+                }
             } else if (this.client.currentScreen != null) {
                 this.client.currentScreen.init(this.client, width, height);
             }

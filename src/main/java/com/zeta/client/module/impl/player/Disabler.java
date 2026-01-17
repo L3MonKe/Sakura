@@ -2,10 +2,10 @@ package com.zeta.client.module.impl.player;
 
 import com.zeta.client.events.EventType;
 import com.zeta.client.events.packet.PacketEvent;
-import com.zeta.client.manager.impl.NotificationManager;
 import com.zeta.client.mixin.accessor.IPlayerMoveC2SPacket;
 import com.zeta.client.module.Category;
 import com.zeta.client.module.Module;
+import com.zeta.client.utils.client.ChatUtil;
 import com.zeta.client.values.impl.BoolValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
@@ -23,11 +23,11 @@ public class Disabler extends Module {
     }
 
     private final BoolValue logging = new BoolValue("Logging", "日志", false);
-    private final BoolValue disAim360 = new BoolValue("Disable Loyisa Aim 360", "防止Loyisa抽风 强迫症最爱", false);
+    private final BoolValue disAim360 = new BoolValue("Aim 360", "Aim 360", true);
     private final BoolValue acaaimstep = new BoolValue("ACAAimStep", "AimStep", false);
     private final BoolValue acaperfectrotation = new BoolValue("ACAPerfectRotation", "完美转向修正", false);
     private final BoolValue grimDuplicateRotPlace = new BoolValue("Grim Duplicate Rototation Place", "重复转向放置", false);
-    private final BoolValue roundRotation = new BoolValue("VulcanAim", "转向取整", true);
+    private final BoolValue roundRotation = new BoolValue("VulcanAim", "转向取整", false);
 
     private final Random random = new Random();
     private float playerYaw;
@@ -131,7 +131,8 @@ public class Disabler extends Module {
 
     private void log(String message) {
         if (logging.get()) {
-            NotificationManager.send(message);
+            ChatUtil.addChatMessage(message);
+            //NotificationManager.send(message);
         }
     }
 

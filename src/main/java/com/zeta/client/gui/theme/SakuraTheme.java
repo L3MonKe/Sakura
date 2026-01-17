@@ -7,6 +7,9 @@ import java.awt.*;
 public class SakuraTheme {
     public static final Color PRIMARY = new Color(255, 255, 255); // White
     public static final Color PRIMARY_HOVER = new Color(240, 240, 240);
+    public static final Color ACCENT = new Color(92, 124, 255);
+    public static final Color SUCCESS = new Color(46, 184, 114);
+    public static final Color DANGER = new Color(236, 72, 72);
     public static final Color BACKGROUND = new Color(20, 20, 20, 150); // Screen Dim
     public static final Color PANEL_BG = new Color(255, 255, 255, 255); // Opaque White Panel
     public static final Color TEXT = new Color(0, 0, 0); // Pure Black Text

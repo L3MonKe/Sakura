@@ -36,6 +36,8 @@ public class MainMenuShader {
     private int resolutionUniform;
     private int transitionUniform;
     private int mouseUniform;
+    private int uSizeUniform;
+    private int timeUniformAlt;
     private float accumulatedTime;
     private float transitionValue = 1.0f; // 1.0 = 正常显示
     private float mouseOffsetX = 0f;
@@ -97,6 +99,8 @@ public class MainMenuShader {
         this.resolutionUniform = GL20.glGetUniformLocation(program, "resolution");
         this.transitionUniform = GL20.glGetUniformLocation(program, "transition");
         this.mouseUniform = GL20.glGetUniformLocation(program, "mouse");
+        this.uSizeUniform = GL20.glGetUniformLocation(program, "uSize");
+        this.timeUniformAlt = GL20.glGetUniformLocation(program, "Time");
         GL20.glUseProgram(0);
 
         return program;
@@ -132,18 +136,15 @@ public class MainMenuShader {
         float scaleFactor = (float) mc.getWindow().getScaleFactor();
         GL20.glUniform2f(this.resolutionUniform, width * scaleFactor, height * scaleFactor);
 
-        int uSizeUniform = GL20.glGetUniformLocation(this.programId, "uSize");
-        if (uSizeUniform != -1) {
-            GL20.glUniform2f(uSizeUniform, width * scaleFactor, height * scaleFactor);
+        if (this.uSizeUniform >= 0) {
+            GL20.glUniform2f(this.uSizeUniform, width * scaleFactor, height * scaleFactor);
         }
-
-        int TimeUniform = GL20.glGetUniformLocation(this.programId, "Time");
 
         accumulatedTime += (float) (1.0 * AnimationUtil.deltaTime());
         GL20.glUniform1f(this.timeUniform, accumulatedTime);
 
-        if (TimeUniform != -1) {
-            GL20.glUniform1f(TimeUniform, accumulatedTime);
+        if (this.timeUniformAlt >= 0) {
+            GL20.glUniform1f(this.timeUniformAlt, accumulatedTime);
         }
 
         // 设置过渡参数
