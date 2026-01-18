@@ -44,7 +44,7 @@ public class CommandManager {
         register(
                 new BindCommand(),
                 new HelpCommand(),
-                new IRCCommand(),
+                //new IRCCommand(),
                 new PrefixCommand(),
                 new ResetCommand(),
                 new SaveCommand(),
@@ -59,7 +59,7 @@ public class CommandManager {
         }
     }
 
-    @EventHandler
+    /*TODO:@EventHandler
     private void onJoin(GameJoinEvent event) {
         if (ChatClient.get().session != null) {
             if (!ChatClient.get().session.isConnected()) {
@@ -87,7 +87,7 @@ public class CommandManager {
                 ChatClient.get().chat(msg.substring(prefix.length()));
             }
         }
-    }
+    }*/
 
     @EventHandler(priority = 999)
     public void onChatMessage(ChatMessageEvent.Client event) {

@@ -30,9 +30,9 @@ public class ChatClient {
     private static ChatClient INSTANCE;
 
     public static ChatClient get() {
-        if (ChatClient.INSTANCE == null) {
+        /*if (ChatClient.INSTANCE == null) {
             ChatClient.main(null);
-        }
+        }*/
 
         return ChatClient.INSTANCE;
     }

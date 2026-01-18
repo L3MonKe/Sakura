@@ -1,3 +1,4 @@
+/*
 package com.zeta.client.command.impl;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -73,3 +74,4 @@ public class IRCCommand extends Command {
         }
     }
 }
+*/
