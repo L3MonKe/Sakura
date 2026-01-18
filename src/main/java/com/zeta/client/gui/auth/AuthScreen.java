@@ -20,7 +20,6 @@ import java.util.concurrent.CompletableFuture;
 
 public class AuthScreen extends Screen {
     private final Screen parent;
-    private static final long VERIFY_TIMEOUT_MS = 60_000L;
 
     private enum Mode {
         Login,
@@ -147,17 +146,6 @@ public class AuthScreen extends Screen {
             passwordField.setEditable(false);
             if (licenseField != null) licenseField.setEditable(false);
             exitButton.active = false;
-
-            CompletableFuture.runAsync(() -> {
-                try {
-                    Thread.sleep(VERIFY_TIMEOUT_MS);
-                } catch (InterruptedException ignored) {
-                    return;
-                }
-                if (verifying && verifyAttemptSeq == attempt) {
-                    System.exit(0);
-                }
-            });
 
             String deviceId = AuthGate.getDeviceId();
             String username = usernameField.getText();
