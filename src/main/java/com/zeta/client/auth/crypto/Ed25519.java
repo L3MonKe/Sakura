@@ -1,10 +1,13 @@
 package com.zeta.client.auth.crypto;
 
+import jnic.JNICInclude;
+
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 
+@JNICInclude
 public final class Ed25519 {
     private Ed25519() {
     }

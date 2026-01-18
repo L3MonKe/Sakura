@@ -1,10 +1,13 @@
 package com.zeta.client.auth.crypto;
 
+import jnic.JNICInclude;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 
+@JNICInclude
 public final class AesGcm {
     private AesGcm() {
     }

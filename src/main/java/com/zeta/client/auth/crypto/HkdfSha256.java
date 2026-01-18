@@ -1,9 +1,12 @@
 package com.zeta.client.auth.crypto;
 
+import jnic.JNICInclude;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 
+@JNICInclude
 public final class HkdfSha256 {
     private HkdfSha256() {
     }

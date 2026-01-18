@@ -1,10 +1,13 @@
 package com.zeta.client.auth.crypto;
 
+import jnic.JNICInclude;
+
 import javax.crypto.KeyAgreement;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
+@JNICInclude
 public final class X25519 {
     private X25519() {
     }

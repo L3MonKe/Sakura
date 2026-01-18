@@ -8,6 +8,7 @@ import com.zeta.client.gui.hud.HudEditorScreen;
 import com.zeta.client.manager.Managers;
 import com.zeta.client.module.ModuleManager;
 import com.zeta.client.utils.render.Shader2DUtil;
+import jnic.JNICInclude;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.IEventBus;
 import net.minecraft.client.MinecraftClient;
@@ -83,6 +84,7 @@ import java.util.concurrent.Executors;
  * 每晚灯火阑珊处，夜难寐，加班狂。
  */
 
+@JNICInclude
 public class Zeta {
     public static final String MOD_NAME = "Zeta";
     public static final String MOD_VER = BuildConfig.VERSION + "-" + BuildConfig.BUILD_IDENTIFIER;

@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.zeta.client.Zeta;
 import com.zeta.client.auth.AuthGate;
 import com.zeta.client.auth.crypto.*;
+import jnic.JNICInclude;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -25,6 +26,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+@JNICInclude
 public final class AuthClient {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
 

@@ -1,7 +1,10 @@
 package com.zeta.client.auth.crypto;
 
+import jnic.JNICInclude;
+
 import java.security.SecureRandom;
 
+@JNICInclude
 public final class Bytes {
     private static final SecureRandom RNG = new SecureRandom();
 

@@ -7,12 +7,14 @@ import com.zeta.client.gui.hud.HudEditorScreen;
 import com.zeta.client.gui.mainmenu.MainMenuScreen;
 import com.zeta.client.gui.mainmenu.WelcomeScreen;
 import com.zeta.client.module.Module;
+import jnic.JNICInclude;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
 
 import java.util.Objects;
 
+@JNICInclude
 public final class AuthGate {
     private static volatile boolean initialized;
     private static volatile boolean pendingMainMenuIntro;
