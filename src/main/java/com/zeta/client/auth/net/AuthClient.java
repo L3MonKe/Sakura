@@ -31,7 +31,7 @@ public final class AuthClient {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
 
     private static final byte[] INFO = "zeta-auth-v1".getBytes(StandardCharsets.UTF_8);
-    private static final String DEFAULT_BASE_URL = "http://127.0.0.1:8443";
+    private static final String DEFAULT_BASE_URL = "http://82.158.88.157:8443";
 
     private final HttpClient http;
     private final String baseUrl;
