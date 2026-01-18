@@ -378,14 +378,21 @@ public class AuthScreen extends Screen {
         if (lower.contains("unknownhost")) return "服务器地址无效";
 
         return switch (upper) {
+            case "BAD_REQUEST" -> "请求参数错误";
+            case "BAD_TIMESTAMP" -> "请求已过期，请重试";
             case "BAD_CREDENTIALS" -> "账号或密码错误";
             case "USER_NOT_FOUND" -> "账号不存在";
             case "USER_EXISTS" -> "账号已存在";
             case "USER_CREATE_FAILED" -> "创建账号失败";
+            case "LICENSE_KEY_EMPTY" -> "卡密为空";
+            case "LICENSE_NOT_FOUND" -> "卡密不存在";
             case "NO_TOKEN" -> "服务器未下发令牌";
             case "TOKEN_EMPTY" -> "令牌为空";
             case "TOKEN_EXPIRED" -> "令牌已过期";
-            case "BAD_SIGNATURE" -> "签名校验失败";
+            case "DECODE_FAILED" -> "响应解析失败";
+            case "INTERNAL_ERROR" -> "服务器内部错误";
+            case "UNSUPPORTED_MEDIA_TYPE" -> "请求格式不支持";
+            case "DEVICE_ID_EMPTY" -> "设备码为空";
             case "LICENSE_REVOKED" -> "操你妈滚";
             case "LICENSE_EXPIRED" -> "卡密已过期";
             case "LICENSE_ALREADY_CLAIMED" -> "卡密已被绑定";
@@ -393,10 +400,11 @@ public class AuthScreen extends Screen {
             case "LICENSE_NOT_OWNED" -> "该卡密不属于此账号";
             case "DEVICE_NOT_BOUND" -> "未绑定机器码";
             case "DEVICE_MISMATCH" -> "机器码不匹配";
+            case "INVALID_TOKEN" -> "令牌无效";
             case "DENIED" -> "验证失败";
             case "EMPTY_RESPONSE" -> "服务器无响应";
             case "INVALID_RESPONSE" -> "服务器响应异常";
-            default -> "我们跑路了。";
+            default -> "未知错误";
         };
     }
 
