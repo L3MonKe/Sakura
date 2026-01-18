@@ -396,7 +396,7 @@ public class AuthScreen extends Screen {
             case "DENIED" -> "验证失败";
             case "EMPTY_RESPONSE" -> "服务器无响应";
             case "INVALID_RESPONSE" -> "服务器响应异常";
-            default -> "无法连接至服务器";
+            default -> "我们跑路了。";
         };
     }
 
