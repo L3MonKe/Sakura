@@ -1,0 +1,34 @@
+{
+  "enable": {
+    "sounds": [
+      {
+        "name": "lemonclient:augustus/enable",
+        "stream": false
+      }
+    ]
+  },
+  "disable": {
+    "sounds": [
+      {
+        "name": "lemonclient:augustus/disable",
+        "stream": false
+      }
+    ]
+  },
+  "activate": {
+    "sounds": [
+      {
+        "name": "lemonclient:jello/activate",
+        "stream": false
+      }
+    ]
+  },
+  "deactivate": {
+    "sounds": [
+      {
+        "name": "lemonclient:jello/deactivate",
+        "stream": false
+      }
+    ]
+  }
+}

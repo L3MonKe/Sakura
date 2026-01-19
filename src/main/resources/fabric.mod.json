@@ -1,16 +1,18 @@
 {
   "schemaVersion": 1,
-  "id": "zeta",
+  "id": "lemonclient",
   "version": "${version}",
-  "name": "Zeta",
-  "description": "Zeta Minecraft cheat client.",
+  "name": "LemonClient",
+  "description": "LemonClient minecraft cheat client.",
   "authors": [
-    "Fin_LemonKe"
+    "Fin_LemonKe",
+    "ShaoYuYo",
+    "Nykrop"
   ],
   "mixins": [
-    "zeta.mixins.json"
+    "lemonclient.mixins.json"
   ],
-  "accessWidener": "zeta.accesswidener",
+  "accessWidener": "lemonclient.accesswidener",
   "depends": {
     "java": ">=21",
     "fabricloader": ">=0.15.0",
