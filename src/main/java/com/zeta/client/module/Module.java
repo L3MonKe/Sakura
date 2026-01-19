@@ -1,11 +1,6 @@
 package com.zeta.client.module;
 
 import com.zeta.client.Zeta;
-import com.zeta.client.auth.AuthGate;
-import com.zeta.client.gui.clickgui.ClickGuiScreen;
-import com.zeta.client.gui.hud.HudEditorScreen;
-import com.zeta.client.gui.mainmenu.MainMenuScreen;
-import com.zeta.client.gui.mainmenu.WelcomeScreen;
 import com.zeta.client.module.impl.client.ClickGui;
 import com.zeta.client.module.impl.hud.DynamicIslandHud;
 import com.zeta.client.module.impl.hud.ModuleListHud;
@@ -82,20 +77,6 @@ public class Module {
     }
 
     public void setState(boolean state) {
-        if (state && !AuthGate.isVerified()) {
-            MinecraftClient c = MinecraftClient.getInstance();
-            if (c != null) {
-                boolean suspicious = (c.player != null || c.world != null) ||
-                        (c.currentScreen instanceof MainMenuScreen) ||
-                        (c.currentScreen instanceof WelcomeScreen) ||
-                        (c.currentScreen instanceof ClickGuiScreen) ||
-                        (c.currentScreen instanceof HudEditorScreen);
-                if (suspicious) {
-                    System.exit(0);
-                }
-            }
-            return;
-        }
         if (this.state != state) {
             this.state = state;
             DynamicIslandHud.onModuleToggle(this, state);
