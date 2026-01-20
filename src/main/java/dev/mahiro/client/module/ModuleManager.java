@@ -47,6 +47,7 @@ public class ModuleManager {
         add(new Step());
         add(new Velocity());
         add(new VelocityRubberband());
+        add(new FastWeb());
 
         // Player
         add(new AntiHunger());
