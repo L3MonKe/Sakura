@@ -10,9 +10,9 @@
     "Nykrop"
   ],
   "mixins": [
-    "lemonclient.mixins.json"
+    "mahiro.mixins.json"
   ],
-  "accessWidener": "lemonclient.accesswidener",
+  "accessWidener": "mahiro.accesswidener",
   "depends": {
     "java": ">=21",
     "fabricloader": ">=0.15.0",

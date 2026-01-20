@@ -1,0 +1,34 @@
+{
+  "enable": {
+    "sounds": [
+      {
+        "name": "mahiro:augustus/enable",
+        "stream": false
+      }
+    ]
+  },
+  "disable": {
+    "sounds": [
+      {
+        "name": "mahiro:augustus/disable",
+        "stream": false
+      }
+    ]
+  },
+  "activate": {
+    "sounds": [
+      {
+        "name": "mahiro:jello/activate",
+        "stream": false
+      }
+    ]
+  },
+  "deactivate": {
+    "sounds": [
+      {
+        "name": "mahiro:jello/deactivate",
+        "stream": false
+      }
+    ]
+  }
+}
