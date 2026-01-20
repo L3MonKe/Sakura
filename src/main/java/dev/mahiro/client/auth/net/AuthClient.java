@@ -115,43 +115,6 @@ public final class AuthClient {
                 .exceptionally(e -> AuthVerifyResult.fail(normalizeThrowableMessage(e)));
     }
 
-    public CompletableFuture<AuthVerifyResult> verifyLicense(String licenseKey, String deviceId) {
-        return verifyLicense(licenseKey, deviceId, "", "", false);
-    }
-
-    public CompletableFuture<AuthVerifyResult> verifyLicense(String licenseKey, String deviceId, String username, String password, boolean register) {
-        if (licenseKey == null || licenseKey.isBlank()) {
-            return CompletableFuture.completedFuture(AuthVerifyResult.fail("LICENSE_KEY_EMPTY"));
-        }
-        if (deviceId == null || deviceId.isBlank()) {
-            return CompletableFuture.completedFuture(AuthVerifyResult.fail("DEVICE_ID_EMPTY"));
-        }
-
-        return handshake()
-                .thenCompose(session -> {
-                    JsonObject payload = new JsonObject();
-                    payload.addProperty("licenseKey", licenseKey.trim().toUpperCase(java.util.Locale.ROOT));
-                    payload.addProperty("deviceId", deviceId.trim());
-                    payload.addProperty("clientVersion", LemonClient.MOD_VER);
-                    payload.addProperty("ts", System.currentTimeMillis());
-                    if (username != null && !username.isBlank()) payload.addProperty("username", username.trim());
-                    if (password != null && !password.isBlank()) payload.addProperty("password", password);
-                    if (register) payload.addProperty("register", true);
-
-                    String plaintextJson = GSON.toJson(payload);
-                    AesGcm.Encrypted enc = AesGcm.encrypt(session.key32(), plaintextJson.getBytes(StandardCharsets.UTF_8), session.aad());
-
-                    JsonObject req = new JsonObject();
-                    req.addProperty("sid", session.sessionId());
-                    req.addProperty("iv", B64.enc(enc.iv()));
-                    req.addProperty("ct", B64.enc(enc.ciphertext()));
-
-                    return postJson("/api/v1/license/verify", req)
-                            .thenApply(resp -> decodeVerifyResponse(session, resp));
-                })
-                .exceptionally(e -> AuthVerifyResult.fail(normalizeThrowableMessage(e)));
-    }
-
     public CompletableFuture<AuthVerifyResult> verifyToken(String token, String deviceId) {
         if (token == null || token.isBlank()) {
             return CompletableFuture.completedFuture(AuthVerifyResult.fail("TOKEN_EMPTY"));
@@ -216,30 +179,6 @@ public final class AuthClient {
         String v = System.getProperty(name);
         if (v == null || v.isBlank()) v = System.getenv(name.toUpperCase().replace('.', '_'));
         return v == null ? "" : v.trim();
-    }
-
-    private AuthVerifyResult decodeVerifyResponse(SecureSession session, JsonObject resp) {
-        try {
-            if (resp == null) return AuthVerifyResult.fail("EMPTY_RESPONSE");
-            if (resp.has("error")) return AuthVerifyResult.fail(resp.get("error").getAsString());
-            if (!resp.has("iv") || !resp.has("ct")) return AuthVerifyResult.fail("INVALID_RESPONSE");
-
-            byte[] iv = B64.dec(resp.get("iv").getAsString());
-            byte[] ct = B64.dec(resp.get("ct").getAsString());
-            byte[] pt = AesGcm.decrypt(session.key32(), iv, ct, session.aad());
-            String json = new String(pt, StandardCharsets.UTF_8);
-            JsonObject obj = GSON.fromJson(json, JsonObject.class);
-
-            boolean ok = obj != null && obj.has("ok") && obj.get("ok").getAsBoolean();
-            if (!ok) {
-                String err = obj != null && obj.has("error") ? obj.get("error").getAsString() : "DENIED";
-                return AuthVerifyResult.fail(err);
-            }
-            String token = obj.has("token") ? obj.get("token").getAsString() : "";
-            return AuthVerifyResult.ok(token);
-        } catch (Exception e) {
-            return AuthVerifyResult.fail("DECODE_FAILED");
-        }
     }
 
     private AuthVerifyResult decodeTokenVerifyResponse(SecureSession session, JsonObject resp, String token) {

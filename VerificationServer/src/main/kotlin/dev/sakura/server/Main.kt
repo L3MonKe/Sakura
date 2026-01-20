@@ -138,7 +138,9 @@ private fun runSelfTest(baseUrl: String, store: JsonStore) {
     val pt2 = aesGcmDecrypt(key32, B64D.decode(regResp2.iv), B64D.decode(regResp2.ct), aad)
     val auth2 = JSON.decodeFromString(UserAuthPlainResponse.serializer(), pt2.toString(StandardCharsets.UTF_8))
     if (auth2.ok) throw IllegalStateException("EXPECTED_LICENSE_ALREADY_CLAIMED")
-    if (auth2.error != "LICENSE_ALREADY_CLAIMED") throw IllegalStateException(auth2.error ?: "EXPECTED_LICENSE_ALREADY_CLAIMED")
+    if (auth2.error != "LICENSE_ALREADY_CLAIMED") throw IllegalStateException(
+        auth2.error ?: "EXPECTED_LICENSE_ALREADY_CLAIMED"
+    )
     if (store.findUserByUsername(user2) != null) throw IllegalStateException("ORPHAN_USER_CREATED")
 
     val usersPath = store.dir.resolve("users.json")

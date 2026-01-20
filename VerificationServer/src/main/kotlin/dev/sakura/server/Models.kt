@@ -60,17 +60,6 @@ internal data class UserAuthPlainResponse(
 )
 
 @Serializable
-internal data class LicenseVerifyPlainRequest(
-    val licenseKey: String,
-    val deviceId: String,
-    val username: String? = null,
-    val password: String? = null,
-    val register: Boolean = false,
-    val clientVersion: String? = null,
-    val ts: Long
-)
-
-@Serializable
 internal data class TokenVerifyPlainRequest(
     val token: String,
     val deviceId: String? = null,
@@ -90,56 +79,6 @@ internal data class TokenPayload(
     @SerialName("lic") val licenseKey: String,
     @SerialName("exp") val expiresAt: Long,
     @SerialName("iat") val issuedAt: Long
-)
-
-@Serializable
-internal data class DeviceBindPlainRequest(
-    val licenseKey: String,
-    val deviceId: String,
-    val token: String? = null,
-    val username: String? = null,
-    val password: String? = null,
-    val ts: Long
-)
-
-@Serializable
-internal data class DeviceBindPlainResponse(
-    val ok: Boolean,
-    val error: String? = null,
-    val expiresAt: Long? = null
-)
-
-@Serializable
-internal data class DeviceUnbindPlainRequest(
-    val licenseKey: String,
-    val deviceId: String,
-    val token: String? = null,
-    val username: String? = null,
-    val password: String? = null,
-    val ts: Long
-)
-
-@Serializable
-internal data class DeviceUnbindPlainResponse(
-    val ok: Boolean,
-    val error: String? = null,
-    val expiresAt: Long? = null
-)
-
-@Serializable
-internal data class DeviceRebindPlainRequest(
-    val licenseKey: String,
-    val newDeviceId: String,
-    val username: String,
-    val password: String,
-    val ts: Long
-)
-
-@Serializable
-internal data class DeviceRebindPlainResponse(
-    val ok: Boolean,
-    val error: String? = null,
-    val expiresAt: Long? = null
 )
 
 @Serializable

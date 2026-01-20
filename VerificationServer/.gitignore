@@ -22,3 +22,5 @@ run
 # Rust
 target/
 *.lock
+data
+kotlin
