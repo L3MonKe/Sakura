@@ -311,7 +311,7 @@ public class MainMenuScreen extends Screen {
 
     private void drawVersion(Layout layout, Color color, float opacity) {
         float logoSize = refFont(80f, layout.scale);
-        float versionX = width / 2f + NanoVGHelper.getTextWidth("SAKURA", FontLoader.bold(logoSize), logoSize) / 2f - 5f * layout.scale;
+        float versionX = width / 2f + NanoVGHelper.getTextWidth("Sakura", FontLoader.bold(logoSize), logoSize) / 2f - 5f * layout.scale;
         float versionY = 7f * layout.scale + height / 2f - 50f * layout.scale - 100f * layout.scale;
         float versionSize = refFont(15f, layout.scale);
         NanoVGHelper.drawString(
@@ -335,7 +335,7 @@ public class MainMenuScreen extends Screen {
         float aWidth = NanoVGHelper.getTextWidth("S", FontLoader.bold(logoSize), logoSize);
         float baseY = 7f * layout.scale + height / 2f - 50f * layout.scale - liftY;
 
-        float etaWidth = NanoVGHelper.getTextWidth("AKURA", FontLoader.bold(logoSize), logoSize);
+        float etaWidth = NanoVGHelper.getTextWidth("akura", FontLoader.bold(logoSize), logoSize);
         float zX = width / 2f - aWidth / 2f - etaWidth / 2f;
         float etaX = width / 2f - etaWidth / 2f + aWidth / 2f;
 
@@ -350,7 +350,7 @@ public class MainMenuScreen extends Screen {
         );
 
         NanoVGHelper.drawString(
-                "AKURA",
+                "akura",
                 etaX,
                 baseY,
                 FontLoader.bold(logoSize),
