@@ -340,7 +340,7 @@ public class MainMenuScreen extends Screen {
         float etaX = width / 2f - etaWidth / 2f + aWidth / 2f;
 
         NanoVGHelper.drawString(
-                "Z",
+                "S",
                 zX,
                 baseY,
                 FontLoader.bold(logoSize),
@@ -350,7 +350,7 @@ public class MainMenuScreen extends Screen {
         );
 
         NanoVGHelper.drawString(
-                "ETA",
+                "AKURA",
                 etaX,
                 baseY,
                 FontLoader.bold(logoSize),
@@ -480,10 +480,11 @@ public class MainMenuScreen extends Screen {
         NanoVGHelper.drawRect(lineX, topY, scale, 78f * scale, applyAlpha(WHITE, opacity));
 
         List<String> lines = Arrays.asList(
-                "LemonClient Development",
+                "LemonClientDevelopment",
                 "Minecraft 1.21.4",
                 "Changelog :",
-                "* 我不知道写啥"
+                "* 人要写端",
+                "* 阻止妖猫开宝马"
         );
 
         float fontSize = refFont(15f, scale);
