@@ -13,7 +13,7 @@ import net.minecraft.util.math.Box;
 
 public class FastWeb extends Module {
     public FastWeb() {
-        super("FastWeb", "快速网", Category.Movement);
+        super("FastWeb", "快速的网", Category.Movement);
     }
 
     public enum Mode {
