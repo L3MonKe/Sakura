@@ -27,7 +27,7 @@ public class FastWeb extends Module {
 
     @EventHandler
     public void onMotion(MotionEvent event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (!isInWeb()) {
             return;
