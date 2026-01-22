@@ -7,13 +7,10 @@ import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.player.*;
 import dev.mahiro.client.utils.player.MovementUtil;
 import dev.mahiro.client.utils.rotation.MovementFix;
-import dev.mahiro.client.utils.rotation.RaytraceUtil;
 import dev.mahiro.client.utils.rotation.RotationUtil;
 import dev.mahiro.client.utils.vector.Rotation;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
@@ -23,7 +20,7 @@ import java.util.function.Function;
 
 public class RotationManager {
     private static final Rotation offset = new Rotation(0, 0);
-    public static Rotation rotations, lastRotations = new Rotation(0, 0), targetRotations, lastServerRotations;
+    public static Rotation rotations, lastRotations = new Rotation(0, 0), targetRotations, animationRotation, lastAnimationRotation;
     private static final MinecraftClient mc = MinecraftClient.getInstance();
     private static boolean active;
     private static boolean smoothed;
@@ -31,14 +28,6 @@ public class RotationManager {
     private static MovementFix correctMovement;
     private static Function<Rotation, Boolean> raycast;
     private static float randomAngle;
-
-    private static float renderPitch;
-    private static float renderYawOffset;
-    private static float prevRenderPitch;
-    private static float prevRenderYawOffset;
-    private static float prevRotationYawHead;
-    private static float rotationYawHead;
-    private static int ticksExisted;
 
     private static int priority;
 
@@ -216,8 +205,8 @@ public class RotationManager {
 
     @EventHandler
     private void onPlayerTick(PlayerTickEvent event) {
-        if (!active || rotations == null || lastRotations == null || targetRotations == null || lastServerRotations == null) {
-            rotations = lastRotations = targetRotations = lastServerRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+        if (!active || rotations == null || lastRotations == null || targetRotations == null) {
+            rotations = lastRotations = targetRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
         }
 
         if (active) {
@@ -276,9 +265,6 @@ public class RotationManager {
                 event.setYaw(yaw);
                 event.setPitch(pitch);
 
-                lastServerRotations = new Rotation(yaw, pitch);
-                setRenderRotation(yaw, pitch);
-
                 if (Math.abs((rotations.yaw - mc.player.getYaw()) % 360) < 1 && Math.abs((rotations.pitch - mc.player.getPitch())) < 1) {
                     active = false;
                     priority = 0;
@@ -291,6 +277,8 @@ public class RotationManager {
                 lastRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             }
 
+            lastAnimationRotation = animationRotation;
+            animationRotation = new Rotation(event.getYaw(), event.getPitch());
             targetRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             smoothed = false;
         }
@@ -301,63 +289,10 @@ public class RotationManager {
         final Rotation rotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
         final Rotation fixedRotations = RotationUtil.resetRotation(RotationUtil.applySensitivityPatch(rotations, lastRotations));
 
-        if (fixedRotations != null && !Float.isNaN(fixedRotations.yaw) && !Float.isNaN(fixedRotations.pitch)) {
+        if (!Float.isNaN(fixedRotations.yaw) && !Float.isNaN(fixedRotations.pitch)) {
             mc.player.setYaw(fixedRotations.yaw);
             mc.player.setPitch(MathHelper.clamp(fixedRotations.pitch, -90.0f, 90.0f));
         }
-    }
-
-    public void setRenderRotation(float yaw, float pitch) {
-        if (mc.player == null) return;
-
-        if (mc.player.age != ticksExisted) {
-            ticksExisted = mc.player.age;
-            prevRenderPitch = renderPitch;
-            prevRenderYawOffset = renderYawOffset;
-            prevRotationYawHead = rotationYawHead;
-        }
-
-        renderPitch = pitch;
-        renderYawOffset = getRenderYawOffset(yaw, prevRenderYawOffset);
-        rotationYawHead = yaw;
-    }
-
-    private float getRenderYawOffset(float yaw, float offsetIn) {
-        float result = offsetIn;
-        float offset;
-
-        double xDif = mc.player.getX() - mc.player.prevX;
-        double zDif = mc.player.getZ() - mc.player.prevZ;
-
-        if (xDif * xDif + zDif * zDif > 0.0025000002f) {
-            offset = (float) MathHelper.atan2(zDif, xDif) * 57.295776f - 90.0f;
-            float wrap = MathHelper.abs(MathHelper.wrapDegrees(yaw) - offset);
-            if (95.0F < wrap && wrap < 265.0F) {
-                result = offset - 180.0F;
-            } else {
-                result = offset;
-            }
-        }
-
-        if (mc.player.handSwingProgress > 0.0F) {
-            result = yaw;
-        }
-
-        result = offsetIn + MathHelper.wrapDegrees(result - offsetIn) * 0.3f;
-        offset = MathHelper.wrapDegrees(yaw - result);
-
-        if (offset < -75.0f) {
-            offset = -75.0f;
-        } else if (offset >= 75.0f) {
-            offset = 75.0f;
-        }
-
-        result = yaw - offset;
-        if (offset * offset > 2500.0f) {
-            result += offset * 0.2f;
-        }
-
-        return result;
     }
 
     public void lookAt(Vec3d target, double speed) {
@@ -367,33 +302,5 @@ public class RotationManager {
     public void lookAt(Vec3d target, double speed, Priority priority) {
         Rotation rotation = RotationUtil.calculate(target);
         setRotations(rotation, speed, MovementFix.OFF, priority);
-    }
-
-    public boolean isLookingAt(BlockPos pos, Direction side) {
-        return RaytraceUtil.overBlock(getRotation(), side, pos, false);
-    }
-
-    public static float getRenderPitch() {
-        return renderPitch;
-    }
-
-    public static float getRotationYawHead() {
-        return rotationYawHead;
-    }
-
-    public static float getRenderYawOffset() {
-        return renderYawOffset;
-    }
-
-    public static float getPrevRenderPitch() {
-        return prevRenderPitch;
-    }
-
-    public static float getPrevRotationYawHead() {
-        return prevRotationYawHead;
-    }
-
-    public static float getPrevRenderYawOffset() {
-        return prevRenderYawOffset;
     }
 }

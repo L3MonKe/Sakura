@@ -84,7 +84,7 @@ import java.util.concurrent.Executors;
  */
 
 public class LemonClient {
-    public static final String MOD_NAME = "LemonClient";
+    public static final String MOD_NAME = "M4h1r0";
     public static final String MOD_VER = BuildConfig.VERSION + "-" + BuildConfig.BUILD_IDENTIFIER;
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);

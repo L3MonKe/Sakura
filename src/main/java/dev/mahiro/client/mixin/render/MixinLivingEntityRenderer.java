@@ -68,8 +68,8 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
             return original;
         }
 
-        if (Managers.ROTATION.isActive()) {
-            return MathHelper.lerp(tickDelta, RotationManager.getPrevRenderYawOffset(), RotationManager.getRenderYawOffset());
+        if (Managers.ROTATION.isActive() && RotationManager.animationRotation != null && RotationManager.lastAnimationRotation != null) {
+            return MathHelper.lerpAngleDegrees(tickDelta, RotationManager.lastAnimationRotation.yaw, RotationManager.animationRotation.yaw);
         }
 
         return original;
@@ -81,8 +81,8 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
             return original;
         }
 
-        if (Managers.ROTATION.isActive()) {
-            return MathHelper.lerpAngleDegrees(tickDelta, RotationManager.getPrevRotationYawHead(), RotationManager.getRotationYawHead());
+        if (Managers.ROTATION.isActive() && RotationManager.animationRotation != null && RotationManager.lastAnimationRotation != null) {
+            return MathHelper.lerpAngleDegrees(tickDelta, RotationManager.lastAnimationRotation.yaw, RotationManager.animationRotation.yaw);
         }
 
         return original;
@@ -94,8 +94,8 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
             return original;
         }
 
-        if (Managers.ROTATION.isActive()) {
-            return MathHelper.lerp(tickDelta, RotationManager.getPrevRenderPitch(), RotationManager.getRenderPitch());
+        if (Managers.ROTATION.isActive() && RotationManager.animationRotation != null && RotationManager.lastAnimationRotation != null) {
+            return MathHelper.lerpAngleDegrees(tickDelta, RotationManager.lastAnimationRotation.pitch, RotationManager.animationRotation.pitch);
         }
 
         return original;
