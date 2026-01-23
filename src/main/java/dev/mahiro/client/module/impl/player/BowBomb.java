@@ -7,12 +7,13 @@ import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.client.ChatUtil;
-import dev.mahiro.client.utils.combat.CombatUtil;
+import dev.mahiro.client.utils.player.MovementUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
@@ -46,7 +47,8 @@ public class BowBomb extends Module {
     private final TimerUtil activeTimer = new TimerUtil();
     private final Random random = new Random();
 
-    boolean active = false;
+    private boolean active = false;
+    public static boolean send = false;
 
     @Override
     public void onDisable() {
@@ -69,7 +71,7 @@ public class BowBomb extends Module {
         }
         PlayerEntity target = getTarget();
         if (target == null) return;
-        Vec3d headPos = target.getEyePos().add(CombatUtil.getMotionVec(target, predictTicks.get().floatValue(), true));
+        Vec3d headPos = target.getEyePos().add(MovementUtil.getMotionVec(target, predictTicks.get().floatValue(), true));
         Managers.ROTATION.lookAt(headPos, rotationSpeed.get());
     }
 
@@ -78,14 +80,16 @@ public class BowBomb extends Module {
         double distance = 100000;
         for (PlayerEntity player : mc.world.getPlayers()) {
             if (Math.abs(player.getY() - mc.player.getY()) > 4) continue;
-            if (!CombatUtil.isValid(player, distance)) continue;
+            if (isValid(player, distance)) continue;
             target = player;
             distance = mc.player.distanceTo(player);
         }
         return target;
     }
 
-    public static boolean send = false;
+    private boolean isValid(Entity entity, double range) {
+        return entity == null || !entity.isAlive() || entity.equals(mc.player) || mc.player.getPos().distanceTo(entity.getPos()) > range;
+    }
 
     @EventHandler
     protected void onPacketSend(PacketEvent event) {

@@ -7,10 +7,8 @@ import static dev.mahiro.client.Mahiro.mc;
 
 public class PacketUtil {
     public static void sendSequencedPacket(SequencedPacketCreator packetCreator) {
-        if (mc.getNetworkHandler() == null || mc.world == null) return;
         try (PendingUpdateManager pendingUpdateManager = mc.world.getPendingUpdateManager().incrementSequence()) {
-            int i = pendingUpdateManager.getSequence();
-            mc.getNetworkHandler().sendPacket(packetCreator.predict(i));
+            mc.getNetworkHandler().sendPacket(packetCreator.predict(pendingUpdateManager.getSequence()));
         }
     }
 }

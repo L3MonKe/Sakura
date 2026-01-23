@@ -112,9 +112,6 @@ public class RaytraceUtil {
         ).getType() == HitResult.Type.MISS;
     }
 
-    /**
-     * Allows you to check if your enemy is behind a wall
-     */
     public static boolean facingEnemy(Entity toEntity, double range, Rotation rotation) {
         return rayTraceEntity(range, rotation, entity -> entity == toEntity) != null;
     }
@@ -158,7 +155,6 @@ public class RaytraceUtil {
                 mc.player
         ));
 
-        // 3. 验证结果
         if (hitResult.getType() != HitResult.Type.BLOCK) {
             return false;
         }

@@ -7,7 +7,10 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.interfaces.IEntityRenderState;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.RotationManager;
+import dev.mahiro.client.module.ModuleManager;
 import dev.mahiro.client.module.impl.render.Chams;
+import dev.mahiro.client.module.impl.render.NameTags;
+import dev.mahiro.client.utils.vector.Rotation;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -15,7 +18,6 @@ import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.render.entity.state.LivingEntityRenderState;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
@@ -24,6 +26,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import static dev.mahiro.client.Mahiro.mc;
 import static org.lwjgl.opengl.GL11.*;
@@ -34,7 +37,7 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
     private boolean render$render(M instance, MatrixStack matrixStack, VertexConsumer vertexConsumer, int light, int overlay, int color, S state, MatrixStack matrices, VertexConsumerProvider consumers, int i) {
         final Chams chamsModule = Mahiro.MODULES.getModule(Chams.class);
 
-        if (!chamsModule.isEnabled() || !chamsModule.isColorOverlay() || !(((IEntityRenderState) state).getEntity() instanceof PlayerEntity)) {
+        if (!chamsModule.isEnabled() || !chamsModule.isColorOverlay() || !(((IEntityRenderState) state).getEntity() instanceof PlayerEntity player) || player == mc.player) {
             return true;
         }
 
@@ -52,7 +55,7 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
     private RenderLayer removePlayerTexture(RenderLayer original, S state, boolean showBody, boolean translucent, boolean showOutline) {
         final Chams chamsModule = Mahiro.MODULES.getModule(Chams.class);
 
-        if (!chamsModule.isEnabled() || !(((IEntityRenderState) state).getEntity() instanceof PlayerEntity) || chamsModule.shouldKeepTextures()) {
+        if (!chamsModule.isEnabled() || chamsModule.shouldKeepTextures() || !(((IEntityRenderState) state).getEntity() instanceof PlayerEntity player) || player == mc.player) {
             return original;
         }
 
@@ -61,12 +64,9 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
 
     @Inject(method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("HEAD"))
     private void setPolygonStates(S state, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo info) {
-        Entity entity = ((IEntityRenderState) state).getEntity();
-        if (!(entity instanceof PlayerEntity)) return;
+        if (!(((IEntityRenderState) state).getEntity() instanceof PlayerEntity player) || player == mc.player) return;
 
-        final Chams chamsModule = Mahiro.MODULES.getModule(Chams.class);
-
-        if (chamsModule.isEnabled()) {
+        if (Mahiro.MODULES.getModule(Chams.class).isEnabled()) {
             glEnable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(1.0f, -1100000.0f);
         }
@@ -74,14 +74,18 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
 
     @Inject(method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("TAIL"))
     private void revertPolygonStates(S state, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int i, CallbackInfo info) {
-        Entity entity = ((IEntityRenderState) state).getEntity();
-        if (!(entity instanceof PlayerEntity)) return;
+        if (!(((IEntityRenderState) state).getEntity() instanceof PlayerEntity player) || player == mc.player) return;
 
-        final Chams chamsModule = Mahiro.MODULES.getModule(Chams.class);
-
-        if (chamsModule.isEnabled()) {
+        if (Mahiro.MODULES.getModule(Chams.class).isEnabled()) {
             glPolygonOffset(1.0f, 1100000.0f);
             glDisable(GL_POLYGON_OFFSET_FILL);
+        }
+    }
+
+    @Inject(method = "hasLabel(Lnet/minecraft/entity/LivingEntity;D)Z", at = @At("HEAD"), cancellable = true)
+    private void hookHasLabel(T livingEntity, double d, CallbackInfoReturnable<Boolean> cir) {
+        if (Mahiro.MODULES.getModule(NameTags.class).isEnabled() && livingEntity instanceof PlayerEntity) {
+            cir.setReturnValue(false);
         }
     }
 
@@ -91,8 +95,10 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
             return original;
         }
 
-        if (Managers.ROTATION.isActive() && RotationManager.animationRotation != null && RotationManager.lastAnimationRotation != null) {
-            return MathHelper.lerpAngleDegrees(tickDelta, RotationManager.lastAnimationRotation.yaw, RotationManager.animationRotation.yaw);
+        Rotation rotation = RotationManager.animationRotation;
+        Rotation lastRotation = RotationManager.lastAnimationRotation;
+        if (Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
+            return MathHelper.lerpAngleDegrees(tickDelta, lastRotation.yaw, rotation.yaw);
         }
 
         return original;
@@ -118,7 +124,7 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
         }
 
         if (Managers.ROTATION.isActive() && RotationManager.animationRotation != null && RotationManager.lastAnimationRotation != null) {
-            return MathHelper.lerpAngleDegrees(tickDelta, RotationManager.lastAnimationRotation.pitch, RotationManager.animationRotation.pitch);
+            return MathHelper.lerp(tickDelta, RotationManager.lastAnimationRotation.pitch, RotationManager.animationRotation.pitch);
         }
 
         return original;

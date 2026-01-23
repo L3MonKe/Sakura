@@ -9,7 +9,10 @@ import dev.mahiro.client.events.render.Render2DEvent;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.NotificationManager;
 import dev.mahiro.client.module.impl.client.*;
-import dev.mahiro.client.module.impl.combat.*;
+import dev.mahiro.client.module.impl.combat.AntiBot;
+import dev.mahiro.client.module.impl.combat.AttributeSwap;
+import dev.mahiro.client.module.impl.combat.AutoSnowball;
+import dev.mahiro.client.module.impl.combat.KillAura;
 import dev.mahiro.client.module.impl.hud.*;
 import dev.mahiro.client.module.impl.movement.*;
 import dev.mahiro.client.module.impl.player.*;
@@ -32,12 +35,13 @@ public class ModuleManager {
         // Combat
         add(new AntiBot());
         add(new AttributeSwap());
-        add(new AutoPot());
         add(new KillAura());
         add(new AutoSnowball());
 
         // Movement
         add(new AutoSprint());
+        add(new FastWeb());
+        add(new JumpCooldown());
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());
@@ -47,7 +51,6 @@ public class ModuleManager {
         add(new Step());
         add(new Velocity());
         add(new VelocityRubberband());
-        add(new FastWeb());
 
         // Player
         add(new AntiHunger());
@@ -63,9 +66,9 @@ public class ModuleManager {
         add(new PacketEat());
         add(new PacketMine());
         add(new Replenish());
+        add(new Stealer());
         add(new TimerModule());
         add(new InvManager());
-        add(new ChestStealer());
 
         // Render
         add(new AspectRatio());

@@ -2,8 +2,10 @@ package dev.mahiro.client.utils.player;
 
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.utils.math.MathUtil;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 
 import static dev.mahiro.client.Mahiro.mc;
 
@@ -49,6 +51,32 @@ public class MovementUtil {
             return (mc.player.getStatusEffect(StatusEffects.JUMP_BOOST).getAmplifier() + 1) * 0.1;
         }
         return 0;
+    }
+
+    public static Vec3d getMotionVec(Entity entity, float ticks, boolean collision) {
+        if (mc.world == null) return Vec3d.ZERO;
+        double dX = entity.getX() - entity.prevX;
+        double dY = entity.getY() - entity.prevY;
+        double dZ = entity.getZ() - entity.prevZ;
+        double entityMotionPosX = 0;
+        double entityMotionPosY = 0;
+        double entityMotionPosZ = 0;
+        if (collision) {
+            for (double i = 1; i <= ticks; i = i + 0.5) {
+                if (!mc.world.canCollide(entity, entity.getBoundingBox().offset(new Vec3d(dX * i, dY * i, dZ * i)))) {
+                    entityMotionPosX = dX * i;
+                    entityMotionPosY = dY * i;
+                    entityMotionPosZ = dZ * i;
+                } else {
+                    break;
+                }
+            }
+        } else {
+            entityMotionPosX = dX * ticks;
+            entityMotionPosY = dY * ticks;
+            entityMotionPosZ = dZ * ticks;
+        }
+        return new Vec3d(entityMotionPosX, entityMotionPosY, entityMotionPosZ);
     }
 
     public static double getMotionY() {

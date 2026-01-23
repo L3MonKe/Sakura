@@ -153,12 +153,10 @@ public class Module {
         this.bindMode = bindMode;
     }
 
-    // 获取模块是否隐藏
     public boolean isHidden() {
         return hidden.get();
     }
 
-    // 设置模块是否隐藏
     public void setHidden(boolean hidden) {
         this.hidden.set(hidden);
     }

@@ -35,8 +35,6 @@ import java.util.function.Consumer;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class NameTags extends Module {
-    public static NameTags INSTANCE;
-
     private final NumberValue<Double> scaling = new NumberValue<>("Size", "大小", 4.0, 0.1, 10.0, 0.1);
     private final NumberValue<Double> minScale = new NumberValue<>("MinSize", "最小大小", 0.5, 0.1, 5.0, 0.1);
     private final BoolValue self = new BoolValue("Self", "自身", false);
@@ -54,7 +52,6 @@ public class NameTags extends Module {
 
     public NameTags() {
         super("NameTags", "名牌显示", Category.Render);
-        INSTANCE = this;
     }
 
     @Override

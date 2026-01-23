@@ -8,6 +8,9 @@ import dev.mahiro.client.events.player.JumpEvent;
 import dev.mahiro.client.events.player.JumpRotationEvent;
 import dev.mahiro.client.events.player.SprintEvent;
 import dev.mahiro.client.events.player.TravelEvent;
+import dev.mahiro.client.manager.impl.RotationManager;
+import dev.mahiro.client.module.impl.movement.JumpCooldown;
+import dev.mahiro.client.utils.vector.Rotation;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -16,6 +19,7 @@ import net.minecraft.entity.attribute.*;
 import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -33,6 +37,9 @@ public abstract class MixinLivingEntity extends Entity {
         super(type, world);
     }
 
+    @Shadow
+    private int jumpingCooldown;
+
     @Final
     @Shadow
     private static EntityAttributeModifier SPRINTING_SPEED_BOOST;
@@ -47,14 +54,33 @@ public abstract class MixinLivingEntity extends Entity {
         return null;
     }
 
+    @Redirect(method = "tickMovement", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/LivingEntity;jumpingCooldown:I", opcode = Opcodes.PUTFIELD, ordinal = 1))
+    private void modifyJumpingCooldown(LivingEntity instance, int jumpingCooldown) {
+        if (instance == mc.player) {
+            this.jumpingCooldown = JumpCooldown.cooldown.get();
+        } else {
+            this.jumpingCooldown = 10;
+        }
+    }
+
+    @Redirect(method = "turnHead", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getYaw()F"))
+    private float modifyHeadYaw(LivingEntity entity) {
+        Rotation animationRotation = RotationManager.animationRotation;
+        if (entity == mc.player && animationRotation != null) {
+            return animationRotation.yaw;
+        } else {
+            return entity.getYaw();
+        }
+    }
+
     @Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
-    public void setSprintingHook(boolean sprinting, CallbackInfo ci) {
+    public void setSprintingHook(CallbackInfo ci) {
         if ((Object) this == MinecraftClient.getInstance().player) {
             SprintEvent event = new SprintEvent();
             Mahiro.EVENT_BUS.post(event);
             if (event.isCancelled()) {
                 ci.cancel();
-                sprinting = event.isSprint();
+                boolean sprinting = event.isSprint();
                 super.setSprinting(sprinting);
                 EntityAttributeInstance entityAttributeInstance = this.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED);
                 entityAttributeInstance.removeModifier(SPRINTING_SPEED_BOOST.id());
