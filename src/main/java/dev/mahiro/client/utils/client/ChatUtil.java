@@ -1,13 +1,13 @@
 package dev.mahiro.client.utils.client;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.text.Text;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class ChatUtil {
-    private static final String PREFIX = "§7[§5" + LemonClient.MOD_NAME + "§7] ";
+    private static final String PREFIX = "§7[§5" + Mahiro.MOD_NAME + "§7] ";
 
     public static void component(Text component) {
         ChatHud chat = mc.inGameHud.getChatHud();

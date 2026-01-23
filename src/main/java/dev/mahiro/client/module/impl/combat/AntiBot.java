@@ -1,7 +1,7 @@
 package dev.mahiro.client.module.impl.combat;
 
 import com.mojang.authlib.GameProfile;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.impl.BoolValue;
@@ -46,7 +46,7 @@ public class AntiBot extends Module {
     }
 
     public static boolean isBot(PlayerEntity player) {
-        AntiBot antiBot = LemonClient.MODULES == null ? null : LemonClient.MODULES.getModule(AntiBot.class);
+        AntiBot antiBot = Mahiro.MODULES == null ? null : Mahiro.MODULES.getModule(AntiBot.class);
         if (antiBot == null || !antiBot.isEnabled()) return false;
         return antiBot.isBotInternal(player);
     }

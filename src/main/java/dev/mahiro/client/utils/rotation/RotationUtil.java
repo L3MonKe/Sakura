@@ -11,7 +11,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class RotationUtil {
     public static Rotation calculate(final Vector3d from, final Vector3d to) {

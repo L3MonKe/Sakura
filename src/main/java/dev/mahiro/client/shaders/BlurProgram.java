@@ -15,7 +15,7 @@ import org.lwjgl.opengl.GL30;
 
 import java.awt.*;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class BlurProgram {
     private final Uniform2f uSize;

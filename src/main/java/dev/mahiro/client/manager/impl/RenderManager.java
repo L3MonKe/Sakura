@@ -1,6 +1,6 @@
 package dev.mahiro.client.manager.impl;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.utils.render.Render3DUtil;
 import meteordevelopment.orbit.EventHandler;
@@ -15,7 +15,7 @@ public class RenderManager {
     private final List<Renderer> renderBoxes = new ArrayList<>();
 
     public RenderManager() {
-        LemonClient.EVENT_BUS.subscribe(this);
+        Mahiro.EVENT_BUS.subscribe(this);
     }
 
     public void add(BlockPos pos, Color sideColor, Color lineColor, int fadeTime) {

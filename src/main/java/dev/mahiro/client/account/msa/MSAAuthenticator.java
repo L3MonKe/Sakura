@@ -6,7 +6,7 @@ import com.google.gson.JsonSyntaxException;
 import com.mojang.util.UndashedUuid;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.account.msa.callback.BrowserLoginCallback;
 import dev.mahiro.client.account.msa.exception.MSAAuthException;
 import dev.mahiro.client.account.msa.model.MinecraftProfile;
@@ -345,7 +345,7 @@ public final class MSAAuthenticator {
         try (CloseableHttpResponse response = HTTP_CLIENT.execute(httpPost)) {
             return EntityUtils.toString(response.getEntity());
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to make POST request to {}", url);
+            Mahiro.LOGGER.error("Failed to make POST request to {}", url);
             e.printStackTrace();
         }
         return null;

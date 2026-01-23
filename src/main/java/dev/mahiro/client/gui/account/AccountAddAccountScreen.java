@@ -1,7 +1,7 @@
 package dev.mahiro.client.gui.account;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.account.msa.exception.MSAAuthException;
 import dev.mahiro.client.account.type.MinecraftAccount;
 import dev.mahiro.client.account.type.impl.CrackedAccount;
@@ -120,7 +120,7 @@ public final class AccountAddAccountScreen extends Screen {
         {
             try {
                 AccountManager.MSA_AUTHENTICATOR.loginWithBrowser((token) ->
-                        LemonClient.EXECUTOR.execute(() ->
+                        Mahiro.EXECUTOR.execute(() ->
                         {
                             final MicrosoftAccount account = new MicrosoftAccount(token);
                             final Session session = account.login();

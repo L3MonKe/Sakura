@@ -1,6 +1,6 @@
 package dev.mahiro.client.gui.clickgui;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.clickgui.panel.CategoryPanel;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.impl.client.ClickGui;
@@ -18,7 +18,7 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class ClickGuiScreen extends Screen {
     public static Animation openingAnimation = new EaseOutSine(400, 1);
@@ -110,7 +110,7 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public void close() {
-        LemonClient.MODULES.getModule(ClickGui.class).setState(false);
+        Mahiro.MODULES.getModule(ClickGui.class).setState(false);
     }
 
     @Override

@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.entity;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.entity.EntityPushEvent;
 import dev.mahiro.client.events.player.MoveEvent;
 import dev.mahiro.client.events.player.RayTraceEvent;
@@ -17,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity {
@@ -42,7 +42,7 @@ public abstract class MixinEntity {
     private Vec3d redirectGetRotationVector(Entity instance, float pitch, float yaw) {
         if (instance == mc.player) {
             RayTraceEvent event = new RayTraceEvent(instance, yaw, pitch);
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
             return this.getRotationVector(event.getPitch(), event.getYaw());
         }
         return this.getRotationVector(pitch, yaw);
@@ -52,7 +52,7 @@ public abstract class MixinEntity {
     public void updateVelocityHook(float speed, Vec3d movementInput, CallbackInfo ci) {
         if ((Object) this == mc.player) {
             UpdateVelocityEvent event = new UpdateVelocityEvent(movementInput, speed, mc.player.getYaw(), movementInputToVelocity(movementInput, speed, mc.player.getYaw()));
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
             if (event.isCancelled()) {
                 ci.cancel();
                 mc.player.setVelocity(mc.player.getVelocity().add(event.getVelocity()));
@@ -64,7 +64,7 @@ public abstract class MixinEntity {
     private float redirectGetYawInUpdateVelocity(Entity instance) {
         if ((Object) instance == mc.player) {
             StrafeEvent event = new StrafeEvent(instance.getYaw());
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
             return event.getYaw();
         }
         return instance.getYaw();
@@ -74,7 +74,7 @@ public abstract class MixinEntity {
     private void onPushAwayFrom(Entity entity, CallbackInfo ci) {
         if ((Object) this == mc.player) {
             EntityPushEvent event = new EntityPushEvent((Entity) (Object) this, entity);
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
             if (event.isCancelled()) {
                 ci.cancel();
             }
@@ -85,7 +85,7 @@ public abstract class MixinEntity {
     private void onMove(MovementType type, Vec3d movement, CallbackInfo ci) {
         if ((Object) this == mc.player && type == MovementType.SELF) {
             MoveEvent event = new MoveEvent(movement);
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
 
             if (event.isCancelled()) {
                 ci.cancel();

@@ -1,6 +1,6 @@
 package dev.mahiro.client.gui.clickgui.panel;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.IComponent;
 import dev.mahiro.client.gui.clickgui.component.ModuleComponent;
 import dev.mahiro.client.module.Category;
@@ -30,8 +30,8 @@ public class CategoryPanel implements IComponent {
         this.category = category;
         this.opened = true;
         this.openAnimation.setDirection(Direction.BACKWARDS);
-        for (i = 0; i < (LemonClient.MODULES.getModsByCategory(category).size()); ++i) {
-            Module module = LemonClient.MODULES.getModsByCategory(category).get(i);
+        for (i = 0; i < (Mahiro.MODULES.getModsByCategory(category).size()); ++i) {
+            Module module = Mahiro.MODULES.getModsByCategory(category).get(i);
             moduleComponents.add(new ModuleComponent(module));
         }
     }

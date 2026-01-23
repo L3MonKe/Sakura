@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.hud;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.manager.impl.NotificationManager;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.impl.client.HudEditor;
@@ -29,7 +29,7 @@ public class NotificationHud extends HudModule {
 
     @Override
     public void onRender(DrawContext context) {
-        if (LemonClient.MODULES.getModule(HudEditor.class).isEnabled()) {
+        if (Mahiro.MODULES.getModule(HudEditor.class).isEnabled()) {
             float[] size = NotificationManager.renderPreview(
                     context.getMatrices(),
                     x, y,

@@ -1,6 +1,6 @@
 package dev.mahiro.lemonchat.client;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.Chat;
 import dev.mahiro.lemonchat.network.NetHandler;
 import dev.mahiro.lemonchat.network.c2s.ChatMessageC2S;
@@ -11,7 +11,7 @@ import net.minecraft.text.Text;
 
 import java.io.IOException;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class ClientNetworkHandler implements NetHandler {
     public final ClientSession session;
@@ -37,7 +37,7 @@ public class ClientNetworkHandler implements NetHandler {
 
     @Override
     public void onMessageS2C(ChatMessageS2C packet) throws IOException {
-        if (LemonClient.MODULES.getModule(Chat.class).enable.get()) {
+        if (Mahiro.MODULES.getModule(Chat.class).enable.get()) {
             sendMessage(packet.message);
         }
     }

@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.player;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.player.BlockEvent;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.util.math.BlockPos;
@@ -14,6 +14,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MixinClientPlayerInteractionManager {
     @Inject(method = "attackBlock", at = @At("HEAD"))
     private void onPlayerAttackBlock(final BlockPos pos, final Direction face, final CallbackInfoReturnable<Boolean> info) {
-        LemonClient.EVENT_BUS.post(new BlockEvent(pos, face));
+        Mahiro.EVENT_BUS.post(new BlockEvent(pos, face));
     }
 }

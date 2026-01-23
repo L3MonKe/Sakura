@@ -2,7 +2,7 @@ package dev.mahiro.client.events.client;
 
 import dev.mahiro.client.auth.AuthGate;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class TickEvent {
     public static class Pre extends TickEvent {

@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.client;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.CameraClip;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.client.option.Perspective;
@@ -17,7 +17,7 @@ public class MixinGameOptions {
 
     @Inject(method = "setPerspective", at = @At("HEAD"), cancellable = true)
     private void onSetPerspective(Perspective perspective, CallbackInfo ci) {
-        CameraClip cameraClip = LemonClient.MODULES.getModule(CameraClip.class);
+        CameraClip cameraClip = Mahiro.MODULES.getModule(CameraClip.class);
 
         if (cameraClip.isEnabled() && cameraClip.disableFirstPers.get()) {
             if (perspective == Perspective.THIRD_PERSON_FRONT) {

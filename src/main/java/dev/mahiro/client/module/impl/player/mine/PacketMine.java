@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.player.mine;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.player.BlockEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
@@ -345,7 +345,7 @@ public class PacketMine extends Module {
                     PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.getCurrentPos(), side));
         }
 
-        if (blockPos != blockData2.getCurrentPos()) LemonClient.EVENT_BUS.post(new BlockEvent(blockPos, side));
+        if (blockPos != blockData2.getCurrentPos()) Mahiro.EVENT_BUS.post(new BlockEvent(blockPos, side));
     }
 
     public Direction getInteractDirection(final BlockPos blockPos, final boolean strictDirection) {

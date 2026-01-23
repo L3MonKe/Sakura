@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.network;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.ChatMessageEvent;
 import dev.mahiro.client.events.client.GameJoinEvent;
 import dev.mahiro.client.events.entity.EntityVelocityUpdateEvent;
@@ -31,12 +31,12 @@ public abstract class MixinClientPlayNetworkHandler extends ClientCommonNetworkH
 
     @Inject(method = "sendChatMessage", at = @At(value = "HEAD"), cancellable = true)
     private void hookSendChatMessage(String content, CallbackInfo ci) {
-        if (LemonClient.EVENT_BUS.post(new ChatMessageEvent.Server(content)).isCancelled()) ci.cancel();
+        if (Mahiro.EVENT_BUS.post(new ChatMessageEvent.Server(content)).isCancelled()) ci.cancel();
     }
 
     @Inject(method = "onGameJoin", at = @At(value = "TAIL"))
     private void hookOnGameJoin(GameJoinS2CPacket packet, CallbackInfo ci) {
-        LemonClient.EVENT_BUS.post(new GameJoinEvent());
+        Mahiro.EVENT_BUS.post(new GameJoinEvent());
     }
 
     @Inject(method = "onEntityVelocityUpdate", at = @At("HEAD"), cancellable = true)
@@ -46,7 +46,7 @@ public abstract class MixinClientPlayNetworkHandler extends ClientCommonNetworkH
         if (entity != null) {
             if (entity == MinecraftClient.getInstance().player) {
                 EntityVelocityUpdateEvent event = new EntityVelocityUpdateEvent();
-                LemonClient.EVENT_BUS.post(event);
+                Mahiro.EVENT_BUS.post(event);
                 if (!event.isCancelled()) {
                     entity.setVelocityClient(packet.getVelocityX(), packet.getVelocityY(), packet.getVelocityZ());
                 }

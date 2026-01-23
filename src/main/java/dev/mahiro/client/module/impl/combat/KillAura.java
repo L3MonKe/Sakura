@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.combat;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.manager.Managers;
@@ -59,8 +59,8 @@ public class KillAura extends Module {
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        boolean scaffoldEnable = LemonClient.MODULES.getModule(Scaffold.class).isEnabled();
-        boolean blinkEnable = LemonClient.MODULES.getModule(Blink.class).isEnabled();
+        boolean scaffoldEnable = Mahiro.MODULES.getModule(Scaffold.class).isEnabled();
+        boolean blinkEnable = Mahiro.MODULES.getModule(Blink.class).isEnabled();
         if (scaffoldEnable || blinkEnable) return;
 
         findTarget();

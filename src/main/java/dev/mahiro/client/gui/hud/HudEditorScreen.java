@@ -1,6 +1,6 @@
 package dev.mahiro.client.gui.hud;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.HudEditor;
@@ -26,7 +26,7 @@ public class HudEditorScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         hudPanel.render(context, mouseX, mouseY, delta);
-        for (Module module : LemonClient.MODULES.getAllModules()) {
+        for (Module module : Mahiro.MODULES.getAllModules()) {
             if (module instanceof HudModule hud && hud.isEnabled()) {
                 hud.renderInEditor(context, mouseX, mouseY);
             }
@@ -39,7 +39,7 @@ public class HudEditorScreen extends Screen {
             return true;
         }
 
-        for (Module module : LemonClient.MODULES.getAllModules()) {
+        for (Module module : Mahiro.MODULES.getAllModules()) {
             if (module instanceof HudModule hud && hud.isEnabled()) {
                 if (hud.mouseClicked((float) mouseX, (float) mouseY, button)) {
                     return true;
@@ -53,7 +53,7 @@ public class HudEditorScreen extends Screen {
     public boolean mouseReleased(double mouseX, double mouseY, int button) {
         hudPanel.mouseReleased(mouseX, mouseY, button);
 
-        for (Module module : LemonClient.MODULES.getAllModules()) {
+        for (Module module : Mahiro.MODULES.getAllModules()) {
             if (module instanceof HudModule hud && hud.isEnabled()) {
                 hud.mouseReleased(button);
             }
@@ -88,7 +88,7 @@ public class HudEditorScreen extends Screen {
     @Override
     public void close() {
         super.close();
-        HudEditor hudEditor = LemonClient.MODULES.getModule(HudEditor.class);
+        HudEditor hudEditor = Mahiro.MODULES.getModule(HudEditor.class);
         if (hudEditor != null) {
             hudEditor.setState(false);
         }

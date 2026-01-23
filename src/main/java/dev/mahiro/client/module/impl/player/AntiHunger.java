@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.player;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.mixin.accessor.IPlayerMoveC2SPacket;
@@ -26,7 +26,7 @@ public class AntiHunger extends Module {
         if (event.getType() != EventType.SEND) return;
 
         if (BowBomb.send) return;
-        if (AutoPearl.throwing || LemonClient.MODULES.getModule(Phase.class).isEnabled()) return;
+        if (AutoPearl.throwing || Mahiro.MODULES.getModule(Phase.class).isEnabled()) return;
         if (event.getPacket() instanceof ClientCommandC2SPacket packet && sprint.get()) {
             if (packet.getMode() == ClientCommandC2SPacket.Mode.START_SPRINTING) {
                 event.cancel();

@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.client;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.entity.AttackEvent;
@@ -36,18 +36,18 @@ public class MixinMinecraftClient {
 
     @Inject(method = "<init>(Lnet/minecraft/client/RunArgs;)V", at = @At("TAIL"))
     private void onInit(RunArgs args, CallbackInfo ci) {
-        LemonClient.init((MinecraftClient) (Object) this);
+        Mahiro.init((MinecraftClient) (Object) this);
     }
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void onPreTick(CallbackInfo info) {
-        LemonClient.EVENT_BUS.post(new TickEvent.Pre());
+        Mahiro.EVENT_BUS.post(new TickEvent.Pre());
     }
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void onPostTick(CallbackInfo info) {
         TickEvent.Post event = new TickEvent.Post();
-        LemonClient.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(event);
     }
 
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)
@@ -59,7 +59,7 @@ public class MixinMinecraftClient {
 
     @Inject(method = "handleInputEvents", at = @At(value = "HEAD"))
     private void onHandleInputEvents(CallbackInfo info) {
-        LemonClient.EVENT_BUS.post(new HandleInputEvent());
+        Mahiro.EVENT_BUS.post(new HandleInputEvent());
     }
 
     @ModifyArg(method = "updateWindowTitle", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/Window;setTitle(Ljava/lang/String;)V"))
@@ -76,7 +76,7 @@ public class MixinMinecraftClient {
     private void onAttack(CallbackInfoReturnable<Boolean> cir) {
         if (player != null && ((MinecraftClient) (Object) this).crosshairTarget instanceof EntityHitResult entityHitResult) {
             Entity entity = entityHitResult.getEntity();
-            LemonClient.EVENT_BUS.post(new AttackEvent(entity));
+            Mahiro.EVENT_BUS.post(new AttackEvent(entity));
         }
     }
 }

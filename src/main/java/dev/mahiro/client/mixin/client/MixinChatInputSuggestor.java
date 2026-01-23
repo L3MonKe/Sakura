@@ -3,7 +3,7 @@ package dev.mahiro.client.mixin.client;
 import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestions;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.SuggestChatEvent;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -45,7 +45,7 @@ public abstract class MixinChatInputSuggestor {
     @Inject(method = "refresh", at = @At(value = "INVOKE", target = "Lcom/mojang/brigadier/StringReader;canRead()Z", remap = false), cancellable = true, locals = LocalCapture.CAPTURE_FAILHARD)
     private void hookRefresh(CallbackInfo ci, String string, StringReader stringReader) {
         SuggestChatEvent suggestChatEvent = new SuggestChatEvent();
-        LemonClient.EVENT_BUS.post(suggestChatEvent);
+        Mahiro.EVENT_BUS.post(suggestChatEvent);
 
         if (suggestChatEvent.getPrefix() == null || suggestChatEvent.getDispatcher() == null) {
             return;

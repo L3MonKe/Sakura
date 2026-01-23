@@ -5,7 +5,7 @@ import dev.mahiro.client.utils.math.MathUtil;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.math.MathHelper;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class MovementUtil {
     public static boolean isMoving() {

@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.hud;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
@@ -29,7 +29,7 @@ public class WatermarkHud extends HudModule {
     public void onRender(DrawContext context) {
         float s = hudScale.get().floatValue();
 
-        String text = LemonClient.MOD_NAME + " " + LemonClient.MOD_VER;
+        String text = Mahiro.MOD_NAME + " " + Mahiro.MOD_VER;
         float fontSize = 30 * s;
         int fontLoader = FontLoader.bold((int) fontSize);
         float fontW = NanoVGHelper.getTextWidth(text, fontLoader, fontSize);

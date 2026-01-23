@@ -1,7 +1,7 @@
 package dev.mahiro.satin.impl;
 
 import com.google.common.base.Preconditions;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.satin.api.ManagedCoreShader;
 import dev.mahiro.satin.api.uniform.SamplerUniform;
 import net.minecraft.client.MinecraftClient;
@@ -64,6 +64,6 @@ public final class ResettableManagedCoreShader extends ResettableManagedShaderBa
 
     @Override
     protected void logInitError(IOException e) {
-        LemonClient.LOGGER.error("Could not create shader program {}", this.getLocation(), e);
+        Mahiro.LOGGER.error("Could not create shader program {}", this.getLocation(), e);
     }
 }

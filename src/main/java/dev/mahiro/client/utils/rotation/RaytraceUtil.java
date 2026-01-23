@@ -16,7 +16,7 @@ import net.minecraft.world.RaycastContext;
 
 import java.util.function.Predicate;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class RaytraceUtil {
     public static Vec3d getRotationVector(Rotation rotation) {

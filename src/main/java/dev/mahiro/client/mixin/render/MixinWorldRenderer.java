@@ -1,7 +1,7 @@
 package dev.mahiro.client.mixin.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.module.impl.render.NoRender;
 import dev.mahiro.client.utils.render.MSAAFramebuffer;
@@ -25,14 +25,14 @@ public class MixinWorldRenderer {
         matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
         matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0f));
 
-        MSAAFramebuffer.use(() -> LemonClient.EVENT_BUS.post(new Render3DEvent(matrixStack, tickCounter.getTickDelta(true))));
+        MSAAFramebuffer.use(() -> Mahiro.EVENT_BUS.post(new Render3DEvent(matrixStack, tickCounter.getTickDelta(true))));
 
         RenderSystem.getModelViewStack().popMatrix();
     }
 
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
     private void onRenderWeather(FrameGraphBuilder frameGraphBuilder, Vec3d pos, float tickDelta, Fog fog, CallbackInfo ci) {
-        NoRender noRender = LemonClient.MODULES.getModule(NoRender.class);
+        NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
         if (noRender.noWeather()) ci.cancel();
     }
 }

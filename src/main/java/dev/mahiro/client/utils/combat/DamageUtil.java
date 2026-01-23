@@ -19,7 +19,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 
 import java.util.Objects;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class DamageUtil {
     public static float calculateCrystalDamage(LivingEntity entity, Vec3d pos) {

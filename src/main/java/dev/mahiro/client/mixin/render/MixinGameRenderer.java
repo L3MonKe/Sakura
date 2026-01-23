@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.AspectRatio;
 import dev.mahiro.client.module.impl.render.NoRender;
 import dev.mahiro.client.utils.math.FrameRateCounter;
@@ -33,14 +33,14 @@ public class MixinGameRenderer {
 
     @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true)
     private void tiltViewWhenHurtHook(MatrixStack matrices, float tickDelta, CallbackInfo ci) {
-        if (LemonClient.MODULES.getModule(NoRender.class).getNoHurtCam()) {
+        if (Mahiro.MODULES.getModule(NoRender.class).getNoHurtCam()) {
             ci.cancel();
         }
     }
 
     @Inject(method = "getBasicProjectionMatrix", at = @At("TAIL"), cancellable = true)
     public void getBasicProjectionMatrix(float fovDegrees, CallbackInfoReturnable<Matrix4f> info) {
-        if (LemonClient.MODULES.getModule(AspectRatio.class).isEnabled()) {
+        if (Mahiro.MODULES.getModule(AspectRatio.class).isEnabled()) {
             MatrixStack matrixStack = new MatrixStack();
             matrixStack.peek().getPositionMatrix().identity();
             if (zoom != 1.0f) {
@@ -48,7 +48,7 @@ public class MixinGameRenderer {
                 matrixStack.scale(zoom, zoom, 1.0f);
             }
 
-            matrixStack.peek().getPositionMatrix().mul(new Matrix4f().setPerspective((float) (fovDegrees * 0.01745329238474369), LemonClient.MODULES.getModule(AspectRatio.class).ratio.get().floatValue(), 0.05f, viewDistance * 4.0f));
+            matrixStack.peek().getPositionMatrix().mul(new Matrix4f().setPerspective((float) (fovDegrees * 0.01745329238474369), Mahiro.MODULES.getModule(AspectRatio.class).ratio.get().floatValue(), 0.05f, viewDistance * 4.0f));
             info.setReturnValue(matrixStack.peek().getPositionMatrix());
         }
     }

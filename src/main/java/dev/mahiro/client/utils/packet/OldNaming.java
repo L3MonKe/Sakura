@@ -2,7 +2,7 @@ package dev.mahiro.client.utils.packet;
 
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 /**
  * @Author：Gu-Yuemang

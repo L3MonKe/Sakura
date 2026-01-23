@@ -1,7 +1,7 @@
 package dev.mahiro.client.mixin.render;
 
 import com.llamalad7.mixinextras.sugar.Local;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.Fullbright;
 import net.minecraft.client.gl.SimpleFramebuffer;
 import net.minecraft.client.render.LightmapTextureManager;
@@ -21,7 +21,7 @@ public class MixinLightmapTextureManager {
 
     @Inject(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/profiler/Profiler;push(Ljava/lang/String;)V", shift = At.Shift.AFTER), cancellable = true)
     private void update$skip(float tickProgress, CallbackInfo ci, @Local Profiler profiler) {
-        if (LemonClient.MODULES.getModule(Fullbright.class).isGamma()) {
+        if (Mahiro.MODULES.getModule(Fullbright.class).isGamma()) {
             // 1.21.10版本
 //            RenderSystem.getDevice().createCommandEncoder().clearColorTexture(glTexture, ColorHelper.getArgb(255, 255, 255, 255));
             this.lightmapFramebuffer.clear();

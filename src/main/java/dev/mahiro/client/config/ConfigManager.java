@@ -1,7 +1,7 @@
 package dev.mahiro.client.config;
 
 import com.google.gson.*;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.account.type.MinecraftAccount;
 import dev.mahiro.client.account.type.impl.CrackedAccount;
 import dev.mahiro.client.account.type.impl.MicrosoftAccount;
@@ -56,7 +56,7 @@ public class ConfigManager {
                 Files.createDirectories(MODULES_DIR);
             }
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to create config directory: {}", e.getMessage());
+            Mahiro.LOGGER.error("Failed to create config directory: {}", e.getMessage());
         }
     }
 
@@ -73,7 +73,7 @@ public class ConfigManager {
                 try {
                     array.add(account.toJSON());
                 } catch (RuntimeException e) {
-                    LemonClient.LOGGER.error(e.getMessage());
+                    Mahiro.LOGGER.error(e.getMessage());
                 }
             }
 
@@ -90,7 +90,7 @@ public class ConfigManager {
                         Files.delete(ACCOUNTS_FILE);
                     }
                 } catch (Exception e) {
-                    LemonClient.LOGGER.error("Failed to encrypt accounts: {}", e.getMessage());
+                    Mahiro.LOGGER.error("Failed to encrypt accounts: {}", e.getMessage());
                 }
             } else {
                 // 明文保存
@@ -105,7 +105,7 @@ public class ConfigManager {
                 }
             }
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to save accounts: {}", e.getMessage());
+            Mahiro.LOGGER.error("Failed to save accounts: {}", e.getMessage());
         }
     }
 
@@ -119,11 +119,11 @@ public class ConfigManager {
                         String encrypted = Files.readString(ENCRYPTED_ACCOUNTS_FILE, StandardCharsets.UTF_8);
                         content = decrypt(encrypted, currentPassword);
                     } catch (Exception e) {
-                        LemonClient.LOGGER.error("Failed to decrypt accounts: {}", e.getMessage());
+                        Mahiro.LOGGER.error("Failed to decrypt accounts: {}", e.getMessage());
                         return;
                     }
                 } else {
-                    LemonClient.LOGGER.info("Encrypted accounts file found, waiting for password.");
+                    Mahiro.LOGGER.info("Encrypted accounts file found, waiting for password.");
                     return;
                 }
             } else if (Files.exists(ACCOUNTS_FILE)) {
@@ -149,7 +149,7 @@ public class ConfigManager {
                     }
                 } else if (object.has("token")) {
                     if (!object.has("username")) {
-                        LemonClient.LOGGER.error("Browser account does not have a username set?");
+                        Mahiro.LOGGER.error("Browser account does not have a username set?");
                         continue;
                     }
                     account = new MicrosoftAccount(object.get("token").getAsString());
@@ -163,11 +163,11 @@ public class ConfigManager {
                 if (account != null) {
                     Managers.ACCOUNT.register(account, false);
                 } else {
-                    LemonClient.LOGGER.error("Could not parse account JSON.\nRaw: {}", object.toString());
+                    Mahiro.LOGGER.error("Could not parse account JSON.\nRaw: {}", object.toString());
                 }
             }
         } catch (IOException | IllegalStateException e) {
-            LemonClient.LOGGER.error("Failed to load accounts: {}", e.getMessage());
+            Mahiro.LOGGER.error("Failed to load accounts: {}", e.getMessage());
         }
     }
 
@@ -214,7 +214,7 @@ public class ConfigManager {
     }
 
     private void saveModules() {
-        for (Module module : LemonClient.MODULES.getAllModules()) {
+        for (Module module : Mahiro.MODULES.getAllModules()) {
             saveModule(module);
         }
     }
@@ -245,7 +245,7 @@ public class ConfigManager {
                 GSON.toJson(moduleObject, writer);
             }
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to save module {}: {}", module.getEnglishName(), e.getMessage());
+            Mahiro.LOGGER.error("Failed to save module {}: {}", module.getEnglishName(), e.getMessage());
         }
     }
 
@@ -258,13 +258,13 @@ public class ConfigManager {
                     .forEach(path -> {
                         String moduleName = path.getFileName().toString();
                         moduleName = moduleName.substring(0, moduleName.length() - 5);
-                        Module module = LemonClient.MODULES.getModuleByString(moduleName);
+                        Module module = Mahiro.MODULES.getModuleByString(moduleName);
                         if (module != null) {
                             loadModule(module, path);
                         }
                     });
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to load modules: {}", e.getMessage());
+            Mahiro.LOGGER.error("Failed to load modules: {}", e.getMessage());
         }
     }
 
@@ -307,7 +307,7 @@ public class ConfigManager {
                 }
             }
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to load module {}: {}", module.getEnglishName(), e.getMessage());
+            Mahiro.LOGGER.error("Failed to load module {}: {}", module.getEnglishName(), e.getMessage());
         }
     }
 
@@ -316,8 +316,8 @@ public class ConfigManager {
             JsonObject clickGuiObject = new JsonObject();
 
             JsonArray panelsArray = new JsonArray();
-            if (LemonClient.CLICKGUI != null) {
-                for (CategoryPanel panel : LemonClient.CLICKGUI.getPanels()) {
+            if (Mahiro.CLICKGUI != null) {
+                for (CategoryPanel panel : Mahiro.CLICKGUI.getPanels()) {
                     JsonObject panelObject = new JsonObject();
                     panelObject.addProperty("category", panel.getCategory().name());
                     panelObject.addProperty("x", panel.getX());
@@ -328,8 +328,8 @@ public class ConfigManager {
             }
             clickGuiObject.add("panels", panelsArray);
 
-            if (LemonClient.HUDEDITOR != null) {
-                HudPanel hudPanel = LemonClient.HUDEDITOR.getHudPanel();
+            if (Mahiro.HUDEDITOR != null) {
+                HudPanel hudPanel = Mahiro.HUDEDITOR.getHudPanel();
                 if (hudPanel != null) {
                     JsonObject hudPanelObject = new JsonObject();
                     hudPanelObject.addProperty("x", hudPanel.getX());
@@ -355,13 +355,13 @@ public class ConfigManager {
             String content = new String(Files.readAllBytes(CLICKGUI_FILE), StandardCharsets.UTF_8);
             JsonObject clickGuiObject = JsonParser.parseString(content).getAsJsonObject();
 
-            if (clickGuiObject.has("panels") && LemonClient.CLICKGUI != null) {
+            if (clickGuiObject.has("panels") && Mahiro.CLICKGUI != null) {
                 JsonArray panelsArray = clickGuiObject.getAsJsonArray("panels");
                 for (JsonElement element : panelsArray) {
                     JsonObject panelObject = element.getAsJsonObject();
                     String categoryName = panelObject.get("category").getAsString();
 
-                    for (CategoryPanel panel : LemonClient.CLICKGUI.getPanels()) {
+                    for (CategoryPanel panel : Mahiro.CLICKGUI.getPanels()) {
                         if (panel.getCategory().name().equals(categoryName)) {
                             if (panelObject.has("x")) panel.setX(panelObject.get("x").getAsFloat());
                             if (panelObject.has("y")) panel.setY(panelObject.get("y").getAsFloat());
@@ -372,16 +372,16 @@ public class ConfigManager {
                 }
             }
 
-            if (clickGuiObject.has("hudPanel") && LemonClient.HUDEDITOR != null) {
+            if (clickGuiObject.has("hudPanel") && Mahiro.HUDEDITOR != null) {
                 JsonObject hudPanelObject = clickGuiObject.getAsJsonObject("hudPanel");
-                HudPanel hudPanel = LemonClient.HUDEDITOR.getHudPanel();
+                HudPanel hudPanel = Mahiro.HUDEDITOR.getHudPanel();
                 if (hudPanel != null) {
                     if (hudPanelObject.has("x")) hudPanel.setX(hudPanelObject.get("x").getAsFloat());
                     if (hudPanelObject.has("y")) hudPanel.setY(hudPanelObject.get("y").getAsFloat());
                 }
             }
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to load clickgui: {}", e.getMessage());
+            Mahiro.LOGGER.error("Failed to load clickgui: {}", e.getMessage());
         }
     }
 
@@ -487,7 +487,7 @@ public class ConfigManager {
                 GSON.toJson(prefixObject, writer);
             }
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to save prefix: {}", e.getMessage());
+            Mahiro.LOGGER.error("Failed to save prefix: {}", e.getMessage());
         }
     }
 
@@ -503,7 +503,7 @@ public class ConfigManager {
                 return prefixObject.get("prefix").getAsString();
             }
         } catch (IOException e) {
-            LemonClient.LOGGER.error("Failed to load prefix: {}", e.getMessage());
+            Mahiro.LOGGER.error("Failed to load prefix: {}", e.getMessage());
         }
         return ".";
     }

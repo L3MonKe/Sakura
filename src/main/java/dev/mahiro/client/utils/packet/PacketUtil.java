@@ -3,7 +3,7 @@ package dev.mahiro.client.utils.packet;
 import net.minecraft.client.network.PendingUpdateManager;
 import net.minecraft.client.network.SequencedPacketCreator;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class PacketUtil {
     public static void sendSequencedPacket(SequencedPacketCreator packetCreator) {

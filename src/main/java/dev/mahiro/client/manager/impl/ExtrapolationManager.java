@@ -1,6 +1,6 @@
 package dev.mahiro.client.manager.impl;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TickEvent;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -15,13 +15,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class ExtrapolationManager {
     private Map<AbstractClientPlayerEntity, List<Vec3d>> motions = new HashMap<>();
 
     public ExtrapolationManager() {
-        LemonClient.EVENT_BUS.subscribe(this);
+        Mahiro.EVENT_BUS.subscribe(this);
     }
 
     @EventHandler(priority = 1000000)

@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.ChatMessageEvent;
 import dev.mahiro.client.mixin.accessor.IChatInputSuggestor;
 import dev.mahiro.client.mixin.accessor.ISuggestionWindow;
@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.*;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 @Mixin(ChatScreen.class)
 public class MixinChatScreen {
@@ -68,7 +68,7 @@ public class MixinChatScreen {
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color backgroundColor = new Color(18, 18, 18, 70);
 
-            HudEditor hudEditor = LemonClient.MODULES.getModule(HudEditor.class);
+            HudEditor hudEditor = Mahiro.MODULES.getModule(HudEditor.class);
             boolean enableBloom = hudEditor != null ? hudEditor.enableChatBloom.get() : true;
 
             if (enableBloom) {
@@ -80,7 +80,7 @@ public class MixinChatScreen {
     }
 
     private float getGlobalRadius() {
-        HudEditor hudEditor = LemonClient.MODULES.getModule(HudEditor.class);
+        HudEditor hudEditor = Mahiro.MODULES.getModule(HudEditor.class);
         if (hudEditor != null) {
             return hudEditor.globalCornerRadius.get().floatValue();
         }
@@ -89,7 +89,7 @@ public class MixinChatScreen {
 
     @Inject(method = "render", at = @At("RETURN"))
     private void onRenderPost(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
-        if (chatField == null || !chatField.getText().startsWith(LemonClient.COMMAND.getPrefix())) return;
+        if (chatField == null || !chatField.getText().startsWith(Mahiro.COMMAND.getPrefix())) return;
         NanoVGRenderer.INSTANCE.draw(vg -> {
             final float PAD = 0.5F;
             final Color SAKURA = new Color(255, 183, 197, (int) (255 * inputAlpha));
@@ -116,7 +116,7 @@ public class MixinChatScreen {
 
     @Inject(method = "sendMessage", at = @At("HEAD"), cancellable = true)
     private void hookSendMessage(String chatText, boolean addToHistory, CallbackInfo ci) {
-        if (LemonClient.EVENT_BUS.post(new ChatMessageEvent.Client(chatText)).isCancelled()) ci.cancel();
+        if (Mahiro.EVENT_BUS.post(new ChatMessageEvent.Client(chatText)).isCancelled()) ci.cancel();
     }
 
     @Inject(method = "init", at = @At("TAIL"))

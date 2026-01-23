@@ -1,6 +1,6 @@
 package dev.mahiro.satin.impl;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.shaders.WindowResizeCallback;
 import dev.mahiro.satin.api.ManagedCoreShader;
 import dev.mahiro.satin.api.ShaderEffectManager;
@@ -47,7 +47,7 @@ public final class ReloadableShaderEffectManager implements ShaderEffectManager 
             try {
                 ss.initializeOrLog(shaderResources);
             } catch (Exception e) {
-                LemonClient.LOGGER.error("Failed to reload shader: {}", ss.getLocation(), e);
+                Mahiro.LOGGER.error("Failed to reload shader: {}", ss.getLocation(), e);
             }
         }
     }

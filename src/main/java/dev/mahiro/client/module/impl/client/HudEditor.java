@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.client;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
 import dev.mahiro.client.module.Category;
@@ -25,7 +25,7 @@ public class HudEditor extends Module {
         }
 
         if (mc.player != null && !(mc.currentScreen instanceof HudEditorScreen)) {
-            mc.setScreen(LemonClient.HUDEDITOR);
+            mc.setScreen(Mahiro.HUDEDITOR);
         }
     }
 
@@ -35,6 +35,6 @@ public class HudEditor extends Module {
             mc.setScreen(null);
         }
 
-        LemonClient.CONFIG.saveDefaultConfig();
+        Mahiro.CONFIG.saveDefaultConfig();
     }
 }

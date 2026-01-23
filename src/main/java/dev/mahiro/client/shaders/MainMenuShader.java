@@ -11,7 +11,7 @@ import org.lwjgl.opengl.GL20;
 
 import java.io.IOException;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class MainMenuShader {
     // 共享的SAKURA着色器实例（用于 SplashOverlay和TitleScreen之间的过渡）

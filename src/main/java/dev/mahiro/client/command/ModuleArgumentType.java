@@ -6,7 +6,7 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.Module;
 import net.minecraft.command.CommandSource;
 
@@ -26,7 +26,7 @@ public class ModuleArgumentType implements ArgumentType<Module> {
     @Override
     public Module parse(StringReader reader) throws CommandSyntaxException {
         String string = reader.readString();
-        Module module = LemonClient.MODULES.getModuleByString(string);
+        Module module = Mahiro.MODULES.getModuleByString(string);
         if (module == null) {
             throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherParseException().createWithContext(reader, null);
         }
@@ -37,14 +37,14 @@ public class ModuleArgumentType implements ArgumentType<Module> {
     public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
                                                               final SuggestionsBuilder builder) {
         return CommandSource.suggestMatching(
-                LemonClient.MODULES.getAllModules().stream().map(Module::getEnglishName),
+                Mahiro.MODULES.getAllModules().stream().map(Module::getEnglishName),
                 builder
         );
     }
 
     @Override
     public Collection<String> getExamples() {
-        return LemonClient.MODULES.getAllModules().stream()
+        return Mahiro.MODULES.getAllModules().stream()
                 .map(Module::getEnglishName)
                 .limit(10)
                 .toList();

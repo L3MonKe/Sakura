@@ -1,7 +1,7 @@
 package dev.mahiro.client.mixin.render;
 
 import com.llamalad7.mixinextras.injector.v2.WrapWithCondition;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.Crystal;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
@@ -23,7 +23,7 @@ public abstract class MixinEndCrystalEntityRenderer {
 
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(CallbackInfo info) {
-        crystal = LemonClient.MODULES.getModule(Crystal.class);
+        crystal = Mahiro.MODULES.getModule(Crystal.class);
     }
 
     @Shadow

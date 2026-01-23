@@ -1,7 +1,7 @@
 package dev.mahiro.client.module.impl.player;
 
 import com.mojang.authlib.GameProfile;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.player.MotionEvent;
@@ -155,7 +155,7 @@ public class FakePlayer extends Module {
                     fakePlayer.setStackInHand(Hand.OFF_HAND, ItemStack.EMPTY);
 
                     EntityStatusS2CPacket packet = new EntityStatusS2CPacket(fakePlayer, EntityStatuses.USE_TOTEM_OF_UNDYING);
-                    LemonClient.EVENT_BUS.post(new PacketEvent(EventType.RECEIVE, packet));
+                    Mahiro.EVENT_BUS.post(new PacketEvent(EventType.RECEIVE, packet));
                     packet.apply(mc.getNetworkHandler());
                 }
             }

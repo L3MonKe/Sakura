@@ -1,6 +1,6 @@
 package dev.mahiro.client.module;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
 import dev.mahiro.client.module.impl.client.HudEditor;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
@@ -60,7 +60,7 @@ public class HudModule extends Module {
     }
 
     public void renderInGame(DrawContext context) {
-        if (LemonClient.MODULES.getModule(HudEditor.class).isEnabled() && mc.currentScreen instanceof HudEditorScreen) {
+        if (Mahiro.MODULES.getModule(HudEditor.class).isEnabled() && mc.currentScreen instanceof HudEditorScreen) {
             return;
         }
         onRender(context);

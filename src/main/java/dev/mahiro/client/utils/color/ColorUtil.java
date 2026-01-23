@@ -2,10 +2,6 @@ package dev.mahiro.client.utils.color;
 
 import java.awt.*;
 
-/**
- * @Author：Gu-Yuemang
- * @Date：2025/11/14 01:25
- */
 public class ColorUtil {
     public static Color applyOpacity(Color color, float opacity) {
         opacity = Math.min(1, Math.max(0, opacity));

@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TimerEvent;
 import dev.mahiro.client.module.impl.player.TimerModule;
 import net.minecraft.client.render.RenderTickCounter;
@@ -19,8 +19,8 @@ public class MixinRenderTickCounter {
     @Inject(at = {@At(value = "FIELD", target = "Lnet/minecraft/client/render/RenderTickCounter$Dynamic;prevTimeMillis:J", opcode = Opcodes.PUTFIELD, ordinal = 0)}, method = {"beginRenderTick(J)I"})
     public void onBeginRenderTick(long long_1, CallbackInfoReturnable<Integer> cir) {
         TimerEvent event = new TimerEvent();
-        LemonClient.EVENT_BUS.post(event);
-        TimerModule timer = LemonClient.MODULES.getModule(TimerModule.class);
+        Mahiro.EVENT_BUS.post(event);
+        TimerModule timer = Mahiro.MODULES.getModule(TimerModule.class);
         if (!event.isCancelled()) {
             if (event.isModified()) {
                 lastFrameDuration *= event.get();

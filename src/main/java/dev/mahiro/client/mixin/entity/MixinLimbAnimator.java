@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.entity;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.entity.LimbAnimationEvent;
 import net.minecraft.entity.LimbAnimator;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,7 +13,7 @@ public final class MixinLimbAnimator {
     @Inject(method = "getSpeed()F", at = @At("HEAD"), cancellable = true)
     private void hookGetSpeed(CallbackInfoReturnable<Float> cir) {
         LimbAnimationEvent limbAnimationEvent = new LimbAnimationEvent();
-        LemonClient.EVENT_BUS.post(limbAnimationEvent);
+        Mahiro.EVENT_BUS.post(limbAnimationEvent);
         if (limbAnimationEvent.isCancelled()) {
             cir.cancel();
             cir.setReturnValue(limbAnimationEvent.getSpeed());
@@ -23,7 +23,7 @@ public final class MixinLimbAnimator {
     @Inject(method = "getSpeed(F)F", at = @At("HEAD"), cancellable = true)
     private void hookGetSpeed(float tickDelta, CallbackInfoReturnable<Float> cir) {
         LimbAnimationEvent limbAnimationEvent = new LimbAnimationEvent();
-        LemonClient.EVENT_BUS.post(limbAnimationEvent);
+        Mahiro.EVENT_BUS.post(limbAnimationEvent);
         if (limbAnimationEvent.isCancelled()) {
             cir.cancel();
             cir.setReturnValue(limbAnimationEvent.getSpeed());

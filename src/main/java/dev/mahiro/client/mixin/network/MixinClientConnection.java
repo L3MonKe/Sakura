@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.network;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
 import net.minecraft.network.ClientConnection;
@@ -25,7 +25,7 @@ public class MixinClientConnection {
     @Inject(method = "send(Lnet/minecraft/network/packet/Packet;)V", at = @At("HEAD"), cancellable = true)
     private void sendPacketEvent(Packet<?> packet, final CallbackInfo callbackInfo) {
         final PacketEvent event = new PacketEvent(EventType.SEND, packet);
-        LemonClient.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(event);
         if (event.isCancelled()) {
             callbackInfo.cancel();
         }
@@ -45,7 +45,7 @@ public class MixinClientConnection {
         }
 
         final PacketEvent event = new PacketEvent(EventType.RECEIVE, packet);
-        LemonClient.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(event);
         if (event.isCancelled()) {
             ci.cancel();
         }
@@ -53,6 +53,6 @@ public class MixinClientConnection {
 
     @Inject(method = "send(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/PacketCallbacks;)V", at = @At("TAIL"))
     private void onSendPacketTail(Packet<?> packet, @Nullable PacketCallbacks callbacks, CallbackInfo ci) {
-        LemonClient.EVENT_BUS.post(new PacketEvent(EventType.SENT, packet));
+        Mahiro.EVENT_BUS.post(new PacketEvent(EventType.SENT, packet));
     }
 }

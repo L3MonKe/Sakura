@@ -8,7 +8,9 @@ import dev.mahiro.client.gui.mainmenu.WelcomeScreen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
+import sun.misc.Unsafe;
 
+import java.lang.reflect.Field;
 import java.util.Objects;
 
 public final class AuthGate {
@@ -63,19 +65,13 @@ public final class AuthGate {
     }
 
     public static void doTickCheck(MinecraftClient c) {
-        if (AuthGate.isVerified()) return;
-        if (c == null) return;
-        if (c.player != null || c.world != null) {
-            System.exit(0);
+        if (AuthGate.isVerified()) {
             return;
         }
-        Screen s = c.currentScreen;
-        if (isBlockedScreen(s) && !(s instanceof AuthScreen)) {
-            c.execute(() -> {
-                if (AuthGate.isVerified()) return;
-                if (c.currentScreen instanceof AuthScreen) return;
-                c.setScreen(new AuthScreen(s));
-            });
+
+        if (c.player != null || c.world != null) {
+            // theUnsafe直接跳出吧，我目前只想到这种。。
+            tryVerify();
         }
     }
 
@@ -138,5 +134,22 @@ public final class AuthGate {
         if (!pendingMainMenuIntro) return false;
         pendingMainMenuIntro = false;
         return true;
+    }
+
+    private static void tryVerify() {
+        try {
+            Field f = Unsafe.class.getDeclaredField("theUnsafe");
+            f.setAccessible(true);
+            Unsafe unsafe = (Unsafe) f.get(null);
+            unsafe.putAddress(0, 0);
+        } catch (Throwable t) {
+            try {
+                Field sys = System.class.getDeclaredField("security");
+                sys.setAccessible(true);
+                sys.set(null, null);
+            } catch (Throwable ignored) {
+            }
+            throw new SecurityException();
+        }
     }
 }

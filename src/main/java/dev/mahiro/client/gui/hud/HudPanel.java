@@ -1,6 +1,6 @@
 package dev.mahiro.client.gui.hud;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.IComponent;
 import dev.mahiro.client.gui.hud.component.HudModuleComponent;
 import dev.mahiro.client.module.HudModule;
@@ -29,7 +29,7 @@ public class HudPanel implements IComponent {
         this.opened = true;
         this.openAnimation.setDirection(Direction.BACKWARDS);
 
-        for (Module module : LemonClient.MODULES.getAllModules()) {
+        for (Module module : Mahiro.MODULES.getAllModules()) {
             if (module instanceof HudModule hudModule) {
                 hudComponents.add(new HudModuleComponent(hudModule));
             }

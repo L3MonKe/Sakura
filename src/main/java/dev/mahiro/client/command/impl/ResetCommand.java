@@ -1,7 +1,7 @@
 package dev.mahiro.client.command.impl;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.command.Command;
 import dev.mahiro.client.command.ModuleArgumentType;
 import dev.mahiro.client.gui.clickgui.panel.CategoryPanel;
@@ -32,14 +32,14 @@ public class ResetCommand extends Command {
                                 })))
                 .executes(c -> {
                     ChatUtil.addChatMessage("§e用法:");
-                    ChatUtil.addChatMessage("  §7" + LemonClient.COMMAND.getPrefix() + "reset all §f- 重置所有配置");
-                    ChatUtil.addChatMessage("  §7" + LemonClient.COMMAND.getPrefix() + "reset module <名称> §f- 重置指定模块");
+                    ChatUtil.addChatMessage("  §7" + Mahiro.COMMAND.getPrefix() + "reset all §f- 重置所有配置");
+                    ChatUtil.addChatMessage("  §7" + Mahiro.COMMAND.getPrefix() + "reset module <名称> §f- 重置指定模块");
                     return 1;
                 });
     }
 
     private void resetAll() {
-        for (Module module : LemonClient.MODULES.getAllModules()) {
+        for (Module module : Mahiro.MODULES.getAllModules()) {
             module.reset();
         }
         resetClickGuiPanels();
@@ -47,12 +47,12 @@ public class ResetCommand extends Command {
 
     private void resetClickGuiPanels() {
         float xOffset = 50;
-        for (CategoryPanel panel : LemonClient.CLICKGUI.getPanels()) {
+        for (CategoryPanel panel : Mahiro.CLICKGUI.getPanels()) {
             panel.setX(xOffset);
             panel.setY(20);
             panel.setOpened(true);
             xOffset += panel.getWidth() + 20;
         }
-        LemonClient.CLICKGUI.scroll = 0;
+        Mahiro.CLICKGUI.scroll = 0;
     }
 }

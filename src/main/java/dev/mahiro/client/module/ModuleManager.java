@@ -1,6 +1,6 @@
 package dev.mahiro.client.module;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.events.input.MouseButtonEvent;
 import dev.mahiro.client.events.misc.KeyAction;
@@ -23,7 +23,7 @@ import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class ModuleManager {
     private final Map<Class<? extends Module>, Module> modules = new LinkedHashMap<>();
@@ -105,7 +105,7 @@ public class ModuleManager {
     }
 
     public ModuleManager() {
-        LemonClient.EVENT_BUS.subscribe(this);
+        Mahiro.EVENT_BUS.subscribe(this);
         init();
     }
 

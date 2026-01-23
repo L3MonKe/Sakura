@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import net.minecraft.client.util.Icons;
 import net.minecraft.client.util.Window;
 import net.minecraft.resource.InputSupplier;
@@ -17,11 +17,11 @@ import java.util.List;
 public class MixinWindow {
     @Redirect(method = "setIcon", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/Icons;getIcons(Lnet/minecraft/resource/ResourcePack;)Ljava/util/List;"))
     private List<InputSupplier<InputStream>> onSetIcon(Icons instance, ResourcePack resourcePack) throws IOException {
-        final InputStream stream16 = LemonClient.class.getResourceAsStream("/assets/mahiro/icons/icon_16x16.png");
-        final InputStream stream32 = LemonClient.class.getResourceAsStream("/assets/mahiro/icons/icon_32x32.png");
+        final InputStream stream16 = Mahiro.class.getResourceAsStream("/assets/mahiro/icons/icon_16x16.png");
+        final InputStream stream32 = Mahiro.class.getResourceAsStream("/assets/mahiro/icons/icon_32x32.png");
 
         if (stream16 == null || stream32 == null) {
-            LemonClient.LOGGER.error("找不到icon图标!");
+            Mahiro.LOGGER.error("找不到icon图标!");
             return instance.getIcons(resourcePack);
         }
 

@@ -3,7 +3,7 @@ package dev.mahiro.client.auth.net;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.auth.crypto.*;
 
@@ -63,7 +63,7 @@ public final class AuthClient {
                     payload.addProperty("username", username.trim());
                     payload.addProperty("password", password);
                     payload.addProperty("deviceId", deviceId.trim());
-                    payload.addProperty("clientVersion", LemonClient.MOD_VER);
+                    payload.addProperty("clientVersion", Mahiro.MOD_VER);
                     payload.addProperty("ts", System.currentTimeMillis());
 
                     String plaintextJson = GSON.toJson(payload);
@@ -98,7 +98,7 @@ public final class AuthClient {
                     payload.addProperty("password", password);
                     payload.addProperty("licenseKey", licenseKey.trim().toUpperCase(java.util.Locale.ROOT));
                     payload.addProperty("deviceId", deviceId.trim());
-                    payload.addProperty("clientVersion", LemonClient.MOD_VER);
+                    payload.addProperty("clientVersion", Mahiro.MOD_VER);
                     payload.addProperty("ts", System.currentTimeMillis());
 
                     String plaintextJson = GSON.toJson(payload);

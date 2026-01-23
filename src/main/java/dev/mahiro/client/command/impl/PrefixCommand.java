@@ -2,7 +2,7 @@ package dev.mahiro.client.command.impl;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.command.Command;
 import dev.mahiro.client.utils.client.ChatUtil;
 import net.minecraft.command.CommandSource;
@@ -24,14 +24,14 @@ public class PrefixCommand extends Command {
                             }
 
                             int prefixKey = getPrefixKey(newPrefix);
-                            LemonClient.COMMAND.setPrefix(newPrefix, prefixKey);
-                            LemonClient.CONFIG.savePrefix(newPrefix);
+                            Mahiro.COMMAND.setPrefix(newPrefix, prefixKey);
+                            Mahiro.CONFIG.savePrefix(newPrefix);
                             ChatUtil.addChatMessage("Command prefix set to: §a" + newPrefix);
                             return 1;
                         }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("Current prefix: §a" + LemonClient.COMMAND.getPrefix());
-                    ChatUtil.addChatMessage("Usage: " + LemonClient.COMMAND.getPrefix() + "prefix <new prefix>");
+                    ChatUtil.addChatMessage("Current prefix: §a" + Mahiro.COMMAND.getPrefix());
+                    ChatUtil.addChatMessage("Usage: " + Mahiro.COMMAND.getPrefix() + "prefix <new prefix>");
                     return 1;
                 });
     }

@@ -1,6 +1,6 @@
 package dev.mahiro.client.gui.mainmenu;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.clickgui.component.ModuleComponent;
 import dev.mahiro.client.gui.clickgui.panel.CategoryPanel;
 import dev.mahiro.client.gui.component.AdvancedColorPicker;
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 import static org.lwjgl.nanovg.NanoVG.nvgCreateImageMem;
 
 public class WelcomeScreen extends Screen {
@@ -210,13 +210,13 @@ public class WelcomeScreen extends Screen {
     }
 
     private void finishWizard() {
-        ClickGui clickGui = LemonClient.MODULES.getModule(ClickGui.class);
+        ClickGui clickGui = Mahiro.MODULES.getModule(ClickGui.class);
         if (clickGui != null) {
             clickGui.setKey(GLFW.GLFW_KEY_RIGHT_SHIFT);
             if (Math.random() > 0.5) {
                 ClickGui.colorMode.set(ClickGui.ColorMode.values()[(int) (Math.random() * ClickGui.ColorMode.values().length)]);
             }
-            LemonClient.CONFIG.saveDefaultConfig();
+            Mahiro.CONFIG.saveDefaultConfig();
         }
         exiting = true;
         exitTime = System.currentTimeMillis();
@@ -295,7 +295,7 @@ public class WelcomeScreen extends Screen {
         isImageLoading = true;
         CompletableFuture.runAsync(() -> {
             try {
-                InputStream is = LemonClient.class.getResourceAsStream("/assets/mahiro/textures/pi8.jpg");
+                InputStream is = Mahiro.class.getResourceAsStream("/assets/mahiro/textures/pi8.jpg");
                 if (is == null) {
                     isImageLoading = false;
                     return;

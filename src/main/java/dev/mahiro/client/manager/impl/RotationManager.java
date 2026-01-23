@@ -1,6 +1,6 @@
 package dev.mahiro.client.manager.impl;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.input.MoveInputEvent;
@@ -32,7 +32,7 @@ public class RotationManager {
     private static int priority;
 
     public RotationManager() {
-        LemonClient.EVENT_BUS.subscribe(this);
+        Mahiro.EVENT_BUS.subscribe(this);
     }
 
     // 婆罗门这一块

@@ -1,7 +1,7 @@
 package dev.mahiro.client.mixin.input;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import net.minecraft.client.input.KeyboardInput;
 import net.minecraft.util.PlayerInput;
@@ -21,7 +21,7 @@ public class MixinKeyboardInput {
                 original.sneak(),
                 original.sprint()
         );
-        LemonClient.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(event);
         return event.toPlayerInput();
     }
 }

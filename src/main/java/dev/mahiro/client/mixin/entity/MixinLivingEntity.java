@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.entity;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
 import dev.mahiro.client.events.entity.UpdateServerPositionEvent;
@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 @Mixin(LivingEntity.class)
 public abstract class MixinLivingEntity extends Entity {
@@ -51,7 +51,7 @@ public abstract class MixinLivingEntity extends Entity {
     public void setSprintingHook(boolean sprinting, CallbackInfo ci) {
         if ((Object) this == MinecraftClient.getInstance().player) {
             SprintEvent event = new SprintEvent();
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
             if (event.isCancelled()) {
                 ci.cancel();
                 sprinting = event.isSprint();
@@ -69,7 +69,7 @@ public abstract class MixinLivingEntity extends Entity {
     private void onTravelPre(Vec3d movementInput, CallbackInfo ci) {
         if ((Object) this == mc.player) {
             TravelEvent event = new TravelEvent(EventType.PRE, movementInput);
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
             if (event.isCancelled()) {
                 ci.cancel();
             }
@@ -80,7 +80,7 @@ public abstract class MixinLivingEntity extends Entity {
     private void onTravelPost(Vec3d movementInput, CallbackInfo ci) {
         if ((Object) this == mc.player) {
             TravelEvent event = new TravelEvent(EventType.POST, movementInput);
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
         }
     }
 
@@ -88,7 +88,7 @@ public abstract class MixinLivingEntity extends Entity {
     private float redirectGetYawInJump(LivingEntity instance) {
         if (instance == mc.player) {
             JumpRotationEvent event = new JumpRotationEvent(instance.getYaw());
-            LemonClient.EVENT_BUS.post(event);
+            Mahiro.EVENT_BUS.post(event);
             return event.getYaw();
         }
         return instance.getYaw();
@@ -96,18 +96,18 @@ public abstract class MixinLivingEntity extends Entity {
 
     @Inject(method = "jump", at = @At("HEAD"))
     private void onJumpPre(CallbackInfo ci) {
-        LemonClient.EVENT_BUS.post(new JumpEvent(EventType.PRE));
+        Mahiro.EVENT_BUS.post(new JumpEvent(EventType.PRE));
     }
 
     @Inject(method = "jump", at = @At("RETURN"))
     private void onJumpPost(CallbackInfo ci) {
-        LemonClient.EVENT_BUS.post(new JumpEvent(EventType.POST));
+        Mahiro.EVENT_BUS.post(new JumpEvent(EventType.POST));
     }
 
     @Inject(method = "getHandSwingDuration", at = @At("HEAD"), cancellable = true)
     private void hookGetHandSwingDuration(CallbackInfoReturnable<Integer> cir) {
         SwingSpeedEvent swingSpeedEvent = new SwingSpeedEvent();
-        LemonClient.EVENT_BUS.post(swingSpeedEvent);
+        Mahiro.EVENT_BUS.post(swingSpeedEvent);
         if (swingSpeedEvent.isCancelled()) {
             if (swingSpeedEvent.getSelfOnly() && ((Object) this != mc.player)) {
                 return;
@@ -120,6 +120,6 @@ public abstract class MixinLivingEntity extends Entity {
     @Inject(method = "updateTrackedPositionAndAngles", at = @At(value = "HEAD"))
     private void hookUpdateTrackedPositionAndAngles(double x, double y, double z, float yaw, float pitch, int interpolationSteps, CallbackInfo ci) {
         UpdateServerPositionEvent updateServerPositionEvent = new UpdateServerPositionEvent((LivingEntity) (Object) this, x, y, z, yaw, pitch);
-        LemonClient.EVENT_BUS.post(updateServerPositionEvent);
+        Mahiro.EVENT_BUS.post(updateServerPositionEvent);
     }
 }

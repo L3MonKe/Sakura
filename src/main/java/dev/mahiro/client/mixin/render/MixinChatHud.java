@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.HudEditor;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
@@ -59,7 +59,7 @@ public class MixinChatHud {
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color backgroundColor = new Color(18, 18, 18, 70);
 
-            HudEditor hudEditor = LemonClient.MODULES.getModule(HudEditor.class);
+            HudEditor hudEditor = Mahiro.MODULES.getModule(HudEditor.class);
             boolean enableBloom = hudEditor != null ? hudEditor.enableChatBloom.get() : true;
 
             if (enableBloom) {
@@ -71,7 +71,7 @@ public class MixinChatHud {
     }
 
     private float getGlobalRadius() {
-        HudEditor hudEditor = LemonClient.MODULES.getModule(HudEditor.class);
+        HudEditor hudEditor = Mahiro.MODULES.getModule(HudEditor.class);
         if (hudEditor != null) {
             return hudEditor.globalCornerRadius.get().floatValue();
         }

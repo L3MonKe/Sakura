@@ -83,7 +83,7 @@ import java.util.concurrent.Executors;
  * 每晚灯火阑珊处，夜难寐，加班狂。
  */
 
-public class LemonClient {
+public class Mahiro {
     public static final String MOD_NAME = "M4h1r0";
     public static final String MOD_VER = BuildConfig.VERSION + "-" + BuildConfig.BUILD_IDENTIFIER;
 
@@ -107,7 +107,7 @@ public class LemonClient {
 
         AuthGate.init();
 
-        EVENT_BUS.registerLambdaFactory(LemonClient.class.getPackageName(), (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
+        EVENT_BUS.registerLambdaFactory(Mahiro.class.getPackageName(), (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
         EXECUTOR = Executors.newFixedThreadPool(1);
 

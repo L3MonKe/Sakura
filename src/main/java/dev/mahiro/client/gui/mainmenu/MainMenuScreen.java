@@ -1,6 +1,6 @@
 package dev.mahiro.client.gui.mainmenu;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.gui.account.AccountSelectorScreen;
 import dev.mahiro.client.module.impl.client.ClickGui;
@@ -29,7 +29,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class MainMenuScreen extends Screen {
     private static final Color OVERLAY_TINT_1 = new Color(62, 137, 154, 50);
@@ -78,7 +78,7 @@ public class MainMenuScreen extends Screen {
 
     @Override
     protected void init() {
-        ClickGui clickGui = LemonClient.MODULES.getModule(ClickGui.class);
+        ClickGui clickGui = Mahiro.MODULES.getModule(ClickGui.class);
         if (clickGui != null && clickGui.getKey() == -1) {
             mc.setScreen(new WelcomeScreen());
             return;
@@ -315,7 +315,7 @@ public class MainMenuScreen extends Screen {
         float versionY = 7f * layout.scale + height / 2f - 50f * layout.scale - 100f * layout.scale;
         float versionSize = refFont(15f, layout.scale);
         NanoVGHelper.drawString(
-                LemonClient.MOD_VER,
+                Mahiro.MOD_VER,
                 versionX,
                 versionY,
                 FontLoader.greycliffSemi(versionSize),

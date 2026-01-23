@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.entity;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.movement.Velocity;
 import net.minecraft.fluid.FlowableFluid;
 import net.minecraft.util.math.Direction;
@@ -14,7 +14,7 @@ import java.util.Iterator;
 public class MixinFlowableFluid {
     @Redirect(method = "getVelocity", at = @At(value = "INVOKE", target = "Ljava/util/Iterator;hasNext()Z", ordinal = 0))
     private boolean redirectVelocity(Iterator<Direction> var9) {
-        Velocity velocity = LemonClient.MODULES.getModule(Velocity.class);
+        Velocity velocity = Mahiro.MODULES.getModule(Velocity.class);
         if (velocity.isEnabled() && velocity.waterPush.get()) {
             return false;
         }

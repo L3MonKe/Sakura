@@ -1,6 +1,6 @@
 package dev.mahiro.client.manager.impl;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.account.msa.MSAAuthenticator;
 import dev.mahiro.client.account.type.MinecraftAccount;
 import dev.mahiro.client.mixin.accessor.IMinecraftClient;
@@ -9,7 +9,7 @@ import net.minecraft.client.session.Session;
 import java.util.LinkedList;
 import java.util.List;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class AccountManager {
     public static final MSAAuthenticator MSA_AUTHENTICATOR = new MSAAuthenticator();
@@ -23,22 +23,22 @@ public class AccountManager {
     public void register(MinecraftAccount account, boolean save) {
         for (MinecraftAccount existing : accounts) {
             if (existing.username().equalsIgnoreCase(account.username()) && existing.getClass() == account.getClass()) {
-                LemonClient.LOGGER.warn("Account already exists: {} ({})", account.username(), account.getClass().getSimpleName());
+                Mahiro.LOGGER.warn("Account already exists: {} ({})", account.username(), account.getClass().getSimpleName());
                 return;
             }
         }
         accounts.add(account);
-        if (save) LemonClient.CONFIG.saveAccounts();
+        if (save) Mahiro.CONFIG.saveAccounts();
     }
 
     public void unregister(final MinecraftAccount account) {
         accounts.remove(account);
-        LemonClient.CONFIG.saveAccounts();
+        Mahiro.CONFIG.saveAccounts();
     }
 
     public void setSession(final Session session) {
         ((IMinecraftClient) mc).setSession(session);
-        LemonClient.LOGGER.info("Set session to {} ({})", session.getUsername(), session.getUuidOrNull());
+        Mahiro.LOGGER.info("Set session to {} ({})", session.getUsername(), session.getUuidOrNull());
     }
 
     public List<MinecraftAccount> getAccounts() {
@@ -46,6 +46,6 @@ public class AccountManager {
     }
 
     public boolean isEncrypted() {
-        return LemonClient.CONFIG.isEncrypted();
+        return Mahiro.CONFIG.isEncrypted();
     }
 }

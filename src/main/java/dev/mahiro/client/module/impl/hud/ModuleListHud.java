@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.hud;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.ClickGui;
@@ -128,7 +128,7 @@ public class ModuleListHud extends HudModule {
     }
 
     private boolean isHudEditorOpen() {
-        HudEditor editor = LemonClient.MODULES.getModule(HudEditor.class);
+        HudEditor editor = Mahiro.MODULES.getModule(HudEditor.class);
         return editor != null && editor.isEnabled();
     }
 
@@ -190,7 +190,7 @@ public class ModuleListHud extends HudModule {
     private final java.util.Map<Module, String> moduleIconMap = new java.util.HashMap<>();
 
     private void updateModuleList() {
-        List<Module> enabledModules = LemonClient.MODULES.getAllModules().stream()
+        List<Module> enabledModules = Mahiro.MODULES.getAllModules().stream()
                 .filter(Module::isEnabled)
                 .filter(module -> !module.isHidden())
                 .filter(module -> !hideHudModules.get() || !(module instanceof HudModule))

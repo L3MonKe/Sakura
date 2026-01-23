@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.entity;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.entity.BlockPushEvent;
 import dev.mahiro.client.events.player.MotionEvent;
@@ -22,7 +22,7 @@ public class MixinClientPlayerEntity {
     @Inject(method = "sendMovementPackets", at = @At("HEAD"), cancellable = true)
     private void sendMovementPacketsHeadInject(CallbackInfo ci) {
         ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
-        LemonClient.EVENT_BUS.post(motionEvent = new MotionEvent(EventType.PRE, player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch(), player.isOnGround()));
+        Mahiro.EVENT_BUS.post(motionEvent = new MotionEvent(EventType.PRE, player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch(), player.isOnGround()));
         if (motionEvent.isCancelled()) ci.cancel();
     }
 
@@ -59,13 +59,13 @@ public class MixinClientPlayerEntity {
     @Inject(method = "sendMovementPackets", at = @At("TAIL"))
     private void sendMovementPacketsTailInject(CallbackInfo info) {
         ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
-        LemonClient.EVENT_BUS.post(new MotionEvent(EventType.POST, player.getYaw(), player.getPitch()));
+        Mahiro.EVENT_BUS.post(new MotionEvent(EventType.POST, player.getYaw(), player.getPitch()));
     }
 
     @Inject(method = "pushOutOfBlocks", at = @At("HEAD"), cancellable = true)
     private void onPushOutOfBlocks(double x, double z, CallbackInfo ci) {
         BlockPushEvent event = new BlockPushEvent((ClientPlayerEntity) (Object) this);
-        LemonClient.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(event);
         if (event.isCancelled()) {
             ci.cancel();
         }
@@ -73,13 +73,13 @@ public class MixinClientPlayerEntity {
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void tickHeadHook(CallbackInfo ci) {
-        if (LemonClient.EVENT_BUS.post(new PlayerTickEvent()).isCancelled()) ci.cancel();
+        if (Mahiro.EVENT_BUS.post(new PlayerTickEvent()).isCancelled()) ci.cancel();
     }
 
     @Redirect(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z"))
     private boolean onSlowDown(ClientPlayerEntity instance) {
         SlowdownEvent event = new SlowdownEvent(instance.isUsingItem());
-        LemonClient.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(event);
         return event.isSlowdown();
     }
 }

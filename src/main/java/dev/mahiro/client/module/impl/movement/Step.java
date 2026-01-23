@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.movement;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.player.MotionEvent;
@@ -37,12 +37,12 @@ public class Step extends Module {
 
     @Override
     protected void onEnable() {
-        LemonClient.EVENT_BUS.subscribe(this);
+        Mahiro.EVENT_BUS.subscribe(this);
     }
 
     @Override
     protected void onDisable() {
-        LemonClient.EVENT_BUS.unsubscribe(this);
+        Mahiro.EVENT_BUS.unsubscribe(this);
         if (mc.player != null) {
             setStepHeight(0.6f);
         }

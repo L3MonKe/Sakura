@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.movement;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
@@ -172,7 +172,7 @@ public class VelocityRubberband extends Module {
         frozenPackets.clear();
 
         if (debug.get()) {
-            LemonClient.LOGGER.info("Freeze start, KB: " + velocity);
+            Mahiro.LOGGER.info("Freeze start, KB: " + velocity);
         }
     }
 
@@ -202,7 +202,7 @@ public class VelocityRubberband extends Module {
         mc.player.setVelocity(0, mc.player.getVelocity().y * 0.3, 0);
 
         if (debug.get()) {
-            LemonClient.LOGGER.info("Teleport back, distance: " + distance);
+            Mahiro.LOGGER.info("Teleport back, distance: " + distance);
         }
 
         finishRubberband();

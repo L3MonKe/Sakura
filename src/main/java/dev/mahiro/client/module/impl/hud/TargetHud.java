@@ -1,7 +1,7 @@
 package dev.mahiro.client.module.impl.hud;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.impl.combat.KillAura;
@@ -80,7 +80,7 @@ public class TargetHud extends HudModule {
     }
 
     private LivingEntity getCurrentTarget() {
-        KillAura killAura = LemonClient.MODULES.getModule(KillAura.class);
+        KillAura killAura = Mahiro.MODULES.getModule(KillAura.class);
         if (killAura != null && killAura.isEnabled()) {
             Entity target = killAura.getCurrentTarget();
             if (target instanceof LivingEntity living) {

@@ -8,7 +8,7 @@ import net.minecraft.util.Identifier;
 import java.util.HashSet;
 import java.util.Set;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public class SoundManager {
     private final Set<String> REGISTERED_SOUND_FILES = new HashSet<>();

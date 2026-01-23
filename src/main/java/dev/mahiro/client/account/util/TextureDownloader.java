@@ -1,6 +1,6 @@
 package dev.mahiro.client.account.util;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.util.Identifier;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 public final class TextureDownloader {
     private final CloseableHttpClient client = HttpClients.createDefault();
@@ -26,7 +26,7 @@ public final class TextureDownloader {
     public void downloadTexture(final String id, final String url, final boolean force) {
         if (!downloading.add(id) || cache.containsKey(id)) return;
 
-        LemonClient.EXECUTOR.execute(() -> {
+        Mahiro.EXECUTOR.execute(() -> {
             final HttpGet request = new HttpGet(url);
             try (CloseableHttpResponse response = client.execute(request)) {
                 final InputStream stream = response.getEntity().getContent();

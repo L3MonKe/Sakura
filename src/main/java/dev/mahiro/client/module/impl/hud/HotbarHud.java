@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.hud;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.impl.client.HudEditor;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
@@ -55,7 +55,7 @@ public class HotbarHud extends HudModule {
 
     @Override
     public void renderInGame(DrawContext context) {
-        HudEditor editor = LemonClient.MODULES.getModule(HudEditor.class);
+        HudEditor editor = Mahiro.MODULES.getModule(HudEditor.class);
         if (editor != null && editor.isEnabled()) return;
 
         updateAnimation();

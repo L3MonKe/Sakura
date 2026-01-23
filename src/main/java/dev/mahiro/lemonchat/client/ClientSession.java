@@ -1,6 +1,6 @@
 package dev.mahiro.lemonchat.client;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.Capes;
 import dev.mahiro.lemonchat.client.codec.PDecoder;
 import dev.mahiro.lemonchat.network.Packet;
@@ -18,7 +18,7 @@ import net.minecraft.util.math.MathHelper;
 import java.io.IOException;
 import java.net.SocketAddress;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 import static dev.mahiro.lemonchat.client.ChatClient.LOGGER;
 
 public class ClientSession extends SimpleChannelInboundHandler<Packet> {
@@ -188,7 +188,7 @@ public class ClientSession extends SimpleChannelInboundHandler<Packet> {
         if (this.tickCount % 60 == 0) {
             if (mc != null && mc.world != null && mc.player != null) {
                 String capeId = "None";
-                Capes cape = LemonClient.MODULES.getModule(Capes.class);
+                Capes cape = Mahiro.MODULES.getModule(Capes.class);
                 if (cape != null && cape.isEnabled()) {
                     capeId = cape.getName();
                 }

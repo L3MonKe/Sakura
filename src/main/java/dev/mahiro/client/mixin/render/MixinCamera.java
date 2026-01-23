@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.CameraClip;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
@@ -26,14 +26,14 @@ public abstract class MixinCamera {
 
     @ModifyArgs(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;moveBy(FFF)V", ordinal = 0))
     private void modifyCameraDistance(Args args) {
-        if (LemonClient.MODULES.getModule(CameraClip.class).isNormal()) {
-            args.set(0, -clipToSpace(LemonClient.MODULES.getModule(CameraClip.class).getDistance()));
+        if (Mahiro.MODULES.getModule(CameraClip.class).isNormal()) {
+            args.set(0, -clipToSpace(Mahiro.MODULES.getModule(CameraClip.class).getDistance()));
         }
     }
 
     @Inject(method = "clipToSpace", at = @At("HEAD"), cancellable = true)
     private void onClipToSpace(float f, CallbackInfoReturnable<Float> cir) {
-        CameraClip clip = LemonClient.MODULES.getModule(CameraClip.class);
+        CameraClip clip = Mahiro.MODULES.getModule(CameraClip.class);
         if (clip.isNormal()) {
             cir.setReturnValue(clip.getDistance());
         } else if (clip.isAction()) {
@@ -48,7 +48,7 @@ public abstract class MixinCamera {
 
     @ModifyArgs(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;setPos(DDD)V"))
     private void onSetCameraPosition(Args args) {
-        CameraClip actionCamera = LemonClient.MODULES.getModule(CameraClip.class);
+        CameraClip actionCamera = Mahiro.MODULES.getModule(CameraClip.class);
 
         if (actionCamera != null && actionCamera.shouldModifyCamera() && focusedEntity != null) {
             Vec3d playerPos = focusedEntity.getPos();

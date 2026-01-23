@@ -1,6 +1,6 @@
 package dev.mahiro.client.module;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.module.impl.hud.DynamicIslandHud;
 import dev.mahiro.client.module.impl.hud.ModuleListHud;
@@ -60,7 +60,7 @@ public class Module {
     }
 
     public <M extends Module> boolean isEnabled(Class<M> module) {
-        Module mod = LemonClient.MODULES.getModule(module);
+        Module mod = Mahiro.MODULES.getModule(module);
         return mod != null && mod.isEnabled();
     }
 
@@ -82,10 +82,10 @@ public class Module {
             DynamicIslandHud.onModuleToggle(this, state);
             ModuleListHud.onModuleToggle(this, state);
             if (state) {
-                LemonClient.EVENT_BUS.subscribe(this);
+                Mahiro.EVENT_BUS.subscribe(this);
                 onEnable();
             } else {
-                LemonClient.EVENT_BUS.unsubscribe(this);
+                Mahiro.EVENT_BUS.unsubscribe(this);
                 onDisable();
             }
         }

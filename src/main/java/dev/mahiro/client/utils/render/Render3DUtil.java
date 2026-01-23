@@ -19,7 +19,7 @@ import org.joml.Vector3f;
 import java.awt.*;
 import java.util.List;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class Render3DUtil {

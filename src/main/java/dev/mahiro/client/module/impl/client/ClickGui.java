@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.client;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.color.ColorUtil;
@@ -52,7 +52,7 @@ public class ClickGui extends Module {
             this.toggle();
             return;
         }
-        mc.setScreen(LemonClient.CLICKGUI);
+        mc.setScreen(Mahiro.CLICKGUI);
     }
 
     @Override

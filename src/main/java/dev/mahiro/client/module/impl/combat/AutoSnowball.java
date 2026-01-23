@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.combat;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
@@ -33,7 +33,7 @@ public class AutoSnowball extends Module {
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        KillAura killAura = LemonClient.MODULES.getModule(KillAura.class);
+        KillAura killAura = Mahiro.MODULES.getModule(KillAura.class);
         if (!killAura.isEnabled() || killAura.getCurrentTarget() == null) return;
 
         ItemStack offhand = mc.player.getOffHandStack();

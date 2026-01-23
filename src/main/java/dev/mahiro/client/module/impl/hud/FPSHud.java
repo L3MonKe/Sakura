@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.hud;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
@@ -69,7 +69,7 @@ public class FPSHud extends HudModule {
     }
 
     private int calculateColor() {
-        long offset = LemonClient.MODULES.getAllModules().stream()
+        long offset = Mahiro.MODULES.getAllModules().stream()
                 .filter(Module::isEnabled)
                 .count();
 

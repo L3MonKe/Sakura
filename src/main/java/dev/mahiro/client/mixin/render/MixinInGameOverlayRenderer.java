@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.NoRender;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.hud.InGameOverlayRenderer;
@@ -16,19 +16,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinInGameOverlayRenderer {
     @Inject(method = "renderFireOverlay", at = @At("HEAD"), cancellable = true)
     private static void onRenderFireOverlay(MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
-        NoRender noRender = LemonClient.MODULES.getModule(NoRender.class);
+        NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
         if (noRender.noFireOverlay()) ci.cancel();
     }
 
     @Inject(method = "renderUnderwaterOverlay", at = @At("HEAD"), cancellable = true)
     private static void onRenderUnderwaterOverlay(MinecraftClient client, MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
-        NoRender noRender = LemonClient.MODULES.getModule(NoRender.class);
+        NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
         if (noRender.noLiquidOverlay()) ci.cancel();
     }
 
     @Inject(method = "renderInWallOverlay", at = @At("HEAD"), cancellable = true)
     private static void onRenderInWallOverlay(Sprite sprite, MatrixStack matrices, VertexConsumerProvider vertexConsumers, CallbackInfo ci) {
-        NoRender noRender = LemonClient.MODULES.getModule(NoRender.class);
+        NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
         if (noRender.noInWallOverlay()) ci.cancel();
     }
 }

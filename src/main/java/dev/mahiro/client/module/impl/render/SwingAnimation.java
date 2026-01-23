@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.entity.LimbAnimationEvent;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
@@ -40,12 +40,12 @@ public class SwingAnimation extends Module {
 
     @Override
     protected void onEnable() {
-        LemonClient.EVENT_BUS.subscribe(this);
+        Mahiro.EVENT_BUS.subscribe(this);
     }
 
     @Override
     protected void onDisable() {
-        LemonClient.EVENT_BUS.unsubscribe(this);
+        Mahiro.EVENT_BUS.unsubscribe(this);
     }
 
     @EventHandler

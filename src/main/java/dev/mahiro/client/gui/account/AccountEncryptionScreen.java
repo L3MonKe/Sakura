@@ -1,7 +1,7 @@
 package dev.mahiro.client.gui.account;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.component.SakuraButton;
 import dev.mahiro.client.gui.component.SakuraTextField;
 import dev.mahiro.client.gui.theme.SakuraTheme;
@@ -87,7 +87,7 @@ public final class AccountEncryptionScreen extends Screen {
         addDrawableChild(new SakuraButton((int) inputX, (int) buttonY, (int) inputWidth, 24, "Encrypt", (action) ->
         {
             if (isPasswordSecure(passwordTextField.getText())) {
-                LemonClient.CONFIG.setEncryptionPassword(passwordTextField.getText());
+                Mahiro.CONFIG.setEncryptionPassword(passwordTextField.getText());
                 client.setScreen(parent);
             }
         }));

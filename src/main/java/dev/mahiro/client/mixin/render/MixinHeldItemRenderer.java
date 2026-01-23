@@ -1,6 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.item.EatTransformationEvent;
 import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.events.render.item.RenderSwingAnimationEvent;
@@ -24,11 +24,10 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import static dev.mahiro.client.LemonClient.mc;
+import static dev.mahiro.client.Mahiro.mc;
 
 @Mixin(HeldItemRenderer.class)
 public class MixinHeldItemRenderer {
-
     @Shadow
     @Final
     private MinecraftClient client;
@@ -60,7 +59,7 @@ public class MixinHeldItemRenderer {
         if (g < 0.8f) {
             h = MathHelper.abs(MathHelper.cos(f / 4.0f * (float) Math.PI) * 0.1f);
             EatTransformationEvent eatTransformationEvent = new EatTransformationEvent();
-            LemonClient.EVENT_BUS.post(eatTransformationEvent);
+            Mahiro.EVENT_BUS.post(eatTransformationEvent);
             matrices.translate(0.0f, eatTransformationEvent.isCancelled() ? h * eatTransformationEvent.getFactor() : h, 0.0f);
         }
         h = 1.0f - (float) Math.pow(g, 27.0);
@@ -74,7 +73,7 @@ public class MixinHeldItemRenderer {
     @ModifyArg(method = "updateHeldItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;clamp(FFF)F", ordinal = 2), index = 0)
     private float hookEquipProgressMainhand(float value) {
         RenderSwingAnimationEvent renderSwingAnimation = new RenderSwingAnimationEvent();
-        LemonClient.EVENT_BUS.post(renderSwingAnimation);
+        Mahiro.EVENT_BUS.post(renderSwingAnimation);
         float f = mc.player.getAttackCooldownProgress(1.0f);
         float modified = renderSwingAnimation.isCancelled() ? 1.0f : f * f * f;
         return (ItemStack.areEqual(mainHand, mc.player.getMainHandStack()) ? modified : 0.0f) - equipProgressMainHand;
@@ -85,7 +84,7 @@ public class MixinHeldItemRenderer {
         ItemStack itemStack = mc.player.getMainHandStack();
         ItemStack itemStack2 = mc.player.getOffHandStack();
         UpdateHeldItemsEvent updateHeldItemsEvent = new UpdateHeldItemsEvent();
-        LemonClient.EVENT_BUS.post(updateHeldItemsEvent);
+        Mahiro.EVENT_BUS.post(updateHeldItemsEvent);
         if (updateHeldItemsEvent.isCancelled()) {
             ci.cancel();
             equipProgressMainHand = 1.0f;
@@ -100,6 +99,6 @@ public class MixinHeldItemRenderer {
     @Inject(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V", shift = At.Shift.AFTER))
     private void hookRenderFirstPersonItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
         HeldItemRendererEvent event = new HeldItemRendererEvent(matrices, hand);
-        LemonClient.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(event);
     }
 }

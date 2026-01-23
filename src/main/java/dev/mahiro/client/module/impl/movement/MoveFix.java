@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.movement;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.player.JumpEvent;
@@ -105,6 +105,6 @@ public class MoveFix extends Module {
     }
 
     public static boolean isActive() {
-        return LemonClient.MODULES.getModule(MoveFix.class).isEnabled();
+        return Mahiro.MODULES.getModule(MoveFix.class).isEnabled();
     }
 }

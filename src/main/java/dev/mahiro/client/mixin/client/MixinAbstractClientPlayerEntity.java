@@ -1,7 +1,7 @@
 package dev.mahiro.client.mixin.client;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.Capes;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.util.SkinTextures;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public abstract class MixinAbstractClientPlayerEntity {
     @ModifyReturnValue(method = "getSkinTextures", at = @At("RETURN"))
     private SkinTextures modifySkinTextures(SkinTextures original) {
-        Capes capes = LemonClient.MODULES.getModule(Capes.class);
+        Capes capes = Mahiro.MODULES.getModule(Capes.class);
         if (capes == null) return original;
 
         AbstractClientPlayerEntity player = (AbstractClientPlayerEntity) (Object) this;

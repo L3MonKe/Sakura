@@ -1,6 +1,6 @@
 package dev.mahiro.satin.impl;
 
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.satin.api.uniform.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.resource.ResourceFactory;
@@ -81,7 +81,7 @@ public abstract class ResettableManagedShaderBase<S extends AutoCloseable> imple
         if (this.shader != null) {
             boolean found = setupUniform(ret, shader);
             if (!found) {
-                LemonClient.LOGGER.warn("No {} found with name {} in shader {}", uniformKind, uniformName, this.location);
+                Mahiro.LOGGER.warn("No {} found with name {} in shader {}", uniformKind, uniformName, this.location);
             }
         }
         uniformMap.put(uniformName, ret);

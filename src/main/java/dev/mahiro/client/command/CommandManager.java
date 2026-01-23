@@ -2,7 +2,7 @@ package dev.mahiro.client.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.command.impl.*;
 import dev.mahiro.client.events.client.ChatMessageEvent;
 import dev.mahiro.client.events.client.SuggestChatEvent;
@@ -30,9 +30,9 @@ public class CommandManager {
     private final CommandSource source = new ClientCommandSource(null, mc);
 
     public CommandManager() {
-        LemonClient.EVENT_BUS.subscribe(this);
+        Mahiro.EVENT_BUS.subscribe(this);
 
-        String savedPrefix = LemonClient.CONFIG.loadPrefix();
+        String savedPrefix = Mahiro.CONFIG.loadPrefix();
         if (savedPrefix != null && !savedPrefix.isEmpty()) {
             this.prefix = savedPrefix;
             this.prefixKey = getPrefixKey(savedPrefix);

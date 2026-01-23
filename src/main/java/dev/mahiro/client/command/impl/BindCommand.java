@@ -2,7 +2,7 @@ package dev.mahiro.client.command.impl;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import dev.mahiro.client.LemonClient;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.command.Command;
 import dev.mahiro.client.command.ModuleArgumentType;
 import dev.mahiro.client.module.Module;
@@ -30,7 +30,7 @@ public class BindCommand extends Command {
                                             if (keyName.equalsIgnoreCase("none")) {
                                                 module.setKey(InputUtil.UNKNOWN_KEY.getCode());
                                                 ChatUtil.addChatMessage("Unbound " + module.getEnglishName() + ".");
-                                                LemonClient.CONFIG.saveDefaultConfig();
+                                                Mahiro.CONFIG.saveDefaultConfig();
                                                 return 1;
                                             }
 
@@ -49,7 +49,7 @@ public class BindCommand extends Command {
                                             module.setKey(key.getCode());
                                             module.setBindMode(bindMode);
                                             ChatUtil.addChatMessage("Bound " + module.getEnglishName() + " to " + keyName.toUpperCase() + " (" + bindMode.name() + ").");
-                                            LemonClient.CONFIG.saveDefaultConfig();
+                                            Mahiro.CONFIG.saveDefaultConfig();
                                             return 1;
                                         }))
                                 .executes(c -> {
@@ -59,7 +59,7 @@ public class BindCommand extends Command {
                                     if (keyName.equalsIgnoreCase("none")) {
                                         module.setKey(InputUtil.UNKNOWN_KEY.getCode());
                                         ChatUtil.addChatMessage("Unbound " + module.getEnglishName() + ".");
-                                        LemonClient.CONFIG.saveDefaultConfig();
+                                        Mahiro.CONFIG.saveDefaultConfig();
                                         return 1;
                                     }
 
@@ -71,7 +71,7 @@ public class BindCommand extends Command {
 
                                     module.setKey(key.getCode());
                                     ChatUtil.addChatMessage("Bound " + module.getEnglishName() + " to " + keyName.toUpperCase() + " (" + module.getBindMode().name() + ").");
-                                    LemonClient.CONFIG.saveDefaultConfig();
+                                    Mahiro.CONFIG.saveDefaultConfig();
                                     return 1;
                                 }))
                         .executes(c -> {
