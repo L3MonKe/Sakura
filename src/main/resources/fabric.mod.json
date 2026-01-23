@@ -3,7 +3,7 @@
   "id": "lemonclient",
   "version": "${version}",
   "name": "LemonClient",
-  "description": "LemonClient minecraft cheat client.",
+  "description": "M4h1r0 minecraft hacked client.",
   "authors": [
     "Fin_LemonKe",
     "ShaoYuYo",
@@ -13,6 +13,7 @@
     "mahiro.mixins.json"
   ],
   "accessWidener": "mahiro.accesswidener",
+  "icon": "assets/mahiro/icons/icon.png",
   "depends": {
     "java": ">=21",
     "fabricloader": ">=0.15.0",

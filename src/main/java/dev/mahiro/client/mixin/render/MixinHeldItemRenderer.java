@@ -5,6 +5,7 @@ import dev.mahiro.client.events.render.item.EatTransformationEvent;
 import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.events.render.item.RenderSwingAnimationEvent;
 import dev.mahiro.client.events.render.item.UpdateHeldItemsEvent;
+import dev.mahiro.client.module.impl.render.OldHitting;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -19,9 +20,11 @@ import net.minecraft.util.math.RotationAxis;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static dev.mahiro.client.Mahiro.mc;
@@ -49,6 +52,23 @@ public class MixinHeldItemRenderer {
 
     @Shadow
     private float prevEquipProgressOffHand;
+
+    @Unique
+    private float cachedSwingProgress;
+
+    @Unique
+    private float cachedEquipProgress;
+
+    @Unique
+    private Hand cachedHand;
+
+    @Shadow
+    private void applyEquipOffset(MatrixStack matrices, Arm arm, float equipProgress) {
+    }
+
+    @Shadow
+    private void applyEatOrDrinkTransformation(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player) {
+    }
 
     @Inject(method = "applyEatOrDrinkTransformation", at = @At(value = "HEAD"), cancellable = true)
     private void hookApplyEatOrDrinkTransformation(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player, CallbackInfo ci) {
@@ -100,5 +120,47 @@ public class MixinHeldItemRenderer {
     private void hookRenderFirstPersonItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
         HeldItemRendererEvent event = new HeldItemRendererEvent(matrices, hand);
         Mahiro.EVENT_BUS.post(event);
+    }
+
+    @Inject(method = "renderFirstPersonItem", at = @At("HEAD"))
+    private void hookRenderFirstPersonItemHead(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+        cachedSwingProgress = swingProgress;
+        cachedEquipProgress = equipProgress;
+        cachedHand = hand;
+    }
+
+    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;applyEatOrDrinkTransformation(Lnet/minecraft/client/util/math/MatrixStack;FLnet/minecraft/util/Arm;Lnet/minecraft/item/ItemStack;Lnet/minecraft/entity/player/PlayerEntity;)V"))
+    private void redirectApplyEatOrDrinkTransformation(HeldItemRenderer instance, MatrixStack matrices, float tickDelta, Arm arm, ItemStack item, PlayerEntity player) {
+        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
+        if (oldHitting.isEnabled()) {
+            if (cachedSwingProgress != 0.0f) {
+                float side = cachedHand == Hand.MAIN_HAND ? 1.0f : -1.0f;
+                matrices.translate(side * 0.56f, -0.52f + cachedEquipProgress * -0.6f, -0.72f);
+                float f2 = MathHelper.sin(cachedSwingProgress * cachedSwingProgress * (float) Math.PI);
+                float f1 = MathHelper.sin(MathHelper.sqrt(cachedSwingProgress) * (float) Math.PI);
+                matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees(f2 * 20.0f));
+                matrices.multiply(RotationAxis.NEGATIVE_Z.rotationDegrees(f2 * 20.0f));
+                matrices.multiply(RotationAxis.NEGATIVE_X.rotationDegrees(f2 * 80.0f));
+                matrices.translate(-0.8f, 0.2f, 0f);
+                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(30.0f));
+                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-80.0f));
+                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(60.0f));
+                matrices.scale(1.4f, 1.4f, 1.4f);
+                return;
+            }
+            applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
+            applyEquipOffset(matrices, arm, cachedEquipProgress);
+            doSwingAnimation(matrices, cachedSwingProgress);
+            return;
+        }
+        applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
+    }
+
+    private void doSwingAnimation(MatrixStack matrices, float swingProgress) {
+        float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
+        float f1 = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(f * -20.0f));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(f1 * -20.0f));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(f1 * -80.0f));
     }
 }

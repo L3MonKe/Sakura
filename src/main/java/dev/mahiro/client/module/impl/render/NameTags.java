@@ -6,6 +6,7 @@ import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render2DEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
+import dev.mahiro.client.module.impl.combat.AntiBot;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
@@ -86,6 +87,7 @@ public class NameTags extends Module {
         for (PlayerEntity player : mc.world.getPlayers()) {
             if (player == mc.player && !self.get()) continue;
             if (!player.isAlive()) continue;
+            if (AntiBot.isBot(player)) continue;
 
             double x = player.prevX + (player.getX() - player.prevX) * mc.getRenderTickCounter().getTickDelta(true);
             double y = player.prevY + (player.getY() - player.prevY) * mc.getRenderTickCounter().getTickDelta(true);

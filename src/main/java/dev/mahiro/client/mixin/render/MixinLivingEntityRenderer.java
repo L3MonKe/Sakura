@@ -7,7 +7,6 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.interfaces.IEntityRenderState;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.RotationManager;
-import dev.mahiro.client.module.ModuleManager;
 import dev.mahiro.client.module.impl.render.Chams;
 import dev.mahiro.client.module.impl.render.NameTags;
 import dev.mahiro.client.utils.vector.Rotation;
@@ -110,8 +109,10 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
             return original;
         }
 
-        if (Managers.ROTATION.isActive() && RotationManager.animationRotation != null && RotationManager.lastAnimationRotation != null) {
-            return MathHelper.lerpAngleDegrees(tickDelta, RotationManager.lastAnimationRotation.yaw, RotationManager.animationRotation.yaw);
+        Rotation rotation = RotationManager.animationRotation;
+        Rotation lastRotation = RotationManager.lastAnimationRotation;
+        if (Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
+            return MathHelper.lerpAngleDegrees(tickDelta, lastRotation.yaw, rotation.yaw);
         }
 
         return original;
@@ -123,8 +124,10 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
             return original;
         }
 
-        if (Managers.ROTATION.isActive() && RotationManager.animationRotation != null && RotationManager.lastAnimationRotation != null) {
-            return MathHelper.lerp(tickDelta, RotationManager.lastAnimationRotation.pitch, RotationManager.animationRotation.pitch);
+        Rotation rotation = RotationManager.animationRotation;
+        Rotation lastRotation = RotationManager.lastAnimationRotation;
+        if (Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
+            return MathHelper.lerp(tickDelta, lastRotation.pitch, rotation.pitch);
         }
 
         return original;

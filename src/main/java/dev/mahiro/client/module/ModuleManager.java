@@ -81,6 +81,7 @@ public class ModuleManager {
         add(new JumpCircles());
         add(new NameTags());
         add(new NoRender());
+        add(new OldHitting());
         add(new Shaders());
         add(new SwingAnimation());
         add(new TotemParticles());

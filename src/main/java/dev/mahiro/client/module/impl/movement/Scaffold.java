@@ -42,7 +42,7 @@ public class Scaffold extends Module {
     private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
     private final BoolValue swapBack = new BoolValue("SwapBack", "停用还原", true, () -> swapMode.is(SwapMode.Normal));
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
-    private final BoolValue telly = new BoolValue("Telly", "Telly搭路", false);
+    private final BoolValue telly = new BoolValue("Telly", "Telly搭路", true);
     private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 1, 0, 8, 1, telly::get);
     private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, telly::get);
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);

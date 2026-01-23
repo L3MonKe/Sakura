@@ -10,6 +10,7 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.CobwebBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
 
 public class FastWeb extends Module {
     public FastWeb() {
@@ -49,60 +50,21 @@ public class FastWeb extends Module {
     }
 
     private boolean isInWeb() {
-        BlockPos playerPos = null;
-        if (mc.player != null) {
-            playerPos = mc.player.getBlockPos();
-        }
-        if (mc.world != null && mc.world.getBlockState(playerPos).getBlock() instanceof CobwebBlock) {
+        BlockPos playerPos = mc.player.getBlockPos();
+        if (mc.world.getBlockState(playerPos).getBlock() instanceof CobwebBlock) {
             return true;
         }
 
-        BlockPos belowPos = null;
-        if (playerPos != null) {
-            belowPos = playerPos.down();
-        }
-        if (mc.world != null && mc.world.getBlockState(belowPos).getBlock() instanceof CobwebBlock) {
+        BlockPos belowPos = playerPos.down();
+        if (mc.world.getBlockState(belowPos).getBlock() instanceof CobwebBlock) {
             return true;
         }
 
-        Box playerBox = null;
-        if (mc.player != null) {
-            playerBox = mc.player.getBoundingBox();
-        }
+        Box box = mc.player.getBoundingBox().expand(0.0);
 
-        Box expandedBox = null;
-        if (playerBox != null) {
-            expandedBox = playerBox.expand(0.0);
-        }
-
-        int minX = 0;
-        if (expandedBox != null) {
-            minX = (int) Math.floor(expandedBox.minX);
-        }
-        int minY = 0;
-        if (expandedBox != null) {
-            minY = (int) Math.floor(expandedBox.minY);
-        }
-        int minZ = 0;
-        if (expandedBox != null) {
-            minZ = (int) Math.floor(expandedBox.minZ);
-        }
-        int maxX = 0;
-        if (expandedBox != null) {
-            maxX = (int) Math.floor(expandedBox.maxX);
-        }
-        int maxY = 0;
-        if (expandedBox != null) {
-            maxY = (int) Math.floor(expandedBox.maxY);
-        }
-        int maxZ = 0;
-        if (expandedBox != null) {
-            maxZ = (int) Math.floor(expandedBox.maxZ);
-        }
-
-        for (int x = minX; x <= maxX; x++) {
-            for (int y = minY; y <= maxY; y++) {
-                for (int z = minZ; z <= maxZ; z++) {
+        for (int x = MathHelper.floor(box.minX); x <= box.maxX; x++) {
+            for (int y = MathHelper.floor(box.minY); y <= box.maxY; y++) {
+                for (int z = MathHelper.floor(box.minZ); z <= box.maxZ; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
                     if (mc.world != null && mc.world.getBlockState(pos).getBlock() instanceof CobwebBlock) {
                         return true;
@@ -110,6 +72,7 @@ public class FastWeb extends Module {
                 }
             }
         }
+
         return false;
     }
 }
