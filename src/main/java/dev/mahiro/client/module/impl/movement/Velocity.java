@@ -291,6 +291,31 @@ public class Velocity extends Module {
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
+        if (mode.is(Mode.NoXZ)) {
+            if (stage == VelocityStage.ATTACK) {
+                if (mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
+                    double motionXZ = 1.0;
+                    for (int i = 0; i < attacks.get(); i++) {
+                        if (mc.player.isSprinting()) mc.player.setSprinting(false);
+                        mc.interactionManager.attackEntity(mc.player, target);
+                        mc.player.swingHand(Hand.MAIN_HAND);
+                        motionXZ *= 0.6;
+                    }
+                    if (velocity != null) {
+                        mc.player.setVelocity(velocity.x * motionXZ, velocity.y, velocity.z * motionXZ);
+                    }
+                    stage = VelocityStage.CLEAR;
+                }
+            } else if (stage == VelocityStage.DELAY && System.currentTimeMillis() - velocityTime >= alinkTime.get()) {
+                if (velocity != null) {
+                    mc.player.setVelocity(velocity);
+                }
+                stage = VelocityStage.CLEAR;
+            }
+
+            if (lag && mc.player.hurtTime == 0) lag = false;
+        }
+
         if ((mc.player.isTouchingWater() || mc.player.isSubmergedInWater() || mc.player.isInLava()) && pauseInLiquid.get())
             return;
 
@@ -325,35 +350,6 @@ public class Velocity extends Module {
             int rgb = entity.equals(target) ? new Color(200, 0, 0, 60).getRGB() : new Color(0, 200, 0, 60).getRGB();
             Render3DUtil.drawFullBox(event.getMatrices(), box, rgb, rgb, 2f);
         }
-    }
-
-    @EventHandler
-    public void onTickBJDPre(TickEvent.Pre event) {
-        if (nullCheck()) return;
-        if (!mode.is(Mode.NoXZ)) return;
-
-        if (stage == VelocityStage.ATTACK) {
-            if (mc.crosshairTarget instanceof EntityHitResult ehr && ehr.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
-                double motionXZ = 1.0;
-                for (int i = 0; i < attacks.get(); i++) {
-                    if (mc.player.isSprinting()) mc.player.setSprinting(false);
-                    mc.interactionManager.attackEntity(mc.player, target);
-                    mc.player.swingHand(Hand.MAIN_HAND);
-                    motionXZ *= 0.6;
-                }
-                if (velocity != null) {
-                    mc.player.setVelocity(velocity.x * motionXZ, velocity.y, velocity.z * motionXZ);
-                }
-                stage = VelocityStage.CLEAR;
-            }
-        } else if (stage == VelocityStage.DELAY && System.currentTimeMillis() - velocityTime >= alinkTime.get()) {
-            if (velocity != null) {
-                mc.player.setVelocity(velocity);
-            }
-            stage = VelocityStage.CLEAR;
-        }
-
-        if (lag && mc.player.hurtTime == 0) lag = false;
     }
 
     @EventHandler

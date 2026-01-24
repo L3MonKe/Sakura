@@ -39,6 +39,12 @@ public class MixinChatScreen {
     private static long openTime = 0;
     @Unique
     private static float inputAlpha = 0f;
+    @Unique
+    private static int inputFieldBaseY = Integer.MIN_VALUE;
+    @Unique
+    private static int inputBoxBaseY = Integer.MIN_VALUE;
+    @Unique
+    private static int inputBoxCurrentY = 0;
 
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V", ordinal = 0))
     private void redirectInputBoxBackground(DrawContext context, int x1, int y1, int x2, int y2, int color) {
@@ -52,6 +58,10 @@ public class MixinChatScreen {
             inputInitialized = true;
             openTime = System.currentTimeMillis();
             inputAlpha = 0f;
+            if (chatField != null) {
+                inputFieldBaseY = chatField.getY();
+            }
+            inputBoxBaseY = y1;
         }
 
         long elapsed = System.currentTimeMillis() - openTime;
@@ -64,6 +74,11 @@ public class MixinChatScreen {
 
         int animatedY1 = (int) inputCurrentY;
         int animatedY2 = animatedY1 + height;
+        inputBoxCurrentY = animatedY1;
+        if (chatField != null && inputFieldBaseY != Integer.MIN_VALUE && inputBoxBaseY != Integer.MIN_VALUE) {
+            int textOffset = inputFieldBaseY - inputBoxBaseY;
+            chatField.setY(animatedY1 + textOffset);
+        }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color backgroundColor = new Color(18, 18, 18, 70);
@@ -98,7 +113,7 @@ public class MixinChatScreen {
             int animatedY = (int) inputCurrentY;
             NanoVGHelper.drawRoundRectOutline(
                     marginLeft - 1.5f,
-                    mc.getWindow().getScaledHeight() - 14 - PAD,
+                    inputBoxCurrentY - PAD,
                     340,
                     12 + PAD * 2,
                     getGlobalRadius(),
@@ -122,11 +137,17 @@ public class MixinChatScreen {
     @Inject(method = "init", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
         inputInitialized = false;
+        inputFieldBaseY = Integer.MIN_VALUE;
+        inputBoxBaseY = Integer.MIN_VALUE;
+        inputBoxCurrentY = 0;
     }
 
     @Inject(method = "removed", at = @At("HEAD"))
     private void onRemoved(CallbackInfo ci) {
         inputInitialized = false;
         inputAlpha = 0f;
+        inputFieldBaseY = Integer.MIN_VALUE;
+        inputBoxBaseY = Integer.MIN_VALUE;
+        inputBoxCurrentY = 0;
     }
 }

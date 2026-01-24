@@ -29,8 +29,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class Stealer extends Module {
-    private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟", 2, 0, 10, 1);
-    private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 6, 0, 10, 1);
+    private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟", 3, 0, 10, 1);
+    private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 4, 0, 10, 1);
     private final BoolValue smart = new BoolValue("Smart", "智能筛选", true);
     private final BoolValue enderChest = new BoolValue("Ender Chest", "末影箱", false);
     private final BoolValue closeWhenDone = new BoolValue("Auto Close", "拿完关闭", true);
@@ -104,10 +104,48 @@ public class Stealer extends Module {
             if (stack.isEmpty()) continue;
 
             if (shouldTake(stack, inventory)) {
-                mc.interactionManager.clickSlot(handler.syncId, slot, 0, SlotActionType.QUICK_MOVE, mc.player);
+                int targetSlot = findMainTargetSlot(handler, stack);
+                if (targetSlot == -1) continue;
+                moveToSlot(handler, slot, targetSlot);
                 resetDelay();
                 break;
             }
+        }
+    }
+
+    private int findMainTargetSlot(GenericContainerScreenHandler handler, ItemStack stack) {
+        if (stack.isEmpty()) return -1;
+        int base = handler.getInventory().size();
+        int mainStart = base;
+        int mainEnd = base + 26;
+        int emptySlot = -1;
+
+        for (int i = mainStart; i <= mainEnd; i++) {
+            if (i < 0 || i >= handler.slots.size()) continue;
+            var slot = handler.slots.get(i);
+            if (!slot.hasStack()) {
+                if (emptySlot == -1) emptySlot = i;
+                continue;
+            }
+            ItemStack target = slot.getStack();
+            if (canMerge(stack, target) && target.getCount() < target.getMaxCount()) {
+                return i;
+            }
+        }
+        return emptySlot;
+    }
+
+    private boolean canMerge(ItemStack source, ItemStack target) {
+        if (!source.isStackable() || !target.isStackable()) return false;
+        return source.getItem() == target.getItem() && source.getName().equals(target.getName());
+    }
+
+    private void moveToSlot(GenericContainerScreenHandler handler, int fromSlotId, int toSlotId) {
+        if (fromSlotId == toSlotId) return;
+        mc.interactionManager.clickSlot(handler.syncId, fromSlotId, 0, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(handler.syncId, toSlotId, 0, SlotActionType.PICKUP, mc.player);
+        if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) {
+            mc.interactionManager.clickSlot(handler.syncId, fromSlotId, 0, SlotActionType.PICKUP, mc.player);
         }
     }
 

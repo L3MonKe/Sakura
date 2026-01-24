@@ -19,6 +19,7 @@ import net.minecraft.component.type.AttributeModifiersComponent;
 import net.minecraft.component.type.FoodComponent;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.*;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
@@ -27,7 +28,9 @@ import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Hand;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class InvManager extends Module {
     public InvManager() {
@@ -50,13 +53,13 @@ public class InvManager extends Module {
     private final BoolValue swing = new BoolValue("Swing", "挥手动画", true);
     public final EnumValue<OffhandMode> offHandMode = new EnumValue<>("Offhand Mode", "副手模式", OffhandMode.None);
     public final NumberValue<Integer> delay = new NumberValue<>("Delay", "延迟", 1, 1, 250, 1);
-    private final BoolValue keepTNT = new BoolValue("Keep TNT", "保留TNT", true);
+    private final BoolValue keepTNT = new BoolValue("Keep TNT", "保留TNT", false);
     public final NumberValue<Integer> blocks = new NumberValue<>("Blocks", "方块阈值", 512, 16, 512, 1);
 
     public final NumberValue<Integer> slotSword = new NumberValue<>("Sword Slot", "剑槽位", 1, 0, 9, 1);
-    public final NumberValue<Integer> slotBlock = new NumberValue<>("Block Slot", "方块槽位", 2, 0, 9, 1);
-    public final NumberValue<Integer> slotFood = new NumberValue<>("Food Slot", "食物槽位", 3, 0, 9, 1);
-    public final NumberValue<Integer> slotPearl = new NumberValue<>("Pearl Slot", "珍珠槽位", 4, 0, 9, 1);
+    public final NumberValue<Integer> slotFood = new NumberValue<>("Food Slot", "食物槽位", 2, 0, 9, 1);
+    public final NumberValue<Integer> slotPearl = new NumberValue<>("Pearl Slot", "珍珠槽位", 3, 0, 9, 1);
+    public final NumberValue<Integer> slotBlock = new NumberValue<>("Block Slot", "方块槽位", 4, 0, 9, 1);
     public final NumberValue<Integer> slotAxe = new NumberValue<>("Axe Slot", "斧子槽位", 5, 0, 9, 1);
     public final NumberValue<Integer> slotPickaxe = new NumberValue<>("Pickaxe Slot", "镐子槽位", 6, 0, 9, 1);
     public final NumberValue<Integer> slotBucket = new NumberValue<>("Bucket Slot", "水桶槽位", 7, 0, 9, 1);
@@ -65,35 +68,30 @@ public class InvManager extends Module {
 
     private final TimerUtil timer = new TimerUtil();
 
-    private final List<Slot> gappleStackSlots = new ArrayList<>();
-    private final List<Slot> throwableStackSlots = new ArrayList<>();
-    private final List<Slot> protectedSlots = new ArrayList<>();
-
     private Slot currentBestBlockSlot = null;
+    private final List<Slot> protectedSlots = new ArrayList<>();
 
     @Override
     protected void onDisable() {
         currentBestBlockSlot = null;
-        gappleStackSlots.clear();
-        throwableStackSlots.clear();
     }
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if ((mode.is(Mode.InvOpen) && mc.currentScreen instanceof InventoryScreen)
-                || (mode.is(Mode.NoMove) && !MovementUtil.isMoving())
-                || mode.is(Mode.Always)) {
+        if ((mode.is(Mode.InvOpen) && mc.currentScreen instanceof InventoryScreen) || (mode.is(Mode.NoMove) && !MovementUtil.isMoving()) || mode.is(Mode.Always)) {
+            if (mc.player.playerScreenHandler != mc.player.currentScreenHandler) {
+                return;
+            }
 
-            List<Slot> unnecessarySlots = new ArrayList<>();
+            List<Slot> hookSlot = new ArrayList<>();
 
-            gappleStackSlots.clear();
-            throwableStackSlots.clear();
             protectedSlots.clear();
 
             Slot bestSwordSlot = null;
             Slot bestBlockSlot = null;
+            Item bestBlockItem = null;
             Slot bestFoodSlot = null;
             Slot[] bestArmorSlots = new Slot[4];
             Slot bestBowSlot = null;
@@ -103,8 +101,11 @@ public class InvManager extends Module {
             Slot bestPickaxeSlot = null;
             Slot bestBucketSlot = null;
 
+            List<Slot> blockSlots = new ArrayList<>();
+            Map<Item, Integer> blockTotals = new HashMap<>();
+
             for (Slot slot : mc.player.playerScreenHandler.slots) {
-                if (!slot.hasStack() || slot.id <= 8) {
+                if (!slot.hasStack() || slot.id <= 8 || slot.id == SlotUtil.indexToId(40)) {
                     continue;
                 }
                 Item item = slot.getStack().getItem();
@@ -118,18 +119,12 @@ public class InvManager extends Module {
                     continue;
                 }
 
-                if (item == Items.GOLDEN_APPLE || item == Items.ENCHANTED_GOLDEN_APPLE) {
-                    gappleStackSlots.add(slot);
-                } else if (isThrowableItem(slot.getStack())) {
-                    throwableStackSlots.add(slot);
-                }
-
                 if (item instanceof SwordItem) {
                     if (bestSwordSlot == null || getSwordScore(slot.getStack()) > getSwordScore(bestSwordSlot.getStack())) {
-                        unnecessarySlots.add(bestSwordSlot);
+                        hookSlot.add(bestSwordSlot);
                         bestSwordSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
                 } else if (item instanceof ArmorItem armorItem) {
                     int targetSlot = switch (armorItem.getDefaultStack().get(DataComponentTypes.EQUIPPABLE).slot()) {
@@ -142,101 +137,80 @@ public class InvManager extends Module {
                     if (targetSlot < 0) {
                         continue;
                     }
+                    double equippedScore = getEquippedArmorScoreByIndex(targetSlot);
+                    double candidateScore = getArmorScore(slot.getStack());
+                    if (equippedScore >= candidateScore) {
+                        hookSlot.add(slot);
+                        continue;
+                    }
                     Slot bestArmorSlot = bestArmorSlots[targetSlot];
-                    if (bestArmorSlot == null || getArmorScore(slot.getStack()) > getArmorScore(bestArmorSlot.getStack())) {
-                        unnecessarySlots.add(bestArmorSlot);
+                    if (bestArmorSlot == null || candidateScore > getArmorScore(bestArmorSlot.getStack())) {
+                        hookSlot.add(bestArmorSlot);
                         bestArmorSlots[targetSlot] = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
                 } else if (item instanceof BlockItem && isBlockPlaceable(item.getDefaultStack())) {
-                    if (bestBlockSlot == null) {
-                        bestBlockSlot = slot;
-                    } else {
-                        int currentCount = bestBlockSlot.getStack().getCount();
-                        int newCount = slot.getStack().getCount();
-
-                        if (currentBestBlockSlot != null && currentBestBlockSlot.hasStack() && currentBestBlockSlot.getStack().getItem() instanceof BlockItem && getBlockIndex() > blocks.get()) {
-                            if (slot.id == currentBestBlockSlot.id) {
-                                bestBlockSlot = slot;
-                            } else if (newCount > currentBestBlockSlot.getStack().getCount() + 10) {
-                                unnecessarySlots.add(bestBlockSlot);
-                                bestBlockSlot = slot;
-                                currentBestBlockSlot = slot;
-                            } else {
-                                unnecessarySlots.add(slot);
-                            }
-                        } else {
-                            if (newCount > currentCount && getBlockIndex() > blocks.get()) {
-                                unnecessarySlots.add(bestBlockSlot);
-                                bestBlockSlot = slot;
-                                currentBestBlockSlot = slot;
-                            } else if (newCount == currentCount) {
-                                if (currentBestBlockSlot != null && currentBestBlockSlot.id == bestBlockSlot.id) {
-                                    unnecessarySlots.add(slot);
-                                } else {
-                                    if (slot.id < bestBlockSlot.id) {
-                                        unnecessarySlots.add(bestBlockSlot);
-                                        bestBlockSlot = slot;
-                                        currentBestBlockSlot = slot;
-                                    } else {
-                                        unnecessarySlots.add(slot);
-                                    }
-                                }
-                            } else {
-                                if (getBlockIndex() > blocks.get()) {
-                                    unnecessarySlots.add(slot);
-                                }
-                            }
-                        }
-                    }
+                    blockSlots.add(slot);
+                    blockTotals.merge(item, slot.getStack().getCount(), Integer::sum);
                 } else if (item instanceof AxeItem) {
                     if (bestAxeSlot == null || getAxeScore(slot.getStack()) > getAxeScore(bestAxeSlot.getStack())) {
-                        unnecessarySlots.add(bestAxeSlot);
+                        hookSlot.add(bestAxeSlot);
                         bestAxeSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
                 } else if (item instanceof PickaxeItem) {
                     if (bestPickaxeSlot == null || getPickaxeScore(slot.getStack()) > getPickaxeScore(bestPickaxeSlot.getStack())) {
-                        unnecessarySlots.add(bestPickaxeSlot);
+                        hookSlot.add(bestPickaxeSlot);
                         bestPickaxeSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
                 } else if (item instanceof BowItem) {
                     if (bestBowSlot == null || getBowScore(slot.getStack()) > getBowScore(bestBowSlot.getStack())) {
-                        unnecessarySlots.add(bestBowSlot);
+                        hookSlot.add(bestBowSlot);
                         bestBowSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
                 } else if (item instanceof FishingRodItem) {
                     if (bestFishingRodSlot == null || getFishingRodScore(slot.getStack()) > getFishingRodScore(bestFishingRodSlot.getStack())) {
-                        unnecessarySlots.add(bestFishingRodSlot);
+                        hookSlot.add(bestFishingRodSlot);
                         bestFishingRodSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
                 } else if (item instanceof EnderPearlItem) {
                     if (bestEnderPearlSlot == null || getPearlScore(slot.getStack()) > getPearlScore(bestEnderPearlSlot.getStack())) {
-                        unnecessarySlots.add(bestEnderPearlSlot);
+                        hookSlot.add(bestEnderPearlSlot);
                         bestEnderPearlSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
-                } else if (item.getComponents().contains(DataComponentTypes.FOOD)) {
+                } else if (item.getComponents().contains(DataComponentTypes.FOOD) && !(offHandMode.get() == OffhandMode.Gapple && isGapple(item))) {
                     if (bestFoodSlot == null || getFoodScore(slot.getStack()) > getFoodScore(bestFoodSlot.getStack())) {
-                        unnecessarySlots.add(bestFoodSlot);
+                        hookSlot.add(bestFoodSlot);
                         bestFoodSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
                     }
                 } else if (item == Items.WATER_BUCKET) {
                     if (bestBucketSlot == null) {
                         bestBucketSlot = slot;
                     } else {
-                        unnecessarySlots.add(slot);
+                        hookSlot.add(slot);
+                    }
+                }
+            }
+
+            bestBlockItem = getBestBlockItem(blockTotals);
+            bestBlockSlot = findBestBlockSlot(blockSlots, bestBlockItem);
+            if (bestBlockItem != null && getBlockIndex() > blocks.get()) {
+                for (Slot blockSlot : blockSlots) {
+                    if (blockSlot == null || !blockSlot.hasStack()) continue;
+                    if (blockSlot.getStack().getItem() != bestBlockItem) {
+                        hookSlot.add(blockSlot);
                     }
                 }
             }
@@ -245,8 +219,8 @@ public class InvManager extends Module {
                 currentBestBlockSlot = null;
             }
 
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
-                for (Slot slot : unnecessarySlots) {
+            if (timer.passedMS(delay.get())) {
+                for (Slot slot : hookSlot) {
                     if (slot != null && !isProtectedItem(slot.getStack())) {
                         if (slot.getStack().getItem() instanceof BlockItem) {
                             if (getBlockIndex() > blocks.get()) {
@@ -263,7 +237,7 @@ public class InvManager extends Module {
                 }
             }
 
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
+            if (timer.passedMS(delay.get())) {
                 for (Slot slot : protectedSlots) {
                     if (slot.id >= 36 && slot.id <= 44) {
                         int hotbarIndex = slot.id - 36;
@@ -280,7 +254,7 @@ public class InvManager extends Module {
                 }
             }
 
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
+            if (timer.passedMS(delay.get())) {
                 for (int i = 0; i < bestArmorSlots.length; i++) {
                     Slot slot = bestArmorSlots[i];
                     if (slot != null) {
@@ -299,7 +273,7 @@ public class InvManager extends Module {
                 }
             }
 
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
+            if (timer.passedMS(delay.get())) {
                 if (bestSwordSlot != null && bestSwordSlot.getStack().getItem() instanceof SwordItem) {
                     int targetSlotId = 36 + slotSword.get() - 1;
                     if (bestSwordSlot.id != targetSlotId) {
@@ -309,9 +283,18 @@ public class InvManager extends Module {
                     }
                 }
 
-                if (bestBlockSlot != null && bestBlockSlot.getStack().getItem() instanceof BlockItem) {
+                if (bestBlockItem != null && bestBlockSlot != null && bestBlockSlot.getStack().getItem() instanceof BlockItem) {
                     int targetSlotId = 36 + slotBlock.get() - 1;
-                    if (bestBlockSlot.id != targetSlotId && isBlockPlaceable(bestBlockSlot.getStack()) && getBlockIndex() > blocks.get()) {
+                    Slot targetSlot = mc.player.playerScreenHandler.getSlot(targetSlotId);
+                    if (targetSlot.hasStack() && targetSlot.getStack().getItem() == bestBlockItem) {
+                        Slot mergeSource = findMergeSource(blockSlots, bestBlockItem, targetSlotId);
+                        if (mergeSource != null && targetSlot.getStack().getCount() < targetSlot.getStack().getMaxCount()) {
+                            mergeStacks(mergeSource, targetSlot);
+                            timer.reset();
+                            return;
+                        }
+                    }
+                    if (bestBlockSlot.id != targetSlotId && isBlockPlaceable(bestBlockSlot.getStack())) {
                         click(bestBlockSlot, slotBlock.get() - 1, SlotActionType.SWAP);
                         timer.reset();
                         return;
@@ -380,11 +363,9 @@ public class InvManager extends Module {
                         return;
                     }
                 }
-                timer.reset();
-                return;
             }
 
-            if (timer.passedMS(randomBetween(delay.getMin(), delay.get()))) {
+            if (timer.passedMS(delay.get())) {
                 manageOffhand();
                 timer.reset();
             }
@@ -396,8 +377,7 @@ public class InvManager extends Module {
 
     private boolean isProtectedItem(ItemStack stack) {
         Item item = stack.getItem();
-        return (item == Items.END_CRYSTAL) ||
-                (item == Items.TOTEM_OF_UNDYING);
+        return (item == Items.END_CRYSTAL) || (item == Items.TOTEM_OF_UNDYING);
     }
 
     private void manageOffhand() {
@@ -414,11 +394,7 @@ public class InvManager extends Module {
             if (!isGapple(offhandStack.getItem())) {
                 Slot bestGappleSlot = findBestGappleSlot();
                 if (bestGappleSlot != null && bestGappleSlot.id != offhandSlot.id) {
-                    if (offhandStack.isEmpty()) {
-                        putItemInSlotOFF(offhandSlot.id, bestGappleSlot.id);
-                    } else {
-                        putItemInSlotOFF(bestGappleSlot.id, offhandSlot.id);
-                    }
+                    putItemInSlotOFF(bestGappleSlot, offhandSlot);
                     timer.reset();
                 }
             }
@@ -426,11 +402,7 @@ public class InvManager extends Module {
             if (!isThrowableItem(offhandStack)) {
                 Slot bestThrowableSlot = findBestThrowableSlot();
                 if (bestThrowableSlot != null && bestThrowableSlot.id != offhandSlot.id) {
-                    if (offhandStack.isEmpty()) {
-                        putItemInSlotOFF(offhandSlot.id, bestThrowableSlot.id);
-                    } else {
-                        putItemInSlotOFF(bestThrowableSlot.id, offhandSlot.id);
-                    }
+                    putItemInSlotOFF(bestThrowableSlot, offhandSlot);
                     timer.reset();
                 }
             }
@@ -439,12 +411,14 @@ public class InvManager extends Module {
 
     private Slot findBestGappleSlot() {
         Slot best = null;
-        for (Slot slot : gappleStackSlots) {
+        for (Slot slot : mc.player.playerScreenHandler.slots) {
+            if (!slot.hasStack()) continue;
+            Item item = slot.getStack().getItem();
+            if (!isGapple(item)) continue;
             if (best == null) {
                 best = slot;
                 continue;
             }
-            Item item = slot.getStack().getItem();
             Item bestItem = best.getStack().getItem();
             if (item == Items.ENCHANTED_GOLDEN_APPLE && bestItem != Items.ENCHANTED_GOLDEN_APPLE) {
                 best = slot;
@@ -462,7 +436,9 @@ public class InvManager extends Module {
 
     private Slot findBestThrowableSlot() {
         Slot best = null;
-        for (Slot slot : throwableStackSlots) {
+        for (Slot slot : mc.player.playerScreenHandler.slots) {
+            if (!slot.hasStack()) continue;
+            if (!isThrowableItem(slot.getStack())) continue;
             if (best == null) {
                 best = slot;
                 continue;
@@ -480,8 +456,9 @@ public class InvManager extends Module {
         return best;
     }
 
-    private void putItemInSlotOFF(int slot, int slotIn) {
-        swapSlots(slot, slotIn);
+    private void putItemInSlotOFF(Slot sourceSlot, Slot offhandSlot) {
+        if (sourceSlot == null || offhandSlot == null) return;
+        swapSlots(sourceSlot.id, offhandSlot.id);
     }
 
     private boolean isGapple(Item item) {
@@ -507,6 +484,70 @@ public class InvManager extends Module {
         return 0;
     }
 
+    private Item getBestBlockItem(Map<Item, Integer> blockTotals) {
+        if (blockTotals.isEmpty()) return null;
+        Item bestItem = null;
+        int bestCount = 0;
+        for (Map.Entry<Item, Integer> entry : blockTotals.entrySet()) {
+            int count = entry.getValue();
+            if (count > bestCount) {
+                bestCount = count;
+                bestItem = entry.getKey();
+            }
+        }
+        return bestItem;
+    }
+
+    private Slot findBestBlockSlot(List<Slot> blockSlots, Item item) {
+        if (item == null) return null;
+        Slot best = null;
+        int bestCount = -1;
+        for (Slot slot : blockSlots) {
+            if (slot == null || !slot.hasStack()) continue;
+            ItemStack stack = slot.getStack();
+            if (stack.getItem() != item) continue;
+            int count = stack.getCount();
+            if (count > bestCount) {
+                bestCount = count;
+                best = slot;
+            }
+        }
+        return best;
+    }
+
+    private Slot findMergeSource(List<Slot> blockSlots, Item item, int targetSlotId) {
+        if (item == null) return null;
+        Slot best = null;
+        int bestCount = -1;
+        for (Slot slot : blockSlots) {
+            if (slot == null || !slot.hasStack() || slot.id == targetSlotId) continue;
+            ItemStack stack = slot.getStack();
+            if (stack.getItem() != item) continue;
+            int count = stack.getCount();
+            if (count > bestCount) {
+                bestCount = count;
+                best = slot;
+            }
+        }
+        return best;
+    }
+
+    private void mergeStacks(Slot sourceSlot, Slot targetSlot) {
+        if (sourceSlot == null || targetSlot == null) return;
+        if (sourceSlot.id == targetSlot.id) return;
+        if (!sourceSlot.hasStack() || !targetSlot.hasStack()) return;
+        ItemStack sourceStack = sourceSlot.getStack();
+        ItemStack targetStack = targetSlot.getStack();
+        if (sourceStack.getItem() != targetStack.getItem()) return;
+        if (targetStack.getCount() >= targetStack.getMaxCount()) return;
+        int syncId = mc.player.currentScreenHandler.syncId;
+        mc.interactionManager.clickSlot(syncId, sourceSlot.id, 0, SlotActionType.PICKUP, mc.player);
+        mc.interactionManager.clickSlot(syncId, targetSlot.id, 0, SlotActionType.PICKUP, mc.player);
+        if (!mc.player.currentScreenHandler.getCursorStack().isEmpty()) {
+            mc.interactionManager.clickSlot(syncId, sourceSlot.id, 0, SlotActionType.PICKUP, mc.player);
+        }
+    }
+
     private void click(Slot slot, int button, SlotActionType type) {
         mc.interactionManager.clickSlot(mc.player.currentScreenHandler.syncId, slot.id, button, type, mc.player);
         if (swing.get() && type == SlotActionType.THROW) {
@@ -525,19 +566,13 @@ public class InvManager extends Module {
     }
 
     private int getArmorSlotId(int index) {
-        int armorIndex = switch (index) {
-            case 0 -> 39;
-            case 1 -> 38;
-            case 2 -> 37;
-            case 3 -> 36;
+        return switch (index) {
+            case 0 -> 5;
+            case 1 -> 6;
+            case 2 -> 7;
+            case 3 -> 8;
             default -> -1;
         };
-        if (armorIndex < 0) return -1;
-        return SlotUtil.indexToId(armorIndex);
-    }
-
-    public static double randomBetween(double min, double max) {
-        return (max + (min - max) * Math.random());
     }
 
     private boolean isArmorEquipped(int index, Slot slot) {
@@ -555,6 +590,16 @@ public class InvManager extends Module {
             return isBetterOrEqualArmor(equipped, candidate);
         }
         return false;
+    }
+
+    private double getEquippedArmorScoreByIndex(int index) {
+        return switch (index) {
+            case 0 -> getArmorScore(mc.player.getEquippedStack(EquipmentSlot.HEAD));
+            case 1 -> getArmorScore(mc.player.getEquippedStack(EquipmentSlot.CHEST));
+            case 2 -> getArmorScore(mc.player.getEquippedStack(EquipmentSlot.LEGS));
+            case 3 -> getArmorScore(mc.player.getEquippedStack(EquipmentSlot.FEET));
+            default -> 0.0;
+        };
     }
 
     private boolean isBetterOrEqualArmor(ItemStack equipped, ItemStack candidate) {
@@ -672,7 +717,7 @@ public class InvManager extends Module {
     public int getBlockIndex() {
         int blockCount = 0;
         for (int slotIndex = 9; slotIndex < 45; slotIndex++) {
-            ItemStack stack = mc.player.currentScreenHandler.getSlot(slotIndex).getStack();
+            ItemStack stack = mc.player.playerScreenHandler.getSlot(slotIndex).getStack();
             if (stack.getItem() instanceof BlockItem) {
                 blockCount += stack.getCount();
             }
