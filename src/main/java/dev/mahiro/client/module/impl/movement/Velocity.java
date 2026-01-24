@@ -25,6 +25,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.FishingBobberEntity;
 import net.minecraft.network.listener.ClientPlayPacketListener;
+import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.s2c.common.CommonPingS2CPacket;
@@ -79,7 +80,7 @@ public class Velocity extends Module {
 
     private final TimerUtil timer = new TimerUtil();
     private boolean flag;
-    private final Queue<Packet<? super ClientPlayPacketListener>> packets = new ConcurrentLinkedQueue<>();
+    private final Queue<Packet<? super PacketListener>> packets = new ConcurrentLinkedQueue<>();
     private final Map<Entity, Vec3d> targets = new ConcurrentHashMap<>();
     private boolean lag;
     private boolean jump;
@@ -232,7 +233,7 @@ public class Velocity extends Module {
                 updateTargetPosition(positionPacket);
             }
 
-            packets.add((Packet<? super ClientPlayPacketListener>) p);
+            packets.add((Packet<? super PacketListener>) p);
             event.cancel();
             return;
         }
@@ -400,7 +401,7 @@ public class Velocity extends Module {
         }
 
         while (!packets.isEmpty()) {
-            Packet<? super ClientPlayPacketListener> packet = packets.poll();
+            Packet<? super PacketListener> packet = packets.poll();
             if (packet != null) {
                 packet.apply(mc.getNetworkHandler());
             }
