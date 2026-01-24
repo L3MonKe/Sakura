@@ -7,6 +7,7 @@ import net.minecraft.resource.InputSupplier;
 import net.minecraft.resource.ResourcePack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.io.IOException;
@@ -26,5 +27,10 @@ public class MixinWindow {
         }
 
         return List.of(() -> stream16, () -> stream32);
+    }
+
+    @ModifyArg(method = "setTitle", at = @At(value = "INVOKE", target = "Lorg/lwjgl/glfw/GLFW;glfwSetWindowTitle(JLjava/lang/CharSequence;)V", remap = false), index = 1)
+    private CharSequence setTitle(CharSequence title) {
+        return "桜";
     }
 }

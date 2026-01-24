@@ -35,8 +35,7 @@ public class MixinItem {
     @Inject(method = "use", at = @At("HEAD"), cancellable = true)
     private void onUse(World world, PlayerEntity user, Hand hand, CallbackInfoReturnable<ActionResult> cir) {
         if (((Item) (Object) this) instanceof SwordItem && Mahiro.MODULES.getModule(OldHitting.class).isEnabled()) {
-            user.setCurrentHand(hand);
-            cir.setReturnValue(ActionResult.CONSUME);
+            cir.setReturnValue(ActionResult.PASS);
         }
     }
 }

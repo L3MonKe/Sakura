@@ -27,6 +27,8 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
+import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 
@@ -286,13 +288,13 @@ public class TargetHud extends HudModule {
 
     private void drawAvatarCornerMask(float ax, float ay, float size, float radius, Color bgColor) {
         long vg = NanoVGRenderer.INSTANCE.getContext();
-        org.lwjgl.nanovg.NVGColor color = NanoVGHelper.nvgColor(bgColor);
+        NVGColor color = NanoVGHelper.nvgColor(bgColor);
 
-        org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
-        org.lwjgl.nanovg.NanoVG.nvgRect(vg, ax - 1, ay - 1, size + 2, size + 2);
-        org.lwjgl.nanovg.NanoVG.nvgPathWinding(vg, org.lwjgl.nanovg.NanoVG.NVG_HOLE);
-        org.lwjgl.nanovg.NanoVG.nvgRoundedRect(vg, ax, ay, size, size, radius);
-        org.lwjgl.nanovg.NanoVG.nvgFillColor(vg, color);
-        org.lwjgl.nanovg.NanoVG.nvgFill(vg);
+        NanoVG.nvgBeginPath(vg);
+        NanoVG.nvgRect(vg, ax - 1, ay - 1, size + 2, size + 2);
+        NanoVG.nvgPathWinding(vg, NanoVG.NVG_HOLE);
+        NanoVG.nvgRoundedRect(vg, ax, ay, size, size, radius);
+        NanoVG.nvgFillColor(vg, color);
+        NanoVG.nvgFill(vg);
     }
 }

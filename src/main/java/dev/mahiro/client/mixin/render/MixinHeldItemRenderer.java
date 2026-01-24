@@ -13,6 +13,7 @@ import net.minecraft.client.render.item.HeldItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.SwordItem;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
@@ -129,6 +130,39 @@ public class MixinHeldItemRenderer {
         cachedHand = hand;
     }
 
+    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;isUsingItem()Z"))
+    private boolean redirectIsUsingItem(AbstractClientPlayerEntity player) {
+        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
+        if (oldHitting.isEnabled()
+                && mc.options.useKey.isPressed()
+                && player.getMainHandStack().getItem() instanceof SwordItem) {
+            return true;
+        }
+        return player.isUsingItem();
+    }
+
+    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getItemUseTimeLeft()I"))
+    private int redirectGetItemUseTimeLeft(AbstractClientPlayerEntity player) {
+        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
+        if (oldHitting.isEnabled()
+                && mc.options.useKey.isPressed()
+                && player.getMainHandStack().getItem() instanceof SwordItem) {
+            return 1;
+        }
+        return player.getItemUseTimeLeft();
+    }
+
+    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getActiveHand()Lnet/minecraft/util/Hand;"))
+    private Hand redirectGetActiveHand(AbstractClientPlayerEntity player) {
+        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
+        if (oldHitting.isEnabled()
+                && mc.options.useKey.isPressed()
+                && player.getMainHandStack().getItem() instanceof SwordItem) {
+            return Hand.MAIN_HAND;
+        }
+        return player.getActiveHand();
+    }
+
     @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;applyEatOrDrinkTransformation(Lnet/minecraft/client/util/math/MatrixStack;FLnet/minecraft/util/Arm;Lnet/minecraft/item/ItemStack;Lnet/minecraft/entity/player/PlayerEntity;)V"))
     private void redirectApplyEatOrDrinkTransformation(HeldItemRenderer instance, MatrixStack matrices, float tickDelta, Arm arm, ItemStack item, PlayerEntity player) {
         OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
@@ -149,7 +183,6 @@ public class MixinHeldItemRenderer {
                 return;
             }
             applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
-            applyEquipOffset(matrices, arm, cachedEquipProgress);
             doSwingAnimation(matrices, cachedSwingProgress);
             return;
         }
