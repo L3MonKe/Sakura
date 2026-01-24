@@ -90,30 +90,21 @@ public class MovementUtil {
     }
 
     public static void setMotionX(double x) {
-        if (mc.player == null) return;
         mc.player.setVelocity(x, mc.player.getVelocity().y, mc.player.getVelocity().z);
     }
 
     public static void setMotionZ(double z) {
-        if (mc.player == null) return;
         mc.player.setVelocity(mc.player.getVelocity().x, mc.player.getVelocity().y, z);
     }
 
-    public static void setMotion(double x, double y, double z) {
-        if (mc.player == null) return;
-        mc.player.setVelocity(x, y, z);
-    }
-
     public static void strafe(double speed) {
-        if (mc.player == null || !isMoving()) return;
+        if (!isMoving()) return;
 
         double yaw = getDirection();
         mc.player.setVelocity(-Math.sin(yaw) * speed, mc.player.getVelocity().y, Math.cos(yaw) * speed);
     }
 
     public static double getDirection() {
-        if (mc.player == null) return 0;
-
         float yaw = mc.player.getYaw();
         float forward = mc.player.input.movementForward;
         float strafe = mc.player.input.movementSideways;

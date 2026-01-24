@@ -31,10 +31,11 @@ public class ModuleManager {
     private void init() {
         // Combat
         add(new AntiBot());
+        add(new AttackCrystal());
         add(new AttributeSwap());
         add(new KillAura());
         add(new AutoSnowball());
-        add(new AttackCrystal());
+
         // Movement
         add(new AutoSprint());
         add(new FastWeb());
