@@ -41,6 +41,10 @@ public class Module {
         this.values.add(this.hidden);
     }
 
+    protected void addValue(Value<?> value) {
+        this.values.add(value);
+    }
+
     protected boolean nullCheck() {
         return mc.player == null || mc.world == null;
     }

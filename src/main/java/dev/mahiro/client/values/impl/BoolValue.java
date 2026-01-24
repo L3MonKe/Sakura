@@ -12,4 +12,8 @@ public class BoolValue extends Value<Boolean> {
     public BoolValue(String name, String chineseName, boolean defaultValue) {
         this(name, chineseName, defaultValue, () -> true);
     }
+
+    public BoolValue(String name, boolean defaultValue) {
+        this(name, name, defaultValue, () -> true);
+    }
 }

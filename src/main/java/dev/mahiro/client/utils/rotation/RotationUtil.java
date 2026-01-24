@@ -78,6 +78,10 @@ public class RotationUtil {
         return calculate(new Vector3d(x, y, z));
     }
 
+    public static Rotation calculate(final BlockPos position, final Direction direction) {
+        return calculate(new Vector3d(position.getX(), position.getY(), position.getZ()), direction);
+    }
+
     public static Rotation applySensitivityPatch(final Rotation rotation) {
         final Rotation previousRotation = new Rotation(((IEntity) mc.player).getPrevYaw(), ((IEntity) mc.player).getPrevPitch());
         final float mouseSensitivity = (float) (mc.options.getMouseSensitivity().getValue() * 0.6F + 0.2F);

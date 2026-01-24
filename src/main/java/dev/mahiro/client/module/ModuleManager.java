@@ -35,6 +35,9 @@ public class ModuleManager {
         add(new KillAura());
         add(new AutoSnowball());
         add(new AttackCrystal());
+        add(new AutoCrystal());
+        add(new AutoAnchor());
+        add(new AutoTotem());
         // Movement
         add(new AutoSprint());
         add(new FastWeb());
