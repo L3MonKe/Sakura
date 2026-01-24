@@ -30,7 +30,7 @@ public class AttackCrystal extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (mc.player == null || mc.world == null) return;
+        if (nullCheck()) return;
 
         if (attackCooldown > 0) {
             attackCooldown--;
@@ -107,10 +107,8 @@ public class AttackCrystal extends Module {
             return;
         }
 
-        mc.player.networkHandler.sendPacket(
-                PlayerInteractEntityC2SPacket.attack(targetCrystal, mc.player.isSneaking())
-        );
-
+        mc.player.attack(targetCrystal);
+        //mc.player.networkHandler.sendPacket(PlayerInteractEntityC2SPacket.attack(, mc.player.isSneaking()));
         mc.player.swingHand(Hand.MAIN_HAND);
 
         targetCrystal = null;
@@ -119,11 +117,9 @@ public class AttackCrystal extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Post event) {
-        if (mc.player == null || mc.crosshairTarget == null) return;
+        if (nullCheck()) return;
 
-        if (mc.crosshairTarget instanceof EntityHitResult entityHitResult &&
-                entityHitResult.getEntity() instanceof EndCrystalEntity) {
-
+        if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof EndCrystalEntity) {
             if (attackCooldown == 0) {
                 targetCrystal = entityHitResult.getEntity();
                 attackCrystal();
