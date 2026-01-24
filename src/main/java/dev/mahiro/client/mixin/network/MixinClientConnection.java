@@ -4,9 +4,11 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
 import net.minecraft.network.ClientConnection;
+import net.minecraft.network.OffThreadException;
 import net.minecraft.network.PacketCallbacks;
 import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.BundleS2CPacket;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -31,16 +33,16 @@ public class MixinClientConnection {
 
     @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true, require = 1)
     private static void receivePacketEvent(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
-//        if (packet instanceof BundleS2CPacket bundleS2CPacket) {
-//            ci.cancel();
-//            for (Packet<?> packetInBundle : bundleS2CPacket.getPackets()) {
-//                try {
-//                    handlePacket(packetInBundle, listener);
-//                } catch (OffThreadException ignored) {
-//                }
-//            }
-//            return;
-//        }
+        if (packet instanceof BundleS2CPacket bundleS2CPacket) {
+            ci.cancel();
+            for (Packet<?> packetInBundle : bundleS2CPacket.getPackets()) {
+                try {
+                    handlePacket(packetInBundle, listener);
+                } catch (OffThreadException ignored) {
+                }
+            }
+            return;
+        }
 
         final PacketEvent event = new PacketEvent(EventType.RECEIVE, packet);
         Mahiro.EVENT_BUS.post(event);
