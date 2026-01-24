@@ -116,7 +116,7 @@ public class AttackCrystal extends Module {
         mc.player.swingHand(Hand.MAIN_HAND);
 
         targetCrystal = null;
-        attackCooldown = 2;
+        attackCooldown = 1;
 
         rotationManager.setActive(false);
     }
