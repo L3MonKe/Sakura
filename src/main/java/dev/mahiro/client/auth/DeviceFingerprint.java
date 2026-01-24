@@ -5,7 +5,6 @@ import oshi.hardware.*;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
@@ -41,16 +40,7 @@ public final class DeviceFingerprint {
                     .sorted()
                     .collect(Collectors.joining("|"));
 
-            List<NetworkIF> nics = hal.getNetworkIFs();
-            String macs = nics.stream()
-                    .sorted(Comparator.comparing(NetworkIF::getName, Comparator.nullsLast(String::compareToIgnoreCase)))
-                    .map(NetworkIF::getMacaddr)
-                    .map(DeviceFingerprint::safe)
-                    .filter(s -> !s.isBlank())
-                    .collect(Collectors.joining("|"));
-
             String os = safe(System.getProperty("os.name"));
-            String osVer = safe(System.getProperty("os.version"));
             String arch = safe(System.getProperty("os.arch"));
 
             String raw = String.join(";",
@@ -64,9 +54,7 @@ public final class DeviceFingerprint {
                     "cpuVendor=" + cpuVendor,
                     "gpu=" + gpuNames,
                     "disk=" + diskSerials,
-                    "mac=" + macs,
                     "os=" + os,
-                    "osv=" + osVer,
                     "arch=" + arch
             );
 
