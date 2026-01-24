@@ -86,7 +86,7 @@ public class Velocity extends Module {
     }
 
     @EventHandler
-    private void onTick(TickEvent.Pre event) {
+    private void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
         switch (mode.get()) {
@@ -120,6 +120,8 @@ public class Velocity extends Module {
 
     @EventHandler
     private void onPostTick(TickEvent.Post event) {
+        if (nullCheck()) return;
+
         if (stage == VelocityStage.CLEAR) {
             clear(true);
         }
