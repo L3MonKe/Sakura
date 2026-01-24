@@ -23,7 +23,6 @@ import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.entity.player.PlayerPosition;
 import net.minecraft.entity.projectile.FishingBobberEntity;
 import net.minecraft.network.listener.ClientPlayPacketListener;
 import net.minecraft.network.packet.Packet;
@@ -68,7 +67,7 @@ public class Velocity extends Module {
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.NoXZ);
     private final NumberValue<Double> horizontal = new NumberValue<>("Horizontal", "水平", 0.0, 0.0, 100.0, 1.0, () -> mode.is(Mode.Custom));
     private final NumberValue<Double> vertical = new NumberValue<>("Vertical", "垂直", 0.0, 0.0, 100.0, 1.0, () -> mode.is(Mode.Custom));
-    private final NumberValue<Integer> attacks = new NumberValue<>("Attack Counts", "攻击计数", 4, 1, 5, 1, () -> mode.is(Mode.NoXZ));
+    private final NumberValue<Integer> attacks = new NumberValue<>("Attack Counts", "攻击计数", 2, 1, 5, 1, () -> mode.is(Mode.NoXZ));
     private final NumberValue<Double> alinkTime = new NumberValue<>("Max Alink Time", "最大啊领克时间", 2500.0, 50.0, 10000.0, 50.0, () -> mode.is(Mode.NoXZ));
     public final BoolValue flagInWall = new BoolValue("Flag In Wall", "墙内标记", false, () -> mode.is(Mode.BBTTGrim) || mode.is(Mode.Wall));
     public final BoolValue noExplosions = new BoolValue("No Explosions", "无爆炸", false);
@@ -406,36 +405,28 @@ public class Velocity extends Module {
 
         while (!packets.isEmpty()) {
             Packet<? super ClientPlayPacketListener> packet = packets.poll();
-            if (packet != null && mc.getNetworkHandler() != null) {
+            if (packet != null) {
                 packet.apply(mc.getNetworkHandler());
             }
         }
     }
 
     private void updateTargetPosition(EntityS2CPacket packet) {
-        if (mc.world == null) return;
         Entity entity = packet.getEntity(mc.world);
         if (entity == null) return;
 
-        Vec3d currentPos = targets.getOrDefault(entity, entity.getPos());
         if (packet.isPositionChanged()) {
+            Vec3d currentPos = targets.getOrDefault(entity, entity.getPos());
             double dx = packet.getDeltaX() / 4096.0;
             double dy = packet.getDeltaY() / 4096.0;
             double dz = packet.getDeltaZ() / 4096.0;
             targets.put(entity, currentPos.add(dx, dy, dz));
-        } else {
-            targets.putIfAbsent(entity, currentPos);
         }
     }
 
     private void updateTargetPosition(EntityPositionS2CPacket packet) {
-        if (mc.world == null) return;
         Entity entity = mc.world.getEntityById(packet.entityId());
         if (entity == null) return;
-
-        Vec3d currentPos = targets.getOrDefault(entity, entity.getPos());
-        PlayerPosition current = new PlayerPosition(currentPos, entity.getVelocity(), entity.getYaw(), entity.getPitch());
-        PlayerPosition applied = PlayerPosition.apply(current, packet.change(), packet.relatives());
-        targets.put(entity, applied.position());
+        targets.put(entity, packet.change().position());
     }
 }

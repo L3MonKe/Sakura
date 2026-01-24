@@ -18,7 +18,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -60,11 +59,6 @@ public class MixinMinecraftClient {
     @Inject(method = "handleInputEvents", at = @At(value = "HEAD"))
     private void onHandleInputEvents(CallbackInfo info) {
         Mahiro.EVENT_BUS.post(new HandleInputEvent());
-    }
-
-    @ModifyArg(method = "updateWindowTitle", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/Window;setTitle(Ljava/lang/String;)V"))
-    private String setTitle(String original) {
-        return "桜";
     }
 
     @Inject(method = "onResolutionChanged", at = @At("TAIL"))

@@ -31,7 +31,7 @@ import java.util.List;
 
 public class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    public static final Path CONFIG_DIR = Paths.get("mahiro");
+    public static final Path CONFIG_DIR = Paths.get("mahiro-config");
     private static final Path MODULES_DIR = CONFIG_DIR.resolve("modules");
     private static final Path CLICKGUI_FILE = CONFIG_DIR.resolve("clickgui.json");
     private static final Path ACCOUNTS_FILE = CONFIG_DIR.resolve("accounts.json");
