@@ -3,6 +3,7 @@ package dev.mahiro.client.module.impl.player;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
+import dev.mahiro.client.utils.math.MathUtil;
 import dev.mahiro.client.utils.player.EnchantmentUtil;
 import dev.mahiro.client.utils.player.MovementUtil;
 import dev.mahiro.client.utils.player.SlotUtil;
@@ -18,8 +19,8 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.component.type.AttributeModifiersComponent;
 import net.minecraft.component.type.FoodComponent;
 import net.minecraft.enchantment.Enchantments;
-import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.*;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
@@ -52,7 +53,8 @@ public class InvManager extends Module {
     public final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.InvOpen);
     private final BoolValue swing = new BoolValue("Swing", "挥手动画", true);
     public final EnumValue<OffhandMode> offHandMode = new EnumValue<>("Offhand Mode", "副手模式", OffhandMode.None);
-    public final NumberValue<Integer> delay = new NumberValue<>("Delay", "延迟", 1, 1, 250, 1);
+    private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟", 90, 1, 250, 1);
+    private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110, 1, 250, 1);
     private final BoolValue keepTNT = new BoolValue("Keep TNT", "保留TNT", false);
     public final NumberValue<Integer> blocks = new NumberValue<>("Blocks", "方块阈值", 512, 16, 512, 1);
 
@@ -67,6 +69,7 @@ public class InvManager extends Module {
     public final NumberValue<Integer> slotFishingRod = new NumberValue<>("FishingRod Slot", "鱼竿槽位", 9, 0, 9, 1);
 
     private final TimerUtil timer = new TimerUtil();
+    private int nextDelayMs = 0;
 
     private Slot currentBestBlockSlot = null;
     private final List<Slot> protectedSlots = new ArrayList<>();
@@ -74,6 +77,11 @@ public class InvManager extends Module {
     @Override
     protected void onDisable() {
         currentBestBlockSlot = null;
+    }
+
+    @Override
+    protected void onEnable() {
+        resetDelay();
     }
 
     @EventHandler
@@ -219,25 +227,25 @@ public class InvManager extends Module {
                 currentBestBlockSlot = null;
             }
 
-            if (timer.passedMS(delay.get())) {
+            if (timer.passedMS(nextDelayMs)) {
                 for (Slot slot : hookSlot) {
                     if (slot != null && !isProtectedItem(slot.getStack())) {
                         if (slot.getStack().getItem() instanceof BlockItem) {
                             if (getBlockIndex() > blocks.get()) {
                                 click(slot, 1, SlotActionType.THROW);
-                                timer.reset();
+                                resetDelay();
                                 return;
                             }
                         } else {
                             click(slot, 1, SlotActionType.THROW);
-                            timer.reset();
+                            resetDelay();
                             return;
                         }
                     }
                 }
             }
 
-            if (timer.passedMS(delay.get())) {
+            if (timer.passedMS(nextDelayMs)) {
                 for (Slot slot : protectedSlots) {
                     if (slot.id >= 36 && slot.id <= 44) {
                         int hotbarIndex = slot.id - 36;
@@ -248,13 +256,13 @@ public class InvManager extends Module {
                                 break;
                             }
                         }
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
             }
 
-            if (timer.passedMS(delay.get())) {
+            if (timer.passedMS(nextDelayMs)) {
                 for (int i = 0; i < bestArmorSlots.length; i++) {
                     Slot slot = bestArmorSlots[i];
                     if (slot != null) {
@@ -266,19 +274,19 @@ public class InvManager extends Module {
                             if (armorSlotId >= 0 && slot.id != armorSlotId) {
                                 swapSlots(slot.id, armorSlotId);
                             }
-                            timer.reset();
+                            resetDelay();
                             return;
                         }
                     }
                 }
             }
 
-            if (timer.passedMS(delay.get())) {
+            if (timer.passedMS(nextDelayMs)) {
                 if (bestSwordSlot != null && bestSwordSlot.getStack().getItem() instanceof SwordItem) {
                     int targetSlotId = 36 + slotSword.get() - 1;
                     if (bestSwordSlot.id != targetSlotId) {
                         click(bestSwordSlot, slotSword.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -290,13 +298,13 @@ public class InvManager extends Module {
                         Slot mergeSource = findMergeSource(blockSlots, bestBlockItem, targetSlotId);
                         if (mergeSource != null && targetSlot.getStack().getCount() < targetSlot.getStack().getMaxCount()) {
                             mergeStacks(mergeSource, targetSlot);
-                            timer.reset();
+                            resetDelay();
                             return;
                         }
                     }
                     if (bestBlockSlot.id != targetSlotId && isBlockPlaceable(bestBlockSlot.getStack())) {
                         click(bestBlockSlot, slotBlock.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -305,7 +313,7 @@ public class InvManager extends Module {
                     int targetSlotId = 36 + slotFood.get() - 1;
                     if (bestFoodSlot.id != targetSlotId) {
                         click(bestFoodSlot, slotFood.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -314,7 +322,7 @@ public class InvManager extends Module {
                     int targetSlotId = 36 + slotPearl.get() - 1;
                     if (bestEnderPearlSlot.id != targetSlotId) {
                         click(bestEnderPearlSlot, slotPearl.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -323,7 +331,7 @@ public class InvManager extends Module {
                     int targetSlotId = 36 + slotFishingRod.get() - 1;
                     if (bestFishingRodSlot.id != targetSlotId) {
                         click(bestFishingRodSlot, slotFishingRod.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -332,7 +340,7 @@ public class InvManager extends Module {
                     int targetSlotId = 36 + slotBow.get() - 1;
                     if (bestBowSlot.id != targetSlotId) {
                         click(bestBowSlot, slotBow.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -341,7 +349,7 @@ public class InvManager extends Module {
                     int targetSlotId = 36 + slotAxe.get() - 1;
                     if (bestAxeSlot.id != targetSlotId) {
                         click(bestAxeSlot, slotAxe.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -350,7 +358,7 @@ public class InvManager extends Module {
                     int targetSlotId = 36 + slotPickaxe.get() - 1;
                     if (bestPickaxeSlot.id != targetSlotId) {
                         click(bestPickaxeSlot, slotPickaxe.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
@@ -359,18 +367,18 @@ public class InvManager extends Module {
                     int targetSlotId = 36 + slotBucket.get() - 1;
                     if (bestBucketSlot.id != targetSlotId && slotBucket.get() > 0) {
                         click(bestBucketSlot, slotBucket.get() - 1, SlotActionType.SWAP);
-                        timer.reset();
+                        resetDelay();
                         return;
                     }
                 }
             }
 
-            if (timer.passedMS(delay.get())) {
+            if (timer.passedMS(nextDelayMs)) {
                 manageOffhand();
-                timer.reset();
+                resetDelay();
             }
         } else {
-            timer.reset();
+            resetDelay();
             currentBestBlockSlot = null;
         }
     }
@@ -395,7 +403,7 @@ public class InvManager extends Module {
                 Slot bestGappleSlot = findBestGappleSlot();
                 if (bestGappleSlot != null && bestGappleSlot.id != offhandSlot.id) {
                     putItemInSlotOFF(bestGappleSlot, offhandSlot);
-                    timer.reset();
+                    resetDelay();
                 }
             }
         } else if (mode == OffhandMode.Throwable) {
@@ -403,10 +411,27 @@ public class InvManager extends Module {
                 Slot bestThrowableSlot = findBestThrowableSlot();
                 if (bestThrowableSlot != null && bestThrowableSlot.id != offhandSlot.id) {
                     putItemInSlotOFF(bestThrowableSlot, offhandSlot);
-                    timer.reset();
+                    resetDelay();
                 }
             }
         }
+    }
+
+    private void resetDelay() {
+        timer.reset();
+        nextDelayMs = getRandomDelayMs();
+    }
+
+    private int getRandomDelayMs() {
+        int min = minDelay.get();
+        int max = maxDelay.get();
+        if (max < min) {
+            int temp = min;
+            min = max;
+            max = temp;
+        }
+        if (max == min) return min;
+        return MathUtil.getRandom(min, max + 1);
     }
 
     private Slot findBestGappleSlot() {
