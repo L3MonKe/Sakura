@@ -1,6 +1,7 @@
 package dev.mahiro.client.module.impl.combat;
 
 import dev.mahiro.client.events.client.TickEvent;
+import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
@@ -23,11 +24,8 @@ public class AttackCrystal extends Module {
     private Entity targetCrystal;
     private int attackCooldown;
 
-    private final RotationManager rotationManager;
-
     public AttackCrystal() {
         super("AttackCrystal", "水晶光环", Category.Combat);
-        this.rotationManager = new RotationManager();
     }
 
     @EventHandler
@@ -79,9 +77,9 @@ public class AttackCrystal extends Module {
         boolean canSee = canSeeCrystal(targetRot, range);
 
         if (canSee) {
-            rotationManager.setRotations(
+            Managers.ROTATION.setRotations(
                     targetRot,
-                    180.0,
+                    10.0,
                     MovementFix.OFF,
                     RotationManager.Priority.Highest
             );
@@ -117,8 +115,6 @@ public class AttackCrystal extends Module {
 
         targetCrystal = null;
         attackCooldown = 1;
-
-        rotationManager.setActive(false);
     }
 
     @EventHandler
@@ -147,6 +143,5 @@ public class AttackCrystal extends Module {
         super.onDisable();
         targetCrystal = null;
         attackCooldown = 0;
-        rotationManager.setActive(false);
     }
 }
