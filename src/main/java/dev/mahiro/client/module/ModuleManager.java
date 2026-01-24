@@ -31,6 +31,7 @@ public class ModuleManager {
     private void init() {
         // Combat
         add(new AntiBot());
+        add(new AttackCrystal());
         add(new AttributeSwap());
         add(new KillAura());
         add(new AutoSnowball());
@@ -38,6 +39,7 @@ public class ModuleManager {
         add(new AutoCrystal());
         add(new AutoAnchor());
         add(new AutoTotem());
+
         // Movement
         add(new AutoSprint());
         add(new FastWeb());

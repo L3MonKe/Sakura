@@ -69,8 +69,5 @@
   },
   "overwrites": {
     "requireAnnotations": true
-  },
-  "mixins": [
-    "entity.MixinFlowableFluid"
-  ]
+  }
 }

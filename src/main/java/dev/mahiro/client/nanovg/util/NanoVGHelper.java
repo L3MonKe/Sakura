@@ -6,10 +6,12 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.MatrixStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
+import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.system.MemoryStack;
 
 import java.awt.*;
 import java.io.InputStream;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
@@ -481,6 +483,23 @@ public class NanoVGHelper {
         }
     }
 
+    public static int createImageFromHandle(int textureId, int width, int height) {
+        try {
+            Method method;
+            try {
+                method = NanoVGGL3.class.getMethod("nvgCreateImageFromHandle", long.class, int.class, int.class, int.class, int.class);
+            } catch (NoSuchMethodException e) {
+                method = NanoVGGL3.class.getMethod("nvglCreateImageFromHandle", long.class, int.class, int.class, int.class, int.class);
+            }
+            Object result = method.invoke(null, getContext(), textureId, width, height, NVG_IMAGE_NEAREST);
+            if (result instanceof Integer id) {
+                return id;
+            }
+        } catch (Exception ignored) {
+        }
+        return -1;
+    }
+
     public static void drawCircleOutline(float x, float y, float radius, float strokeWidth, Color color) {
         long vg = getContext();
         nvgBeginPath(vg);
@@ -526,63 +545,6 @@ public class NanoVGHelper {
 
     public static void globalAlpha(long vg, float alpha) {
         nvgGlobalAlpha(vg, alpha);
-    }
-
-    /**
-     * 绘制图片
-     *
-     * @param imageId NanoVG 图片 ID
-     * @param x       X 坐标
-     * @param y       Y 坐标
-     * @param width   宽度
-     * @param height  高度
-     * @param alpha   透明度 (0-1)
-     */
-    public static void drawTexture(int imageId, float x, float y, float width, float height, float alpha) {
-        if (imageId == -1) return;
-
-        long vg = getContext();
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            NVGPaint paint = NVGPaint.malloc(stack);
-            // Fix: Pattern origin should match rect origin for simple drawing
-            nvgImagePattern(vg, x, y, width, height, 0, imageId, alpha, paint);
-
-            nvgBeginPath(vg);
-            nvgRect(vg, x, y, width, height);
-            nvgFillPaint(vg, paint);
-            nvgFill(vg);
-        }
-    }
-
-    public static void drawTexture(int imageId, float x, float y, float width, float height, float alpha,
-                                   float scaleX, float scaleY, float rotation) {
-        if (imageId == -1) return;
-
-        long vg = getContext();
-
-        nvgSave(vg);
-
-        // 移动到中心点
-        nvgTranslate(vg, x + width / 2f, y + height / 2f);
-        // 应用旋转
-        nvgRotate(vg, rotation);
-        // 应用缩放
-        nvgScale(vg, scaleX, scaleY);
-        // 移回原点
-        nvgTranslate(vg, -width / 2f, -height / 2f);
-
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            NVGPaint paint = NVGPaint.malloc(stack);
-            nvgImagePattern(vg, 0, 0, width, height, 0, imageId, alpha, paint);
-
-            nvgBeginPath(vg);
-            nvgRect(vg, 0, 0, width, height);
-            nvgFillPaint(vg, paint);
-            nvgFill(vg);
-        }
-
-        nvgRestore(vg);
     }
 
     public static void deleteTexture(int imageId) {

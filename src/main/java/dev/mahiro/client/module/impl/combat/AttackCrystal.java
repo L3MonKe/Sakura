@@ -74,30 +74,19 @@ public class AttackCrystal extends Module {
         Rotation targetRot = RotationUtil.calculate(targetCrystal);
 
         boolean canSee = canSeeCrystal(targetRot, range);
+        if (!canSee) return;
 
-        if (canSee) {
-            Managers.ROTATION.setRotations(
-                    targetRot,
-                    10.0,
-                    MovementFix.OFF,
-                    RotationManager.Priority.Highest
-            );
+        Managers.ROTATION.setRotations(targetRot, 10.0, MovementFix.OFF, RotationManager.Priority.Highest);
 
-            attackCrystal();
-        }
+        attackCrystal();
     }
 
     private boolean canSeeCrystal(Rotation rotation, double range) {
         if (targetCrystal == null) return false;
 
-        HitResult hitResult = RaytraceUtil.rayTraceEntity(
-                range,
-                rotation,
-                entity -> entity == targetCrystal
-        );
+        HitResult hitResult = RaytraceUtil.rayTraceEntity(range, rotation, entity -> entity == targetCrystal);
 
-        return hitResult instanceof EntityHitResult entityHitResult &&
-                entityHitResult.getEntity() == targetCrystal;
+        return hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() == targetCrystal;
     }
 
     private void attackCrystal() {
@@ -128,14 +117,12 @@ public class AttackCrystal extends Module {
 
     @Override
     public void onEnable() {
-        super.onEnable();
         targetCrystal = null;
         attackCooldown = 0;
     }
 
     @Override
     public void onDisable() {
-        super.onDisable();
         targetCrystal = null;
         attackCooldown = 0;
     }
