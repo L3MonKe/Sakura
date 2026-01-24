@@ -9,10 +9,7 @@ import dev.mahiro.client.events.render.Render2DEvent;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.NotificationManager;
 import dev.mahiro.client.module.impl.client.*;
-import dev.mahiro.client.module.impl.combat.AntiBot;
-import dev.mahiro.client.module.impl.combat.AttributeSwap;
-import dev.mahiro.client.module.impl.combat.AutoSnowball;
-import dev.mahiro.client.module.impl.combat.KillAura;
+import dev.mahiro.client.module.impl.combat.*;
 import dev.mahiro.client.module.impl.hud.*;
 import dev.mahiro.client.module.impl.movement.*;
 import dev.mahiro.client.module.impl.player.*;
@@ -37,7 +34,7 @@ public class ModuleManager {
         add(new AttributeSwap());
         add(new KillAura());
         add(new AutoSnowball());
-
+        add(new AttackCrystal());
         // Movement
         add(new AutoSprint());
         add(new FastWeb());
