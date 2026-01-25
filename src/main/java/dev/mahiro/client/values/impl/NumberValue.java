@@ -20,10 +20,6 @@ public class NumberValue<T extends Number> extends Value<T> {
         this(name, chineseName, defaultValue, min, max, step, () -> true);
     }
 
-    public NumberValue(String name, T defaultValue, T min, T max, T step) {
-        this(name, name, defaultValue, min, max, step, () -> true);
-    }
-
     @Override
     public void set(T value) {
         if (value.doubleValue() < min.doubleValue()) {

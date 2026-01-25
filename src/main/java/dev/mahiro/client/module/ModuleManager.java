@@ -44,6 +44,7 @@ public class ModuleManager {
         add(new AutoSprint());
         add(new FastWeb());
         add(new JumpCooldown());
+        add(new KeepSprint());
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());

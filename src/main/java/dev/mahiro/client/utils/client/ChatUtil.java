@@ -23,9 +23,7 @@ public class ChatUtil {
     }
 
     public static void sendMessage(String message) {
-        if (mc.player != null) {
-            Text component = Text.literal(message.replace('&', '§'));
-            mc.player.sendMessage(component, false);
-        }
+        Text component = Text.literal(message.replace('&', '§'));
+        mc.player.sendMessage(component, false);
     }
 }
