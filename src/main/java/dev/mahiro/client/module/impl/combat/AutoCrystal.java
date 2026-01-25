@@ -32,20 +32,20 @@ import net.minecraft.util.math.Vec3d;
 import java.util.List;
 
 public class AutoCrystal extends Module {
-    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", "目标距离", 10.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> placeRange = new NumberValue<>("Place Range", "放置范围", "放置距离", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> breakRange = new NumberValue<>("Break Range", "破坏范围", "破坏距离", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", "墙距离", 3.0, 0.0, 6.0, 0.1);
-    private final NumberValue<Double> minDamage = new NumberValue<>("Min Damage", "最小伤害", "最小伤害", 4.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> maxSelfDamage = new NumberValue<>("Max Self Damage", "最大自伤", "最大自我伤害", 8.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> facePlaceHealth = new NumberValue<>("Face Place Health", "贴脸血量", "脸放置伤害", 8.0, 0.0, 36.0, 0.5);
-    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", "转头速度", 1.5, 0.1, 5.0, 0.1);
-    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", "Angle Tolerance", 20.0, 1.0, 90.0, 1.0);
+    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", 10.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> placeRange = new NumberValue<>("Place Range", "放置范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> breakRange = new NumberValue<>("Break Range", "破坏范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1);
+    private final NumberValue<Double> minDamage = new NumberValue<>("Min Damage", "最小伤害", 4.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> maxSelfDamage = new NumberValue<>("Max Self Damage", "最大自我伤害", 8.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> facePlaceHealth = new NumberValue<>("Face Place Health", "脸放置伤害", 8.0, 0.0, 36.0, 0.5);
+    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 1.5, 0.1, 5.0, 0.1);
+    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
     private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
     private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
-    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", "自动切换", true);
+    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式",  true);
 
     private Entity target;
     private long lastBreakTime;
