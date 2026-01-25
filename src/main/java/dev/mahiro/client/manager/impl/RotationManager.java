@@ -5,7 +5,7 @@ import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.player.*;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.utils.rotation.MovementFix;
 import dev.mahiro.client.utils.rotation.RotationUtil;
 import dev.mahiro.client.utils.vector.Rotation;
@@ -216,7 +216,7 @@ public class RotationManager {
         }
 
         if (correctMovement == MovementFix.BACKWARDS_SPRINT && active) {
-            if (Math.abs(rotations.yaw % 360 - Math.toDegrees(MovementUtil.getDirection()) % 360) > 45) {
+            if (Math.abs(rotations.yaw % 360 - Math.toDegrees(MoveUtil.getDirection()) % 360) > 45) {
                 mc.options.sprintKey.setPressed(false);
                 mc.player.setSprinting(false);
             }
@@ -227,7 +227,7 @@ public class RotationManager {
     private void onMoveInput(MoveInputEvent event) {
         if (active && correctMovement == MovementFix.NORMAL && rotations != null) {
             final float yaw = rotations.yaw;
-            MovementUtil.fixMovement(event, yaw);
+            MoveUtil.fixMovement(event, yaw);
         }
     }
 

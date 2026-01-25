@@ -9,7 +9,7 @@ import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.combat.AntiBot;
 import dev.mahiro.client.utils.client.ChatUtil;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.utils.render.Render3DUtil;
 import dev.mahiro.client.utils.vector.Vector3d;
 import dev.mahiro.client.values.impl.BoolValue;
@@ -242,7 +242,7 @@ public class Velocity extends Module {
         }
 
         if (jump) {
-            if (mc.player.isOnGround() && MovementUtil.isMoving()) event.setJump(true);
+            if (mc.player.isOnGround() && MoveUtil.isMoving()) event.setJump(true);
             jump = false;
         }
     }

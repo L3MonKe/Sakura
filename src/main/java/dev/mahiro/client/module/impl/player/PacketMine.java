@@ -1,355 +1,434 @@
-/// *
-// * This file is part of the Meteorite distribution
-// * Copyright (c) Kelvin LBY.
-// */
-//
-//package mod.kelvinlby.meteorite.systems.modules.world;
-//
-//import mod.kelvinlby.meteorite.events.entity.player.StartBreakingBlockEvent;
-//import mod.kelvinlby.meteorite.events.render.Render3DEvent;
-//import mod.kelvinlby.meteorite.events.world.TickEvent;
-//import mod.kelvinlby.meteorite.renderer.ShapeMode;
-//import mod.kelvinlby.meteorite.settings.*;
-//import mod.kelvinlby.meteorite.settings.*;
-//import mod.kelvinlby.meteorite.systems.modules.Categories;
-//import mod.kelvinlby.meteorite.systems.modules.Module;
-//import mod.kelvinlby.meteorite.systems.modules.Modules;
-//import mod.kelvinlby.meteorite.systems.modules.render.BreakIndicators;
-//import mod.kelvinlby.meteorite.utils.Utils;
-//import mod.kelvinlby.meteorite.utils.misc.Pool;
-//import mod.kelvinlby.meteorite.utils.player.FindItemResult;
-//import mod.kelvinlby.meteorite.utils.player.InvUtils;
-//import mod.kelvinlby.meteorite.utils.player.Rotations;
-//import mod.kelvinlby.meteorite.utils.render.color.SettingColor;
-//import mod.kelvinlby.meteorite.utils.world.BlockUtils;
-//import meteordevelopment.orbit.EventHandler;
-//import net.minecraft.block.Block;
-//import net.minecraft.block.BlockState;
-//import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
-//import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-//import net.minecraft.util.math.BlockPos;
-//import net.minecraft.util.math.Direction;
-//import net.minecraft.util.shape.VoxelShape;
-//
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.Objects;
-//
-//public class PacketMine extends Module {
-//    private final SettingGroup sgGeneral = settings.getDefaultGroup();
-//    private final SettingGroup sgRender = settings.createGroup("Render");
-//
-//    // General
-//
-//    private final Setting<BreakMode> mode = sgGeneral.add(new EnumSetting.Builder<BreakMode>()
-//        .name("mode")
-//        .description("Break mode: Instant (may fail on anticheat), Fast (minimum time to pass checks), Normal (vanilla timing).")
-//        .defaultValue(BreakMode.Fast)
-//        .build()
-//    );
-//
-//    private final Setting<Integer> delay = sgGeneral.add(new IntSetting.Builder()
-//        .name("delay")
-//        .description("Delay between mining blocks in ticks.")
-//        .defaultValue(1)
-//        .min(0)
-//        .build()
-//    );
-//
-//    private final Setting<Boolean> rotate = sgGeneral.add(new BoolSetting.Builder()
-//        .name("rotate")
-//        .description("Sends rotation packets to the server when mining.")
-//        .defaultValue(false)
-//        .build()
-//    );
-//
-//    private final Setting<Boolean> autoSwitch = sgGeneral.add(new BoolSetting.Builder()
-//        .name("auto-switch")
-//        .description("Automatically switches to the best tool when the block is ready to be mined instantly.")
-//        .defaultValue(false)
-//        .build()
-//    );
-//
-//    private final Setting<Boolean> notOnUse = sgGeneral.add(new BoolSetting.Builder()
-//        .name("not-on-use")
-//        .description("Won't auto switch if you're using an item.")
-//        .defaultValue(true)
-//        .visible(autoSwitch::get)
-//        .build()
-//    );
-//
-//    private final Setting<Boolean> obscureBreakingProgress = sgGeneral.add(new BoolSetting.Builder()
-//        .name("obscure-breaking-progress")
-//        .description("Spams abort breaking packets to obscure the block mining progress from other players. Does not hide it perfectly.")
-//        .defaultValue(false)
-//        .build()
-//    );
-//
-//    // Render
-//
-//    private final Setting<Boolean> render = sgRender.add(new BoolSetting.Builder()
-//        .name("render")
-//        .description("Whether or not to render the block being mined.")
-//        .defaultValue(true)
-//        .build()
-//    );
-//
-//    private final Setting<ShapeMode> shapeMode = sgRender.add(new EnumSetting.Builder<ShapeMode>()
-//        .name("shape-mode")
-//        .description("How the shapes are rendered.")
-//        .defaultValue(ShapeMode.Both)
-//        .build()
-//    );
-//
-//    private final Setting<SettingColor> readySideColor = sgRender.add(new ColorSetting.Builder()
-//        .name("ready-side-color")
-//        .description("The color of the sides of the blocks that can be broken.")
-//        .defaultValue(new SettingColor(0, 204, 0, 10))
-//        .build()
-//    );
-//
-//    private final Setting<SettingColor> readyLineColor = sgRender.add(new ColorSetting.Builder()
-//        .name("ready-line-color")
-//        .description("The color of the lines of the blocks that can be broken.")
-//        .defaultValue(new SettingColor(0, 204, 0, 255))
-//        .build()
-//    );
-//
-//    private final Setting<SettingColor> sideColor = sgRender.add(new ColorSetting.Builder()
-//        .name("side-color")
-//        .description("The color of the sides of the blocks being rendered.")
-//        .defaultValue(new SettingColor(204, 0, 0, 10))
-//        .build()
-//    );
-//
-//    private final Setting<SettingColor> lineColor = sgRender.add(new ColorSetting.Builder()
-//        .name("line-color")
-//        .description("The color of the lines of the blocks being rendered.")
-//        .defaultValue(new SettingColor(204, 0, 0, 255))
-//        .build()
-//    );
-//
-//    private final Pool<MyBlock> blockPool = new Pool<>(MyBlock::new);
-//    public final List<MyBlock> blocks = new ArrayList<>();
-//
-//    private boolean swapped, shouldUpdateSlot;
-//
-//    public PacketMine() {
-//        super(Categories.World, "packet-mine", "Sends packets to mine blocks without the mining animation.");
-//    }
-//
-//    @Override
-//    public void onActivate() {
-//        swapped = false;
-//    }
-//
-//    @Override
-//    public void onDeactivate() {
-//        assert mc.player != null;
-//
-//        blockPool.freeAll(blocks);
-//        blocks.clear();
-//
-//        if (shouldUpdateSlot) {
-//            mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().getSelectedSlot()));
-//            shouldUpdateSlot = false;
-//        }
-//    }
-//
-//    @EventHandler
-//    private void onStartBreakingBlock(StartBreakingBlockEvent event) {
-//        if (!BlockUtils.canBreak(event.blockPos)) return;
-//        event.cancel();
-//
-//        swapped = false;
-//
-//        if (!isMiningBlock(event.blockPos)) {
-//            blocks.add(blockPool.get().set(event));
-//        }
-//    }
-//
-//    public boolean isMiningBlock(BlockPos pos) {
-//        for (MyBlock block : blocks) {
-//            if (block.blockPos.equals(pos)) return true;
-//        }
-//
-//        return false;
-//    }
-//
-//    @EventHandler
-//    private void onTick(TickEvent.Pre event) {
-//        assert mc.player != null;
-//        blocks.removeIf(MyBlock::shouldRemove);
-//
-//        if (shouldUpdateSlot) {
-//            mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(mc.player.getInventory().getSelectedSlot()));
-//            shouldUpdateSlot = false;
-//            swapped = false;
-//        }
-//
-//        if (!blocks.isEmpty()) {
-//            MyBlock block = blocks.getFirst();
-//            block.mine();
-//
-//            if (block.isReady() && !swapped && autoSwitch.get() && (!mc.player.isUsingItem() || !notOnUse.get())) {
-//                FindItemResult slot = InvUtils.findFastestTool(block.blockState);
-//                if (!slot.found() || mc.player.getInventory().getSelectedSlot() == slot.slot()) return;
-//                mc.player.networkHandler.sendPacket(new UpdateSelectedSlotC2SPacket(slot.slot()));
-//                swapped = true;
-//                shouldUpdateSlot = true;
-//            }
-//        }
-//    }
-//
-//    @EventHandler
-//    private void onRender(Render3DEvent event) {
-//        if (!render.get()) return;
-//
-//        for (MyBlock block : blocks) {
-//            if (!Modules.get().get(BreakIndicators.class).isActive() || !Modules.get().get(BreakIndicators.class).packetMine.get() || !block.mining) {
-//                block.render(event);
-//            }
-//        }
-//    }
-//
-//    public class MyBlock {
-//        public BlockPos blockPos;
-//        public BlockState blockState;
-//        public Block block;
-//
-//        public Direction direction;
-//
-//        public int timer, startTime;
-//        public long startTimeMillis; // Timestamp when START packet was sent
-//        public boolean mining;
-//        public boolean startPacketSent;
-//        public boolean finishPacketSent;
-//        public long requiredBreakTime; // In milliseconds
-//        public int toolSlot; // The slot of the tool being used to break this block
-//
-//        public MyBlock set(StartBreakingBlockEvent event) {
-//            assert mc.player != null;
-//            assert mc.world != null;
-//            this.blockPos = event.blockPos;
-//            this.direction = event.direction;
-//            this.blockState = mc.world.getBlockState(blockPos);
-//            this.block = blockState.getBlock();
-//            this.timer = delay.get();
-//            this.mining = false;
-//            this.startPacketSent = false;
-//            this.finishPacketSent = false;
-//            this.toolSlot = mc.player.getInventory().getSelectedSlot(); // Store the current tool slot
-//            this.requiredBreakTime = calculateRequiredBreakTime();
-//
-//            return this;
-//        }
-//
-//        public boolean shouldRemove() {
-//            assert mc.player != null;
-//            assert mc.world != null;
-//            boolean broken = mc.world.getBlockState(blockPos).getBlock() != block;
-//            boolean timeout = progress() > 2 && (Objects.requireNonNull(mc.player).age - startTime > 50);
-//            boolean distance = Utils.distance(mc.player.getEyePos().x, mc.player.getEyePos().y, mc.player.getEyePos().z, blockPos.getX() + direction.getOffsetX(), blockPos.getY() + direction.getOffsetY(), blockPos.getZ() + direction.getOffsetZ()) > mc.player.getBlockInteractionRange();
-//
-//            return broken || timeout || distance;
-//        }
-//
-//        public boolean isReady() {
-//            return progress() >= 1;
-//        }
-//
-//        public double progress() {
-//            if (!mining) return 0;
-//
-//            // Use the tool slot that was in hand when breaking started
-//            assert mc.player != null;
-//            return BlockUtils.getBreakDelta(toolSlot, blockState) * ((mc.player.age - startTime) + 1);
-//        }
-//
-//        private long calculateRequiredBreakTime() {
-//            // Get the block damage per tick using the tool that's currently in hand
-//            double blockDamagePerTick = BlockUtils.getBreakDelta(toolSlot, blockState);
-//
-//            // Calculate vanilla break time
-//            // Formula from GrimAC: Math.ceil(1 / blockDamagePerTick) * 50ms
-//            long vanillaBreakTime = (long) (Math.ceil(1.0 / blockDamagePerTick) * 50.0);
-//
-//            return switch (mode.get()) {
-//                case Instant -> 0; // Instant break - send packets immediately
-//                case Fast -> Math.max(0, vanillaBreakTime - 10); // Fast break - 10ms margin to pass GrimAC checks
-//                case Normal -> vanillaBreakTime; // Normal - exact vanilla timing
-//            };
-//        }
-//
-//        public void mine() {
-//            if (rotate.get())
-//                Rotations.rotate(Rotations.getYaw(blockPos), Rotations.getPitch(blockPos), 50, this::sendMinePackets);
-//            else sendMinePackets();
-//        }
-//
-//        private void sendMinePackets() {
-//            assert mc.player != null;
-//            assert mc.world != null;
-//            assert mc.interactionManager != null;
-//
-//            if (timer <= 0) {
-//                // Send START packet if not sent yet
-//                if (!startPacketSent) {
-//                    mc.interactionManager.sendSequencedPacket(mc.world, (sequence) -> new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockPos, direction, sequence));
-//                    startPacketSent = true;
-//                    mining = true;
-//                    startTime = mc.player.age;
-//                    startTimeMillis = System.currentTimeMillis();
-//                }
-//
-//                // Send FINISH packet when enough time has elapsed
-//                if (startPacketSent && !finishPacketSent) {
-//                    long elapsedTime = System.currentTimeMillis() - startTimeMillis;
-//
-//                    if (elapsedTime >= requiredBreakTime) {
-//                        mc.interactionManager.sendSequencedPacket(mc.world, (sequence) -> new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockPos, direction, sequence));
-//                        finishPacketSent = true;
-//                    }
-//                }
-//            } else {
-//                timer--;
-//            }
-//
-//            if (mining && obscureBreakingProgress.get())
-//                Objects.requireNonNull(mc.getNetworkHandler()).sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, blockPos, direction));
-//        }
-//
-//        public void render(Render3DEvent event) {
-//            assert mc.world != null;
-//            VoxelShape shape = mc.world.getBlockState(blockPos).getOutlineShape(mc.world, blockPos);
-//
-//            double x1 = blockPos.getX();
-//            double y1 = blockPos.getY();
-//            double z1 = blockPos.getZ();
-//            double x2 = blockPos.getX() + 1;
-//            double y2 = blockPos.getY() + 1;
-//            double z2 = blockPos.getZ() + 1;
-//
-//            if (!shape.isEmpty()) {
-//                x1 = blockPos.getX() + shape.getMin(Direction.Axis.X);
-//                y1 = blockPos.getY() + shape.getMin(Direction.Axis.Y);
-//                z1 = blockPos.getZ() + shape.getMin(Direction.Axis.Z);
-//                x2 = blockPos.getX() + shape.getMax(Direction.Axis.X);
-//                y2 = blockPos.getY() + shape.getMax(Direction.Axis.Y);
-//                z2 = blockPos.getZ() + shape.getMax(Direction.Axis.Z);
-//            }
-//
-//            if (isReady()) {
-//                event.renderer.box(x1, y1, z1, x2, y2, z2, readySideColor.get(), readyLineColor.get(), shapeMode.get(), 0);
-//            } else {
-//                event.renderer.box(x1, y1, z1, x2, y2, z2, sideColor.get(), lineColor.get(), shapeMode.get(), 0);
-//            }
-//        }
-//    }
-//
-//    public enum BreakMode {
-//        Instant,
-//        Fast,
-//        Normal
-//    }
-//}
+package dev.mahiro.client.module.impl.player;
+
+import dev.mahiro.client.Mahiro;
+import dev.mahiro.client.events.client.TickEvent;
+import dev.mahiro.client.events.player.BlockEvent;
+import dev.mahiro.client.events.render.Render3DEvent;
+import dev.mahiro.client.manager.Managers;
+import dev.mahiro.client.manager.impl.RotationManager;
+import dev.mahiro.client.module.Category;
+import dev.mahiro.client.module.Module;
+import dev.mahiro.client.utils.client.ChatUtil;
+import dev.mahiro.client.utils.player.InvUtil;
+import dev.mahiro.client.utils.render.Render3DUtil;
+import dev.mahiro.client.utils.rotation.MovementFix;
+import dev.mahiro.client.utils.rotation.RotationUtil;
+import dev.mahiro.client.utils.time.TimerUtil;
+import dev.mahiro.client.values.impl.BoolValue;
+import dev.mahiro.client.values.impl.ColorValue;
+import dev.mahiro.client.values.impl.EnumValue;
+import dev.mahiro.client.values.impl.NumberValue;
+import meteordevelopment.orbit.EventHandler;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.enchantment.Enchantments;
+import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.util.Hand;
+import net.minecraft.util.math.*;
+
+import java.awt.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public class PacketMine extends Module {
+    private final BoolValue autoConfig = new BoolValue("Auto", "自动", false);
+    private final BoolValue avoidSelfConfig = new BoolValue("Avoid Self", "避开自身", false, autoConfig::get);
+    private final NumberValue<Double> enemyRangeConfig = new NumberValue<>("EnemyRange", "敌人范围", 5.0, 1.0, 10.0, 0.1, autoConfig::get);
+    private final BoolValue antiCrawlConfig = new BoolValue("Anti Crawl", "反爬行", false);
+    private final BoolValue headConfig = new BoolValue("Target Body", "目标身体", false, autoConfig::get);
+    private final BoolValue aboveHeadConfig = new BoolValue("Target Head", "目标头部", false, autoConfig::get);
+    private final BoolValue strictDirectionConfig = new BoolValue("Strict Direction", "严格方向", false);
+    private final EnumValue<RemineMode> remineConfig = new EnumValue<>("Remine", "重挖", RemineMode.Normal);
+    private final BoolValue eatingPause = new BoolValue("Eating Pause", "吃东西时暂停", false);
+    private final BoolValue miningFix = new BoolValue("Mining Fix", "挖掘修复", false);
+    private final BoolValue doubleBreakConfig = new BoolValue("Double Break", "双重破坏", false);
+    private final NumberValue<Integer> mineTicksConfig = new NumberValue<>("Mining Ticks", "挖掘刻数", 20, 5, 60, 1, doubleBreakConfig::get);
+    private final NumberValue<Double> rangeConfig = new NumberValue<>("Range", "范围", 4.0, 0.1, 6.0, 0.1);
+    private final EnumValue<Swap> swapConfig = new EnumValue<>("Auto Swap", "自动切换", Swap.Silent);
+    private final BoolValue rotateConfig = new BoolValue("Rotate", "转头", true);
+    private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Back Speed", "回转速度", 10, 0, 10, 1, () -> rotateConfig.get());
+    private final BoolValue reTry = new BoolValue("reTry", "重试", false);
+    private final BoolValue grimConfig = new BoolValue("Grim", "Grim", false);
+    private final BoolValue grimNewConfig = new BoolValue("GrimV3", "GrimV3", false, grimConfig::get);
+    private final ColorValue fullColor = new ColorValue("Mine Full", "挖掘填充颜色", new Color(255, 0, 0, 31));
+    private final ColorValue lineColor = new ColorValue("Mine Line", "挖掘边框颜色", new Color(255, 0, 0, 233));
+    private final ColorValue doneFullColor = new ColorValue("Done Full", "完成面颜色", new Color(0, 255, 0, 23));
+    private final ColorValue doneLineColor = new ColorValue("Done Line", "完成线颜色", new Color(0, 255, 0, 233));
+    private final BoolValue debugConfig = new BoolValue("Debug", "调试", false);
+
+    private BlockData blockData = null;
+    private BlockData blockData2 = null;
+
+    private TimerUtil resetTime = new TimerUtil();
+
+    public PacketMine() {
+        super("PacketMine", "发包挖掘", Category.Player);
+    }
+
+    public static int lerp(int start, int end, double pct) {
+        pct = Math.max(0.0f, Math.min(1.0f, pct));
+
+        return Math.toIntExact(Math.round(start + (end - start) * pct));
+    }
+
+    @EventHandler
+    public void onClickBlock(BlockEvent event) {
+        if (blockData == null || event.getBlockPos() != blockData.currentPos()) {
+            if (blockData != null && !mc.world.isAir(blockData.currentPos())) {
+                if (blockData.currentPos() == event.getBlockPos()) return;
+                blockData2 = blockData;
+                if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] Setting fucking blockData2.");
+            }
+            if (canBreak(event.getBlockPos())) {
+                if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] Setting fucking blockData.");
+                blockData = new BlockData(
+                        event.getBlockPos(),
+                        event.getDirection(),
+                        System.currentTimeMillis());
+            }
+        }
+    }
+
+    @EventHandler
+    public void onTick(TickEvent.Post event) {
+        if (nullCheck()) return; // fuck kong zhi zhen
+        if (eatingCheck()) return;
+        if (blockData == null) return;
+        if (mc.player.squaredDistanceTo(blockData.currentPos().toCenterPos()) > Math.pow(rangeConfig.get() + 4, 2)) {
+            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] set blockData = null.");
+            blockData = null;
+            blockData2 = null;
+            return;
+        }
+        if (mc.world.isAir(blockData.currentPos())) {
+            resetTime.reset();
+            return;
+        }
+        if (isReady(blockData)) {
+            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] BLOCK DATA TASKS IS READY.");
+            int slot = InvUtil.findFastestTool(mc.world.getBlockState(blockData.currentPos()), swapConfig.get() == Swap.SilentAlt).slot();
+            performSwap(slot, false);
+            mineTask(blockData);
+            performSwap(slot, true);
+
+            if (remineConfig.get() == RemineMode.Normal) {
+                if (resetTime.passedMS(calcBreakTime(blockData.currentPos(), swapConfig.get() == Swap.SilentAlt) + 5000L) && reTry.get()) {
+                    hookPos(blockData.currentPos(), true);
+                }
+            }
+            if (remineConfig.get() == RemineMode.OFF)
+                blockData = null;
+        }
+        if (blockData2 != null && isReady(blockData2)) {
+            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] BLOCK DATA2 TASKS IS READY.");
+            int slot = InvUtil.findFastestTool(mc.world.getBlockState(blockData2.currentPos()), swapConfig.get() == Swap.SilentAlt).slot();
+            performSwap(slot, false);
+            mineTask(blockData2);
+            performSwap(slot, true);
+//            hookPos(blockData2.getCurrentPos(), false);
+            blockData2 = null;
+        }
+    }
+
+    private boolean isReady(BlockData data) {
+        return System.currentTimeMillis() - data.startTime() > calcBreakTime(data.currentPos(), swapConfig.get() == Swap.SilentAlt);
+    }
+
+    private void mineTask(BlockData data) {
+        if (rotateConfig.get()) {
+            Managers.ROTATION.setRotations(RotationUtil.calculate(data.currentPos()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
+            if (grimConfig.get()) {
+                mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(
+                        mc.player.getX(), mc.player.getY(), mc.player.getZ(), RotationUtil.calculate(data.currentPos()).yaw, RotationUtil.calculate(data.currentPos()).pitch, mc.player.isOnGround(), mc.player.horizontalCollision));
+            }
+        }
+        stopMiningInternal(data);
+    }
+
+    private void performSwap(int slot, boolean back) {
+        if (swapConfig.get() == Swap.Off) return;
+
+        if (!back) {
+            switch (swapConfig.get()) {
+                case Silent -> InvUtil.swap(slot, true);
+                case SilentAlt -> InvUtil.invSwap(slot);
+                case Normal -> InvUtil.swap(slot, false);
+            }
+        } else {
+            switch (swapConfig.get()) {
+                case Silent -> InvUtil.swapBack();
+                case SilentAlt -> InvUtil.invSwapBack();
+            }
+        }
+    }
+
+    @EventHandler
+    private void onRender3D(Render3DEvent event) {
+        if (blockData != null) {
+            renderTask(blockData, event.getMatrices());
+        }
+        if (blockData2 != null) {
+            renderTask(blockData2, event.getMatrices());
+        }
+    }
+
+    private void renderTask(BlockData data, MatrixStack matrices) {
+        double progress = (System.currentTimeMillis() - data.startTime()) / calcBreakTime(data.currentPos(), swapConfig.get() == Swap.SilentAlt);
+        Box box = new Box(data.currentPos());
+        Color lerpedFullColor = new Color(lerp(fullColor.get().getRed(), doneFullColor.get().getRed(), progress),
+                lerp(fullColor.get().getGreen(), doneFullColor.get().getGreen(), progress),
+                lerp(fullColor.get().getBlue(), doneFullColor.get().getBlue(), progress),
+                lerp(fullColor.get().getAlpha(), doneFullColor.get().getAlpha(), progress));
+        Color lerpedLineColor = new Color(lerp(lineColor.get().getRed(), doneLineColor.get().getRed(), progress),
+                lerp(lineColor.get().getGreen(), doneLineColor.get().getGreen(), progress),
+                lerp(lineColor.get().getBlue(), doneLineColor.get().getBlue(), progress),
+                lerp(lineColor.get().getAlpha(), doneLineColor.get().getAlpha(), progress));
+        Render3DUtil.drawFilledBox(matrices, box, lerpedFullColor);
+        Render3DUtil.drawBoxOutline(matrices, box, lerpedLineColor.getRGB(), 1f);
+        Vec3d center = new Vec3d(
+                box.minX + (box.maxX - box.minX) * 0.5,
+                box.minY + (box.maxY - box.minY) * 0.5,
+                box.minZ + (box.maxZ - box.minZ) * 0.5
+        );
+        Render3DUtil.drawText((progress > 1) ? "Completed" : String.format("%.1f", progress * 100.0) + "%", center, 0, 0, 0, Color.WHITE);
+    }
+
+    public boolean canBreak(BlockPos pos) {
+        BlockState state = mc.world.getBlockState(pos);
+        List<Block> blackList = List.of(
+                Blocks.AIR,
+                Blocks.BEDROCK,
+                Blocks.END_PORTAL_FRAME,
+                Blocks.END_PORTAL,
+                Blocks.WATER,
+                Blocks.WATER_CAULDRON,
+                Blocks.LAVA,
+                Blocks.LAVA_CAULDRON,
+                Blocks.FIRE
+        );
+        return !blackList.contains(state.getBlock());
+    }
+
+    private void stopMiningInternal(BlockData data) {
+        if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] SENDING MINE PACKET.");
+        mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, data.currentPos(), data.direction()));
+        mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, data.currentPos(), data.direction()));
+    }
+
+    public float calcBreakTime(BlockPos pos, boolean inventory) {
+        BlockState blockState = mc.world.getBlockState(pos);
+
+        float hardness = blockState.getHardness(mc.world, pos);
+
+        float breakSpeed = +getBreakSpeed(blockState, inventory);
+
+        if (breakSpeed == -1.0f) {
+            return -1.0f;
+        }
+
+        float relativeDamage = breakSpeed / hardness / 30.0f;
+
+        int ticks = MathHelper.ceil(0.7f / relativeDamage);
+
+        return (float) ticks * 50.0f;
+    }
+
+    public float getBreakSpeed(BlockState blockState, boolean inventory) {
+        float maxSpeed = 1.0f;
+
+        int limit = inventory ? mc.player.getInventory().size() : 9;
+
+        for (int i = 0; i < limit; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            float speed = stack.getMiningSpeedMultiplier(blockState);
+
+            if (speed > 1.0f) {
+                var enchantmentRegistry = mc.world.getRegistryManager().getOrThrow(RegistryKeys.ENCHANTMENT);
+                RegistryEntry<Enchantment> efficiencyEntry = enchantmentRegistry.getOrThrow(Enchantments.EFFICIENCY);
+
+                int efficiencyLevel = EnchantmentHelper.getLevel(efficiencyEntry, stack);
+
+                if (efficiencyLevel > 0) {
+                    speed += (float) (efficiencyLevel * efficiencyLevel + 1);
+                }
+
+                if (speed > maxSpeed) {
+                    maxSpeed = speed;
+                }
+            }
+        }
+
+        return maxSpeed;
+    }
+
+    private boolean eatingCheck() {
+        return eatingPause.get() && onEating();
+    }
+
+    private boolean onEating() {
+        return mc.player.isUsingItem() && mc.player.getMainHandStack().contains(DataComponentTypes.FOOD);
+    }
+
+    public void hookPos(BlockPos blockPos, boolean reset) {
+        if (eatingCheck()) return;
+
+        if (reset) {
+            this.blockData = null;
+        }
+
+        mc.world.getBlockState(blockPos).onBlockBreakStart(mc.world, blockPos, mc.player);
+
+        Vec3d eyePos = mc.player.getEyePos();
+        double dx = eyePos.x - (blockPos.getX() + 0.5);
+        double dy = eyePos.y - (blockPos.getY() + 0.5);
+        double dz = eyePos.z - (blockPos.getZ() + 0.5);
+
+        Direction side = getInteractDirection(blockPos, strictDirectionConfig.get());
+        if (side == null) {
+            side = Direction.getFacing((float) dx, (float) dy, (float) dz);
+        }
+
+        if (doubleBreakConfig.get()) {
+            // https://github.com/GrimAnticheat/Grim/blob/2.0/src/main/java/ac/grim/grimac/checks/impl/misc/FastBreak.java#L76
+            // https://github.com/GrimAnticheat/Grim/blob/2.0/src/main/java/ac/grim/grimac/checks/impl/misc/FastBreak.java#L98
+            if (grimNewConfig.get()) {
+                if (!miningFix.get()) {
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.currentPos(), side));
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.currentPos(), side));
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.ABORT_DESTROY_BLOCK, blockData.currentPos(), side));
+                } else {
+                    mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.currentPos(), side));
+                }
+
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.currentPos(), side));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+            } else {
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.currentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.currentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.currentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.currentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.currentPos(), side));
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                        PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, blockData.currentPos(), side));
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+            }
+        } else {
+            mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
+                    PlayerActionC2SPacket.Action.START_DESTROY_BLOCK, blockData.currentPos(), side));
+        }
+
+        if (blockPos != blockData2.currentPos()) Mahiro.EVENT_BUS.post(new BlockEvent(blockPos, side));
+    }
+
+    public Direction getInteractDirection(final BlockPos blockPos, final boolean strictDirection) {
+        Direction direction = getInteractDirectionInternal(blockPos, strictDirection);
+        return direction == null ? Direction.UP : direction;
+    }
+
+    public Direction getInteractDirectionInternal(final BlockPos blockPos, final boolean strictDirection) {
+        Set<Direction> validDirections = getPlaceDirectionsNCP(mc.player.getEyePos(), blockPos.toCenterPos());
+        Direction interactDirection = null;
+        for (final Direction direction : Direction.values()) {
+            final BlockState state = mc.world.getBlockState(blockPos.offset(direction));
+            if (state.isAir() || !state.getFluidState().isEmpty()) {
+                continue;
+            }
+
+            if (state.getBlock() == Blocks.ANVIL || state.getBlock() == Blocks.CHIPPED_ANVIL
+                    || state.getBlock() == Blocks.DAMAGED_ANVIL) {
+                continue;
+            }
+
+            if (strictDirection && !validDirections.contains(direction.getOpposite())) {
+                continue;
+            }
+            interactDirection = direction;
+            break;
+        }
+        if (interactDirection == null) {
+            return null;
+        }
+        return interactDirection.getOpposite();
+    }
+
+    public Set<Direction> getPlaceDirectionsNCP(Vec3d eyePos, Vec3d blockPos) {
+        return getPlaceDirectionsNCP(eyePos.x, eyePos.y, eyePos.z, blockPos.x, blockPos.y, blockPos.z);
+    }
+
+    public Set<Direction> getPlaceDirectionsNCP(final double x, final double y, final double z,
+                                                final double dx, final double dy, final double dz) {
+        final double xdiff = x - dx;
+        final double ydiff = y - dy;
+        final double zdiff = z - dz;
+        final Set<Direction> dirs = new HashSet<>(6);
+        if (ydiff > 0.5) {
+            dirs.add(Direction.UP);
+        } else if (ydiff < -0.5) {
+            dirs.add(Direction.DOWN);
+        } else {
+            dirs.add(Direction.UP);
+            dirs.add(Direction.DOWN);
+        }
+        if (xdiff > 0.5) {
+            dirs.add(Direction.EAST);
+        } else if (xdiff < -0.5) {
+            dirs.add(Direction.WEST);
+        } else {
+            dirs.add(Direction.EAST);
+            dirs.add(Direction.WEST);
+        }
+        if (zdiff > 0.5) {
+            dirs.add(Direction.SOUTH);
+        } else if (zdiff < -0.5) {
+            dirs.add(Direction.NORTH);
+        } else {
+            dirs.add(Direction.SOUTH);
+            dirs.add(Direction.NORTH);
+        }
+        return dirs;
+    }
+
+    public enum RemineMode {
+        Normal,
+        Instant,
+        OFF
+    }
+
+    public enum Swap {
+        Normal,
+        Silent,
+        SilentAlt,
+        Off
+    }
+
+    public record BlockData(BlockPos currentPos, Direction direction, Long startTime) {
+    }
+}

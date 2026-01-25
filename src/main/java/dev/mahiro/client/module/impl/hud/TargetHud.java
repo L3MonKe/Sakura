@@ -2,10 +2,9 @@ package dev.mahiro.client.module.impl.hud;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
-import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
+import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.impl.combat.KillAura;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
@@ -30,8 +29,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
@@ -76,7 +73,6 @@ public class TargetHud extends HudModule {
     private final Animation stateAnimation = new SmoothStepAnimation(240, 1.0, Direction.BACKWARDS);
     private final Animation hurtAnimation = new DecelerateAnimation(220, 1.0, Direction.BACKWARDS);
     private final Animation healthPulseAnimation = new EaseOutSine(240, 1.0, Direction.BACKWARDS);
-    private final Map<String, Integer> scoreboardHealth = new ConcurrentHashMap<>();
     private final Map<Integer, Integer> skinImageCache = new ConcurrentHashMap<>();
     private final Map<Integer, Float> nameScrollOffsets = new ConcurrentHashMap<>();
     private final Map<Integer, Long> nameScrollLastTimes = new ConcurrentHashMap<>();
@@ -112,7 +108,6 @@ public class TargetHud extends HudModule {
         hurtAnimation.reset();
         healthPulseAnimation.setDirection(Direction.BACKWARDS);
         healthPulseAnimation.reset();
-        scoreboardHealth.clear();
     }
 
     @Override
@@ -162,7 +157,7 @@ public class TargetHud extends HudModule {
         LivingEntity renderTarget = hasTarget ? target : lastTarget;
         if (renderTarget == null) return;
 
-        float resolvedHealth = hasTarget ? getBypassedHealth(target) : lastResolvedHealth;
+        float resolvedHealth = hasTarget ? Managers.HEALTH.getHealth(target) : lastResolvedHealth;
         if (hasTarget && lastTarget != target) {
             animatedHealth = resolvedHealth;
             lastTarget = renderTarget;
@@ -337,33 +332,6 @@ public class TargetHud extends HudModule {
         int textFont = FontLoader.medium(Math.round(textSize));
         NanoVGHelper.drawCenteredString(healthText, barX + barWidth / 2f, barY + barHeight / 2f + 1f, textFont, textSize, ColorUtil.applyOpacity(pulseTextColor, alpha));
         NanoVG.nvgRestore(vg);
-    }
-
-    @EventHandler
-    public void onPacket(PacketEvent event) {
-        if (event.getType() != EventType.RECEIVE) return;
-
-        Packet<?> packet = event.getPacket();
-        if (packet instanceof ScoreboardScoreUpdateS2CPacket scorePacket) {
-            String objectiveName = scorePacket.objectiveName();
-            if (isHealthObjective(objectiveName)) {
-                scoreboardHealth.put(scorePacket.scoreHolderName(), scorePacket.score());
-            }
-        }
-    }
-
-    private float getBypassedHealth(LivingEntity target) {
-        String name = target.getName().getString();
-        Integer scoreHealth = scoreboardHealth.get(name);
-        if (scoreHealth != null && scoreHealth > 0) {
-            return scoreHealth;
-        }
-        return target.getHealth();
-    }
-
-    private boolean isHealthObjective(String objectiveName) {
-        if (objectiveName == null) return false;
-        return "belowHealth".equalsIgnoreCase(objectiveName) || "health".equalsIgnoreCase(objectiveName);
     }
 
     @EventHandler

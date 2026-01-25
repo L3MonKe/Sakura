@@ -3,7 +3,7 @@ package dev.mahiro.client.module.impl.movement;
 import dev.mahiro.client.events.player.MotionEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import meteordevelopment.orbit.EventHandler;
@@ -34,9 +34,9 @@ public class FastWeb extends Module {
             return;
         }
 
-        if (MovementUtil.isMoving()) {
+        if (MoveUtil.isMoving()) {
             if (mc.player.isOnGround() || !onlyGround.get()) {
-                MovementUtil.strafe(0.63);
+                MoveUtil.strafe(0.63);
             }
 
             if (motionY.get()) {

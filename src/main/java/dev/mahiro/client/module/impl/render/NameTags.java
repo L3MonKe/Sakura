@@ -4,6 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render2DEvent;
+import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.combat.AntiBot;
@@ -115,7 +116,7 @@ public class NameTags extends Module {
 
     private void render(DrawContext context, PlayerEntity player, float posX, float posY, float posZ) {
         final String name = player.getName().getString();
-        final float hp = player.getHealth() + player.getAbsorptionAmount();
+        final float hp = Managers.HEALTH.getHealth(player);
         final int playerPops = popCounts.getOrDefault(player.getUuid(), 0);
         final int playerPing = getPlayerPing(player);
 

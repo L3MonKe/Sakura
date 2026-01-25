@@ -8,6 +8,7 @@ public class Managers {
     public static AccountManager ACCOUNT;
     public static ChatAnimationUpdater CHAT_ANIMATION;
     public static ExtrapolationManager EXTRAPOLATION;
+    public static HealthManager HEALTH;
     public static RenderManager RENDER;
     public static RotationManager ROTATION;
     public static SoundManager SOUND;
@@ -18,6 +19,7 @@ public class Managers {
         ACCOUNT = new AccountManager();
         CHAT_ANIMATION = new ChatAnimationUpdater();
         EXTRAPOLATION = new ExtrapolationManager();
+        HEALTH = new HealthManager();
         RENDER = new RenderManager();
         ROTATION = new RotationManager();
         SOUND = new SoundManager();

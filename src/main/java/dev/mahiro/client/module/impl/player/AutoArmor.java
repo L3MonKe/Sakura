@@ -4,7 +4,7 @@ import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
@@ -52,7 +52,7 @@ public class AutoArmor extends Module {
 
         if (mc.player.playerScreenHandler != mc.player.currentScreenHandler) return;
 
-        if (MovementUtil.isMoving() && noMove.get()) return;
+        if (MoveUtil.isMoving() && noMove.get()) return;
 
         if (tickDelay > 0) {
             tickDelay--;

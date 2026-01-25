@@ -7,7 +7,7 @@ import dev.mahiro.client.events.player.MotionEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.entity.EntityUtil;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
@@ -59,7 +59,7 @@ public class Step extends Module {
                 mc.player.isTouchingWater() ||
                 inWebPause.get() && EntityUtil.isInWeb(mc.player) ||
                 !mc.player.isOnGround() ||
-                onlyMoving.get() && !MovementUtil.isMoving()) {
+                onlyMoving.get() && !MoveUtil.isMoving()) {
             setStepHeight(0.6f);
             return;
         }
