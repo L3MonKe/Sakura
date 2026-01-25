@@ -115,13 +115,13 @@ public class Mahiro {
 
         MODULES = new ModuleManager();
 
-        COMMAND = new CommandManager();
-
         CLICKGUI = new ClickGuiScreen();
 
         HUDEDITOR = new HudEditorScreen();
 
         CONFIG = new ConfigManager();
+
+        COMMAND = new CommandManager();
 
         Shader2DUtil.init();
 

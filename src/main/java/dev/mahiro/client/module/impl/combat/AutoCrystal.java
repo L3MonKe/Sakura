@@ -139,13 +139,13 @@ public class AutoCrystal extends Module {
             } else {
                 rot = RotationUtil.calculate(bestCrystal);
             }
-            
+
             Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.Highest);
 
             if (isFacing(rot) && System.currentTimeMillis() - lastBreakTime >= breakDelay) {
                 // Double check if we are actually looking at it (Server Side)
                 if (strict.get() && !RaytraceUtil.facingEnemy(bestCrystal, breakRange.get().doubleValue(), Managers.ROTATION.lastRotations)) {
-                     return true; // Wait for rotation
+                    return true; // Wait for rotation
                 }
 
                 mc.interactionManager.attackEntity(mc.player, bestCrystal);
@@ -230,7 +230,7 @@ public class AutoCrystal extends Module {
             if (isFacing(rot) && System.currentTimeMillis() - lastPlaceTime >= placeDelay) {
                 // Relax strict check: allow hitting any side of the block
                 if (strict.get() && !RaytraceUtil.overBlock(Managers.ROTATION.lastRotations, Direction.UP, finalBestPos, false)) {
-                     return; 
+                    return;
                 }
                 executeAction(() -> {
                     BlockUtil.clickBlock(finalBestPos, Direction.UP, false, false);
@@ -261,8 +261,8 @@ public class AutoCrystal extends Module {
             current = Managers.ROTATION.lastRotations;
             if (current == null) current = new Rotation(mc.player.getYaw(), mc.player.getPitch());
         } else {
-             // Loose mode: assume our setRotations update is instant (risky)
-             current = Managers.ROTATION.rotations;
+            // Loose mode: assume our setRotations update is instant (risky)
+            current = Managers.ROTATION.rotations;
         }
 
         float yawDiff = Math.abs(net.minecraft.util.math.MathHelper.wrapDegrees(current.yaw - targetRot.yaw));

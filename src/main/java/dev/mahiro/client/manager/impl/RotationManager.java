@@ -260,10 +260,6 @@ public class RotationManager {
                 float yaw = rotations.yaw;
                 float pitch = rotations.pitch;
 
-                // Update internal state
-                rotations.yaw = yaw;
-                rotations.pitch = pitch;
-
                 if (Float.isNaN(yaw) || Float.isInfinite(yaw)) yaw = mc.player.getYaw();
                 if (Float.isNaN(pitch) || Float.isInfinite(pitch)) pitch = mc.player.getPitch();
                 pitch = MathHelper.clamp(pitch, -90.0f, 90.0f);

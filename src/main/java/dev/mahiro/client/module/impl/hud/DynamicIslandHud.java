@@ -1,9 +1,11 @@
 package dev.mahiro.client.module.impl.hud;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.ClickGui;
+import dev.mahiro.client.module.impl.movement.Scaffold;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
@@ -11,9 +13,12 @@ import dev.mahiro.client.utils.animations.Easing;
 import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
+import net.minecraft.block.Block;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.item.BlockItem;
+import net.minecraft.item.ItemStack;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
@@ -35,6 +40,7 @@ public class DynamicIslandHud extends HudModule {
     private static final class Size {
         static final float BASE_W = 65, BASE_H = 19;
         static final float EXPANDED_W = 90, EXPANDED_H = 25;
+        static final float SCAFFOLD_H = 25;
         static final float ELEMENT_SPACING = 20;
         static final float ELEMENT_WIDTH = 50;
         static final float LOGO_FONT_SIZE = 12;
@@ -88,6 +94,20 @@ public class DynamicIslandHud extends HudModule {
 
     private List<PlayerListEntry> playerList;
     private float tabTargetW, tabTargetH;
+    private float scaffoldTargetW = Size.EXPANDED_W;
+    private float scaffoldBarProgress;
+    private float scaffoldItemX, scaffoldItemY, scaffoldItemScale;
+    private float scaffoldRightTextWidth;
+    private float scaffoldBarMaxCount;
+    private Color scaffoldBlockColor = new Color(255, 255, 255, 120);
+    private String scaffoldCountText;
+    private String scaffoldSuffixText;
+    private String scaffoldBpsText;
+    private ItemStack scaffoldItem = ItemStack.EMPTY;
+    private boolean scaffoldItemVisible;
+    private int scaffoldLastCount = -1;
+    private long scaffoldLastTime;
+    private double scaffoldBpsValue;
 
     public static void hookVanillaTab(Text header, Text footer, List<PlayerListEntry> entries) {
         capturedTabHeader = header;
@@ -113,6 +133,7 @@ public class DynamicIslandHud extends HudModule {
         renderSideBlurs(context, getSideBlurOpacity());
 
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
+        renderScaffoldItem(context);
 
         if (isTabPhase()) {
             renderCapturedTab(context);
@@ -229,6 +250,23 @@ public class DynamicIslandHud extends HudModule {
             tabMergeProgress = 1f;
             setPhase(Phase.TAB_DISPLAY, 1f, tabTargetW, tabTargetH, 1f);
         } else {
+            if (shouldRenderScaffold()) {
+                updateScaffoldState();
+                scaffoldTargetW = calculateScaffoldWidth();
+                float lerp = 0.2f;
+                animW = MathHelper.lerp(lerp, animW, scaffoldTargetW);
+                animH = MathHelper.lerp(lerp, animH, Size.SCAFFOLD_H);
+                progress = 1f;
+                phase = Phase.DISPLAY;
+                blurOpacity = interpolateBlurOpacity(1f);
+
+                animX = (mc.getWindow().getScaledWidth() - animW) / 2f;
+                animY = y;
+                this.width = animW;
+                this.height = animH;
+                this.x = animX;
+                return;
+            }
             if (currentToggle == null && toggleStartTime == -1L) {
                 setPhase(Phase.IDLE, 0f, Size.BASE_W, Size.BASE_H, 1f);
             } else if (dt < Timing.EXPAND) {
@@ -288,6 +326,9 @@ public class DynamicIslandHud extends HudModule {
     }
 
     private float getSideBlurOpacity() {
+        if (shouldRenderScaffold()) {
+            return 0f;
+        }
         if (isTabPhase()) {
             return (phase == Phase.TAB_EXPAND) ? (1f - tabMergeProgress) : (phase == Phase.TAB_COLLAPSE ? tabMergeProgress : 0f);
         }
@@ -335,6 +376,10 @@ public class DynamicIslandHud extends HudModule {
     }
 
     private void renderContent() {
+        if (shouldRenderScaffold()) {
+            renderScaffold();
+            return;
+        }
         switch (phase) {
             case IDLE -> renderIdle();
             case EXPANDING -> renderExpanding();
@@ -398,6 +443,73 @@ public class DynamicIslandHud extends HudModule {
         float alpha = 1f - getMergeProgress();
         drawSideInfo(0f, alpha);
         drawCenteredTitle(alpha);
+    }
+
+    private void renderScaffold() {
+        if (!updateScaffoldState()) {
+            renderIdle();
+            return;
+        }
+
+        float padding = 8f;
+        float iconBox = 17f;
+        float iconRadius = 8.5f;
+        float iconX = animX + padding;
+        float iconY = animY + (animH - iconBox) / 2f;
+
+        float rightX = animX + animW - padding - scaffoldRightTextWidth;
+        float barX = iconX + iconBox + 7f;
+        float barW = Math.max(30f, rightX - barX - 8f);
+        float barH = 3f;
+        float barY = animY + animH / 2f - 1.5f;
+
+        Color base = new Color(12, 12, 12, 80);
+        Color base2 = new Color(20, 20, 20, 110);
+        Color border = new Color(255, 255, 255, 18);
+
+        if (enableBloom.get()) {
+            NanoVGHelper.drawRoundRectBloom(animX, animY, animW, animH, getRadius(), new Color(18, 18, 18, 85));
+        }
+        NanoVGHelper.drawGradientRRect2(animX, animY, animW, animH, getRadius(), base, base2);
+        NanoVGHelper.drawRoundRectOutline(animX, animY, animW, animH, getRadius(), 1f, border);
+
+        Color iconBg = new Color(scaffoldBlockColor.getRed(), scaffoldBlockColor.getGreen(), scaffoldBlockColor.getBlue(), 120);
+        NanoVGHelper.drawRoundRect(iconX, iconY, iconBox, iconBox, iconRadius, iconBg);
+        NanoVGHelper.drawRoundRectOutline(iconX, iconY, iconBox, iconBox, iconRadius, 1f, new Color(255, 255, 255, 28));
+
+        NanoVGHelper.drawRoundRect(barX, barY, barW, barH, barH / 2f, new Color(255, 255, 255, 22));
+        float pct = scaffoldBarMaxCount <= 0f ? 0f : MathHelper.clamp(parseScaffoldCount() / scaffoldBarMaxCount, 0f, 1f);
+        float barTarget = barW * pct;
+        scaffoldBarProgress = MathHelper.lerp(0.2f, scaffoldBarProgress, barTarget);
+        if (scaffoldBarProgress > 0.5f) {
+            NanoVGHelper.drawGradientRRect2(barX, barY, scaffoldBarProgress, barH, barH / 2f, ClickGui.color(0), ClickGui.color2(0));
+        }
+
+        float countSize = 10f;
+        float textSize = 9f;
+        float subSize = 7f;
+        int countFont = FontLoader.bold((int) countSize);
+        int textFont = FontLoader.medium((int) textSize);
+
+        float countY = animY + animH / 2f + 1f;
+        NanoVGHelper.drawString(scaffoldCountText, rightX, countY, countFont, countSize, new Color(255, 255, 255, 230));
+        float countW = NanoVGHelper.getTextWidth(scaffoldCountText, countFont, countSize);
+        NanoVGHelper.drawString(scaffoldSuffixText, rightX + countW, countY, textFont, textSize, new Color(200, 200, 200, 220));
+        NanoVGHelper.drawString(scaffoldBpsText, rightX, countY + 8.5f, textFont, subSize, new Color(160, 160, 160, 200));
+
+        scaffoldItemScale = 0.8f;
+        float itemSize = 16f * scaffoldItemScale;
+        scaffoldItemX = iconX + (iconBox - itemSize) / 2f;
+        scaffoldItemY = iconY + (iconBox - itemSize) / 2f;
+    }
+
+    private void renderScaffoldItem(DrawContext context) {
+        if (!shouldRenderScaffold() || !scaffoldItemVisible || scaffoldItem.isEmpty()) return;
+        context.getMatrices().push();
+        context.getMatrices().translate(scaffoldItemX, scaffoldItemY, 200);
+        context.getMatrices().scale(scaffoldItemScale, scaffoldItemScale, 1f);
+        context.drawItem(scaffoldItem, 0, 0);
+        context.getMatrices().pop();
     }
 
     private void drawBackground(Color color) {
@@ -597,6 +709,101 @@ public class DynamicIslandHud extends HudModule {
         float needed = padding * 2 + iconW + 4 + textW;
 
         return Math.max(Size.EXPANDED_W, Math.max(needed, 41));
+    }
+
+    private boolean shouldRenderScaffold() {
+        if (isTabPhase()) return false;
+        Scaffold scaffold = Mahiro.MODULES.getModule(Scaffold.class);
+        return scaffold != null && scaffold.isEnabled();
+    }
+
+    private boolean updateScaffoldState() {
+        Scaffold scaffold = Mahiro.MODULES.getModule(Scaffold.class);
+        if (scaffold == null || !scaffold.isEnabled() || mc.player == null) {
+            scaffoldItem = ItemStack.EMPTY;
+            scaffoldItemVisible = false;
+            return false;
+        }
+
+        ItemStack main = mc.player.getMainHandStack();
+        ItemStack off = mc.player.getOffHandStack();
+        scaffoldItem = main.getItem() instanceof BlockItem ? main : (off.getItem() instanceof BlockItem ? off : ItemStack.EMPTY);
+        scaffoldItemVisible = !scaffoldItem.isEmpty();
+
+        int count = 0;
+        int maxCount = 0;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (!stack.isEmpty() && stack.getItem() instanceof BlockItem) {
+                count += stack.getCount();
+                maxCount += stack.getMaxCount();
+            }
+        }
+        scaffoldBarMaxCount = Math.max(0, maxCount);
+        scaffoldCountText = String.valueOf(count);
+        scaffoldSuffixText = ClickGui.language.is(ClickGui.Language.Chinese) ? "块" : "Block" + (count > 1 ? "s" : "");
+
+        long now = System.currentTimeMillis();
+        if (count <= 0) {
+            scaffoldBpsValue = 0.0;
+            scaffoldLastCount = -1;
+            scaffoldLastTime = now;
+        } else if (scaffoldLastCount == -1) {
+            scaffoldLastCount = count;
+            scaffoldLastTime = now;
+            scaffoldBpsValue = 0.0;
+        } else {
+            long dt = now - scaffoldLastTime;
+            if (dt >= 250L) {
+                int delta = scaffoldLastCount - count;
+                double bpsRaw = delta > 0 ? (delta / (dt / 1000.0)) : 0.0;
+                scaffoldBpsValue = MathHelper.lerp(0.35, scaffoldBpsValue, bpsRaw);
+                scaffoldLastCount = count;
+                scaffoldLastTime = now;
+            }
+        }
+        scaffoldBpsText = String.format("%.1f b/s", scaffoldBpsValue);
+
+        if (scaffoldItemVisible && scaffoldItem.getItem() instanceof BlockItem blockItem) {
+            Block block = blockItem.getBlock();
+            int rgb = block.getDefaultMapColor().color;
+            Color base = new Color(rgb | 0xFF000000, true);
+            scaffoldBlockColor = new Color(base.getRed(), base.getGreen(), base.getBlue(), 180);
+        } else {
+            scaffoldBlockColor = new Color(255, 255, 255, 120);
+        }
+        return true;
+    }
+
+    private float calculateScaffoldWidth() {
+        float countSize = 10f;
+        float textSize = 9f;
+        float subSize = 7f;
+        int countFont = FontLoader.bold((int) countSize);
+        int textFont = FontLoader.medium((int) textSize);
+
+        float countW = NanoVGHelper.getTextWidth(scaffoldCountText, countFont, countSize);
+        float suffixW = NanoVGHelper.getTextWidth(scaffoldSuffixText, textFont, textSize);
+        float bpsW = NanoVGHelper.getTextWidth(scaffoldBpsText, textFont, subSize);
+
+        scaffoldRightTextWidth = Math.max(countW + suffixW, bpsW);
+
+        float padding = 8f;
+        float iconBox = 17f;
+        float gap1 = 7f;
+        float barW = 70f;
+        float gap2 = 8f;
+
+        float total = padding + iconBox + gap1 + barW + gap2 + scaffoldRightTextWidth + padding;
+        return Math.max(Size.EXPANDED_W, total);
+    }
+
+    private float parseScaffoldCount() {
+        try {
+            return Float.parseFloat(scaffoldCountText);
+        } catch (NumberFormatException ignored) {
+            return 0f;
+        }
     }
 
     private long ela() {

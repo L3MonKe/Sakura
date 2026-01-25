@@ -80,33 +80,6 @@ public class NanoVGRenderer {
         }
     }
 
-    /**
-     * 在已开始的帧中临时暂停NanoVG（用于其他渲染器如Shader）
-     */
-    public void withRawCoords(Runnable drawer) {
-        if (!inFrame) {
-            throw new IllegalStateException("必须在draw()回调内使用");
-        }
-
-        MinecraftClient mc = MinecraftClient.getInstance();
-        int width = mc.getWindow().getWidth();
-        int height = mc.getWindow().getHeight();
-
-        boolean wasScaled = scaled;
-
-        nvgEndFrame(vg);
-
-        drawer.run();
-
-        nvgBeginFrame(vg, width, height, 1.0f);
-
-        if (wasScaled) {
-            float scale = (float) MinecraftClient.getInstance().getWindow().getScaleFactor();
-            nvgSave(vg);
-            nvgScale(vg, scale, scale);
-        }
-    }
-
     public boolean isInFrame() {
         return inFrame;
     }

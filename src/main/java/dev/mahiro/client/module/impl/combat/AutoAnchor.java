@@ -28,16 +28,16 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 public class AutoAnchor extends Module {
-    private final NumberValue<Double> range = new NumberValue<>("Range", "范围", "距离", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", "目标距离", 10.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", "墙距离", 3.0, 0.0, 6.0, 0.1);
-    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", "转头速度", 1.5, 0.1, 5.0, 0.1);
-    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", "Angle Tolerance", 20.0, 1.0, 90.0, 1.0);
+    private final NumberValue<Double> range = new NumberValue<>("Range", "范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", 10.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1);
+    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 1.5, 0.1, 5.0, 0.1);
+    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
     private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
     private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
-    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", "自动切换", true);
+    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", true);
 
     private Entity target;
     private BlockPos currentAnchorPos;
@@ -58,8 +58,6 @@ public class AutoAnchor extends Module {
 
     public AutoAnchor() {
         super("AutoAnchor", "自动锚", Category.Combat);
-        addValue(strict);
-        addValue(jitter);
     }
 
     @Override
@@ -335,7 +333,7 @@ public class AutoAnchor extends Module {
             double x = pos.offset(side).getX() + 0.5 + (Math.random() - 0.5) * 0.2;
             double y = pos.offset(side).getY() + 0.5 + (Math.random() - 0.5) * 0.2;
             double z = pos.offset(side).getZ() + 0.5 + (Math.random() - 0.5) * 0.2;
-            
+
             // Adjust to face center
             x += opp.getOffsetX() * 0.5;
             y += opp.getOffsetY() * 0.5;
@@ -362,14 +360,14 @@ public class AutoAnchor extends Module {
         // 交互也是点这个方块
         Rotation rot;
         if (jitter.get()) {
-             double x = pos.getX() + 0.5 + (Math.random() - 0.5) * 0.2;
-             double y = pos.getY() + 1.0; // Top face
-             double z = pos.getZ() + 0.5 + (Math.random() - 0.5) * 0.2;
-             rot = RotationUtil.calculate(new Vec3d(x, y, z));
+            double x = pos.getX() + 0.5 + (Math.random() - 0.5) * 0.2;
+            double y = pos.getY() + 1.0; // Top face
+            double z = pos.getZ() + 0.5 + (Math.random() - 0.5) * 0.2;
+            rot = RotationUtil.calculate(new Vec3d(x, y, z));
         } else {
-             rot = RotationUtil.calculate(pos, Direction.UP);
+            rot = RotationUtil.calculate(pos, Direction.UP);
         }
-        
+
         Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.High);
 
         if (isFacing(rot)) {
