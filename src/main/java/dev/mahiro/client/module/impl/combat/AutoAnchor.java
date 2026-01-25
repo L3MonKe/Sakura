@@ -18,6 +18,7 @@ import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Blocks;
+import net.minecraft.block.RespawnAnchorBlock;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
@@ -26,22 +27,17 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.Comparator;
-import java.util.List;
-
-import net.minecraft.block.RespawnAnchorBlock;
-
 public class AutoAnchor extends Module {
-    private final NumberValue<Double> range = new NumberValue<>("Range", "范围", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", 10.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1);
-    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 1.5, 0.1, 5.0, 0.1);
-    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
+    private final NumberValue<Double> range = new NumberValue<>("Range", "范围", "距离", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", "目标距离", 10.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", "墙距离", 3.0, 0.0, 6.0, 0.1);
+    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", "转头速度", 1.5, 0.1, 5.0, 0.1);
+    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", "Angle Tolerance", 20.0, 1.0, 90.0, 1.0);
     private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
     private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
-    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", true);
+    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", "自动切换", true);
 
     private Entity target;
     private BlockPos currentAnchorPos;
@@ -49,7 +45,7 @@ public class AutoAnchor extends Module {
     private Stage stage = Stage.Searching;
     private int chargeCount;
     private int chargedTimes;
-    
+
     private long lastActionTime;
     private long actionDelay;
 
@@ -62,14 +58,6 @@ public class AutoAnchor extends Module {
 
     public AutoAnchor() {
         super("AutoAnchor", "自动锚", Category.Combat);
-        addValue(range);
-        addValue(targetRange);
-        addValue(wallRange);
-        addValue(minCPS);
-        addValue(maxCPS);
-        addValue(rotateSpeed);
-        addValue(angleTolerance);
-        addValue(autoSwitch);
         addValue(strict);
         addValue(jitter);
     }
@@ -110,11 +98,11 @@ public class AutoAnchor extends Module {
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
-        
+
         // 如果正在吃东西/喝药/使用物品，暂停一切动作
         if (EatingUtil.isEating()) {
-             reset(); // 重置状态，避免下次开始时状态错乱
-             return;
+            reset(); // 重置状态，避免下次开始时状态错乱
+            return;
         }
 
         target = EntityUtil.getClosestPlayer(targetRange.get().doubleValue());
@@ -145,7 +133,7 @@ public class AutoAnchor extends Module {
         BlockPos bestPos = null;
         BlockPos bestSafety = null;
         double bestDistToTarget = Double.MAX_VALUE;
-        
+
         int r = (int) Math.ceil(range.get().doubleValue());
         double rangeSq = range.get().doubleValue() * range.get().doubleValue();
 
@@ -154,13 +142,13 @@ public class AutoAnchor extends Module {
             for (int y = -r; y <= r; y++) {
                 for (int z = -r; z <= r; z++) {
                     BlockPos pos = pPos.add(x, y, z);
-                    
+
                     // 必须是重生锚
                     if (mc.world.getBlockState(pos).getBlock() != Blocks.RESPAWN_ANCHOR) continue;
-                    
+
                     // 距离检测
                     if (mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > rangeSq) continue;
-                    
+
                     // 墙体检测
                     net.minecraft.util.hit.BlockHitResult hit = RaytraceUtil.rayTraceCollidingBlocks(mc.player.getEyePos(), Vec3d.ofCenter(pos));
                     boolean canSee = hit != null && hit.getBlockPos().equals(pos);
@@ -176,7 +164,7 @@ public class AutoAnchor extends Module {
                     BlockPos safety = findSafetyPos(pos);
                     // safety can be null if no space, but we still might want to explode it
                     // But user specifically asked for safety. Let's try to find one.
-                    
+
                     double distToTarget = target.squaredDistanceTo(Vec3d.ofCenter(pos));
                     if (distToTarget < bestDistToTarget) {
                         bestDistToTarget = distToTarget;
@@ -190,7 +178,7 @@ public class AutoAnchor extends Module {
         if (bestPos != null) {
             currentAnchorPos = bestPos;
             currentSafetyPos = bestSafety;
-            
+
             // Check charges
             try {
                 int charges = mc.world.getBlockState(bestPos).get(RespawnAnchorBlock.CHARGES);
@@ -209,24 +197,24 @@ public class AutoAnchor extends Module {
         // 寻找一个在玩家和锚之间的位置放置萤石
         // 我们取从锚指向玩家的方向
         BlockPos pPos = mc.player.getBlockPos();
-        
+
         // 简单的向量计算：
         // 目标位置 = 锚位置 + (玩家位置 - 锚位置) 的单位方向
         // 但是由于是格子世界，我们需要找到相邻的方块
-        
+
         BlockPos best = null;
         double minDst = Double.MAX_VALUE;
-        
+
         for (Direction dir : Direction.values()) {
             if (dir == Direction.UP || dir == Direction.DOWN) continue;
-            
+
             BlockPos pos = anchorPos.offset(dir);
             if (!BlockUtil.canPlaceAt(pos)) continue;
-            
+
             // 距离检测：必须离玩家更近（相比于锚）
             double distToPlayer = mc.player.squaredDistanceTo(Vec3d.ofCenter(pos));
             double anchorDistToPlayer = mc.player.squaredDistanceTo(Vec3d.ofCenter(anchorPos));
-            
+
             if (distToPlayer < anchorDistToPlayer && distToPlayer < minDst) {
                 minDst = distToPlayer;
                 best = pos;
@@ -236,15 +224,15 @@ public class AutoAnchor extends Module {
     }
 
     // Removed placeAnchor method
-    
+
     private void placeSafety() {
         if (currentSafetyPos == null) {
-             stage = Stage.Exploding;
-             return;
+            stage = Stage.Exploding;
+            return;
         }
 
-        if (mc.world.getBlockState(currentSafetyPos).getBlock() == Blocks.GLOWSTONE || 
-            mc.world.getBlockState(currentSafetyPos).getBlock() == Blocks.OBSIDIAN) {
+        if (mc.world.getBlockState(currentSafetyPos).getBlock() == Blocks.GLOWSTONE ||
+                mc.world.getBlockState(currentSafetyPos).getBlock() == Blocks.OBSIDIAN) {
             stage = Stage.Exploding; // After safety, go to explode (charging is done first now)
             return;
         }
@@ -266,7 +254,7 @@ public class AutoAnchor extends Module {
                 mc.player.swingHand(Hand.MAIN_HAND);
                 resetTimer();
             }, glowstone.slot(), autoSwitch.get());
-            
+
             if (action) {
                 stage = Stage.Exploding;
             }
@@ -286,7 +274,7 @@ public class AutoAnchor extends Module {
                 return;
             }
         } catch (Exception e) {
-             // Ignore
+            // Ignore
         }
 
         FindItemResult glowstone = InvUtil.findInHotbar(Items.GLOWSTONE);
@@ -314,12 +302,12 @@ public class AutoAnchor extends Module {
         // Need to switch to non-glowstone/anchor item
         int slot = -1;
         if (mc.player.getMainHandStack().getItem() == Items.GLOWSTONE || mc.player.getMainHandStack().getItem() == Items.RESPAWN_ANCHOR) {
-             FindItemResult other = InvUtil.findInHotbar(itemStack -> itemStack.getItem() != Items.GLOWSTONE && itemStack.getItem() != Items.RESPAWN_ANCHOR);
-             if (other.found()) slot = other.slot();
-             else {
-                 reset(); 
-                 return;
-             }
+            FindItemResult other = InvUtil.findInHotbar(itemStack -> itemStack.getItem() != Items.GLOWSTONE && itemStack.getItem() != Items.RESPAWN_ANCHOR);
+            if (other.found()) slot = other.slot();
+            else {
+                reset();
+                return;
+            }
         } else {
             slot = mc.player.getInventory().selectedSlot;
         }
@@ -330,7 +318,7 @@ public class AutoAnchor extends Module {
                 mc.player.swingHand(Hand.MAIN_HAND);
                 resetTimer();
             }, slot, autoSwitch.get());
-            
+
             if (action) {
                 reset(); // Done
             }
@@ -397,7 +385,7 @@ public class AutoAnchor extends Module {
         else if (mc.player.getInventory().selectedSlot != slot) return false;
 
         action.run();
-        
+
         // Don't swap back immediately here, let the caller handle it or next tick handle it
         // Actually, for single action per tick, we can swap back if we want to be clean, 
         // but staying on item is often safer for "Switch -> Interact" consistency.

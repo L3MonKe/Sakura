@@ -11,7 +11,7 @@ import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.math.MathUtil;
 import dev.mahiro.client.utils.player.FindItemResult;
 import dev.mahiro.client.utils.player.InvUtil;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.utils.rotation.MovementFix;
 import dev.mahiro.client.utils.rotation.RaytraceUtil;
 import dev.mahiro.client.utils.rotation.RotationUtil;
@@ -125,7 +125,7 @@ public class Scaffold extends Module {
 
     @EventHandler
     public void onStrafe(StrafeEvent event) {
-        if (mc.player.isOnGround() && MovementUtil.isMoving() && telly.get() && !mc.options.jumpKey.isPressed()) {
+        if (mc.player.isOnGround() && MoveUtil.isMoving() && telly.get() && !mc.options.jumpKey.isPressed()) {
             mc.player.jump();
         }
     }
@@ -150,7 +150,7 @@ public class Scaffold extends Module {
     }
 
     public int getYLevel() {
-        if (keepY.get() && !mc.options.jumpKey.isPressed() && MovementUtil.isMoving() && telly.get() && mc.player.fallDistance <= 1) {
+        if (keepY.get() && !mc.options.jumpKey.isPressed() && MoveUtil.isMoving() && telly.get() && mc.player.fallDistance <= 1) {
             return yLevel;
         } else {
             return MathHelper.floor(mc.player.getY()) - 1;
@@ -268,7 +268,7 @@ public class Scaffold extends Module {
 
             Vec3d relevant = hit.subtract(baseVec);
             if (relevant.lengthSquared() <= 4.5 * 4.5 && relevant.dotProduct(new Vec3d(dir.getVector())) >= 0) {
-                if (dir.getOpposite() == Direction.UP && !telly.get() && MovementUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+                if (dir.getOpposite() == Direction.UP && !telly.get() && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
                     continue;
                 }
 

@@ -9,7 +9,7 @@ import net.minecraft.util.math.Vec3d;
 
 import static dev.mahiro.client.Mahiro.mc;
 
-public class MovementUtil {
+public class MoveUtil {
     public static boolean isMoving() {
         return mc.player.input.movementForward != 0 || mc.player.input.movementSideways != 0;
     }

@@ -11,7 +11,7 @@ import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.player.AutoPearl;
 import dev.mahiro.client.utils.player.FindItemResult;
 import dev.mahiro.client.utils.player.InvUtil;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.utils.vector.Rotation;
 import dev.mahiro.client.values.impl.BoolValue;
@@ -109,7 +109,7 @@ public class Phase extends Module {
                     }
                 }
             } else {
-                if (MovementUtil.isMoving()) return;
+                if (MoveUtil.isMoving()) return;
 
                 if (mc.player.age % delay.get() == 0) {
                     mc.player.setPosition(mc.player.getX() + MathHelper.clamp(roundToClosest(mc.player.getX(), Math.floor(mc.player.getX()) + 0.241, Math.floor(mc.player.getX()) + 0.759) - mc.player.getX(), -0.03, 0.03), mc.player.getY(), mc.player.getZ() + MathHelper.clamp(roundToClosest(mc.player.getZ(), Math.floor(mc.player.getZ()) + 0.241, Math.floor(mc.player.getZ()) + 0.759) - mc.player.getZ(), -0.03, 0.03));

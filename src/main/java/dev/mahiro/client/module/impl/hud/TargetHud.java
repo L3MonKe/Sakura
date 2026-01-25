@@ -2,10 +2,9 @@ package dev.mahiro.client.module.impl.hud;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
-import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
+import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.impl.combat.KillAura;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
@@ -30,8 +29,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
@@ -58,6 +55,8 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> hudBlurStrength = new NumberValue<>("BlurStrength", "模糊强度", 8.0, 1.0, 20.0, 0.5, () -> hudEnabled.get() && hudBlur.get());
     private final ColorValue hudColor = new ColorValue("Background", "背景颜色", new Color(30, 30, 30, 180), hudEnabled::get);
     private final BoolValue animationEnabled = new BoolValue("Animations", "动画", true, hudEnabled::get);
+    private final NumberValue<Double> nameScrollSpeed = new NumberValue<>("Name Scroll Speed", "名字滚动速度", 20.0, 5.0, 60.0, 1.0, hudEnabled::get);
+    private final NumberValue<Double> nameScrollPause = new NumberValue<>("Name Scroll Pause", "名字停顿时间", 1000.0, 200.0, 3000.0, 50.0, hudEnabled::get);
 
     private final BoolValue espEnabled = new BoolValue("ESP", "透视", true);
     private final ColorValue espColor1 = new ColorValue("ESPColor1", "透视颜色1", new Color(255, 0, 0, 255), espEnabled::get);
@@ -74,9 +73,11 @@ public class TargetHud extends HudModule {
     private final Animation stateAnimation = new SmoothStepAnimation(240, 1.0, Direction.BACKWARDS);
     private final Animation hurtAnimation = new DecelerateAnimation(220, 1.0, Direction.BACKWARDS);
     private final Animation healthPulseAnimation = new EaseOutSine(240, 1.0, Direction.BACKWARDS);
-    private final Map<String, Integer> scoreboardHealth = new ConcurrentHashMap<>();
     private final Map<Integer, Integer> skinImageCache = new ConcurrentHashMap<>();
-    private final Map<Integer, Long> nameScrollStartTimes = new ConcurrentHashMap<>();
+    private final Map<Integer, Float> nameScrollOffsets = new ConcurrentHashMap<>();
+    private final Map<Integer, Long> nameScrollLastTimes = new ConcurrentHashMap<>();
+    private final Map<Integer, Integer> nameScrollDirections = new ConcurrentHashMap<>();
+    private final Map<Integer, Long> nameScrollPauseUntil = new ConcurrentHashMap<>();
 
     private static final float HUD_WIDTH = 160f;
     private static final float HUD_HEIGHT = 50f;
@@ -107,7 +108,6 @@ public class TargetHud extends HudModule {
         hurtAnimation.reset();
         healthPulseAnimation.setDirection(Direction.BACKWARDS);
         healthPulseAnimation.reset();
-        scoreboardHealth.clear();
     }
 
     @Override
@@ -157,7 +157,7 @@ public class TargetHud extends HudModule {
         LivingEntity renderTarget = hasTarget ? target : lastTarget;
         if (renderTarget == null) return;
 
-        float resolvedHealth = hasTarget ? getBypassedHealth(target) : lastResolvedHealth;
+        float resolvedHealth = hasTarget ? Managers.HEALTH.getHealth(target) : lastResolvedHealth;
         if (hasTarget && lastTarget != target) {
             animatedHealth = resolvedHealth;
             lastTarget = renderTarget;
@@ -261,22 +261,34 @@ public class TargetHud extends HudModule {
         float nameAvailableWidth = (x + width - PADDING) - textX;
         if (nameWidth > nameAvailableWidth) {
             float maxScroll = nameWidth - nameAvailableWidth;
-            double scrollDuration = (maxScroll / 20f) * 1000.0;
-            double pauseDuration = 1000.0;
-            double cycleDuration = scrollDuration * 2 + pauseDuration * 2;
             int nameKey = name.hashCode();
-            long startTime = nameScrollStartTimes.computeIfAbsent(nameKey, k -> System.currentTimeMillis());
-            double timeInCycle = (System.currentTimeMillis() - startTime) % cycleDuration;
-            float scrollX;
-            if (timeInCycle < pauseDuration) {
-                scrollX = 0;
-            } else if (timeInCycle < pauseDuration + scrollDuration) {
-                scrollX = (float) ((timeInCycle - pauseDuration) / scrollDuration * maxScroll);
-            } else if (timeInCycle < pauseDuration * 2 + scrollDuration) {
-                scrollX = maxScroll;
-            } else {
-                scrollX = (float) (maxScroll - ((timeInCycle - (pauseDuration * 2 + scrollDuration)) / scrollDuration * maxScroll));
+            long now = System.currentTimeMillis();
+            float scrollFactor = MathHelper.clamp((alpha - 0.9f) / 0.1f, 0f, 1f);
+            float scrollX = nameScrollOffsets.getOrDefault(nameKey, 0f);
+            long lastTime = nameScrollLastTimes.getOrDefault(nameKey, now);
+            int direction = nameScrollDirections.getOrDefault(nameKey, 1);
+            long pauseUntil = nameScrollPauseUntil.getOrDefault(nameKey, 0L);
+
+            if (scrollFactor > 0f && now >= pauseUntil) {
+                long deltaMs = Math.max(0L, now - lastTime);
+                float delta = nameScrollSpeed.get().floatValue() * (deltaMs / 1000f) * direction;
+                scrollX += delta;
+                if (scrollX >= maxScroll) {
+                    scrollX = maxScroll;
+                    direction = -1;
+                    pauseUntil = now + nameScrollPause.get().longValue();
+                } else if (scrollX <= 0f) {
+                    scrollX = 0f;
+                    direction = 1;
+                    pauseUntil = now + nameScrollPause.get().longValue();
+                }
             }
+
+            nameScrollOffsets.put(nameKey, scrollX);
+            nameScrollLastTimes.put(nameKey, now);
+            nameScrollDirections.put(nameKey, direction);
+            nameScrollPauseUntil.put(nameKey, pauseUntil);
+
             NanoVG.nvgSave(vg);
             NanoVG.nvgIntersectScissor(vg, textX, y + 4f, nameAvailableWidth, 18f);
             NanoVG.nvgTranslate(vg, -scrollX, 0);
@@ -320,33 +332,6 @@ public class TargetHud extends HudModule {
         int textFont = FontLoader.medium(Math.round(textSize));
         NanoVGHelper.drawCenteredString(healthText, barX + barWidth / 2f, barY + barHeight / 2f + 1f, textFont, textSize, ColorUtil.applyOpacity(pulseTextColor, alpha));
         NanoVG.nvgRestore(vg);
-    }
-
-    @EventHandler
-    public void onPacket(PacketEvent event) {
-        if (event.getType() != EventType.RECEIVE) return;
-
-        Packet<?> packet = event.getPacket();
-        if (packet instanceof ScoreboardScoreUpdateS2CPacket scorePacket) {
-            String objectiveName = scorePacket.objectiveName();
-            if (isHealthObjective(objectiveName)) {
-                scoreboardHealth.put(scorePacket.scoreHolderName(), scorePacket.score());
-            }
-        }
-    }
-
-    private float getBypassedHealth(LivingEntity target) {
-        String name = target.getName().getString();
-        Integer scoreHealth = scoreboardHealth.get(name);
-        if (scoreHealth != null && scoreHealth > 0) {
-            return scoreHealth;
-        }
-        return target.getHealth();
-    }
-
-    private boolean isHealthObjective(String objectiveName) {
-        if (objectiveName == null) return false;
-        return "belowHealth".equalsIgnoreCase(objectiveName) || "health".equalsIgnoreCase(objectiveName);
     }
 
     @EventHandler

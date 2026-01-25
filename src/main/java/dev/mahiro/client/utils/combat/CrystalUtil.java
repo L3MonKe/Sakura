@@ -1,21 +1,16 @@
 package dev.mahiro.client.utils.combat;
 
 import dev.mahiro.client.utils.rotation.RaytraceUtil;
-import net.minecraft.block.Blocks;
-import net.minecraft.enchantment.EnchantmentHelper;
 import net.minecraft.entity.DamageUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttributes;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.effect.StatusEffects;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.Difficulty;
-import net.minecraft.world.World;
 import net.minecraft.world.explosion.Explosion;
 
 import java.util.Objects;
@@ -24,16 +19,16 @@ import static dev.mahiro.client.Mahiro.mc;
 
 public class CrystalUtil {
     public static float calculateDamage(Vec3d pos, Entity target) {
-        if (mc.world == null || mc.world.getDifficulty() == Difficulty.PEACEFUL) return 0f;
+        if (mc.world.getDifficulty() == Difficulty.PEACEFUL) return 0f;
         if (!(target instanceof LivingEntity livingEntity)) return 0f;
 
         // Use null for explosion object to avoid interface implementation issues
         // We hope DamageUtil and DamageSources don't crash with null
         Explosion explosion = null;
-        
+
         double maxDist = 12.0;
         double distSq = Math.sqrt(livingEntity.squaredDistanceTo(pos));
-        
+
         if (distSq > maxDist) return 0f;
 
         double density = getExposure(pos, livingEntity);
@@ -46,9 +41,9 @@ public class CrystalUtil {
         // Try to get armor toughness safely
         float toughness = 0f;
         try {
-             toughness = (float) livingEntity.getAttributeValue(EntityAttributes.ARMOR_TOUGHNESS);
+            toughness = (float) livingEntity.getAttributeValue(EntityAttributes.ARMOR_TOUGHNESS);
         } catch (Throwable e) {
-             // Fallback or ignore
+            // Fallback or ignore
         }
 
         damage = DamageUtil.getDamageLeft(livingEntity, damage, mc.world.getDamageSources().explosion(explosion), livingEntity.getArmor(), toughness);
@@ -58,10 +53,10 @@ public class CrystalUtil {
         }
 
         if (damage <= 0f) damage = 0f;
-        
+
         return damage;
     }
-    
+
     // Re-implemented getExposure manually
     public static float getExposure(Vec3d source, Entity entity) {
         Box box = entity.getBoundingBox();
@@ -75,12 +70,12 @@ public class CrystalUtil {
             int j = 0;
             int k = 0;
 
-            for(float l = 0.0F; l <= 1.0F; l = (float)((double)l + d)) {
-                for(float m = 0.0F; m <= 1.0F; m = (float)((double)m + e)) {
-                    for(float n = 0.0F; n <= 1.0F; n = (float)((double)n + f)) {
-                        double o = MathHelper.lerp((double)l, box.minX, box.maxX);
-                        double p = MathHelper.lerp((double)m, box.minY, box.maxY);
-                        double q = MathHelper.lerp((double)n, box.minZ, box.maxZ);
+            for (float l = 0.0F; l <= 1.0F; l = (float) ((double) l + d)) {
+                for (float m = 0.0F; m <= 1.0F; m = (float) ((double) m + e)) {
+                    for (float n = 0.0F; n <= 1.0F; n = (float) ((double) n + f)) {
+                        double o = MathHelper.lerp((double) l, box.minX, box.maxX);
+                        double p = MathHelper.lerp((double) m, box.minY, box.maxY);
+                        double q = MathHelper.lerp((double) n, box.minZ, box.maxZ);
                         Vec3d vec3d = new Vec3d(o + g, p + h, q + i);
                         if (RaytraceUtil.canSeePointFrom(mc.player.getEyePos(), vec3d)) { // Use player eyes or source? source is explosion center.
                             // But RaytraceUtil.canSeePointFrom uses mc.player.getEyePos() usually?
@@ -89,7 +84,7 @@ public class CrystalUtil {
                             // I should use a generic raycast.
                             // But RaytraceUtil.canSeePointFrom(eyes, vec3) calls world.raycast.
                             // I can use that but pass source as eyes.
-                            if (canSee(source, vec3d)) {
+                            if (RaytraceUtil.canSeePointFrom(source, vec3d)) {
                                 ++j;
                             }
                         }
@@ -98,20 +93,16 @@ public class CrystalUtil {
                 }
             }
 
-            return (float)j / (float)k;
+            return (float) j / (float) k;
         } else {
             return 0.0F;
         }
-    }
-    
-    private static boolean canSee(Vec3d from, Vec3d to) {
-        return dev.mahiro.client.utils.rotation.RaytraceUtil.canSeePointFrom(from, to);
     }
 
     public static float calculateDamage(BlockPos pos, Entity target) {
         return calculateDamage(Vec3d.ofCenter(pos).add(0, -0.5, 0), target);
     }
-    
+
     public static float calculateDamage(Entity crystal, Entity target) {
         return calculateDamage(crystal.getPos(), target);
     }

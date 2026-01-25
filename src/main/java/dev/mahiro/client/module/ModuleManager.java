@@ -13,7 +13,8 @@ import dev.mahiro.client.module.impl.combat.*;
 import dev.mahiro.client.module.impl.hud.*;
 import dev.mahiro.client.module.impl.movement.*;
 import dev.mahiro.client.module.impl.player.*;
-import dev.mahiro.client.module.impl.player.mine.PacketMine;
+import dev.mahiro.client.module.impl.player.inventory.InvManager;
+import dev.mahiro.client.module.impl.player.inventory.Stealer;
 import dev.mahiro.client.module.impl.render.*;
 import dev.mahiro.client.values.Value;
 import meteordevelopment.orbit.EventHandler;
@@ -44,6 +45,7 @@ public class ModuleManager {
         add(new AutoSprint());
         add(new FastWeb());
         add(new JumpCooldown());
+        add(new KeepSprint());
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());
@@ -67,7 +69,6 @@ public class ModuleManager {
         add(new NoRotate());
         add(new PacketEat());
         add(new PacketMine());
-        add(new Replenish());
         add(new Stealer());
         add(new TimerModule());
         add(new InvManager());

@@ -7,7 +7,7 @@ import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.client.ChatUtil;
-import dev.mahiro.client.utils.player.MovementUtil;
+import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.EnumValue;
@@ -71,7 +71,7 @@ public class BowBomb extends Module {
         }
         PlayerEntity target = getTarget();
         if (target == null) return;
-        Vec3d headPos = target.getEyePos().add(MovementUtil.getMotionVec(target, predictTicks.get().floatValue(), true));
+        Vec3d headPos = target.getEyePos().add(MoveUtil.getMotionVec(target, predictTicks.get().floatValue(), true));
         Managers.ROTATION.lookAt(headPos, rotationSpeed.get());
     }
 

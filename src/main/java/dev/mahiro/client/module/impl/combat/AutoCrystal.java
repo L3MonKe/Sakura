@@ -5,12 +5,12 @@ import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
+import dev.mahiro.client.utils.combat.CrystalUtil;
 import dev.mahiro.client.utils.entity.EntityUtil;
 import dev.mahiro.client.utils.player.EatingUtil;
 import dev.mahiro.client.utils.player.FindItemResult;
 import dev.mahiro.client.utils.player.InvUtil;
 import dev.mahiro.client.utils.rotation.MovementFix;
-import dev.mahiro.client.utils.combat.CrystalUtil;
 import dev.mahiro.client.utils.rotation.RaytraceUtil;
 import dev.mahiro.client.utils.rotation.RotationUtil;
 import dev.mahiro.client.utils.vector.Rotation;
@@ -27,27 +27,25 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.Comparator;
 import java.util.List;
 
 public class AutoCrystal extends Module {
-    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", 10.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> placeRange = new NumberValue<>("Place Range", "放置范围", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> breakRange = new NumberValue<>("Break Range", "破坏范围", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1);
-    private final NumberValue<Double> minDamage = new NumberValue<>("Min Damage", "最小伤害", 4.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> maxSelfDamage = new NumberValue<>("Max Self Damage", "最大自伤", 8.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> facePlaceHealth = new NumberValue<>("Face Place Health", "贴脸血量", 8.0, 0.0, 36.0, 0.5);
-    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 1.5, 0.1, 5.0, 0.1);
-    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
+    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", "目标距离", 10.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> placeRange = new NumberValue<>("Place Range", "放置范围", "放置距离", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> breakRange = new NumberValue<>("Break Range", "破坏范围", "破坏距离", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", "墙距离", 3.0, 0.0, 6.0, 0.1);
+    private final NumberValue<Double> minDamage = new NumberValue<>("Min Damage", "最小伤害", "最小伤害", 4.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> maxSelfDamage = new NumberValue<>("Max Self Damage", "最大自伤", "最大自我伤害", 8.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> facePlaceHealth = new NumberValue<>("Face Place Health", "贴脸血量", "脸放置伤害", 8.0, 0.0, 36.0, 0.5);
+    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", "转头速度", 1.5, 0.1, 5.0, 0.1);
+    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", "Angle Tolerance", 20.0, 1.0, 90.0, 1.0);
     private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
     private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
-    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", true);
+    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", "自动切换", true);
 
     private Entity target;
     private long lastBreakTime;
@@ -57,18 +55,6 @@ public class AutoCrystal extends Module {
 
     public AutoCrystal() {
         super("AutoCrystal", "自动水晶", Category.Combat);
-        addValue(targetRange);
-        addValue(placeRange);
-        addValue(breakRange);
-        addValue(wallRange);
-        addValue(minDamage);
-        addValue(maxSelfDamage);
-        addValue(facePlaceHealth);
-        addValue(minCPS);
-        addValue(maxCPS);
-        addValue(rotateSpeed);
-        addValue(angleTolerance);
-        addValue(autoSwitch);
         addValue(strict);
         addValue(jitter);
     }
@@ -97,7 +83,7 @@ public class AutoCrystal extends Module {
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
-        
+
         // 如果正在吃东西/喝药/使用物品，暂停一切动作
         if (EatingUtil.isEating()) return;
 
@@ -179,7 +165,7 @@ public class AutoCrystal extends Module {
         BlockPos bestPos = null;
         float bestDamage = 0;
         double rangeSq = placeRange.get().doubleValue() * placeRange.get().doubleValue();
-        
+
         BlockPos pPos = mc.player.getBlockPos();
         int r = (int) Math.ceil(placeRange.get().doubleValue());
 
@@ -190,7 +176,7 @@ public class AutoCrystal extends Module {
                     Vec3d posVec = Vec3d.ofCenter(pos);
                     double distSq = mc.player.squaredDistanceTo(posVec);
                     if (distSq > rangeSq) continue;
-                    
+
                     // 墙体检测
                     boolean canSee = RaytraceUtil.canSeePointFrom(mc.player.getEyePos(), posVec);
                     if (strict.get()) {
@@ -204,7 +190,7 @@ public class AutoCrystal extends Module {
                     if (canPlaceCrystal(pos)) {
                         float damage = CrystalUtil.calculateDamage(pos, target);
                         float minDmg = minDamage.get().floatValue();
-                        
+
                         if (target instanceof PlayerEntity player) {
                             if (player.getHealth() + player.getAbsorptionAmount() <= facePlaceHealth.get().floatValue()) {
                                 minDmg = 2.0f;
@@ -227,7 +213,7 @@ public class AutoCrystal extends Module {
 
         if (bestPos != null) {
             // FindItemResult crystal = InvUtil.findInHotbar(Items.END_CRYSTAL); // Already found above
-            
+
             BlockPos finalBestPos = bestPos;
             Rotation rot;
             if (jitter.get()) {
@@ -262,7 +248,7 @@ public class AutoCrystal extends Module {
         else if (mc.player.getInventory().selectedSlot != slot) return false;
 
         action.run();
-        
+
         if (autoSwitch) InvUtil.swap(oldSlot, false);
         return true;
     }
@@ -286,16 +272,16 @@ public class AutoCrystal extends Module {
 
     private boolean canPlaceCrystal(BlockPos pos) {
         // 检查基座是黑曜石或基岩
-        if (mc.world.getBlockState(pos).getBlock() != Blocks.OBSIDIAN && 
-            mc.world.getBlockState(pos).getBlock() != Blocks.BEDROCK) return false;
-            
+        if (mc.world.getBlockState(pos).getBlock() != Blocks.OBSIDIAN &&
+                mc.world.getBlockState(pos).getBlock() != Blocks.BEDROCK) return false;
+
         // 检查上方空间
         BlockPos up1 = pos.up();
         BlockPos up2 = up1.up();
-        
+
         if (!mc.world.isAir(up1)) return false;
         // 1.12.2+ 不需要检查第二格空气，但在某些服务器可能需要，这里暂时只检查一格，或者检查实体
-        
+
         Box box = new Box(up1);
         return !EntityUtil.intersectsWithEntity(box, entity -> true);
     }

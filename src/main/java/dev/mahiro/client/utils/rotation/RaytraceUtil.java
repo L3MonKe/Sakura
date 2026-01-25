@@ -100,9 +100,6 @@ public class RaytraceUtil {
         );
     }
 
-    /**
-     * Allows you to check if a point is behind a wall
-     */
     public static boolean canSeePointFrom(Vec3d eyes, Vec3d vec3) {
         if (mc.world == null || mc.player == null) return false;
         return mc.world.raycast(
