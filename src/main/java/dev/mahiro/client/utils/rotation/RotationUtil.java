@@ -171,7 +171,7 @@ public class RotationUtil {
                 }
 
                 final Rotation rotations = new Rotation(yaw, pitch);
-                final Rotation fixedRotations = applySensitivityPatch(rotations);
+                final Rotation fixedRotations = applySensitivityPatch(rotations, lastRotation);
 
                 yaw = shortestYaw(lastYaw, fixedRotations.yaw);
                 pitch = Math.max(-90, Math.min(90, fixedRotations.pitch));

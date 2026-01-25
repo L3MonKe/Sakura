@@ -32,14 +32,16 @@ import java.util.List;
 import net.minecraft.block.RespawnAnchorBlock;
 
 public class AutoAnchor extends Module {
-    private final NumberValue<Double> range = new NumberValue<>("Range", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", 10.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", 3.0, 0.0, 6.0, 0.1);
-    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", 8.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", 12.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", 1.5, 0.1, 5.0, 0.1);
-    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", 20.0, 1.0, 90.0, 1.0);
-    private final BoolValue autoSwitch = new BoolValue("Auto Switch", true);
+    private final NumberValue<Double> range = new NumberValue<>("Range", "范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", 10.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1);
+    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 1.5, 0.1, 5.0, 0.1);
+    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
+    private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
+    private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
+    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", true);
 
     private Entity target;
     private BlockPos currentAnchorPos;
@@ -68,6 +70,8 @@ public class AutoAnchor extends Module {
         addValue(rotateSpeed);
         addValue(angleTolerance);
         addValue(autoSwitch);
+        addValue(strict);
+        addValue(jitter);
     }
 
     @Override
@@ -87,14 +91,16 @@ public class AutoAnchor extends Module {
 
     private void resetTimer() {
         lastActionTime = System.currentTimeMillis();
-        actionDelay = (long) (1000.0 / (minCPS.get().doubleValue() + Math.random() * (maxCPS.get().doubleValue() - minCPS.get().doubleValue())));
+        double range = maxCPS.get().doubleValue() - minCPS.get().doubleValue();
+        double cps = minCPS.get().doubleValue() + range * Math.random();
+        actionDelay = (long) (1000.0 / cps);
     }
 
     private void determineChargeCount() {
         double random = Math.random();
-        if (random < 0.3) {
+        if (random < 0.8) {
             chargeCount = 1;
-        } else if (random < 0.8) {
+        } else if (random < 0.95) {
             chargeCount = 2;
         } else {
             chargeCount = 3;
@@ -155,10 +161,16 @@ public class AutoAnchor extends Module {
                     // 距离检测
                     if (mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > rangeSq) continue;
                     
-                    // 墙体检测 (如果需要)
-                    boolean canSee = RaytraceUtil.canSeePointFrom(mc.player.getEyePos(), Vec3d.ofCenter(pos));
-                    if (!canSee && mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
-                        continue;
+                    // 墙体检测
+                    net.minecraft.util.hit.BlockHitResult hit = RaytraceUtil.rayTraceCollidingBlocks(mc.player.getEyePos(), Vec3d.ofCenter(pos));
+                    boolean canSee = hit != null && hit.getBlockPos().equals(pos);
+
+                    if (strict.get()) {
+                        if (!canSee) continue;
+                    } else {
+                        if (!canSee && mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
+                            continue;
+                        }
                     }
 
                     BlockPos safety = findSafetyPos(pos);
@@ -329,10 +341,30 @@ public class AutoAnchor extends Module {
         Direction side = BlockUtil.getPlaceSide(pos);
         if (side == null) return null;
 
-        Rotation rot = RotationUtil.calculate(pos.offset(side), side.getOpposite());
+        Rotation rot;
+        if (jitter.get()) {
+            Direction opp = side.getOpposite();
+            double x = pos.offset(side).getX() + 0.5 + (Math.random() - 0.5) * 0.2;
+            double y = pos.offset(side).getY() + 0.5 + (Math.random() - 0.5) * 0.2;
+            double z = pos.offset(side).getZ() + 0.5 + (Math.random() - 0.5) * 0.2;
+            
+            // Adjust to face center
+            x += opp.getOffsetX() * 0.5;
+            y += opp.getOffsetY() * 0.5;
+            z += opp.getOffsetZ() * 0.5;
+
+            rot = RotationUtil.calculate(new Vec3d(x, y, z));
+        } else {
+            rot = RotationUtil.calculate(pos.offset(side), side.getOpposite());
+        }
+
         Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.High);
 
         if (isFacing(rot)) {
+            // Relax strict check: allow hitting any side of the neighbor block
+            if (strict.get() && !RaytraceUtil.overBlock(Managers.ROTATION.lastRotations, side.getOpposite(), pos.offset(side), false)) {
+                return null;
+            }
             return side;
         }
         return null;
@@ -340,7 +372,16 @@ public class AutoAnchor extends Module {
 
     private boolean interactBlock(BlockPos pos) {
         // 交互也是点这个方块
-        Rotation rot = RotationUtil.calculate(pos, Direction.UP);
+        Rotation rot;
+        if (jitter.get()) {
+             double x = pos.getX() + 0.5 + (Math.random() - 0.5) * 0.2;
+             double y = pos.getY() + 1.0; // Top face
+             double z = pos.getZ() + 0.5 + (Math.random() - 0.5) * 0.2;
+             rot = RotationUtil.calculate(new Vec3d(x, y, z));
+        } else {
+             rot = RotationUtil.calculate(pos, Direction.UP);
+        }
+        
         Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.High);
 
         if (isFacing(rot)) {
@@ -368,7 +409,14 @@ public class AutoAnchor extends Module {
     }
 
     private boolean isFacing(Rotation targetRot) {
-        Rotation current = Managers.ROTATION.rotations;
+        Rotation current;
+        if (strict.get()) {
+            current = Managers.ROTATION.lastRotations;
+            if (current == null) current = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+        } else {
+            current = Managers.ROTATION.rotations;
+        }
+
         float yawDiff = Math.abs(MathHelper.wrapDegrees(current.yaw - targetRot.yaw));
         float pitchDiff = Math.abs(MathHelper.wrapDegrees(current.pitch - targetRot.pitch));
         return yawDiff <= angleTolerance.get().doubleValue() && pitchDiff <= angleTolerance.get().doubleValue();

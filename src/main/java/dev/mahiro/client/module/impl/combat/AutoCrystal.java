@@ -34,18 +34,20 @@ import java.util.Comparator;
 import java.util.List;
 
 public class AutoCrystal extends Module {
-    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", 10.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> placeRange = new NumberValue<>("Place Range", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> breakRange = new NumberValue<>("Break Range", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", 3.0, 0.0, 6.0, 0.1);
-    private final NumberValue<Double> minDamage = new NumberValue<>("Min Damage", 4.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> maxSelfDamage = new NumberValue<>("Max Self Damage", 8.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> facePlaceHealth = new NumberValue<>("Face Place Health", 8.0, 0.0, 36.0, 0.5);
-    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", 8.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", 12.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", 1.5, 0.1, 5.0, 0.1);
-    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", 20.0, 1.0, 90.0, 1.0);
-    private final BoolValue autoSwitch = new BoolValue("Auto Switch", true);
+    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", 10.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> placeRange = new NumberValue<>("Place Range", "放置范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> breakRange = new NumberValue<>("Break Range", "破坏范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1);
+    private final NumberValue<Double> minDamage = new NumberValue<>("Min Damage", "最小伤害", 4.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> maxSelfDamage = new NumberValue<>("Max Self Damage", "最大自伤", 8.0, 1.0, 20.0, 0.5);
+    private final NumberValue<Double> facePlaceHealth = new NumberValue<>("Face Place Health", "贴脸血量", 8.0, 0.0, 36.0, 0.5);
+    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 1.5, 0.1, 5.0, 0.1);
+    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
+    private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
+    private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
+    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", true);
 
     private Entity target;
     private long lastBreakTime;
@@ -67,6 +69,8 @@ public class AutoCrystal extends Module {
         addValue(rotateSpeed);
         addValue(angleTolerance);
         addValue(autoSwitch);
+        addValue(strict);
+        addValue(jitter);
     }
 
     @Override
@@ -78,12 +82,16 @@ public class AutoCrystal extends Module {
 
     private void resetBreakTimer() {
         lastBreakTime = System.currentTimeMillis();
-        breakDelay = (long) (1000.0 / (minCPS.get().doubleValue() + Math.random() * (maxCPS.get().doubleValue() - minCPS.get().doubleValue())));
+        double range = maxCPS.get().doubleValue() - minCPS.get().doubleValue();
+        double cps = minCPS.get().doubleValue() + range * Math.random();
+        breakDelay = (long) (1000.0 / cps);
     }
 
     private void resetPlaceTimer() {
         lastPlaceTime = System.currentTimeMillis();
-        placeDelay = (long) (1000.0 / (minCPS.get().doubleValue() + Math.random() * (maxCPS.get().doubleValue() - minCPS.get().doubleValue())));
+        double range = maxCPS.get().doubleValue() - minCPS.get().doubleValue();
+        double cps = minCPS.get().doubleValue() + range * Math.random();
+        placeDelay = (long) (1000.0 / cps);
     }
 
     @EventHandler
@@ -124,27 +132,36 @@ public class AutoCrystal extends Module {
         }
 
         if (bestCrystal != null) {
-            // 隔墙检测
+            // 隔墙检测 / 严格射线检测
             boolean canSee = RaytraceUtil.canSeePointFrom(mc.player.getEyePos(), bestCrystal.getPos());
-            if (!canSee && mc.player.squaredDistanceTo(bestCrystal) > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
-                return false;
+            if (strict.get()) {
+                if (!canSee) return false;
+            } else {
+                if (!canSee && mc.player.squaredDistanceTo(bestCrystal) > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
+                    return false;
+                }
             }
 
             // 攻击水晶
-            Rotation rot = RotationUtil.calculate(bestCrystal);
+            Rotation rot;
+            if (jitter.get()) {
+                // Add random jitter to entity hit
+                double x = bestCrystal.getX() + (Math.random() - 0.5) * 0.2;
+                double y = bestCrystal.getY() + (bestCrystal.getHeight() / 2.0) + (Math.random() - 0.5) * 0.2;
+                double z = bestCrystal.getZ() + (Math.random() - 0.5) * 0.2;
+                rot = RotationUtil.calculate(new Vec3d(x, y, z));
+            } else {
+                rot = RotationUtil.calculate(bestCrystal);
+            }
+            
             Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.Highest);
 
-            if (System.currentTimeMillis() - lastBreakTime >= breakDelay) {
-                // Attacking doesn't require specific item, but we should use executeAction for consistency if we wanted to switch
-                // However, crystals can be broken with anything. Usually weak attacks are fine.
-                // But some servers require a weapon. Let's assume we attack with whatever we have.
-                // Or we can switch to a sword if we want. For now, just attack.
-                // To be safe against ghost hand if we were switching, we would use executeAction.
-                // Since we aren't switching, direct attack is fine.
-                // Wait, if we are mid-switch from other modules?
-                // AutoCrystal usually runs tick by tick.
-                
-                // Let's just attack directly.
+            if (isFacing(rot) && System.currentTimeMillis() - lastBreakTime >= breakDelay) {
+                // Double check if we are actually looking at it (Server Side)
+                if (strict.get() && !RaytraceUtil.facingEnemy(bestCrystal, breakRange.get().doubleValue(), Managers.ROTATION.lastRotations)) {
+                     return true; // Wait for rotation
+                }
+
                 mc.interactionManager.attackEntity(mc.player, bestCrystal);
                 mc.player.swingHand(Hand.MAIN_HAND);
                 resetBreakTimer();
@@ -176,8 +193,12 @@ public class AutoCrystal extends Module {
                     
                     // 墙体检测
                     boolean canSee = RaytraceUtil.canSeePointFrom(mc.player.getEyePos(), posVec);
-                    if (!canSee && distSq > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
-                        continue;
+                    if (strict.get()) {
+                        if (!canSee) continue;
+                    } else {
+                        if (!canSee && distSq > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
+                            continue;
+                        }
                     }
 
                     if (canPlaceCrystal(pos)) {
@@ -208,10 +229,23 @@ public class AutoCrystal extends Module {
             // FindItemResult crystal = InvUtil.findInHotbar(Items.END_CRYSTAL); // Already found above
             
             BlockPos finalBestPos = bestPos;
-            Rotation rot = RotationUtil.calculate(finalBestPos.up(), Direction.UP);
+            Rotation rot;
+            if (jitter.get()) {
+                double x = finalBestPos.getX() + 0.5 + (Math.random() - 0.5) * 0.2;
+                double y = finalBestPos.getY() + 1.0; // Top face
+                double z = finalBestPos.getZ() + 0.5 + (Math.random() - 0.5) * 0.2;
+                rot = RotationUtil.calculate(new Vec3d(x, y, z));
+            } else {
+                rot = RotationUtil.calculate(finalBestPos.up(), Direction.UP);
+            }
+
             Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.High);
 
             if (isFacing(rot) && System.currentTimeMillis() - lastPlaceTime >= placeDelay) {
+                // Relax strict check: allow hitting any side of the block
+                if (strict.get() && !RaytraceUtil.overBlock(Managers.ROTATION.lastRotations, Direction.UP, finalBestPos, false)) {
+                     return; 
+                }
                 executeAction(() -> {
                     BlockUtil.clickBlock(finalBestPos, Direction.UP, false, false);
                     mc.player.swingHand(Hand.MAIN_HAND);
@@ -234,7 +268,17 @@ public class AutoCrystal extends Module {
     }
 
     private boolean isFacing(Rotation targetRot) {
-        Rotation current = Managers.ROTATION.rotations;
+        Rotation current;
+        if (strict.get()) {
+            // Strict mode: check against the LAST sent rotation (or current server rotation)
+            // This ensures we don't interact before the rotation packet is actually sent/processed
+            current = Managers.ROTATION.lastRotations;
+            if (current == null) current = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+        } else {
+             // Loose mode: assume our setRotations update is instant (risky)
+             current = Managers.ROTATION.rotations;
+        }
+
         float yawDiff = Math.abs(net.minecraft.util.math.MathHelper.wrapDegrees(current.yaw - targetRot.yaw));
         float pitchDiff = Math.abs(net.minecraft.util.math.MathHelper.wrapDegrees(current.pitch - targetRot.pitch));
         return yawDiff <= angleTolerance.get().doubleValue() && pitchDiff <= angleTolerance.get().doubleValue();
