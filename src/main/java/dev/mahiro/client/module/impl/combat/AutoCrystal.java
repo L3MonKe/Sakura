@@ -55,8 +55,6 @@ public class AutoCrystal extends Module {
 
     public AutoCrystal() {
         super("AutoCrystal", "自动水晶", Category.Combat);
-        addValue(strict);
-        addValue(jitter);
     }
 
     @Override
