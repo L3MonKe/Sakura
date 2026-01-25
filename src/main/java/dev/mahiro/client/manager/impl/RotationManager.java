@@ -279,8 +279,23 @@ public class RotationManager {
                 lastRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             }
 
-            lastAnimationRotation = animationRotation;
-            animationRotation = new Rotation(event.getYaw(), event.getPitch());
+            float eventYaw = event.getYaw();
+            float eventPitch = event.getPitch();
+            Rotation targetAnimation = new Rotation(eventYaw, eventPitch);
+            if (!active) {
+                lastAnimationRotation = targetAnimation;
+                animationRotation = targetAnimation;
+            } else {
+                if (animationRotation == null) {
+                    lastAnimationRotation = targetAnimation;
+                    animationRotation = targetAnimation;
+                } else {
+                    lastAnimationRotation = animationRotation;
+                    float renderYaw = animationRotation.yaw + (eventYaw - animationRotation.yaw) * 0.5f;
+                    float renderPitch = animationRotation.pitch + (eventPitch - animationRotation.pitch) * 0.5f;
+                    animationRotation = new Rotation(renderYaw, renderPitch);
+                }
+            }
             targetRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             smoothed = false;
         }
