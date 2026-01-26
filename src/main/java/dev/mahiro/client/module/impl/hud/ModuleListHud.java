@@ -11,6 +11,8 @@ import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseInOutQuad;
 import dev.mahiro.client.values.impl.BoolValue;
+import dev.mahiro.client.values.impl.ColorValue;
+import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.nanovg.NVGPaint;
@@ -22,18 +24,43 @@ import java.util.List;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class ModuleListHud extends HudModule {
-    private final BoolValue enableBloom = new BoolValue("EnableBloom", "光晕", true);
-    private final NumberValue<Double> radius = new NumberValue<>("Radius", "圆角半径", 6.0, 0.0, 15.0, 1.0);
+    public enum ListMode {
+        Normal,
+        Gradient
+    }
+
+    private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Normal);
+
+    // Normal Mode Settings
+    private final BoolValue normalEnableBloom = new BoolValue("EnableBloom", "光晕", true, () -> mode.is(ListMode.Normal));
+    private final NumberValue<Double> normalRadius = new NumberValue<>("Radius", "圆角半径", 6.0, 0.0, 15.0, 1.0, () -> mode.is(ListMode.Normal));
+    private final BoolValue normalShowCategory = new BoolValue("ShowCategory", "显示分类", true, () -> mode.is(ListMode.Normal));
+    private final BoolValue normalRainbowColor = new BoolValue("RainbowColor", "彩虹色", false, () -> mode.is(ListMode.Normal));
+    private final NumberValue<Double> normalItemSpacing = new NumberValue<>("ItemSpacing", "项目间距", 7.0, 0.0, 10.0, 0.5, () -> mode.is(ListMode.Normal));
+    private final NumberValue<Integer> normalSuffixStyle = new NumberValue<>("SuffixStyle", "后缀符号", 0, 0, 3, 1, () -> mode.is(ListMode.Normal));
+
+    // Shared Settings
     private final NumberValue<Double> animationSpeed = new NumberValue<>("AnimationSpeed", "动画速度", 0.2, 0.05, 0.5, 0.05);
-    private final BoolValue showCategory = new BoolValue("ShowCategory", "显示分类", true);
     private final NumberValue<Double> maxWidth = new NumberValue<>("MaxWidth", "最大宽度", 150.0, 50.0, 300.0, 5.0);
     private final NumberValue<Double> maxHeight = new NumberValue<>("MaxHeight", "最大高度", 200.0, 50.0, 500.0, 10.0);
     private final BoolValue alignRight = new BoolValue("AlignRight", "右对齐", false);
-    private final BoolValue rainbowColor = new BoolValue("RainbowColor", "彩虹色", false);
     private final BoolValue hideHudModules = new BoolValue("HideHudModules", "隐藏HUD模块", false);
-    private final NumberValue<Double> itemSpacing = new NumberValue<>("ItemSpacing", "项目间距", 7.0, 0.0, 10.0, 0.5);
     private final NumberValue<Double> hudScale = new NumberValue<>("HudScale", "HUD缩放", 1.1, 0.5, 2.0, 0.1);
-    private final NumberValue<Integer> suffixStyle = new NumberValue<>("SuffixStyle", "后缀符号", 0, 0, 3, 1);
+
+    // Gradient Mode Settings
+    private final NumberValue<Double> gradientItemSpacing = new NumberValue<>("GradientItemSpacing", "项目间距", 7.0, 0.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Integer> gradientSuffixStyle = new NumberValue<>("GradientSuffixStyle", "后缀符号", 0, 0, 3, 1, () -> mode.is(ListMode.Gradient));
+    private final BoolValue textGlow = new BoolValue("TextGlow", "文本发光", true, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> glowRadius = new NumberValue<>("GlowRadius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && textGlow.get());
+    private final NumberValue<Integer> glowIntensity = new NumberValue<>("GlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && textGlow.get());
+
+    // New Gradient Style Settings
+    private final ColorValue gradientColor1 = new ColorValue("GradientColor1", "渐变色1", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient));
+    private final ColorValue gradientColor2 = new ColorValue("GradientColor2", "渐变色2", new Color(255, 0, 255), () -> mode.is(ListMode.Gradient));
+    private final BoolValue autoColor = new BoolValue("AutoColor", "自动颜色调节", false, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> gradientSpeed = new NumberValue<>("GradientSpeed", "渐变速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> customFontSize = new NumberValue<>("CustomFontSize", "字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> colorStep = new NumberValue<>("ColorStep", "颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(ListMode.Gradient));
 
 
     private final List<ModuleEntry> moduleEntries = new ArrayList<>();
@@ -46,7 +73,7 @@ public class ModuleListHud extends HudModule {
     private float scrollOffset = 0;
 
     private int iconImage = -1;
-    private final BoolValue showIcon = new BoolValue("ShowIcon", "显示图标", true);
+    private final BoolValue normalShowIcon = new BoolValue("ShowIcon", "显示图标", true, () -> mode.is(ListMode.Normal));
     // 图标大小固定为15
 
     private float rotationAngle = 0.0f;
@@ -124,7 +151,7 @@ public class ModuleListHud extends HudModule {
     }
 
     public float getRadius() {
-        return radius.get().floatValue();
+        return normalRadius.get().floatValue();
     }
 
     private boolean isHudEditorOpen() {
@@ -182,7 +209,7 @@ public class ModuleListHud extends HudModule {
 
         updateParticles();
 
-        if (iconImage == -1 && showIcon.get()) {
+        if (iconImage == -1 && normalShowIcon.get()) {
             loadIcon();
         }
     }
@@ -197,10 +224,12 @@ public class ModuleListHud extends HudModule {
                 .sorted((m1, m2) -> {
                     String displayText1 = getDisplayText(m1);
                     String displayText2 = getDisplayText(m2);
-                    int font = FontLoader.medium(10);
+                    
+                    float fontSize = mode.is(ListMode.Gradient) ? customFontSize.get().floatValue() : 10f;
+                    int font = FontLoader.medium(fontSize);
                     float scale = hudScale.get().floatValue();
-                    float width1 = NanoVGHelper.getTextWidth(displayText1, font, 10 * scale);
-                    float width2 = NanoVGHelper.getTextWidth(displayText2, font, 10 * scale);
+                    float width1 = NanoVGHelper.getTextWidth(displayText1, font, fontSize * scale);
+                    float width2 = NanoVGHelper.getTextWidth(displayText2, font, fontSize * scale);
                     return Float.compare(width2, width1);
                 })
                 .toList();
@@ -225,11 +254,16 @@ public class ModuleListHud extends HudModule {
     }
 
     private void calculateTargetSize() {
+        boolean isGradient = mode.is(ListMode.Gradient);
+        double spacing = isGradient ? gradientItemSpacing.get() : normalItemSpacing.get();
+        boolean showCat = isGradient ? false : normalShowCategory.get();
+        boolean showIconValue = isGradient ? false : normalShowIcon.get();
+
         if (moduleEntries.isEmpty()) {
             targetWidth = 50;
             targetHeight = 20;
 
-            if (showIcon.get()) {
+            if (showIconValue) {
                 float iconRenderSize = 13.0f * hudScale.get().floatValue();
                 targetHeight = (PADDING_Y * 2 + iconRenderSize + 4 - 2) * hudScale.get().floatValue();
             }
@@ -240,13 +274,14 @@ public class ModuleListHud extends HudModule {
         float scale = hudScale.get().floatValue();
         float totalHeight = PADDING_Y * 2 * scale;
 
-        if (showIcon.get()) {
+        if (showIconValue) {
             float iconRenderSize = 13.0f * scale;
             totalHeight += iconRenderSize + 4 * scale;
         }
 
         float maxTextWidth = 0;
-        int font = FontLoader.medium(10);
+        float fontSize = isGradient ? customFontSize.get().floatValue() : 10f;
+        int font = FontLoader.medium(fontSize);
 
         for (ModuleEntry entry : moduleEntries) {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
@@ -254,12 +289,12 @@ public class ModuleListHud extends HudModule {
 
             if (animationValue > 0.01) {
                 String text = getDisplayText(entry.module);
-                float textWidth = NanoVGHelper.getTextWidth(text, font, 10 * scale);
-                if (showCategory.get()) {
+                float textWidth = NanoVGHelper.getTextWidth(text, font, fontSize * scale);
+                if (showCat) {
                     textWidth += (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale;
                 }
                 maxTextWidth = Math.max(maxTextWidth, textWidth);
-                totalHeight += (10 + itemSpacing.get().floatValue()) * scale;
+                totalHeight += (fontSize + spacing) * scale;
             }
         }
 
@@ -272,20 +307,20 @@ public class ModuleListHud extends HudModule {
             if (visibleModuleCount == 0 && !moduleEntries.isEmpty()) {
                 for (ModuleEntry entry : moduleEntries) {
                     String text = getDisplayText(entry.module);
-                    float textWidth = NanoVGHelper.getTextWidth(text, font, 10 * scale);
-                    if (showCategory.get()) {
+                    float textWidth = NanoVGHelper.getTextWidth(text, font, fontSize * scale);
+                    if (showCat) {
                         textWidth += (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale;
                     }
                     maxTextWidth = Math.max(maxTextWidth, textWidth);
-                    totalHeight += (10 + itemSpacing.get().floatValue()) * scale;
+                    totalHeight += (fontSize + spacing) * scale;
                 }
-                totalHeight -= itemSpacing.get().floatValue() * scale;
+                totalHeight -= spacing * scale;
             } else {
-                totalHeight -= itemSpacing.get().floatValue() * scale;
+                totalHeight -= spacing * scale;
             }
         }
 
-        if (showIcon.get()) {
+        if (showIconValue) {
             float iconRenderSize = 13.0f * scale;
             int sakuraFont = FontLoader.bold(13);
             float sakuraTextWidth = NanoVGHelper.getTextWidth("ModuleList", sakuraFont, 11 * scale);
@@ -333,12 +368,16 @@ public class ModuleListHud extends HudModule {
     }
 
     private void renderContent() {
+        if (mode.is(ListMode.Gradient)) {
+            renderGradientContent();
+            return;
+        }
         long vg = NanoVGRenderer.INSTANCE.getContext();
         float scale = hudScale.get().floatValue();
 
         float currentY = y + (PADDING_Y * scale) - (scrollOffset * scale);
 
-        if (showIcon.get() && iconImage != -1) {
+        if (normalShowIcon.get() && iconImage != -1) {
             float iconRenderSize = 13.0f * scale;
             float iconX = alignRight.get() ?
                     x + (currentWidth * scale) - iconRenderSize - (PADDING_X * scale) :
@@ -397,12 +436,12 @@ public class ModuleListHud extends HudModule {
             double animationValue = animation != null ? animation.getOutput() : 1.0;
 
             if (animationValue < 0.01) {
-                currentY += ((10 + itemSpacing.get().floatValue()) * scale);
+                currentY += ((10 + normalItemSpacing.get().floatValue()) * scale);
                 continue;
             }
 
             if (currentY + (10 * scale) < y || currentY > y + (currentHeight * scale)) {
-                currentY += ((10 + itemSpacing.get().floatValue()) * scale);
+                currentY += ((10 + normalItemSpacing.get().floatValue()) * scale);
                 continue;
             }
 
@@ -416,7 +455,7 @@ public class ModuleListHud extends HudModule {
             String categoryIcon = "";
             float iconWidth = 0;
             float iconHeight = 0;
-            if (showCategory.get()) {
+            if (normalShowCategory.get()) {
                 int iconFont = FontLoader.icons(10);
                 categoryIcon = getRandomCategoryIcon(entry.module);
                 iconWidth = NanoVGHelper.getTextWidth(categoryIcon, iconFont, 10 * scale);
@@ -429,10 +468,10 @@ public class ModuleListHud extends HudModule {
             float textX;
             float iconBgX = 0;
             float iconX = 0;
-            if (alignRight.get() && showCategory.get()) {
+            if (alignRight.get() && normalShowCategory.get()) {
                 iconBgX = x + (currentWidth * scale) - (PADDING_X * scale) - (ICON_BACKGROUND_WIDTH * scale);
                 textX = iconBgX - (CATEGORY_ICON_SPACING * scale) - moduleNameWidth - (suffix.isEmpty() ? 0 : suffixWidth + (2 * scale));
-            } else if (!alignRight.get() && showCategory.get()) {
+            } else if (!alignRight.get() && normalShowCategory.get()) {
                 iconBgX = itemX + (6 * scale);
                 textX = iconBgX + (ICON_BACKGROUND_WIDTH * scale) + (CATEGORY_ICON_SPACING * scale);
             } else {
@@ -452,42 +491,42 @@ public class ModuleListHud extends HudModule {
             float animatedTextX = alignRight.get() ?
                     textX + (itemWidth - animatedItemWidth) : textX;
 
-            if (enableBloom.get()) {
+            if (normalEnableBloom.get()) {
                 NanoVGHelper.drawRoundRectBloom(
-                        alignRight.get() && showCategory.get() ?
+                        alignRight.get() && normalShowCategory.get() ?
                                 (itemX + (4 * scale) + (itemWidth - animatedItemWidth)) :
-                                (itemX + (showCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING + 4) * scale : (4 * scale)) + (itemWidth - animatedItemWidth)),
+                                (itemX + (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING + 4) * scale : (4 * scale)) + (itemWidth - animatedItemWidth)),
                         currentY - (3 * scale),
-                        (itemWidth - (showCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale : 0) - (7 * scale)) * (float) animationValue,
+                        (itemWidth - (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale : 0) - (7 * scale)) * (float) animationValue,
                         itemHeight + (3 * scale),
-                        getRadius() * scale,
+                        normalRadius.get().floatValue() * scale,
                         animatedBackgroundColor
                 );
             } else {
                 NanoVGHelper.drawRoundRect(
-                        alignRight.get() && showCategory.get() ?
+                        alignRight.get() && normalShowCategory.get() ?
                                 (itemX + (4 * scale) + (itemWidth - animatedItemWidth)) :
-                                (itemX + (showCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING + 4) * scale : (4 * scale)) + (itemWidth - animatedItemWidth)),
+                                (itemX + (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING + 4) * scale : (4 * scale)) + (itemWidth - animatedItemWidth)),
                         currentY - (3 * scale),
-                        (itemWidth - (showCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale : 0) - (7 * scale)) * (float) animationValue,
+                        (itemWidth - (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale : 0) - (7 * scale)) * (float) animationValue,
                         itemHeight + (3 * scale),
-                        getRadius() * scale,
+                        normalRadius.get().floatValue() * scale,
                         animatedBackgroundColor
                 );
             }
 
-            if (showCategory.get()) {
+            if (normalShowCategory.get()) {
                 float animatedIconBgX = alignRight.get() ?
                         x + (currentWidth * scale) - (PADDING_X * scale) - (ICON_BACKGROUND_WIDTH * scale) - (itemWidth - animatedItemWidth) :
                         iconBgX + (itemWidth - animatedItemWidth);
 
-                if (enableBloom.get()) {
+                if (normalEnableBloom.get()) {
                     NanoVGHelper.drawRoundRectBloom(
                             animatedIconBgX,
                             currentY - (3 * scale),
                             ICON_BACKGROUND_WIDTH * scale,
                             ICON_BACKGROUND_HEIGHT * scale,
-                            getRadius() * scale,
+                            normalRadius.get().floatValue() * scale,
                             animatedBackgroundColor
                     );
                 } else {
@@ -496,7 +535,7 @@ public class ModuleListHud extends HudModule {
                             currentY - (3 * scale),
                             ICON_BACKGROUND_WIDTH * scale,
                             ICON_BACKGROUND_HEIGHT * scale,
-                            getRadius() * scale,
+                            normalRadius.get().floatValue() * scale,
                             animatedBackgroundColor
                     );
                 }
@@ -506,7 +545,7 @@ public class ModuleListHud extends HudModule {
                 NanoVGHelper.drawGlowingString(categoryIcon, iconX + (0.5f * scale), iconY + (5 * scale), iconFont, 10 * scale, Color.WHITE, 2.0f * scale);
             }
 
-            Color textColor = rainbowColor.get() ?
+            Color textColor = normalRainbowColor.get() ?
                     ClickGui.color(0) :
                     Color.WHITE;
             Color animatedTextColor = new Color(
@@ -527,7 +566,7 @@ public class ModuleListHud extends HudModule {
                 );
                 NanoVGHelper.drawString(formattedSuffix, suffixX, textY, font, 10 * scale, animatedSuffixColor);
             }
-            currentY += ((10 + itemSpacing.get().floatValue()) * scale);
+            currentY += ((10 + normalItemSpacing.get().floatValue()) * scale);
         }
     }
 
@@ -573,7 +612,7 @@ public class ModuleListHud extends HudModule {
             particles.removeIf(particle -> !particle.isAlive());
 
             if (particles.size() < particleCount.get()) {
-                if (showIcon.get() && iconImage != -1) {
+                if (normalShowIcon.get() && iconImage != -1) {
                     float scale = hudScale.get().floatValue();
                     float iconRenderSize = 13.0f * scale;
                     float iconX = alignRight.get() ?
@@ -626,7 +665,9 @@ public class ModuleListHud extends HudModule {
         String prefixSymbol = "";
         String suffixSymbol = "";
 
-        switch (suffixStyle.get()) {
+        int style = mode.is(ListMode.Gradient) ? gradientSuffixStyle.get() : normalSuffixStyle.get();
+
+        switch (style) {
             case 1: // []
                 prefixSymbol = "[";
                 suffixSymbol = "]";
@@ -654,7 +695,9 @@ public class ModuleListHud extends HudModule {
         String prefixSymbol = "";
         String suffixSymbol = "";
 
-        switch (suffixStyle.get()) {
+        int style = mode.is(ListMode.Gradient) ? gradientSuffixStyle.get() : normalSuffixStyle.get();
+
+        switch (style) {
             case 1: // []
                 prefixSymbol = "[";
                 suffixSymbol = "]";
@@ -684,6 +727,104 @@ public class ModuleListHud extends HudModule {
             moduleIconMap.put(module, icon);
         }
         return moduleIconMap.get(module);
+    }
+
+    private void renderGradientContent() {
+        long vg = NanoVGRenderer.INSTANCE.getContext();
+        float scale = hudScale.get().floatValue();
+        float fontSize = customFontSize.get().floatValue();
+
+        float currentY = y + (PADDING_Y * scale) - (scrollOffset * scale);
+
+        int font = FontLoader.medium(fontSize);
+        int index = 0;
+
+        for (ModuleEntry entry : moduleEntries) {
+            EaseInOutQuad animation = moduleAnimations.get(entry.module);
+            double animationValue = animation != null ? animation.getOutput() : 1.0;
+
+            if (animationValue < 0.01) {
+                currentY += ((fontSize + gradientItemSpacing.get().floatValue()) * scale);
+                index++;
+                continue;
+            }
+
+            if (currentY + (fontSize * scale) < y || currentY > y + (currentHeight * scale)) {
+                currentY += ((fontSize + gradientItemSpacing.get().floatValue()) * scale);
+                index++;
+                continue;
+            }
+
+            String moduleName = entry.module.getEnglishName();
+            String suffix = entry.module.getSuffix();
+            String formattedSuffix = getFormattedSuffix(suffix);
+            float moduleNameWidth = NanoVGHelper.getTextWidth(moduleName, font, fontSize * scale);
+            float textHeight = NanoVGHelper.getFontHeight(font, fontSize * scale);
+            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : NanoVGHelper.getTextWidth(formattedSuffix, font, fontSize * scale) + (2 * scale)) + (PADDING_X * 2 * scale);
+            
+            float itemX = alignRight.get() ? x + (currentWidth * scale) - itemWidth : x;
+            float textX = alignRight.get() ? x + (currentWidth * scale) - (PADDING_X * scale) - moduleNameWidth - (suffix.isEmpty() ? 0 : NanoVGHelper.getTextWidth(formattedSuffix, font, fontSize * scale) + (2 * scale)) : itemX + (PADDING_X * scale);
+            
+            float textY = currentY + textHeight / 2 + (2 * scale);
+
+            float animatedItemWidth = itemWidth * (float) animationValue;
+            float animatedTextX = alignRight.get() ?
+                    textX + (itemWidth - animatedItemWidth) : textX;
+
+            Color c1 = gradientColor1.get();
+            Color c2 = gradientColor2.get();
+
+            if (autoColor.get()) {
+               float hue = (float)((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
+               c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
+               c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
+            }
+
+            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+            double currentOffset = offset + (index * colorStep.get());
+            double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
+
+            Color textColor = interpolateColor(c1, c2, (float)factor);
+
+            Color animatedTextColor = new Color(
+                    textColor.getRed(),
+                    textColor.getGreen(),
+                    textColor.getBlue(),
+                    (int) (textColor.getAlpha() * animationValue)
+            );
+
+            if (textGlow.get()) {
+                NanoVGHelper.drawGlowingString(moduleName, animatedTextX, textY - (fontSize * scale / 2) + (1 * scale), font, fontSize * scale, animatedTextColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
+            } else {
+                NanoVGHelper.drawString(moduleName, animatedTextX, textY, font, fontSize * scale, animatedTextColor);
+            }
+
+            if (!suffix.isEmpty()) {
+                float suffixX = animatedTextX + moduleNameWidth + (2 * scale);
+                Color animatedSuffixColor = new Color(
+                        SUFFIX_COLOR.getRed(),
+                        SUFFIX_COLOR.getGreen(),
+                        SUFFIX_COLOR.getBlue(),
+                        (int) (SUFFIX_COLOR.getAlpha() * animationValue)
+                );
+                if (textGlow.get()) {
+                    NanoVGHelper.drawGlowingString(formattedSuffix, suffixX, textY - (fontSize * scale / 2) + (1 * scale), font, fontSize * scale, animatedSuffixColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
+                } else {
+                    NanoVGHelper.drawString(formattedSuffix, suffixX, textY, font, fontSize * scale, animatedSuffixColor);
+                }
+            }
+            currentY += ((fontSize + gradientItemSpacing.get().floatValue()) * scale);
+            index++;
+        }
+    }
+
+    private Color interpolateColor(Color c1, Color c2, float t) {
+        t = Math.max(0, Math.min(1, t));
+        int r = (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * t);
+        int g = (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * t);
+        int b = (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * t);
+        int a = (int) (c1.getAlpha() + (c2.getAlpha() - c1.getAlpha()) * t);
+        return new Color(r, g, b, a);
     }
 
     private static class ModuleEntry {

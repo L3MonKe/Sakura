@@ -95,9 +95,9 @@ public class NanoVGHelper {
     }
 
     /**
-     * 绘制发光字符串
+     * 绘制发光字符串（带强度控制）
      */
-    public static float drawGlowingString(String text, float x, float y, int font, float size, Color color, float glowRadius) {
+    public static float drawGlowingString(String text, float x, float y, int font, float size, Color color, float glowRadius, int intensity) {
         long vg = getContext();
 
         nvgFontFaceId(vg, font);
@@ -108,13 +108,23 @@ public class NanoVGHelper {
         NVGColor glowColor = nvgColor(color);
         nvgFontBlur(vg, glowRadius);
         nvgFillColor(vg, glowColor);
-        nvgText(vg, x, y, text);
+        
+        for (int i = 0; i < intensity; i++) {
+            nvgText(vg, x, y, text);
+        }
 
         // 绘制清晰的前景文本
         nvgFontBlur(vg, 0);
         nvgText(vg, x, y, text);
 
         return size;
+    }
+
+    /**
+     * 绘制发光字符串
+     */
+    public static float drawGlowingString(String text, float x, float y, int font, float size, Color color, float glowRadius) {
+        return drawGlowingString(text, x, y, font, size, color, glowRadius, 1);
     }
 
     /**
