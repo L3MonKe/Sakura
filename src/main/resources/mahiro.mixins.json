@@ -59,6 +59,7 @@
     "render.MixinScreen",
     "render.MixinShaderLoader",
     "render.MixinSplashOverlay",
+    "render.MixinTextRenderer",
     "render.MixinTitleScreen",
     "render.MixinWindow",
     "render.MixinWorldRenderer",
