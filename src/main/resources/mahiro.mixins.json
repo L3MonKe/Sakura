@@ -57,12 +57,10 @@
     "render.MixinParticleManager",
     "render.MixinRenderTickCounter",
     "render.MixinScreen",
-    "render.MixinShaderLoader",
     "render.MixinSplashOverlay",
     "render.MixinTitleScreen",
     "render.MixinWindow",
-    "render.MixinWorldRenderer",
-    "shader.MixinShaderProgram"
+    "render.MixinWorldRenderer"
   ],
   "injectors": {
     "defaultRequire": 1
