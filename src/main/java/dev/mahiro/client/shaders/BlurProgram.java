@@ -1,12 +1,8 @@
 package dev.mahiro.client.shaders;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gl.Defines;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.GlUniform;
+import net.minecraft.client.gl.*;
 import net.minecraft.client.gl.ShaderProgram;
-import net.minecraft.client.gl.ShaderProgramKey;
-import net.minecraft.client.gl.SimpleFramebuffer;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.util.Identifier;
 import org.lwjgl.opengl.GL30;

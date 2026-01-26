@@ -83,6 +83,7 @@ public class ModuleManager {
         add(new Fullbright());
         add(new Hat());
         add(new JumpCircles());
+        add(new MotionBlur());
         add(new NameTags());
         add(new NoRender());
         add(new OldHitting());
@@ -108,6 +109,7 @@ public class ModuleManager {
         add(new MSHud());
         add(new NotificationHud());
         add(new NotifyHud());
+        add(new PotionHud());
         add(new TargetHud());
         add(new WatermarkHud());
     }
