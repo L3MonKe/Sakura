@@ -87,6 +87,7 @@ public class ModuleManager {
         add(new NoRender());
         add(new OldHitting());
         add(new Shaders());
+        add(new NameProtect());
         add(new SwingAnimation());
         add(new TotemParticles());
         add(new ViewModel());

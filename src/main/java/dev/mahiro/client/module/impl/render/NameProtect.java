@@ -22,14 +22,12 @@ public class NameProtect extends Module {
             if (mc.player == null) return original;
             
             String playerName = mc.player.getName().getString();
-            // 防止空名字或者名字过短导致误判
             if (playerName == null || playerName.isEmpty() || playerName.length() < 2) return original;
 
             if (original.contains(playerName)) {
                 return original.replace(playerName, FAKE_NAME);
             }
         } catch (Exception e) {
-            // 防止并发或其他异常导致崩溃
             return original;
         }
         return original;
@@ -51,17 +49,13 @@ public class NameProtect extends Module {
                 int index = original.indexOf(playerName);
 
                 while (index != -1) {
-                    // 添加名字前的部分
                     result.append(Text.of(original.substring(lastIndex, index)));
-                    
-                    // 添加带渐变的伪装名字
                     result.append(TextReplacer.getGradientText(FAKE_NAME));
                     
                     lastIndex = index + playerName.length();
                     index = original.indexOf(playerName, lastIndex);
                 }
-                
-                // 添加剩余部分
+
                 result.append(Text.of(original.substring(lastIndex)));
                 return result;
             }
