@@ -11,7 +11,7 @@ public class NameProtect extends Module {
     private static final String FAKE_NAME = "桜";
 
     public NameProtect() {
-        super("NameProtect", "名字伪装", Category.Render);
+        super("NameProtect", "名字保护", Category.Render);
     }
 
     public static String getReplacement(String original) {

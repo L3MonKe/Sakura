@@ -1,8 +1,5 @@
 package dev.mahiro.client.module.impl.client;
 
-import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.module.Category;
-import dev.mahiro.client.module.Module;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
@@ -11,7 +8,7 @@ import java.awt.*;
 import java.util.Arrays;
 import java.util.List;
 
-public class TextReplacer extends Module {
+public class TextReplacer {
     // Unicode for "布吉岛" (Bujidao) to avoid encoding issues
     private static final String BUJIDAO = "\u5e03\u5409\u5c9b";
     
@@ -24,11 +21,6 @@ public class TextReplacer extends Module {
             "&d" + BUJIDAO,
             BUJIDAO
     );
-
-    public TextReplacer() {
-        super("TextReplacer", "文本替换", Category.Client);
-        this.setState(true);
-    }
 
     public static boolean containsTarget(String text) {
         if (text == null) return false;

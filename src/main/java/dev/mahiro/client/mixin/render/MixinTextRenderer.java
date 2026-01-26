@@ -33,19 +33,11 @@ public abstract class MixinTextRenderer {
                 modified = true;
             }
 
-            // 2. Check TextReplacer (if not already modified, or check the modified text string)
-            // Simplicity: if NameProtect modified it, we use that result. 
-            // If TextReplacer also needs to run, we would need to run it on the result of NameProtect.
-            // But TextReplacer.replace returns Text, and NameProtect.getGradientReplacement returns Text.
-            // Merging them is complex. Let's assume they are exclusive for now or prioritize NameProtect if it triggers.
-            
+            // 2. Check TextReplacer (Automatic)
             if (!modified) {
                 if (TextReplacer.containsTarget(text)) {
-                    TextReplacer replacer = (TextReplacer) Mahiro.MODULES.getModule(TextReplacer.class);
-                    if (replacer != null && replacer.isEnabled()) {
-                        resultText = TextReplacer.replace(text);
-                        modified = (resultText != null);
-                    }
+                    resultText = TextReplacer.replace(text);
+                    modified = (resultText != null);
                 }
             }
 
@@ -71,11 +63,8 @@ public abstract class MixinTextRenderer {
 
             if (!modified) {
                 if (TextReplacer.containsTarget(string)) {
-                    TextReplacer replacer = (TextReplacer) Mahiro.MODULES.getModule(TextReplacer.class);
-                    if (replacer != null && replacer.isEnabled()) {
-                        resultText = TextReplacer.replace(string);
-                        modified = (resultText != null);
-                    }
+                    resultText = TextReplacer.replace(string);
+                    modified = (resultText != null);
                 }
             }
 
@@ -107,11 +96,8 @@ public abstract class MixinTextRenderer {
 
             if (!modified) {
                 if (TextReplacer.containsTarget(string)) {
-                    TextReplacer replacer = (TextReplacer) Mahiro.MODULES.getModule(TextReplacer.class);
-                    if (replacer != null && replacer.isEnabled()) {
-                        resultText = TextReplacer.replace(string);
-                        modified = (resultText != null);
-                    }
+                    resultText = TextReplacer.replace(string);
+                    modified = (resultText != null);
                 }
             }
 
