@@ -77,11 +77,11 @@ public class InvUtil {
 
     public static FindItemResult findInHotbar(Predicate<ItemStack> isGood) {
         if (testInOffHand(isGood)) {
-            return new FindItemResult(SlotUtil.OFFHAND, mc.player.getOffHandStack().getCount());
+            return new FindItemResult(SlotUtil.OFFHAND, mc.player.getOffHandStack().getCount(), mc.player.getOffHandStack().getMaxCount());
         }
 
         if (testInMainHand(isGood)) {
-            return new FindItemResult(mc.player.getInventory().selectedSlot, mc.player.getMainHandStack().getCount());
+            return new FindItemResult(mc.player.getInventory().selectedSlot, mc.player.getMainHandStack().getCount(), mc.player.getMainHandStack().getMaxCount());
         }
 
         return find(isGood, 0, 8);
@@ -97,14 +97,14 @@ public class InvUtil {
     }
 
     public static FindItemResult find(Predicate<ItemStack> isGood) {
-        if (mc.player == null) return new FindItemResult(0, 0);
+        if (mc.player == null) return new FindItemResult(0, 0, 0);
         return find(isGood, 0, mc.player.getInventory().size());
     }
 
     public static FindItemResult find(Predicate<ItemStack> isGood, int start, int end) {
-        if (mc.player == null) return new FindItemResult(0, 0);
+        if (mc.player == null) return new FindItemResult(0, 0, 0);
 
-        int slot = -1, count = 0;
+        int slot = -1, count = 0, maxCount = 0;
 
         for (int i = start; i <= end; i++) {
             ItemStack stack = mc.player.getInventory().getStack(i);
@@ -112,10 +112,11 @@ public class InvUtil {
             if (isGood.test(stack)) {
                 if (slot == -1) slot = i;
                 count += stack.getCount();
+                maxCount += stack.getMaxCount();
             }
         }
 
-        return new FindItemResult(slot, count);
+        return new FindItemResult(slot, count, maxCount);
     }
 
     public static FindItemResult findFastestTool(BlockState state, Boolean inv) {
@@ -133,7 +134,7 @@ public class InvUtil {
             }
         }
 
-        return new FindItemResult(slot, 1);
+        return new FindItemResult(slot, 1, 1);
     }
 
     public static boolean swap(int slot, boolean swapBack) {

@@ -59,6 +59,7 @@ public class ModuleManager {
         // Player
         add(new AntiHunger());
         add(new AutoArmor());
+        add(new AutoDick());
         add(new AutoPearl());
         add(new Blink());
         add(new BowBomb());

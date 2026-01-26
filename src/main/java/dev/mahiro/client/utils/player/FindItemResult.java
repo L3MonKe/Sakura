@@ -2,7 +2,7 @@ package dev.mahiro.client.utils.player;
 
 import net.minecraft.util.Hand;
 
-public record FindItemResult(int slot, int count) {
+public record FindItemResult(int slot, int count, int maxCount) {
     public boolean found() {
         return slot != -1;
     }
