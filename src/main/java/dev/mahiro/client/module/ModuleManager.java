@@ -59,6 +59,7 @@ public class ModuleManager {
         // Player
         add(new AntiHunger());
         add(new AutoArmor());
+        add(new AutoDick());
         add(new AutoPearl());
         add(new Blink());
         add(new BowBomb());
@@ -82,10 +83,12 @@ public class ModuleManager {
         add(new Fullbright());
         add(new Hat());
         add(new JumpCircles());
+        add(new MotionBlur());
         add(new NameTags());
         add(new NoRender());
         add(new OldHitting());
         add(new Shaders());
+        add(new NameProtect());
         add(new SwingAnimation());
         add(new TotemParticles());
         add(new ViewModel());
@@ -107,6 +110,7 @@ public class ModuleManager {
         add(new MSHud());
         add(new NotificationHud());
         add(new NotifyHud());
+        add(new PotionHud());
         add(new TargetHud());
         add(new WatermarkHud());
     }

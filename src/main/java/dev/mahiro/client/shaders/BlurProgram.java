@@ -1,14 +1,8 @@
 package dev.mahiro.client.shaders;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.mahiro.satin.api.ManagedCoreShader;
-import dev.mahiro.satin.api.ShaderEffectManager;
-import dev.mahiro.satin.api.uniform.SamplerUniform;
-import dev.mahiro.satin.api.uniform.Uniform1f;
-import dev.mahiro.satin.api.uniform.Uniform2f;
-import dev.mahiro.satin.api.uniform.Uniform4f;
-import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.SimpleFramebuffer;
+import net.minecraft.client.gl.*;
+import net.minecraft.client.gl.ShaderProgram;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.util.Identifier;
 import org.lwjgl.opengl.GL30;
@@ -18,29 +12,20 @@ import java.awt.*;
 import static dev.mahiro.client.Mahiro.mc;
 
 public class BlurProgram {
-    private final Uniform2f uSize;
-    private final Uniform2f uLocation;
-    private final Uniform1f radius;
-    private final Uniform2f inputResolution;
-    private final Uniform1f brightness;
-    private final Uniform1f quality;
-    private final Uniform4f color1;
-    private final SamplerUniform sampler;
+    private static final ShaderProgramKey PROGRAM_KEY = new ShaderProgramKey(Identifier.of("mahiro", "core/blur"), VertexFormats.POSITION, Defines.EMPTY);
+
+    private ShaderProgram program;
+    private GlUniform uSize;
+    private GlUniform uLocation;
+    private GlUniform radius;
+    private GlUniform inputResolution;
+    private GlUniform brightness;
+    private GlUniform quality;
+    private GlUniform color1;
 
     private Framebuffer input;
 
-    public static final ManagedCoreShader BLUR = ShaderEffectManager.getInstance().manageCoreShader(Identifier.of("mahiro", "core/blur"), VertexFormats.POSITION);
-
     public BlurProgram() {
-        this.inputResolution = BLUR.findUniform2f("InputResolution");
-        this.brightness = BLUR.findUniform1f("Brightness");
-        this.quality = BLUR.findUniform1f("Quality");
-        this.color1 = BLUR.findUniform4f("color1");
-        this.uSize = BLUR.findUniform2f("uSize");
-        this.uLocation = BLUR.findUniform2f("uLocation");
-        this.radius = BLUR.findUniform1f("radius");
-        sampler = BLUR.findSampler("InputSampler");
-
         WindowResizeCallback.EVENT.register((client, window) -> {
             if (input != null) {
                 input.resize(window.getFramebufferWidth(), window.getFramebufferHeight());
@@ -48,9 +33,31 @@ public class BlurProgram {
         });
     }
 
+    private boolean ensureProgram() {
+        ShaderProgram loaded = mc.getShaderLoader().getOrCreateProgram(PROGRAM_KEY);
+        if (loaded == null) {
+            return false;
+        }
+        if (loaded != this.program) {
+            this.program = loaded;
+            this.inputResolution = loaded.getUniform("InputResolution");
+            this.brightness = loaded.getUniform("Brightness");
+            this.quality = loaded.getUniform("Quality");
+            this.color1 = loaded.getUniform("color1");
+            this.uSize = loaded.getUniform("uSize");
+            this.uLocation = loaded.getUniform("uLocation");
+            this.radius = loaded.getUniform("radius");
+        }
+        return true;
+    }
+
     public void setParameters(float x, float y, float width, float height, float r, Color c1, float blurStrenth, float blurOpacity) {
         if (input == null) {
             input = new SimpleFramebuffer(mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), false);
+        }
+
+        if (!ensureProgram()) {
+            return;
         }
 
         float factor = (float) mc.getWindow().getScaleFactor();
@@ -60,10 +67,14 @@ public class BlurProgram {
         brightness.set(blurOpacity);
         quality.set(blurStrenth);
         color1.set(c1.getRed() / 255f, c1.getGreen() / 255f, c1.getBlue() / 255f, 1f);
-        sampler.set(input.getColorAttachment());
+        program.addSamplerTexture("InputSampler", input.getColorAttachment());
     }
 
     public void use() {
+        if (!ensureProgram()) {
+            return;
+        }
+
         var buffer = mc.getFramebuffer();
 
         input.beginWrite(false);
@@ -75,9 +86,11 @@ public class BlurProgram {
             input.resize(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight());
         }
 
-        inputResolution.set((float) buffer.textureWidth, (float) buffer.textureHeight);
-        sampler.set(input.getColorAttachment());
+        if (inputResolution != null) {
+            inputResolution.set((float) buffer.textureWidth, (float) buffer.textureHeight);
+        }
+        program.addSamplerTexture("InputSampler", input.getColorAttachment());
 
-        RenderSystem.setShader(BLUR.getProgram());
+        RenderSystem.setShader(program);
     }
 }

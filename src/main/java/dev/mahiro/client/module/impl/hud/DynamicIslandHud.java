@@ -94,16 +94,15 @@ public class DynamicIslandHud extends HudModule {
 
     private List<PlayerListEntry> playerList;
     private float tabTargetW, tabTargetH;
-    private float scaffoldTargetW = Size.EXPANDED_W;
     private float scaffoldBarProgress;
     private float scaffoldItemX, scaffoldItemY, scaffoldItemScale;
     private float scaffoldRightTextWidth;
     private float scaffoldBarMaxCount;
-    private Color scaffoldBlockColor = new Color(255, 255, 255, 120);
+    private Color scaffoldBlockColor;
     private String scaffoldCountText;
     private String scaffoldSuffixText;
     private String scaffoldBpsText;
-    private ItemStack scaffoldItem = ItemStack.EMPTY;
+    private ItemStack scaffoldItem;
     private boolean scaffoldItemVisible;
     private int scaffoldLastCount = -1;
     private long scaffoldLastTime;
@@ -252,7 +251,7 @@ public class DynamicIslandHud extends HudModule {
         } else {
             if (shouldRenderScaffold()) {
                 updateScaffoldState();
-                scaffoldTargetW = calculateScaffoldWidth();
+                float scaffoldTargetW = calculateScaffoldWidth();
                 float lerp = 0.2f;
                 animW = MathHelper.lerp(lerp, animW, scaffoldTargetW);
                 animH = MathHelper.lerp(lerp, animH, Size.SCAFFOLD_H);
@@ -741,7 +740,7 @@ public class DynamicIslandHud extends HudModule {
         }
         scaffoldBarMaxCount = Math.max(0, maxCount);
         scaffoldCountText = String.valueOf(count);
-        scaffoldSuffixText = ClickGui.language.is(ClickGui.Language.Chinese) ? "块" : "Block" + (count > 1 ? "s" : "");
+        scaffoldSuffixText = ClickGui.language.is(ClickGui.Language.Chinese) ? "块" : "s";
 
         long now = System.currentTimeMillis();
         if (count <= 0) {

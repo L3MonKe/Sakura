@@ -24,6 +24,7 @@ import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.FallingBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
@@ -161,6 +162,8 @@ public class Scaffold extends Module {
         if (!(itemStack.getItem() instanceof BlockItem)) return false;
 
         Block block = ((BlockItem) itemStack.getItem()).getBlock();
+
+        if (block == Blocks.TNT) return false;
 
         if (!Block.isShapeFullCube(block.getDefaultState().getCollisionShape(mc.world, pos))) return false;
         return !(block instanceof FallingBlock) || !FallingBlock.canFallThrough(mc.world.getBlockState(pos));
