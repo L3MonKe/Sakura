@@ -41,6 +41,7 @@ public class ModuleListHud extends HudModule {
 
     // Shared Settings
     private final NumberValue<Double> animationSpeed = new NumberValue<>("AnimationSpeed", "动画速度", 0.2, 0.05, 0.5, 0.05);
+    private final NumberValue<Double> sliderSpeed = new NumberValue<>("SliderSpeed", "滑动速度", 0.2, 0.01, 1.0, 0.01);
     private final NumberValue<Double> maxWidth = new NumberValue<>("MaxWidth", "最大宽度", 150.0, 50.0, 300.0, 5.0);
     private final NumberValue<Double> maxHeight = new NumberValue<>("MaxHeight", "最大高度", 200.0, 50.0, 500.0, 10.0);
     private final BoolValue alignRight = new BoolValue("AlignRight", "右对齐", false);
@@ -66,6 +67,7 @@ public class ModuleListHud extends HudModule {
     private final List<ModuleEntry> moduleEntries = new ArrayList<>();
     private static ModuleListHud instance;
     private final java.util.Map<Module, EaseInOutQuad> moduleAnimations = new java.util.HashMap<>();
+    private final java.util.Map<Module, Float> moduleYPositions = new java.util.HashMap<>();
     private float targetWidth = 0;
     private float targetHeight = 0;
     private float currentWidth = 0;
@@ -117,11 +119,9 @@ public class ModuleListHud extends HudModule {
                 animation.setDirection(Direction.FORWARDS);
                 animation.reset();
             } else {
-                EaseInOutQuad animation = instance.moduleAnimations.get(module);
-                if (animation != null) {
-                    animation.setDirection(Direction.BACKWARDS);
-                    animation.reset();
-                }
+                EaseInOutQuad animation = instance.moduleAnimations.computeIfAbsent(module, k -> new EaseInOutQuad(200, 1.0));
+                animation.setDirection(Direction.BACKWARDS);
+                animation.reset();
             }
         }
     }
@@ -217,8 +217,8 @@ public class ModuleListHud extends HudModule {
     private final java.util.Map<Module, String> moduleIconMap = new java.util.HashMap<>();
 
     private void updateModuleList() {
-        List<Module> enabledModules = Mahiro.MODULES.getAllModules().stream()
-                .filter(Module::isEnabled)
+        List<Module> visibleModules = Mahiro.MODULES.getAllModules().stream()
+                .filter(module -> module.isEnabled() || (moduleAnimations.containsKey(module) && moduleAnimations.get(module).getOutput() > 0.001))
                 .filter(module -> !module.isHidden())
                 .filter(module -> !hideHudModules.get() || !(module instanceof HudModule))
                 .sorted((m1, m2) -> {
@@ -238,13 +238,22 @@ public class ModuleListHud extends HudModule {
         while (iterator.hasNext()) {
             java.util.Map.Entry<Module, String> entry = iterator.next();
             Module module = entry.getKey();
-            if (!enabledModules.contains(module)) {
+            if (!visibleModules.contains(module)) {
                 iterator.remove();
+            }
+        }
+        
+        java.util.Iterator<java.util.Map.Entry<Module, Float>> yIterator = moduleYPositions.entrySet().iterator();
+        while (yIterator.hasNext()) {
+            java.util.Map.Entry<Module, Float> entry = yIterator.next();
+            Module module = entry.getKey();
+            if (!visibleModules.contains(module)) {
+                yIterator.remove();
             }
         }
 
         moduleEntries.clear();
-        for (Module module : enabledModules) {
+        for (Module module : visibleModules) {
             moduleEntries.add(new ModuleEntry(module));
             if (!moduleIconMap.containsKey(module)) {
                 String icon = ICON_SET[RANDOM.nextInt(ICON_SET.length)];
@@ -435,13 +444,33 @@ public class ModuleListHud extends HudModule {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
             double animationValue = animation != null ? animation.getOutput() : 1.0;
 
-            if (animationValue < 0.01) {
-                currentY += ((10 + normalItemSpacing.get().floatValue()) * scale);
+            float itemFullHeight = (10 + normalItemSpacing.get().floatValue()) * scale;
+            
+            // Calculate target Y for this module
+            float targetY = currentY;
+            
+            // Get current render Y
+            float renderY = moduleYPositions.getOrDefault(entry.module, targetY);
+            
+            // Interpolate
+            float diff = targetY - renderY;
+            if (Math.abs(diff) > 0.1) {
+                renderY += diff * sliderSpeed.get().floatValue();
+            } else {
+                renderY = targetY;
+            }
+            moduleYPositions.put(entry.module, renderY);
+
+            // Increment currentY for the next module based on this module's animated height
+            if (animationValue > 0.01) {
+                 currentY += itemFullHeight * animationValue;
+            }
+
+            if (renderY + (10 * scale) < y || renderY > y + (currentHeight * scale)) {
                 continue;
             }
 
-            if (currentY + (10 * scale) < y || currentY > y + (currentHeight * scale)) {
-                currentY += ((10 + normalItemSpacing.get().floatValue()) * scale);
+            if (animationValue < 0.01) {
                 continue;
             }
 
@@ -477,7 +506,10 @@ public class ModuleListHud extends HudModule {
             } else {
                 textX = alignRight.get() ? x + (currentWidth * scale) - (PADDING_X * scale) - moduleNameWidth - (suffix.isEmpty() ? 0 : suffixWidth + (2 * scale)) : itemX + (PADDING_X * scale);
             }
-            float textY = currentY + textHeight / 2 + (2 * scale);
+            
+            // Use renderY instead of currentY for drawing
+            float drawY = renderY;
+            float textY = drawY + textHeight / 2 + (2 * scale);
 
             int alpha = (int) (BACKGROUND_COLOR.getAlpha() * animationValue);
             Color animatedBackgroundColor = new Color(
@@ -496,7 +528,7 @@ public class ModuleListHud extends HudModule {
                         alignRight.get() && normalShowCategory.get() ?
                                 (itemX + (4 * scale) + (itemWidth - animatedItemWidth)) :
                                 (itemX + (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING + 4) * scale : (4 * scale)) + (itemWidth - animatedItemWidth)),
-                        currentY - (3 * scale),
+                        drawY - (3 * scale),
                         (itemWidth - (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale : 0) - (7 * scale)) * (float) animationValue,
                         itemHeight + (3 * scale),
                         normalRadius.get().floatValue() * scale,
@@ -507,7 +539,7 @@ public class ModuleListHud extends HudModule {
                         alignRight.get() && normalShowCategory.get() ?
                                 (itemX + (4 * scale) + (itemWidth - animatedItemWidth)) :
                                 (itemX + (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING + 4) * scale : (4 * scale)) + (itemWidth - animatedItemWidth)),
-                        currentY - (3 * scale),
+                        drawY - (3 * scale),
                         (itemWidth - (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale : 0) - (7 * scale)) * (float) animationValue,
                         itemHeight + (3 * scale),
                         normalRadius.get().floatValue() * scale,
@@ -523,7 +555,7 @@ public class ModuleListHud extends HudModule {
                 if (normalEnableBloom.get()) {
                     NanoVGHelper.drawRoundRectBloom(
                             animatedIconBgX,
-                            currentY - (3 * scale),
+                            drawY - (3 * scale),
                             ICON_BACKGROUND_WIDTH * scale,
                             ICON_BACKGROUND_HEIGHT * scale,
                             normalRadius.get().floatValue() * scale,
@@ -532,14 +564,14 @@ public class ModuleListHud extends HudModule {
                 } else {
                     NanoVGHelper.drawRoundRect(
                             animatedIconBgX,
-                            currentY - (3 * scale),
+                            drawY - (3 * scale),
                             ICON_BACKGROUND_WIDTH * scale,
                             ICON_BACKGROUND_HEIGHT * scale,
                             normalRadius.get().floatValue() * scale,
                             animatedBackgroundColor
                     );
                 }
-                float iconY = currentY + ((ICON_BACKGROUND_HEIGHT * scale) - iconHeight) / 2;
+                float iconY = drawY + ((ICON_BACKGROUND_HEIGHT * scale) - iconHeight) / 2;
                 iconX = animatedIconBgX + ((ICON_BACKGROUND_WIDTH * scale) - iconWidth) / 2;
                 int iconFont = FontLoader.icons(10);
                 NanoVGHelper.drawGlowingString(categoryIcon, iconX + (0.5f * scale), iconY + (5 * scale), iconFont, 10 * scale, Color.WHITE, 2.0f * scale);
@@ -566,7 +598,6 @@ public class ModuleListHud extends HudModule {
                 );
                 NanoVGHelper.drawString(formattedSuffix, suffixX, textY, font, 10 * scale, animatedSuffixColor);
             }
-            currentY += ((10 + normalItemSpacing.get().floatValue()) * scale);
         }
     }
 
@@ -743,15 +774,34 @@ public class ModuleListHud extends HudModule {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
             double animationValue = animation != null ? animation.getOutput() : 1.0;
 
-            if (animationValue < 0.01) {
-                currentY += ((fontSize + gradientItemSpacing.get().floatValue()) * scale);
-                index++;
+            float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
+
+            // Calculate target Y
+            float targetY = currentY;
+
+            // Get current render Y
+            float renderY = moduleYPositions.getOrDefault(entry.module, targetY);
+
+            // Interpolate
+            float diff = targetY - renderY;
+            if (Math.abs(diff) > 0.1) {
+                renderY += diff * sliderSpeed.get().floatValue();
+            } else {
+                renderY = targetY;
+            }
+            moduleYPositions.put(entry.module, renderY);
+
+            // Increment currentY for the next module based on this module's animated height
+            if (animationValue > 0.01) {
+                currentY += itemFullHeight * animationValue;
+                index++; // Only increment index if module is visible (to keep gradient consistent)
+            }
+
+            if (renderY + (fontSize * scale) < y || renderY > y + (currentHeight * scale)) {
                 continue;
             }
 
-            if (currentY + (fontSize * scale) < y || currentY > y + (currentHeight * scale)) {
-                currentY += ((fontSize + gradientItemSpacing.get().floatValue()) * scale);
-                index++;
+            if (animationValue < 0.01) {
                 continue;
             }
 
@@ -765,7 +815,9 @@ public class ModuleListHud extends HudModule {
             float itemX = alignRight.get() ? x + (currentWidth * scale) - itemWidth : x;
             float textX = alignRight.get() ? x + (currentWidth * scale) - (PADDING_X * scale) - moduleNameWidth - (suffix.isEmpty() ? 0 : NanoVGHelper.getTextWidth(formattedSuffix, font, fontSize * scale) + (2 * scale)) : itemX + (PADDING_X * scale);
             
-            float textY = currentY + textHeight / 2 + (2 * scale);
+            // Use renderY instead of currentY
+            float drawY = renderY;
+            float textY = drawY + textHeight / 2 + (2 * scale);
 
             float animatedItemWidth = itemWidth * (float) animationValue;
             float animatedTextX = alignRight.get() ?
@@ -813,8 +865,6 @@ public class ModuleListHud extends HudModule {
                     NanoVGHelper.drawString(formattedSuffix, suffixX, textY, font, fontSize * scale, animatedSuffixColor);
                 }
             }
-            currentY += ((fontSize + gradientItemSpacing.get().floatValue()) * scale);
-            index++;
         }
     }
 
