@@ -55,9 +55,10 @@ public abstract class MixinLivingEntity extends Entity {
     }
 
     @Redirect(method = "tickMovement", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/LivingEntity;jumpingCooldown:I", opcode = Opcodes.PUTFIELD, ordinal = 1))
-    private void modifyJumpingCooldown(LivingEntity instance, int jumpingCooldown) {
-        if (instance == mc.player) {
-            this.jumpingCooldown = JumpCooldown.cooldown.get();
+    private void redirectJumpingCooldown(LivingEntity instance, int jumpingCooldown) {
+        JumpCooldown module = Mahiro.MODULES.getModule(JumpCooldown.class);
+        if (instance == mc.player && module.isEnabled()) {
+            this.jumpingCooldown = module.cooldown.get();
         } else {
             this.jumpingCooldown = 10;
         }

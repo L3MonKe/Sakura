@@ -45,7 +45,7 @@ public class AutoCrystal extends Module {
     private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
     private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
     private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
-    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式",  true);
+    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", true);
 
     private Entity target;
     private long lastBreakTime;

@@ -9,5 +9,5 @@ public class JumpCooldown extends Module {
         super("JumpCooldown", "跳跃冷却", Category.Movement);
     }
 
-    public static final NumberValue<Integer> cooldown = new NumberValue<>("Max Cooldown", "最大冷却", 0, 0, 9, 1);
+    public final NumberValue<Integer> cooldown = new NumberValue<>("Max Cooldown", "最大冷却", 0, 0, 9, 1);
 }

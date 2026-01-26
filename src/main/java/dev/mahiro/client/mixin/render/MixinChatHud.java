@@ -129,7 +129,7 @@ public class MixinChatHud {
         if (x1 == -4 && x2 > 0 && (y2 - y1) == lineHeight) {
             return;
         }
-        context.fill(x1, y1, x2, y2, color);
+        //context.fill(x1, y1, x2, y2, color);
     }
 
     @Unique
