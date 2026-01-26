@@ -4,12 +4,14 @@ package dev.mahiro.client.mixin.render;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.entity.EntitySpawnEvent;
 import dev.mahiro.client.module.impl.render.Atmosphere;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -26,5 +28,20 @@ public class ClientWorldMixin {
     @Inject(method = "addEntity", at = @At(value = "HEAD"))
     private void addEntity(Entity entity, CallbackInfo info) {
         Mahiro.EVENT_BUS.post(new EntitySpawnEvent(entity));
+    }
+
+    @Redirect(
+            method = {"tickEntity"},
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/entity/Entity;tick()V"
+            )
+    )
+    public void hookSkipTicks(Entity instance) {
+        if (Mahiro.skipTicks > 0 && instance == MinecraftClient.getInstance().player){
+            Mahiro.skipTicks --;
+        } else {
+            instance.tick();
+        }
     }
 }

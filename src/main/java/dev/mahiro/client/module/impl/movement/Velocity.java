@@ -55,6 +55,7 @@ public class Velocity extends Module {
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.NoXZ);
     private final NumberValue<Integer> attacks = new NumberValue<>("Attack Counts", "攻击计数", 4, 1, 5, 1, () -> mode.is(Mode.NoXZ));
     private final NumberValue<Double> alinkTime = new NumberValue<>("Max Alink Time (ms)", "最大Alink时间(ms)", 2500.0, 50.0, 10000.0, 50.0, () -> mode.is(Mode.NoXZ));
+    private final BoolValue render = new BoolValue("Render", "渲染", false);
     private final BoolValue debug = new BoolValue("Debug", "调试", false);
     /*public final BoolValue blockPush = new BoolValue("BlockPush", "阻止方块推动", true);
         public final BoolValue entityPush = new BoolValue("EntityPush", "阻止实体推动", true);
@@ -249,6 +250,7 @@ public class Velocity extends Module {
 
     @EventHandler
     public void onRender(Render3DEvent event) {
+        if (!render.get()) return;
         if (stage == VelocityStage.NONE) return;
         for (Entity entity : targets.keySet()) {
             if (!(entity instanceof PlayerEntity)) continue;
