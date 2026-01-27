@@ -14,6 +14,7 @@ import dev.mahiro.client.utils.rotation.MovementFix;
 import dev.mahiro.client.utils.rotation.RotationUtil;
 import dev.mahiro.client.utils.vector.Rotation;
 import dev.mahiro.client.values.impl.BoolValue;
+import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.component.DataComponentTypes;
@@ -30,6 +31,10 @@ import java.awt.*;
 import java.util.List;
 
 public class KillAura extends Module {
+    public enum AutoBlockMode {
+        Fake
+    }
+
     public KillAura() {
         super("KillAura", "杀戮光环", Category.Combat);
     }
@@ -37,6 +42,8 @@ public class KillAura extends Module {
     private final NumberValue<Double> aimRange = new NumberValue<>("Aim Range", "瞄准范围", 5.0, 1.0, 6.0, 0.1);
     private final NumberValue<Double> cps = new NumberValue<>("CPS", "攻击速度", 10.0, 1.0, 20.0, 1.0);
     private final NumberValue<Integer> rotateSpeed = new NumberValue<>("Rotation Speed", "转向速度", 10, 1, 10, 1);
+    private final BoolValue autoBlock = new BoolValue("AutoBlock", "自动格挡", false);
+    private final EnumValue<AutoBlockMode> autoBlockMode = new EnumValue<>("Block Mode", "格挡模式", AutoBlockMode.Fake, autoBlock::get);
     private final BoolValue teamCheck = new BoolValue("Team Check", "队伍检测", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
 
@@ -49,6 +56,10 @@ public class KillAura extends Module {
     protected void onDisable() {
         target = null;
         targets = null;
+    }
+
+    public boolean isAutoBlock() {
+        return autoBlock.get();
     }
 
     public Entity getCurrentTarget() {

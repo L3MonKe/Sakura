@@ -15,6 +15,7 @@ public class Chams extends Module {
     }
 
     private final BoolValue keepTextures = new BoolValue("Keep Textures", "Keep Textures", true);
+    public final BoolValue handItems = new BoolValue("Hand Items", "手持物品", false);
     private final BoolValue colorOverlay = new BoolValue("Color Overlay", "颜色显示", false);
     private final ColorValue color = new ColorValue("Color", "颜色", Color.WHITE, colorOverlay::get);
 

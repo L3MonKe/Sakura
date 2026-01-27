@@ -1,37 +1,41 @@
 package dev.mahiro.client.mixin.render;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.item.EatTransformationEvent;
-import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
-import dev.mahiro.client.events.render.item.RenderSwingAnimationEvent;
-import dev.mahiro.client.events.render.item.UpdateHeldItemsEvent;
-import dev.mahiro.client.module.impl.render.OldHitting;
+import dev.mahiro.client.events.render.item.EventHeldItemRenderer;
+import dev.mahiro.client.interfaces.IHeldItemRenderer;
+import dev.mahiro.client.module.impl.render.Animations;
+import dev.mahiro.client.module.impl.render.Chams;
+import dev.mahiro.client.module.impl.render.NoRender;
+import dev.mahiro.client.module.impl.render.ViewModel;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.HeldItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.FilledMapItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.SwordItem;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
+import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import static dev.mahiro.client.Mahiro.mc;
 
 @Mixin(HeldItemRenderer.class)
-public class MixinHeldItemRenderer {
+public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
+
     @Shadow
     @Final
     private MinecraftClient client;
@@ -54,146 +58,98 @@ public class MixinHeldItemRenderer {
     @Shadow
     private float prevEquipProgressOffHand;
 
-    @Unique
-    private float cachedSwingProgress;
-
-    @Unique
-    private float cachedEquipProgress;
-
-    @Unique
-    private Hand cachedHand;
-
-    @Shadow
-    private void applyEquipOffset(MatrixStack matrices, Arm arm, float equipProgress) {
-    }
-
     @Shadow
     private void applyEatOrDrinkTransformation(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player) {
     }
 
-    @Inject(method = "applyEatOrDrinkTransformation", at = @At(value = "HEAD"), cancellable = true)
-    private void hookApplyEatOrDrinkTransformation(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player, CallbackInfo ci) {
-        ci.cancel();
-        float h;
-        float f = (float) this.client.player.getItemUseTimeLeft() - tickDelta + 1.0f;
-        float g = f / (float) stack.getMaxUseTime(mc.player);
-        if (g < 0.8f) {
-            h = MathHelper.abs(MathHelper.cos(f / 4.0f * (float) Math.PI) * 0.1f);
-            EatTransformationEvent eatTransformationEvent = new EatTransformationEvent();
-            Mahiro.EVENT_BUS.post(eatTransformationEvent);
-            matrices.translate(0.0f, eatTransformationEvent.isCancelled() ? h * eatTransformationEvent.getFactor() : h, 0.0f);
-        }
-        h = 1.0f - (float) Math.pow(g, 27.0);
-        int i = arm == Arm.RIGHT ? 1 : -1;
-        matrices.translate(h * 0.6f * (float) i, h * -0.5f, h * 0.0f);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * h * 90.0f));
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(h * 10.0f));
-        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * h * 30.0f));
+    @Override
+    public float getEquippedProgressMainHand() {
+        return equipProgressMainHand;
     }
 
-    @ModifyArg(method = "updateHeldItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;clamp(FFF)F", ordinal = 2), index = 0)
-    private float hookEquipProgressMainhand(float value) {
-        RenderSwingAnimationEvent renderSwingAnimation = new RenderSwingAnimationEvent();
-        Mahiro.EVENT_BUS.post(renderSwingAnimation);
-        float f = mc.player.getAttackCooldownProgress(1.0f);
-        float modified = renderSwingAnimation.isCancelled() ? 1.0f : f * f * f;
-        return (ItemStack.areEqual(mainHand, mc.player.getMainHandStack()) ? modified : 0.0f) - equipProgressMainHand;
+    @Override
+    public void setEquippedProgressMainHand(float mainHand) {
+        this.equipProgressMainHand = mainHand;
     }
 
-    @Inject(method = "updateHeldItems", at = @At(value = "HEAD"), cancellable = true)
-    private void hookUpdateHeldItems(CallbackInfo ci) {
-        ItemStack itemStack = mc.player.getMainHandStack();
-        ItemStack itemStack2 = mc.player.getOffHandStack();
-        UpdateHeldItemsEvent updateHeldItemsEvent = new UpdateHeldItemsEvent();
-        Mahiro.EVENT_BUS.post(updateHeldItemsEvent);
-        if (updateHeldItemsEvent.isCancelled()) {
-            ci.cancel();
-            equipProgressMainHand = 1.0f;
-            equipProgressOffHand = 1.0f;
-            prevEquipProgressMainHand = 1.0f;
-            prevEquipProgressOffHand = 1.0f;
-            mainHand = itemStack;
-            offHand = itemStack2;
-        }
+    @Override
+    public float getEquippedProgressOffHand() {
+        return equipProgressOffHand;
     }
 
-    @Inject(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V", shift = At.Shift.AFTER))
-    private void hookRenderFirstPersonItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        HeldItemRendererEvent event = new HeldItemRendererEvent(matrices, hand);
+    @Override
+    public void setEquippedProgressOffHand(float offHand) {
+        this.equipProgressOffHand = offHand;
+    }
+
+    @Override
+    public void setItemStackMainHand(ItemStack stack) {
+        this.mainHand = stack;
+    }
+
+    @Override
+    public void setItemStackOffHand(ItemStack stack) {
+        this.offHand = stack;
+    }
+
+    @Inject(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V", shift = At.Shift.AFTER), cancellable = true)
+    private void onRenderItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+        if (mc.player == null || mc.world == null) return;
+        EventHeldItemRenderer event = new EventHeldItemRenderer(hand, item, equipProgress, matrices);
         Mahiro.EVENT_BUS.post(event);
+        if (event.isCancelled()) ci.cancel();
     }
 
-    @Inject(method = "renderFirstPersonItem", at = @At("HEAD"))
-    private void hookRenderFirstPersonItemHead(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
-        cachedSwingProgress = swingProgress;
-        cachedEquipProgress = equipProgress;
-        cachedHand = hand;
+    @Inject(method = "renderFirstPersonItem", at = @At(value = "RETURN"))
+    private void onRenderItemPost(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+        Chams chams = Mahiro.MODULES.getModule(Chams.class);
+        if (chams.isEnabled() && chams.handItems.get())
+            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
     }
 
-    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;isUsingItem()Z"))
-    private boolean redirectIsUsingItem(AbstractClientPlayerEntity player) {
-        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
-        if (oldHitting.isEnabled()
-                && mc.options.useKey.isPressed()
-                && player.getMainHandStack().getItem() instanceof SwordItem) {
-            return true;
+    @Inject(method = "renderFirstPersonItem", at = @At(value = "HEAD"), cancellable = true)
+    private void onRenderItemHook(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
+        Animations animations = Mahiro.MODULES.getModule(Animations.class);
+        if (animations != null && animations.shouldAnimate() && !(item.isEmpty()) && !(item.getItem() instanceof FilledMapItem)) {
+            ci.cancel();
+            animations.renderFirstPersonItemCustom(player, tickDelta, pitch, hand, swingProgress, item, equipProgress, matrices, vertexConsumers, light);
         }
-        return player.isUsingItem();
     }
 
-    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getItemUseTimeLeft()I"))
-    private int redirectGetItemUseTimeLeft(AbstractClientPlayerEntity player) {
-        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
-        if (oldHitting.isEnabled()
-                && mc.options.useKey.isPressed()
-                && player.getMainHandStack().getItem() instanceof SwordItem) {
-            return 1;
+
+    private void applyEatOrDrinkTransformationCustom(MatrixStack matrices, float tickDelta, Arm arm, @NotNull ItemStack stack) {
+        float f = (float) mc.player.getItemUseTimeLeft() - tickDelta + 1.0F;
+        float g = f / (float) stack.getMaxUseTime(mc.player);
+        float h;
+        if (g < 0.8F) {
+            h = MathHelper.abs(MathHelper.cos(f / 4.0F * 3.1415927F) * 0.005F);
+            matrices.translate(0.0F, h, 0.0F);
         }
-        return player.getItemUseTimeLeft();
+        h = 1.0F - (float) Math.pow(g, 27.0);
+        int i = arm == Arm.RIGHT ? 1 : -1;
+
+        ViewModel viewModel = Mahiro.MODULES.getModule(ViewModel.class);
+        matrices.translate(h * 0.6F * (float) i * viewModel.eatX.get(), h * -0.5F * viewModel.eatY.get(), h * 0.0F);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * h * 90.0F));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(h * 10.0F));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * h * 30.0F));
     }
 
-    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/AbstractClientPlayerEntity;getActiveHand()Lnet/minecraft/util/Hand;"))
-    private Hand redirectGetActiveHand(AbstractClientPlayerEntity player) {
-        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
-        if (oldHitting.isEnabled()
-                && mc.options.useKey.isPressed()
-                && player.getMainHandStack().getItem() instanceof SwordItem) {
-            return Hand.MAIN_HAND;
+    @Inject(method = "applyEatOrDrinkTransformation", at = @At(value = "HEAD"), cancellable = true)
+    private void applyEatOrDrinkTransformationHook(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player, CallbackInfo ci) {
+        Animations animations = Mahiro.MODULES.getModule(Animations.class);
+        if (animations.isEnabled() && animations.shouldAnimate()) {
+            applyEatOrDrinkTransformationCustom(matrices, tickDelta, arm, stack);
+            ci.cancel();
         }
-        return player.getActiveHand();
     }
 
-    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;applyEatOrDrinkTransformation(Lnet/minecraft/client/util/math/MatrixStack;FLnet/minecraft/util/Arm;Lnet/minecraft/item/ItemStack;Lnet/minecraft/entity/player/PlayerEntity;)V"))
-    private void redirectApplyEatOrDrinkTransformation(HeldItemRenderer instance, MatrixStack matrices, float tickDelta, Arm arm, ItemStack item, PlayerEntity player) {
-        OldHitting oldHitting = Mahiro.MODULES.getModule(OldHitting.class);
-        if (oldHitting.isEnabled()) {
-            if (cachedSwingProgress != 0.0f) {
-                float side = cachedHand == Hand.MAIN_HAND ? 1.0f : -1.0f;
-                matrices.translate(side * 0.56f, -0.52f + cachedEquipProgress * -0.6f, -0.72f);
-                float f2 = MathHelper.sin(cachedSwingProgress * cachedSwingProgress * (float) Math.PI);
-                float f1 = MathHelper.sin(MathHelper.sqrt(cachedSwingProgress) * (float) Math.PI);
-                matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees(f2 * 20.0f));
-                matrices.multiply(RotationAxis.NEGATIVE_Z.rotationDegrees(f2 * 20.0f));
-                matrices.multiply(RotationAxis.NEGATIVE_X.rotationDegrees(f2 * 80.0f));
-                matrices.translate(-0.8f, 0.2f, 0f);
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(30.0f));
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-80.0f));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(60.0f));
-                matrices.scale(1.4f, 1.4f, 1.4f);
-                return;
-            }
-            applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
-            doSwingAnimation(matrices, cachedSwingProgress);
-            return;
+    @ModifyArgs(method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/network/ClientPlayerEntity;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;renderFirstPersonItem(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/util/Hand;FLnet/minecraft/item/ItemStack;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
+    private void renderItem(Args args) {
+        NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
+        if (noRender.isEnabled() && noRender.noSwing.get()) {
+            args.set(4, 0.0F);
         }
-        applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
     }
 
-    private void doSwingAnimation(MatrixStack matrices, float swingProgress) {
-        float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
-        float f1 = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(f * -20.0f));
-        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(f1 * -20.0f));
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(f1 * -80.0f));
-    }
 }
