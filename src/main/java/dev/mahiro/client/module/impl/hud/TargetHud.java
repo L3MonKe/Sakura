@@ -13,8 +13,7 @@ import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
-import dev.mahiro.client.utils.animations.impl.EaseOutBack;
-import dev.mahiro.client.utils.animations.impl.EaseOutCirc;
+import dev.mahiro.client.utils.animations.impl.EaseOutSine;
 import dev.mahiro.client.utils.color.ColorUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
@@ -84,8 +83,8 @@ public class TargetHud extends HudModule {
     private static final Identifier THUD_TEX = Identifier.of("mahiro", "textures/hud/thud.png");
 
     // Animations
-    private final Animation animation = new EaseOutBack(300, 1.0, Direction.BACKWARDS);
-    private final Animation damageAnim = new EaseOutCirc(150, 1.0, Direction.BACKWARDS);
+    private final Animation animation = new EaseOutSine(300, 1.0, Direction.BACKWARDS);
+    private final Animation damageAnim = new EaseOutSine(150, 1.0, Direction.BACKWARDS);
     
     private float displayHealth = -1;
     private float lastTargetHealth = -1;

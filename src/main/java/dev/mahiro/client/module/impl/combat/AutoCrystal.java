@@ -1,286 +1,210 @@
 package dev.mahiro.client.module.impl.combat;
 
 import dev.mahiro.client.events.client.TickEvent;
-import dev.mahiro.client.manager.Managers;
-import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
-import dev.mahiro.client.utils.combat.CrystalUtil;
-import dev.mahiro.client.utils.entity.EntityUtil;
-import dev.mahiro.client.utils.player.EatingUtil;
-import dev.mahiro.client.utils.player.FindItemResult;
-import dev.mahiro.client.utils.player.InvUtil;
-import dev.mahiro.client.utils.rotation.MovementFix;
-import dev.mahiro.client.utils.rotation.RaytraceUtil;
-import dev.mahiro.client.utils.rotation.RotationUtil;
-import dev.mahiro.client.utils.vector.Rotation;
-import dev.mahiro.client.utils.world.BlockUtil;
+import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
+import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.decoration.EndCrystalEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 
-import java.util.List;
+import java.util.Random;
 
 public class AutoCrystal extends Module {
-    private final NumberValue<Double> targetRange = new NumberValue<>("Target Range", "目标范围", 10.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> placeRange = new NumberValue<>("Place Range", "放置范围", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> breakRange = new NumberValue<>("Break Range", "破坏范围", 5.0, 1.0, 6.0, 0.1);
-    private final NumberValue<Double> wallRange = new NumberValue<>("Wall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1);
-    private final NumberValue<Double> minDamage = new NumberValue<>("Min Damage", "最小伤害", 4.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> maxSelfDamage = new NumberValue<>("Max Self Damage", "最大自我伤害", 8.0, 1.0, 20.0, 0.5);
-    private final NumberValue<Double> facePlaceHealth = new NumberValue<>("Face Place Health", "脸放置伤害", 8.0, 0.0, 36.0, 0.5);
-    private final NumberValue<Double> minCPS = new NumberValue<>("Min CPS", "最小CPS", 8.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCPS = new NumberValue<>("Max CPS", "最大CPS", 12.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 1.5, 0.1, 5.0, 0.1);
-    private final NumberValue<Double> angleTolerance = new NumberValue<>("Angle Tolerance", "角度容差", 20.0, 1.0, 90.0, 1.0);
-    private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
-    private final BoolValue strict = new BoolValue("Strict", "严格模式", true);
-    private final BoolValue jitter = new BoolValue("Jitter", "抖动模式", true);
 
-    private Entity target;
-    private long lastBreakTime;
-    private long lastPlaceTime;
-    private long breakDelay;
-    private long placeDelay;
+    private final EnumValue<PlacementMode> placementMode = new EnumValue<>("Placement Mode", "放置模式", PlacementMode.RClick);
+    private final NumberValue<Double> placeCooldown = new NumberValue<>("Place Cooldown", "放置冷却", 50.0, 0.0, 1000.0, 1.0);
+    private final NumberValue<Double> popCooldown = new NumberValue<>("Pop Cooldown", "炸水晶冷却", 0.0, 0.0, 1000.0, 1.0);
+    private final BoolValue onlyOwnCrystal = new BoolValue("Only Own Crystal", "仅炸自己", false);
+    private final BoolValue preserveItems = new BoolValue("No Loot Pop", "保护掉落物", true);
+    private final NumberValue<Double> lootProtectRadiusX = new NumberValue<>("Protect X", "保护半径X", 8.0, 0.0, 16.0, 0.1);
+    private final NumberValue<Double> lootProtectRadiusY = new NumberValue<>("Protect Y", "保护半径Y", 8.0, 0.0, 16.0, 0.1);
+    private final NumberValue<Double> lootProtectRadiusZ = new NumberValue<>("Protect Z", "保护半径Z", 8.0, 0.0, 16.0, 0.1);
+    private final EnumValue<RandomizationMode> randomization = new EnumValue<>("Randomization", "随机化", RandomizationMode.None);
+
+    private final TimerUtil timerUtil = new TimerUtil();
+    private final Random random = new Random();
+    private boolean playerPlacedCrystal = false;
 
     public AutoCrystal() {
-        super("AutoCrystal", "自动水晶", Category.Combat);
+        super("AutoCrystal", "自动水晶 (Ghost)", Category.Combat);
     }
 
     @Override
     public void onEnable() {
-        target = null;
-        resetBreakTimer();
-        resetPlaceTimer();
-    }
-
-    private void resetBreakTimer() {
-        lastBreakTime = System.currentTimeMillis();
-        double range = maxCPS.get().doubleValue() - minCPS.get().doubleValue();
-        double cps = minCPS.get().doubleValue() + range * Math.random();
-        breakDelay = (long) (1000.0 / cps);
-    }
-
-    private void resetPlaceTimer() {
-        lastPlaceTime = System.currentTimeMillis();
-        double range = maxCPS.get().doubleValue() - minCPS.get().doubleValue();
-        double cps = minCPS.get().doubleValue() + range * Math.random();
-        placeDelay = (long) (1000.0 / cps);
+        timerUtil.reset();
+        playerPlacedCrystal = false;
     }
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
-
-        // 如果正在吃东西/喝药/使用物品，暂停一切动作
-        if (EatingUtil.isEating()) return;
-
-        target = EntityUtil.getClosestPlayer(targetRange.get().doubleValue());
-        if (target == null) return;
-
-        // 2. 攻击水晶 (Break Crystal)
-        if (handleCrystalBreak()) return;
-
-        // 3. 放置水晶 (Place Crystal)
-        handleCrystalPlace();
+        endCrystalTrigger();
+        trackPlacedCrystals();
+        placeCrystal();
     }
 
-    private boolean handleCrystalBreak() {
-        // 查找范围内最近的水晶
-        EndCrystalEntity bestCrystal = null;
-        double bestDistSq = Double.MAX_VALUE;
-        double rangeSq = breakRange.get().doubleValue() * breakRange.get().doubleValue();
+    private void endCrystalTrigger() {
+        Entity target = raycastEndCrystal(5);
+        if (target == null)
+            return;
 
-        Box box = new Box(mc.player.getPos(), mc.player.getPos()).expand(breakRange.get().doubleValue());
-        List<EndCrystalEntity> crystals = mc.world.getEntitiesByClass(EndCrystalEntity.class, box, e -> true);
+        if (onlyOwnCrystal.get() && !playerPlacedCrystal)
+            return;
 
-        for (EndCrystalEntity crystal : crystals) {
-            if (!crystal.isAlive()) continue;
-            double distSq = mc.player.squaredDistanceTo(crystal);
-            if (distSq > rangeSq) continue;
+        if (preserveItems.get() && itemNearby(target, 6))
+            return;
 
-            if (distSq < bestDistSq) {
-                bestDistSq = distSq;
-                bestCrystal = crystal;
+        if (timerUtil.passedMS(getCooldownValueWithRandomization(popCooldown.get()))) {
+            mc.interactionManager.attackEntity(mc.player, target);
+            mc.player.swingHand(Hand.MAIN_HAND);
+            timerUtil.reset();
+            playerPlacedCrystal = false;
+        }
+    }
+
+    private double getCooldownValueWithRandomization(double baseValue) {
+        int randomizationValue = 0;
+        switch (randomization.get()) {
+            case Small:
+                if (random.nextBoolean()) randomizationValue = random.nextInt(11) - 5; // -5 to 5
+                break;
+            case Medium:
+                if (random.nextBoolean()) randomizationValue = random.nextInt(31) - 15; // -15 to 15
+                break;
+            case Large:
+                if (random.nextBoolean()) randomizationValue = random.nextInt(51) - 25; // -25 to 25
+                break;
+            case None:
+            default:
+                break;
+        }
+        return Math.max(0, baseValue + randomizationValue);
+    }
+
+    private void trackPlacedCrystals() {
+        if (mc.player.getMainHandStack().getItem() == Items.END_CRYSTAL && mc.options.useKey.isPressed()) {
+            playerPlacedCrystal = true;
+        }
+    }
+
+    private Entity raycastEndCrystal(double range) {
+        Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
+        Vec3d viewVector = mc.player.getRotationVecClient();
+        Vec3d extendedPoint = cameraPos.add(viewVector.x * range, viewVector.y * range, viewVector.z * range);
+
+        for (Entity entity : mc.world.getEntities()) {
+            if (entity instanceof EndCrystalEntity) {
+                if (entity.getBoundingBox().expand(0.3).intersects(cameraPos, extendedPoint)) {
+                    return entity;
+                }
             }
         }
+        return null;
+    }
 
-        if (bestCrystal != null) {
-            // 隔墙检测 / 严格射线检测
-            boolean canSee = RaytraceUtil.canSeePointFrom(mc.player.getEyePos(), bestCrystal.getPos());
-            if (strict.get()) {
-                if (!canSee) return false;
-            } else {
-                if (!canSee && mc.player.squaredDistanceTo(bestCrystal) > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
-                    return false;
+    private boolean itemNearby(Entity entity, double range) {
+        Box boundingBox = new Box(
+                entity.getPos().x - lootProtectRadiusX.get(),
+                entity.getPos().y - lootProtectRadiusY.get(),
+                entity.getPos().z - lootProtectRadiusZ.get(),
+                entity.getPos().x + lootProtectRadiusX.get(),
+                entity.getPos().y + lootProtectRadiusY.get(),
+                entity.getPos().z + lootProtectRadiusZ.get()
+        );
+
+        for (Entity nearbyEntity : mc.world.getOtherEntities(null, boundingBox)) {
+            if (nearbyEntity instanceof ItemEntity) {
+                if (isPreciousItem(((ItemEntity) nearbyEntity).getStack().getItem())) {
+                    return true;
                 }
             }
-
-            // 攻击水晶
-            Rotation rot;
-            if (jitter.get()) {
-                // Add random jitter to entity hit
-                double x = bestCrystal.getX() + (Math.random() - 0.5) * 0.2;
-                double y = bestCrystal.getY() + (bestCrystal.getHeight() / 2.0) + (Math.random() - 0.5) * 0.2;
-                double z = bestCrystal.getZ() + (Math.random() - 0.5) * 0.2;
-                rot = RotationUtil.calculate(new Vec3d(x, y, z));
-            } else {
-                rot = RotationUtil.calculate(bestCrystal);
-            }
-
-            Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.Highest);
-
-            if (isFacing(rot) && System.currentTimeMillis() - lastBreakTime >= breakDelay) {
-                // Double check if we are actually looking at it (Server Side)
-                if (strict.get() && !RaytraceUtil.facingEnemy(bestCrystal, breakRange.get().doubleValue(), Managers.ROTATION.lastRotations)) {
-                    return true; // Wait for rotation
-                }
-
-                mc.interactionManager.attackEntity(mc.player, bestCrystal);
-                mc.player.swingHand(Hand.MAIN_HAND);
-                resetBreakTimer();
-            }
-            return true; // 锁定目标
         }
         return false;
     }
 
-    private void handleCrystalPlace() {
-        FindItemResult crystal = InvUtil.findInHotbar(Items.END_CRYSTAL);
-        if (!crystal.found()) return;
+    private boolean isPreciousItem(Item item) {
+        return item == Items.DIAMOND ||
+                item == Items.DIAMOND_BLOCK ||
+                item == Items.DIAMOND_SWORD ||
+                item == Items.DIAMOND_PICKAXE ||
+                item == Items.DIAMOND_AXE ||
+                item == Items.DIAMOND_SHOVEL ||
+                item == Items.DIAMOND_HOE ||
+                item == Items.DIAMOND_HELMET ||
+                item == Items.DIAMOND_CHESTPLATE ||
+                item == Items.DIAMOND_LEGGINGS ||
+                item == Items.DIAMOND_BOOTS ||
+                item == Items.NETHERITE_INGOT ||
+                item == Items.NETHERITE_BLOCK ||
+                item == Items.NETHERITE_SWORD ||
+                item == Items.NETHERITE_PICKAXE ||
+                item == Items.NETHERITE_AXE ||
+                item == Items.NETHERITE_SHOVEL ||
+                item == Items.NETHERITE_HOE ||
+                item == Items.NETHERITE_HELMET ||
+                item == Items.NETHERITE_CHESTPLATE ||
+                item == Items.NETHERITE_LEGGINGS ||
+                item == Items.NETHERITE_BOOTS;
+    }
 
-        // 寻找最佳放置点 (寻找目标周围最近的可放置点)
-        BlockPos bestPos = null;
-        float bestDamage = 0;
-        double rangeSq = placeRange.get().doubleValue() * placeRange.get().doubleValue();
-
-        BlockPos pPos = mc.player.getBlockPos();
-        int r = (int) Math.ceil(placeRange.get().doubleValue());
-
-        for (int x = -r; x <= r; x++) {
-            for (int y = -r; y <= r; y++) {
-                for (int z = -r; z <= r; z++) {
-                    BlockPos pos = pPos.add(x, y, z);
-                    Vec3d posVec = Vec3d.ofCenter(pos);
-                    double distSq = mc.player.squaredDistanceTo(posVec);
-                    if (distSq > rangeSq) continue;
-
-                    // 墙体检测
-                    boolean canSee = RaytraceUtil.canSeePointFrom(mc.player.getEyePos(), posVec);
-                    if (strict.get()) {
-                        if (!canSee) continue;
-                    } else {
-                        if (!canSee && distSq > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
-                            continue;
-                        }
-                    }
-
-                    if (canPlaceCrystal(pos)) {
-                        float damage = CrystalUtil.calculateDamage(pos, target);
-                        float minDmg = minDamage.get().floatValue();
-
-                        if (target instanceof PlayerEntity player) {
-                            if (player.getHealth() + player.getAbsorptionAmount() <= facePlaceHealth.get().floatValue()) {
-                                minDmg = 2.0f;
-                            }
-                        }
-
-                        if (damage < minDmg) continue;
-
-                        float selfDamage = CrystalUtil.calculateDamage(pos, mc.player);
-                        if (selfDamage > maxSelfDamage.get().doubleValue()) continue;
-
-                        if (damage > bestDamage) {
-                            bestDamage = damage;
-                            bestPos = pos;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (bestPos != null) {
-            // FindItemResult crystal = InvUtil.findInHotbar(Items.END_CRYSTAL); // Already found above
-
-            BlockPos finalBestPos = bestPos;
-            Rotation rot;
-            if (jitter.get()) {
-                double x = finalBestPos.getX() + 0.5 + (Math.random() - 0.5) * 0.2;
-                double y = finalBestPos.getY() + 1.0; // Top face
-                double z = finalBestPos.getZ() + 0.5 + (Math.random() - 0.5) * 0.2;
-                rot = RotationUtil.calculate(new Vec3d(x, y, z));
-            } else {
-                rot = RotationUtil.calculate(finalBestPos.up(), Direction.UP);
-            }
-
-            Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.High);
-
-            if (isFacing(rot) && System.currentTimeMillis() - lastPlaceTime >= placeDelay) {
-                // Relax strict check: allow hitting any side of the block
-                if (strict.get() && !RaytraceUtil.overBlock(Managers.ROTATION.lastRotations, Direction.UP, finalBestPos, false)) {
-                    return;
-                }
-                executeAction(() -> {
-                    BlockUtil.clickBlock(finalBestPos, Direction.UP, false, false);
-                    mc.player.swingHand(Hand.MAIN_HAND);
-                    resetPlaceTimer();
-                }, crystal.slot(), autoSwitch.get());
-            }
+    private void placeCrystal() {
+        if (placementMode.is(PlacementMode.RClick) && mc.options.useKey.isPressed() && mc.player.getInventory().selectedSlot == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
+            placeBlock();
+            timerUtil.reset();
+        } else if (placementMode.is(PlacementMode.Look) && isObsidianOrBedrockInCrosshair() && mc.player.getInventory().selectedSlot == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
+            placeBlock();
+            timerUtil.reset();
         }
     }
 
-    // Helper to execute action with safe switching
-    private boolean executeAction(Runnable action, int slot, boolean autoSwitch) {
-        int oldSlot = mc.player.getInventory().selectedSlot;
-        if (autoSwitch) InvUtil.swap(slot, false);
-        else if (mc.player.getInventory().selectedSlot != slot) return false;
-
-        action.run();
-
-        if (autoSwitch) InvUtil.swap(oldSlot, false);
-        return true;
-    }
-
-    private boolean isFacing(Rotation targetRot) {
-        Rotation current;
-        if (strict.get()) {
-            // Strict mode: check against the LAST sent rotation (or current server rotation)
-            // This ensures we don't interact before the rotation packet is actually sent/processed
-            current = Managers.ROTATION.lastRotations;
-            if (current == null) current = new Rotation(mc.player.getYaw(), mc.player.getPitch());
-        } else {
-            // Loose mode: assume our setRotations update is instant (risky)
-            current = Managers.ROTATION.rotations;
+    private boolean isObsidianOrBedrockInCrosshair() {
+        if (mc.crosshairTarget != null && mc.crosshairTarget.getType() == HitResult.Type.BLOCK) {
+            BlockPos blockPos = ((BlockHitResult) mc.crosshairTarget).getBlockPos();
+            BlockState blockState = mc.world.getBlockState(blockPos);
+            return blockState.getBlock() == Blocks.OBSIDIAN || blockState.getBlock() == Blocks.BEDROCK;
         }
-
-        float yawDiff = Math.abs(net.minecraft.util.math.MathHelper.wrapDegrees(current.yaw - targetRot.yaw));
-        float pitchDiff = Math.abs(net.minecraft.util.math.MathHelper.wrapDegrees(current.pitch - targetRot.pitch));
-        return yawDiff <= angleTolerance.get().doubleValue() && pitchDiff <= angleTolerance.get().doubleValue();
+        return false;
     }
 
-    private boolean canPlaceCrystal(BlockPos pos) {
-        // 检查基座是黑曜石或基岩
-        if (mc.world.getBlockState(pos).getBlock() != Blocks.OBSIDIAN &&
-                mc.world.getBlockState(pos).getBlock() != Blocks.BEDROCK) return false;
+    private void placeBlock() {
+        if (mc.crosshairTarget == null || mc.crosshairTarget.getType() != HitResult.Type.BLOCK) return;
+        BlockHitResult hitResult = (BlockHitResult) mc.crosshairTarget;
+        mc.player.swingHand(mc.player.getActiveHand());
+        mc.getNetworkHandler().sendPacket(new PlayerInteractBlockC2SPacket(Hand.MAIN_HAND, hitResult, 0));
+    }
 
-        // 检查上方空间
-        BlockPos up1 = pos.up();
-        BlockPos up2 = up1.up();
+    private int getCrystalSlot() {
+        for (int i = 0; i <= 8; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack.getItem() == Items.END_CRYSTAL) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
-        if (!mc.world.isAir(up1)) return false;
-        // 1.12.2+ 不需要检查第二格空气，但在某些服务器可能需要，这里暂时只检查一格，或者检查实体
+    private enum PlacementMode {
+        RClick, Look
+    }
 
-        Box box = new Box(up1);
-        return !EntityUtil.intersectsWithEntity(box, entity -> true);
+    private enum RandomizationMode {
+        None, Small, Medium, Large
     }
 }
