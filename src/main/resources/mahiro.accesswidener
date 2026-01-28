@@ -7,5 +7,7 @@ accessible method net/minecraft/client/world/ClientWorld getEntityLookup ()Lnet/
 accessible field net/minecraft/world/entity/SimpleEntityLookup cache Lnet/minecraft/world/entity/SectionedEntityCache;
 accessible field net/minecraft/world/entity/SectionedEntityCache trackedPositions Lit/unimi/dsi/fastutil/longs/LongSortedSet;
 accessible field net/minecraft/world/entity/SectionedEntityCache trackingSections Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
+accessible field net/minecraft/client/render/item/ItemRenderState$LayerRenderState model Lnet/minecraft/client/render/model/BakedModel;
+accessible field net/minecraft/client/render/item/ItemRenderer itemRenderState Lnet/minecraft/client/render/item/ItemRenderState;
 accessible class net/minecraft/client/render/BackgroundRenderer$StatusEffectFogModifier
 accessible method net/minecraft/client/world/ClientWorld getPendingUpdateManager ()Lnet/minecraft/client/network/PendingUpdateManager;

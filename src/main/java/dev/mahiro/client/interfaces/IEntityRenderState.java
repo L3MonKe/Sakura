@@ -4,7 +4,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 
 public interface IEntityRenderState {
-    LivingEntity getEntity();
+    Entity getEntity();
 
-    void setEntity(final Entity entity);
+    void setEntity(Entity entity);
 }

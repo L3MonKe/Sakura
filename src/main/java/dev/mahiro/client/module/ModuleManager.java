@@ -40,6 +40,8 @@ public class ModuleManager {
         add(new AutoCrystal());
         add(new AutoAnchor());
         add(new AutoTotem());
+        add(new LegitCrystal());
+        add(new SafeHotbar());
 
         // Movement
         add(new AutoSprint());
