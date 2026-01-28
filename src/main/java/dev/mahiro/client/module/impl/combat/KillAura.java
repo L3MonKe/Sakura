@@ -40,6 +40,7 @@ public class KillAura extends Module {
     }
 
     private final NumberValue<Double> aimRange = new NumberValue<>("Aim Range", "瞄准范围", 5.0, 1.0, 6.0, 0.1);
+    private final NumberValue<Double> searchRange = new NumberValue<>("Search Range", "搜索范围", 10.0, 1.0, 20.0, 0.1);
     private final NumberValue<Double> cps = new NumberValue<>("CPS", "攻击速度", 10.0, 1.0, 20.0, 1.0);
     private final NumberValue<Integer> rotateSpeed = new NumberValue<>("Rotation Speed", "转向速度", 10, 1, 10, 1);
     private final BoolValue autoBlock = new BoolValue("AutoBlock", "自动格挡", false);
@@ -77,10 +78,12 @@ public class KillAura extends Module {
         findTarget();
 
         if (target != null) {
-            Rotation calculate = RotationUtil.calculate(target);
-            Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
-            if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
-                attackTarget();
+            if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
+                Rotation calculate = RotationUtil.calculate(target);
+                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
+                    attackTarget();
+                }
             }
         }
     }
@@ -112,7 +115,7 @@ public class KillAura extends Module {
     }
 
     private void findTarget() {
-        double range = aimRange.get();
+        double range = Math.max(aimRange.get(), searchRange.get());
         double rangeSq = range * range;
 
         this.target = null;
@@ -132,7 +135,7 @@ public class KillAura extends Module {
             }
         }
 
-        this.setSuffix(candidates.size() + " Targets");
+
     }
 
     private boolean isEnemy(Entity entity) {

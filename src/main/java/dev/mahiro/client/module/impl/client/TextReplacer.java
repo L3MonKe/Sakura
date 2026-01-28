@@ -9,11 +9,13 @@ import java.util.Arrays;
 import java.util.List;
 
 public class TextReplacer {
+    // Unicode for "布吉岛" (Bujidao) to avoid encoding issues
     private static final String BUJIDAO = "\u5e03\u5409\u5c9b";
-
-    // 1. §d布吉岛
-    // 2. &d布吉岛
-    // 3. 布吉岛
+    
+    // Priority list of targets to replace. Longer matches first to consume color codes.
+    // 1. §d布吉岛 (Section sign d + Bujidao)
+    // 2. &d布吉岛 (Ampersand d + Bujidao)
+    // 3. 布吉岛 (Bujidao raw)
     private static final List<String> TARGETS = Arrays.asList(
             "\u00a7d" + BUJIDAO,
             "&d" + BUJIDAO,
@@ -34,6 +36,7 @@ public class TextReplacer {
         String bestTarget = null;
         int firstIndex = -1;
 
+        // Find the first occurring target
         for (String target : TARGETS) {
             int index = original.indexOf(target);
             if (index != -1) {
@@ -56,7 +59,9 @@ public class TextReplacer {
             result.append(getGradientMahiro());
             
             lastIndex = index + target.length();
-
+            
+            // Search for next occurrence
+            // We need to check which target matches next
             index = -1;
             String nextTarget = null;
             int nextMinIndex = -1;
@@ -98,9 +103,11 @@ public class TextReplacer {
     }
 
     private static int getPinkWhiteColor(int offset, long time) {
+        // Dynamic gradient between Pink and White
         double speed = 2.0; 
         double width = 300.0; 
-
+        
+        // Sine wave for smooth transition
         double progress = (Math.sin((time * 0.003 * speed + offset * 0.5)) + 1.0) / 2.0;
         
         Color pink = new Color(255, 180, 225); // Lighter Pink

@@ -113,6 +113,7 @@ public class ModuleManager {
         add(new NotifyHud());
         add(new PotionHud());
         add(new TargetHud());
+        add(new ScoreBoardHud());
         add(new WatermarkHud());
     }
 
