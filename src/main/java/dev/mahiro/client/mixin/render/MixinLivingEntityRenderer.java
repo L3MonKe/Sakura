@@ -45,11 +45,6 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
         return false;
     }
 
-    @Inject(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At("HEAD"))
-    private void updateRenderStateEntity(LivingEntity entity, S state, float tickDelta, CallbackInfo ci) {
-        ((IEntityRenderState) state).setEntity(entity);
-    }
-
     @ModifyReturnValue(method = "getRenderLayer", at = @At("RETURN"))
     private RenderLayer removePlayerTexture(RenderLayer original, S state, boolean showBody, boolean translucent, boolean showOutline) {
         final Chams chamsModule = Mahiro.MODULES.getModule(Chams.class);
