@@ -67,6 +67,7 @@ public class ModuleManager {
         add(new BowBomb());
         add(new Disabler());
         add(new GrimFly());
+        add(new MiddleClickPearl());
         add(new FakePlayer());
         add(new GhostHand());
         add(new NoRotate());
