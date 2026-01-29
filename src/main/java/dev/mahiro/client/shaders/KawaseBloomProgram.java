@@ -11,8 +11,8 @@ import java.awt.*;
 
 import static dev.mahiro.client.Mahiro.mc;
 
-public class BlurProgram {
-    private static final ShaderProgramKey PROGRAM_KEY = new ShaderProgramKey(Identifier.of("mahiro", "core/blur"), VertexFormats.POSITION, Defines.EMPTY);
+public class KawaseBloomProgram {
+    private static final ShaderProgramKey PROGRAM_KEY = new ShaderProgramKey(Identifier.of("mahiro", "core/kawase_bloom"), VertexFormats.POSITION, Defines.EMPTY);
 
     private ShaderProgram program;
     private GlUniform uSize;
@@ -25,7 +25,7 @@ public class BlurProgram {
 
     private Framebuffer input;
 
-    public BlurProgram() {
+    public KawaseBloomProgram() {
         WindowResizeCallback.EVENT.register((client, window) -> {
             if (input != null) {
                 input.resize(window.getFramebufferWidth(), window.getFramebufferHeight());
@@ -62,7 +62,8 @@ public class BlurProgram {
 
         float factor = (float) mc.getWindow().getScaleFactor();
         if (radius != null) radius.set(r * factor);
-        if (uLocation != null) uLocation.set(x * factor, -y * factor + mc.getWindow().getScaledHeight() * factor - height * factor);
+        // Use getFramebufferHeight directly to avoid scaling rounding errors
+        if (uLocation != null) uLocation.set(x * factor, -y * factor + mc.getWindow().getFramebufferHeight() - height * factor);
         if (uSize != null) uSize.set(width * factor, height * factor);
         if (brightness != null) brightness.set(blurOpacity);
         if (quality != null) quality.set(blurStrenth);

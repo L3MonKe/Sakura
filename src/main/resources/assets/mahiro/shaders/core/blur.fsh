@@ -33,7 +33,7 @@ vec4 blur() {
     }
 
     Color /= 81.0;
-    return (Color + color1);
+    return Color;
 }
 
 void main() {

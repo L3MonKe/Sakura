@@ -3,6 +3,7 @@ package dev.mahiro.client.mixin.render;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.Render2DEvent;
 import dev.mahiro.client.module.impl.hud.HotbarHud;
+import dev.mahiro.client.module.impl.hud.ScoreBoardHud;
 import dev.mahiro.client.module.impl.render.NoRender;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -64,7 +65,10 @@ public class MixinInGameHud {
     @Inject(method = "renderScoreboardSidebar(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/scoreboard/ScoreboardObjective;)V", at = @At("HEAD"), cancellable = true)
     private void onRenderScoreboardSidebar(DrawContext context, ScoreboardObjective objective, CallbackInfo ci) {
         NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
-        if (noRender.noScoreboard()) ci.cancel();
+        ScoreBoardHud scoreBoardHud = Mahiro.MODULES.getModule(ScoreBoardHud.class);
+        if ((noRender != null && noRender.noScoreboard()) || (scoreBoardHud != null && scoreBoardHud.isEnabled())) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "renderSpyglassOverlay", at = @At("HEAD"), cancellable = true)
