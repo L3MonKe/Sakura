@@ -11,11 +11,9 @@ import java.awt.*;
 
 public class Shader2DUtil {
     public static BlurProgram BLUR_PROGRAM;
-    public static KawaseBloomProgram KAWASE_BLOOM_PROGRAM;
 
     public static void init() {
         BLUR_PROGRAM = new BlurProgram();
-        KAWASE_BLOOM_PROGRAM = new KawaseBloomProgram();
     }
 
     public static void drawQuadBlur(MatrixStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
