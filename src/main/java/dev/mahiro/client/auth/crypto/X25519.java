@@ -1,10 +1,13 @@
 package dev.mahiro.client.auth.crypto;
 
+import dev.mahiro.obf.ZKMIndy;
+
 import javax.crypto.KeyAgreement;
 import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
+@ZKMIndy
 public final class X25519 {
     private X25519() {
     }

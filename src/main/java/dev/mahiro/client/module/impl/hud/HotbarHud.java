@@ -67,15 +67,6 @@ public class HotbarHud extends HudModule {
 
     @Override
     public void renderInEditor(DrawContext context, float mouseX, float mouseY) {
-        if (dragging) {
-            int gameWidth = mc.getWindow().getScaledWidth();
-            int gameHeight = mc.getWindow().getScaledHeight();
-            x = Math.max(0, Math.min(mouseX - dragX, gameWidth - width));
-            y = Math.max(0, Math.min(mouseY - dragY, gameHeight - height));
-            relativeX = x / gameWidth;
-            relativeY = y / gameHeight;
-        }
-
         updateAnimation();
         calculateLayout();
         renderBloom(context);

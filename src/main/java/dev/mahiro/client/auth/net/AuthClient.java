@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.auth.crypto.*;
+import dev.mahiro.obf.ZKMIndy;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -25,11 +26,12 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+@ZKMIndy
 public final class AuthClient {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
 
     private static final byte[] INFO = "lemon-auth-v1".getBytes(StandardCharsets.UTF_8);
-    private static final String DEFAULT_BASE_URL = "http://127.0.0.1:8443";
+    private static final String DEFAULT_BASE_URL = "http://183.66.27.22:8443";
 
     private final HttpClient http;
     private final String baseUrl;

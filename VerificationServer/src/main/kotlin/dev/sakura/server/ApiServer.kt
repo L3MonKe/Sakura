@@ -210,12 +210,6 @@ private fun handleUserRegister(state: AppState, req: EncryptedRequest): Encrypte
             println("AUTH_REGISTER u=$username lic=${licenseKey.take(12)} ok=false err=LICENSE_NOT_FOUND loadedLicenses=" + state.store.listLicenses().size)
         }
     )
-    if (lic0.status == "BANNED" || lic0.status == "REVOKED") return encryptUserAuthResponse(
-        session,
-        UserAuthPlainResponse(ok = false, error = "LICENSE_REVOKED").also {
-            println("AUTH_REGISTER u=$username lic=${licenseKey.take(12)} ok=false err=LICENSE_REVOKED")
-        }
-    )
     val existingUser = state.store.findUserByUsername(username)
     val user = if (existingUser != null) {
         if (!state.store.verifyUserPassword(existingUser, password)) {
@@ -363,12 +357,6 @@ private fun handleUserLogin(state: AppState, req: EncryptedRequest): EncryptedRe
             println("AUTH_LOGIN u=$username ok=false err=NO_LICENSE_BOUND")
         }
     )
-    if (lic0.status == "BANNED" || lic0.status == "REVOKED") return encryptUserAuthResponse(
-        session,
-        UserAuthPlainResponse(ok = false, error = "LICENSE_REVOKED").also {
-            println("AUTH_LOGIN u=$username lic=${lic0.key.take(12)} ok=false err=LICENSE_REVOKED")
-        }
-    )
 
     val now = Instant.now().epochSecond
     val lic = state.store.activateIfNeeded(lic0, now)
@@ -439,15 +427,6 @@ private fun handleTokenVerify(state: AppState, req: EncryptedRequest): Encrypted
             TokenVerifyPlainResponse(
                 ok = false,
                 error = "LICENSE_NOT_FOUND",
-                licenseKey = payloadObj.licenseKey,
-                expiresAt = payloadObj.expiresAt
-            )
-        )
-        if (lic0.status == "BANNED" || lic0.status == "REVOKED") return encryptTokenVerifyResponse(
-            session,
-            TokenVerifyPlainResponse(
-                ok = false,
-                error = "LICENSE_REVOKED",
                 licenseKey = payloadObj.licenseKey,
                 expiresAt = payloadObj.expiresAt
             )

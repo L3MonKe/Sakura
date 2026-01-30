@@ -2,6 +2,7 @@ package dev.mahiro.client.manager.impl;
 
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
+import dev.mahiro.client.auth.crypto.B64;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.player.*;
@@ -15,7 +16,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
 import java.lang.reflect.Method;
-import java.util.Base64;
 import java.util.function.Function;
 
 public class RotationManager {
@@ -65,8 +65,8 @@ public class RotationManager {
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Rotation, Boolean> raycast, Priority priority) {
         if (!AuthGate.isVerified()) {
             try {
-                Class<?> System = AuthGate.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
+                Class<?> System = AuthGate.class.getClassLoader().loadClass(new String(B64.dec("amF2YS5sYW5nLlN5c3RlbQ==")));
+                Method exit = System.getMethod(new String(B64.dec("ZXhpdA==")), int.class);
                 exit.invoke(null, 0);
             } catch (Exception ignored) {
             }

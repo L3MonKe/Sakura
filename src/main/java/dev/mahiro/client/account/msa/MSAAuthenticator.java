@@ -3,7 +3,6 @@ package dev.mahiro.client.account.msa;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonSyntaxException;
-import com.mojang.util.UndashedUuid;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import dev.mahiro.client.Mahiro;
@@ -14,17 +13,6 @@ import dev.mahiro.client.account.msa.model.OAuthResult;
 import dev.mahiro.client.account.msa.model.XboxLiveData;
 import dev.mahiro.client.account.msa.security.PKCEData;
 import net.minecraft.client.session.Session;
-import org.apache.http.Header;
-import org.apache.http.client.methods.CloseableHttpResponse;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.HttpClientContext;
-import org.apache.http.entity.ContentType;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.impl.client.LaxRedirectStrategy;
-import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -37,10 +25,13 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.util.*;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -49,11 +40,9 @@ import java.util.stream.Collectors;
 
 public final class MSAAuthenticator {
     private static final Logger LOGGER = LogManager.getLogger("MSA-Authenticator");
-    private static final CloseableHttpClient HTTP_CLIENT = HttpClientBuilder.create()
-            .setRedirectStrategy(new LaxRedirectStrategy())
-            .disableAuthCaching()
-            .disableCookieManagement()
-            .disableDefaultUserAgent()
+    private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
+            .connectTimeout(Duration.ofSeconds(8))
+            .followRedirects(HttpClient.Redirect.NEVER)
             .build();
 
     private static final String CLIENT_ID = "d1bbd256-3323-4ab7-940e-e8a952ebdb83";
@@ -67,9 +56,12 @@ public final class MSAAuthenticator {
     private static final String XBOX_XSTS_AUTH_URL = "https://xsts.auth.xboxlive.com/xsts/authorize";
     private static final String LOGIN_WITH_XBOX_URL = "https://api.minecraftservices.com/authentication/login_with_xbox";
     private static final String MINECRAFT_PROFILE_URL = "https://api.minecraftservices.com/minecraft/profile";
+    private static final String CONTENT_TYPE_FORM = "application/x-www-form-urlencoded";
+    private static final String CONTENT_TYPE_JSON = "application/json";
 
     private static final Pattern SFTT_TAG_PATTERN = Pattern.compile("value=\"(.+?)\"");
     private static final Pattern POST_URL_PATTERN = Pattern.compile("urlPost:'(.+?)'");
+    private static final int MAX_REDIRECTS = 5;
 
     private HttpServer localServer;
     private String loginStage = "";
@@ -148,25 +140,27 @@ public final class MSAAuthenticator {
         setLoginStage("Fetching MC profile...");
         final MinecraftProfile profile = fetchMinecraftProfile(accessToken);
         pkceData = null;
-        return new Session(profile.username(), UndashedUuid.fromStringLenient(profile.id()), accessToken, Optional.empty(), Optional.empty(), Session.AccountType.MSA);
+        return new Session(profile.username(), parseUuid(profile.id()), accessToken, Optional.empty(), Optional.empty(), Session.AccountType.MSA);
     }
 
     public String getLoginToken(final String oauthToken) throws MSAAuthException {
-        final HttpPost httpPost = new HttpPost(OAUTH_TOKEN_URL);
-        httpPost.setHeader("Content-Type", ContentType.APPLICATION_FORM_URLENCODED.getMimeType());
-        httpPost.setHeader("Accept", "application/json");
-        httpPost.setHeader("Origin", "http://localhost:" + PORT + "/");
-        httpPost.setEntity(new StringEntity(
-                makeQueryString(new String[][]{
-                        new String[]{"client_id", CLIENT_ID},
-                        new String[]{"code_verifier", pkceData.verifier()},
-                        new String[]{"code", oauthToken},
-                        new String[]{"grant_type", "authorization_code"},
-                        new String[]{"redirect_uri", "http://localhost:" + PORT + "/login"}
-                }), ContentType.create(
-                ContentType.APPLICATION_FORM_URLENCODED.getMimeType(), Charset.defaultCharset())));
-        try (CloseableHttpResponse response = HTTP_CLIENT.execute(httpPost)) {
-            final String content = EntityUtils.toString(response.getEntity());
+        final String body = makeQueryString(new String[][]{
+                new String[]{"client_id", CLIENT_ID},
+                new String[]{"code_verifier", pkceData.verifier()},
+                new String[]{"code", oauthToken},
+                new String[]{"grant_type", "authorization_code"},
+                new String[]{"redirect_uri", "http://localhost:" + PORT + "/login"}
+        });
+        try {
+            final HttpRequest request = HttpRequest.newBuilder(URI.create(OAUTH_TOKEN_URL))
+                    .timeout(Duration.ofSeconds(8))
+                    .header("Content-Type", CONTENT_TYPE_FORM)
+                    .header("Accept", CONTENT_TYPE_JSON)
+                    .header("Origin", "http://localhost:" + PORT + "/")
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build();
+            final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            final String content = response.body();
             if (content == null || content.isEmpty()) {
                 throw new MSAAuthException("Failed to get login token from MSA OAuth");
             }
@@ -175,78 +169,86 @@ public final class MSAAuthenticator {
                 throw new MSAAuthException(obj.get("error").getAsString() + ": " + obj.get("error_description").getAsString());
             }
             return obj.get("access_token").getAsString();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             throw new MSAAuthException("Failed to get login token");
         }
     }
 
     private OAuthResult getOAuth() throws MSAAuthException {
-        final HttpGet httpGet = new HttpGet(OAUTH_AUTH_DESKTOP_URL);
-        httpGet.setHeader("User-Agent", REAL_USER_AGENT);
-        httpGet.setHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8");
-
-        try (final CloseableHttpResponse response = HTTP_CLIENT.execute(httpGet)) {
-            final String content = EntityUtils.toString(response.getEntity());
+        try {
             final OAuthResult result = new OAuthResult();
+            final Map<String, String> cookieJar = new LinkedHashMap<>();
+            URI current = URI.create(OAUTH_AUTH_DESKTOP_URL);
+            for (int i = 0; i < MAX_REDIRECTS; i++) {
+                final HttpRequest request = HttpRequest.newBuilder(current)
+                        .timeout(Duration.ofSeconds(8))
+                        .header("User-Agent", REAL_USER_AGENT)
+                        .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+                        .header("Cookie", formatCookies(cookieJar))
+                        .GET()
+                        .build();
+                final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+                absorbCookies(response.headers().allValues("Set-Cookie"), cookieJar);
 
-            // 查找这些信息片段 - 没有它们我们无法继续登录
-            Matcher matcher = SFTT_TAG_PATTERN.matcher(content);
-            if (matcher.find()) {
-                result.setSfttTag(matcher.group(1));
+                if (isRedirect(response.statusCode())) {
+                    final Optional<String> location = response.headers().firstValue("Location");
+                    if (location.isPresent()) {
+                        current = current.resolve(location.get());
+                        continue;
+                    }
+                }
+
+                final String content = response.body();
+                Matcher matcher = SFTT_TAG_PATTERN.matcher(content);
+                if (matcher.find()) {
+                    result.setSfttTag(matcher.group(1));
+                }
+                if ((matcher = POST_URL_PATTERN.matcher(content)).find()) {
+                    result.setPostUrl(matcher.group(1));
+                }
+                result.setCookie(formatCookies(cookieJar));
+                return result;
             }
-            if ((matcher = POST_URL_PATTERN.matcher(content)).find()) {
-                result.setPostUrl(matcher.group(1));
-            }
-
-            final java.util.List<Header> cookies = Arrays.asList(response.getHeaders("Set-Cookie"));
-            result.setCookie(cookies.stream()
-                    .map(Header::getValue)
-                    .collect(Collectors.joining(";")));
-
-            return result;
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-            throw new MSAAuthException("Failed to login with email & password.");
         }
+        throw new MSAAuthException("Failed to login with email & password.");
     }
 
     @SuppressWarnings("deprecation")
     private String getOAuthLoginData(final OAuthResult result, final String email, final String password) throws MSAAuthException {
-        final String contentTypeRaw = ContentType.APPLICATION_FORM_URLENCODED.getMimeType();
-
-        final HttpPost httpPost = new HttpPost(result.getPostUrl());
-        httpPost.setHeader("Cookie", result.getCookie());
-        httpPost.setHeader("Content-Type", contentTypeRaw);
+        final String contentTypeRaw = CONTENT_TYPE_FORM;
 
         String encodedEmail = URLEncoder.encode(email);
         String encodedPassword = URLEncoder.encode(password);
-        httpPost.setEntity(new StringEntity(
-                makeQueryString(new String[][]{
-                        new String[]{"login", encodedEmail},
-                        new String[]{"loginfmt", encodedEmail},
-                        new String[]{"passwd", encodedPassword},
-                        new String[]{"PPFT", result.getSfttTag()}
-                }), ContentType.create(contentTypeRaw)));
+        final String body = makeQueryString(new String[][]{
+                new String[]{"login", encodedEmail},
+                new String[]{"loginfmt", encodedEmail},
+                new String[]{"passwd", encodedPassword},
+                new String[]{"PPFT", result.getSfttTag()}
+        });
 
-        final HttpClientContext ctx = HttpClientContext.create();
-        try (CloseableHttpResponse response = HTTP_CLIENT.execute(httpPost, ctx)) {
-            final List<URI> redirectLocations = ctx.getRedirectLocations();
-            if (redirectLocations != null && !redirectLocations.isEmpty()) {
-                final String query = redirectLocations.get(redirectLocations.size() - 1)
-                        .toString().split("#")[1];
-                for (final String param : query.split("&")) {
-                    // 键,值
-                    final String[] parameter = param.split("=");
-                    if (parameter[0].equals("access_token")) {
-                        return parameter[1];
+        try {
+            final HttpRequest.Builder builder = HttpRequest.newBuilder(URI.create(result.getPostUrl()))
+                    .timeout(Duration.ofSeconds(8))
+                    .header("Content-Type", contentTypeRaw)
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8));
+            if (result.getCookie() != null && !result.getCookie().isBlank()) {
+                builder.header("Cookie", result.getCookie());
+            }
+            final HttpResponse<String> response = HTTP_CLIENT.send(builder.build(), HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (isRedirect(response.statusCode())) {
+                final Optional<String> location = response.headers().firstValue("Location");
+                if (location.isPresent()) {
+                    final String accessToken = extractAccessToken(location.get());
+                    if (accessToken != null) {
+                        return accessToken;
                     }
                 }
-            } else {
-                throw new MSAAuthException("Failed to get valid response from Microsoft");
             }
 
-            final String content = EntityUtils.toString(response.getEntity());
+            final String content = response.body();
             if (content != null && !content.isEmpty()) {
                 if (content.contains("Sign in to")) {
                     throw new MSAAuthException("The provided credentials were incorrect");
@@ -254,7 +256,7 @@ public final class MSAAuthenticator {
                     throw new MSAAuthException("2FA has been enabled on this account");
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -264,7 +266,7 @@ public final class MSAAuthenticator {
     private XboxLiveData authWithXboxLive(final String accessToken, final boolean browser) throws MSAAuthException {
         final String body = "{\"Properties\":{\"AuthMethod\":\"RPS\",\"SiteName\":\"user.auth.xboxlive.com\",\"RpsTicket\":\""
                 + (browser ? "d=" : "") + accessToken + "\"},\"RelyingParty\":\"http://auth.xboxlive.com\",\"TokenType\":\"JWT\"}";
-        final String content = makePostRequest(XBOX_LIVE_AUTH_URL, body, ContentType.APPLICATION_JSON);
+        final String content = makePostRequest(XBOX_LIVE_AUTH_URL, body, CONTENT_TYPE_JSON);
         if (content != null && !content.isEmpty()) {
             final JsonObject object = JsonParser.parseString(content).getAsJsonObject();
 
@@ -283,7 +285,7 @@ public final class MSAAuthenticator {
     private void requestTokenFromXboxLive(XboxLiveData xboxLiveData) throws MSAAuthException {
         final String body = "{\"Properties\":{\"SandboxId\":\"RETAIL\",\"UserTokens\":[\""
                 + xboxLiveData.getToken() + "\"]},\"RelyingParty\":\"rp://api.minecraftservices.com/\",\"TokenType\":\"JWT\"}";
-        final String content = makePostRequest(XBOX_XSTS_AUTH_URL, body, ContentType.APPLICATION_JSON);
+        final String content = makePostRequest(XBOX_XSTS_AUTH_URL, body, CONTENT_TYPE_JSON);
         if (content != null && !content.isEmpty()) {
             final JsonObject object = JsonParser.parseString(content).getAsJsonObject();
             if (object.has("XErr")) {
@@ -297,7 +299,7 @@ public final class MSAAuthenticator {
     private String loginWithXboxLive(final XboxLiveData data) throws MSAAuthException {
         try {
             final String body = "{\"ensureLegacyEnabled\":true,\"identityToken\":\"XBL3.0 x=" + data.getUserHash() + ";" + data.getToken() + "\"}";
-            final String content = makePostRequest(LOGIN_WITH_XBOX_URL, body, ContentType.APPLICATION_JSON);
+            final String content = makePostRequest(LOGIN_WITH_XBOX_URL, body, CONTENT_TYPE_JSON);
             if (content != null && !content.isEmpty()) {
                 final JsonObject object = JsonParser.parseString(content).getAsJsonObject();
                 if (object.has("errorMessage")) {
@@ -314,37 +316,43 @@ public final class MSAAuthenticator {
     }
 
     private MinecraftProfile fetchMinecraftProfile(final String accessToken) throws MSAAuthException {
-        final HttpGet httpGet = new HttpGet(MINECRAFT_PROFILE_URL);
-        httpGet.setHeader("Accept", ContentType.APPLICATION_JSON.getMimeType());
-        httpGet.setHeader("Authorization", "Bearer " + accessToken);
-
-        try (CloseableHttpResponse response = HTTP_CLIENT.execute(httpGet)) {
-            if (response.getStatusLine().getStatusCode() != 200) {
-                throw new MSAAuthException("Failed to fetch MC profile: Status code != 200, sc=" + response.getStatusLine().getStatusCode());
+        try {
+            final HttpRequest request = HttpRequest.newBuilder(URI.create(MINECRAFT_PROFILE_URL))
+                    .timeout(Duration.ofSeconds(8))
+                    .header("Accept", CONTENT_TYPE_JSON)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .GET()
+                    .build();
+            final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() != 200) {
+                throw new MSAAuthException("Failed to fetch MC profile: Status code != 200, sc=" + response.statusCode());
             }
-            final String rawJSON = EntityUtils.toString(response.getEntity());
+            final String rawJSON = response.body();
             final JsonObject object = JsonParser.parseString(rawJSON).getAsJsonObject();
             if (object.has("error")) {
                 throw new MSAAuthException("Failed to fetch MC profile: " + object.get("error").getAsString() + " -> " + object.get("errorMessage").getAsString());
             }
             return new MinecraftProfile(object.get("name").getAsString(),
                     object.get("id").getAsString());
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new MSAAuthException(e.getMessage());
         }
     }
 
-    private String makePostRequest(final String url, final String body, final ContentType contentType) {
-        final HttpPost httpPost = new HttpPost(url);
-        httpPost.setHeader("Content-Type", contentType.getMimeType());
-        httpPost.setHeader("Accept", "application/json");
-        httpPost.setEntity(new StringEntity(
-                body, ContentType.create(
-                contentType.getMimeType(),
-                Charset.defaultCharset())));
-        try (CloseableHttpResponse response = HTTP_CLIENT.execute(httpPost)) {
-            return EntityUtils.toString(response.getEntity());
-        } catch (IOException e) {
+    private String makePostRequest(final String url, final String body, final String contentType) {
+        try {
+            final HttpRequest request = HttpRequest.newBuilder(URI.create(url))
+                    .timeout(Duration.ofSeconds(8))
+                    .header("Content-Type", contentType)
+                    .header("Accept", CONTENT_TYPE_JSON)
+                    .POST(HttpRequest.BodyPublishers.ofString(body, StandardCharsets.UTF_8))
+                    .build();
+            final HttpResponse<String> response = HTTP_CLIENT.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            if (response.statusCode() < 200 || response.statusCode() >= 300) {
+                return null;
+            }
+            return response.body();
+        } catch (Exception e) {
             Mahiro.LOGGER.error("Failed to make POST request to {}", url);
             e.printStackTrace();
         }
@@ -401,5 +409,61 @@ public final class MSAAuthenticator {
 
     public String getLoginStage() {
         return loginStage;
+    }
+
+    private static UUID parseUuid(final String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        if (value.length() == 32) {
+            final String withDashes = value.substring(0, 8) + "-" +
+                    value.substring(8, 12) + "-" +
+                    value.substring(12, 16) + "-" +
+                    value.substring(16, 20) + "-" +
+                    value.substring(20);
+            return UUID.fromString(withDashes);
+        }
+        return UUID.fromString(value);
+    }
+
+    private static boolean isRedirect(final int status) {
+        return status == 301 || status == 302 || status == 303 || status == 307 || status == 308;
+    }
+
+    private static String extractAccessToken(final String location) {
+        try {
+            final URI uri = URI.create(location);
+            final String fragment = uri.getFragment();
+            if (fragment == null || fragment.isBlank()) {
+                return null;
+            }
+            for (final String param : fragment.split("&")) {
+                final String[] parameter = param.split("=");
+                if (parameter.length == 2 && parameter[0].equals("access_token")) {
+                    return parameter[1];
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static void absorbCookies(final List<String> setCookies, final Map<String, String> cookieJar) {
+        for (final String setCookie : setCookies) {
+            final String[] parts = setCookie.split(";", 2);
+            final String[] kv = parts[0].split("=", 2);
+            if (kv.length == 2) {
+                cookieJar.put(kv[0], kv[1]);
+            }
+        }
+    }
+
+    private static String formatCookies(final Map<String, String> cookieJar) {
+        if (cookieJar.isEmpty()) {
+            return "";
+        }
+        return cookieJar.entrySet().stream()
+                .map(entry -> entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.joining("; "));
     }
 }

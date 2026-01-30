@@ -1,7 +1,10 @@
 package dev.mahiro.client.auth.crypto;
 
+import dev.mahiro.obf.ZKMIndy;
+
 import java.security.SecureRandom;
 
+@ZKMIndy
 public final class Bytes {
     private static final SecureRandom RNG = new SecureRandom();
 

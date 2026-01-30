@@ -1,9 +1,12 @@
 package dev.mahiro.client.auth.crypto;
 
+import dev.mahiro.obf.ZKMIndy;
+
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 
+@ZKMIndy
 public final class HkdfSha256 {
     private HkdfSha256() {
     }

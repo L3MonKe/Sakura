@@ -36,7 +36,7 @@ public class PotionHud extends HudModule {
     private final NumberValue<Double> blurStrength = new NumberValue<>("BlurStrength", "模糊强度", 10.0, 2.0, 24.0, 0.5, () -> backgroundBlur.get());
     private final BoolValue bloom = new BoolValue("Bloom", "光晕", true);
     private final EnumValue<Align> align = new EnumValue<>("Align", "对齐", Align.Left);
-    private final ColorValue backgroundColor = new ColorValue("Background", "背景", new Color(18, 18, 18, 120));
+    private final ColorValue backgroundColor = new ColorValue("BackgroundColor", "背景颜色", new Color(18, 18, 18, 120));
     private final ColorValue itemColor = new ColorValue("ItemBackground", "条目背景", new Color(20, 20, 20, 140));
     private final ColorValue textColor = new ColorValue("Text", "文字颜色", new Color(255, 255, 255, 230));
     private final ColorValue secondaryTextColor = new ColorValue("SecondaryText", "次级文字颜色", new Color(200, 200, 200, 200));
