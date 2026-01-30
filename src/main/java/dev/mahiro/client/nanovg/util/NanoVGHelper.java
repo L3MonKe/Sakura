@@ -209,24 +209,16 @@ public class NanoVGHelper {
     public static void drawRoundRectBloom(float x, float y, float w, float h, float radius, float glowRadius, Color color) {
         long vg = getContext();
 
-        // 增大 Alpha 基数，让光晕更明显
         float baseAlpha = color.getAlpha() / 255.0f;
-        // 增加步数以获得更平滑的渐变
         int glowSteps = (int) Math.max(10, glowRadius * 2);
         
         nvgSave(vg);
-        // 使用 lighter 混合模式可以让叠加部分更亮（可选，但通常对发光效果很好）
-        // nvgGlobalCompositeOperation(vg, NVG_LIGHTER); 
-        // 暂时不开启 lighter，因为背景可能也是半透明的，可能会过曝
-
         for (int i = 0; i < glowSteps; i++) {
             float progress = (float) i / glowSteps;
             float offset = (glowRadius * progress);
-            
-            // 使用非线性的 alpha 衰减 (平方根)，让光晕中心更亮，边缘衰减更慢
-            // 或者是 Cosine 衰减
+
             float alphaFactor = (float) Math.cos(progress * Math.PI / 2);
-            float currentAlpha = baseAlpha * alphaFactor * 0.3f; // 0.3f 是强度系数
+            float currentAlpha = baseAlpha * alphaFactor * 0.3f;
 
             if (currentAlpha <= 0.005f) continue;
 
@@ -239,23 +231,13 @@ public class NanoVGHelper {
             nvgFill(vg);
         }
         nvgRestore(vg);
-
-        // 绘制实际的矩形 (Standard 模式下其实会被上层背景覆盖，但为了完整性还是画出来)
-        // drawRoundRect(x, y, w, h, radius, color); 
-        // 这里的 color 是 bloomColor，我们不需要画实体的 bloomColor 矩形，因为上层会画 backgroundColor
-        // 如果这里画了，且 bloomColor 和 backgroundColor 不同，可能会导致边缘溢出或颜色混合奇怪
-        // 但 drawRoundRectBloom 的语义是画带发光的矩形，所以应该画
-        // 但为了配合 ModuleListHud 的需求，我们只画发光部分？
-        // 不，方法名是 drawRoundRectBloom，应该包含 Rect。
-        // 不过在 Standard 模式下，ModuleListHud 会在同一个位置再画一次背景。
-        // 所以这里画不画其实无所谓，只要不遮挡就行。
     }
 
     /**
      * 绘制带发光效果的圆角矩形
      */
     public static void drawRoundRectBloom(float x, float y, float w, float h, float radius, Color color) {
-        drawRoundRectBloom(x, y, w, h, radius, 8.0f, color);
+        drawRoundRectBloom(x, y, w, h, radius, 5.0f, color);
     }
 
     /**
@@ -475,37 +457,6 @@ public class NanoVGHelper {
      */
     public static void drawRectShadowNoClip(float x, float y, float w, float h, Color color, float blur, float offsetX, float offsetY) {
         drawShadow(x, y, w, h, 0, color, blur, offsetX, offsetY);
-    }
-
-    /**
-     * 绘制带模糊效果的圆角矩形
-     */
-    public static void drawRoundedBlur(float x, float y, float w, float h, float radius, float blurRadius, Color color) {
-        long vg = getContext();
-        
-        // 结束 NanoVG 帧，保存状态
-        nvgEndFrame(vg);
-        
-        // 备份 OpenGL 状态 (混合, 深度测试, 裁剪等)
-        // 注意：在 Minecraft 1.20+ 中，RenderSystem 管理着 GL 状态
-        com.mojang.blaze3d.systems.RenderSystem.enableBlend();
-        com.mojang.blaze3d.systems.RenderSystem.defaultBlendFunc();
-        com.mojang.blaze3d.systems.RenderSystem.disableDepthTest();
-        
-        // 绘制模糊矩形
-        Shader2DUtil.drawRoundedBlur(new MatrixStack(), x, y, w, h, radius, color, blurRadius, 1.0f);
-        
-        // 恢复状态
-        com.mojang.blaze3d.systems.RenderSystem.enableDepthTest();
-        
-        // 恢复 NanoVG
-        int width = mc.getWindow().getWidth();
-        int height = mc.getWindow().getHeight();
-        // 重新初始化 NanoVG 帧，确保后续的 NanoVG 绘制指令能正常工作
-        nvgBeginFrame(vg, width, height, 1.0f);
-        
-        // 恢复之前的 NanoVG 变换状态（如果之前有 translate/scale/rotate）
-        // 这里可能无法完美恢复所有堆栈状态，但至少能保证新的绘制周期开始
     }
 
     /**
