@@ -262,6 +262,33 @@ public class Render3DUtil {
         cleanup3D();
     }
 
+    public static void drawLine(MatrixStack stack, Vec3d start, Vec3d end, Color color, float thickness) {
+        drawLine(stack, start, end, color.getRGB(), thickness);
+    }
+
+    public static void drawLine(MatrixStack stack, Vec3d start, Vec3d end, int color, float thickness) {
+        setup3D();
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
+        RenderSystem.lineWidth(thickness);
+
+        Vec3d camPos = mc.getEntityRenderDispatcher().camera.getPos();
+        float x1 = (float) (start.x - camPos.getX());
+        float y1 = (float) (start.y - camPos.getY());
+        float z1 = (float) (start.z - camPos.getZ());
+        float x2 = (float) (end.x - camPos.getX());
+        float y2 = (float) (end.y - camPos.getY());
+        float z2 = (float) (end.z - camPos.getZ());
+
+        Matrix4f matrix = stack.peek().getPositionMatrix();
+        MatrixStack.Entry entry = stack.peek();
+
+        vertexLine(buffer, matrix, entry, x1, y1, z1, x2, y2, z2, color);
+
+        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        cleanup3D();
+    }
+
     public static void setup3D() {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();

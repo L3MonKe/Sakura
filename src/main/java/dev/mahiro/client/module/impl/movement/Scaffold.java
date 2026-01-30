@@ -73,7 +73,7 @@ public class Scaffold extends Module {
 
     @Override
     public String getSuffix() {
-        return telly.get() ? "Telly" : "Normal";
+        return telly.get() ? "Telly" : "GodBridge";
     }
 
     @EventHandler

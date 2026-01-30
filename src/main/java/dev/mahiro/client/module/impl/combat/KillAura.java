@@ -135,8 +135,6 @@ public class KillAura extends Module {
                 this.target = entity;
             }
         }
-
-
     }
 
     private boolean isEnemy(Entity entity) {

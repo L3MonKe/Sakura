@@ -139,7 +139,6 @@ public class TargetHud extends HudModule {
 
     @Override
     protected void onDisable() {
-        // Schedule cache clear for next render or enable to ensure thread safety
         needsCacheClear = true;
         particles.clear();
     }

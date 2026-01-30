@@ -23,7 +23,7 @@ public class CameraClip extends Module {
         ACTION
     }
 
-    public final Value<Boolean> disableFirstPers = new BoolValue("NoFirst", "禁止第一人称", true);
+    public final BoolValue disableFirstPers = new BoolValue("NoFirst", "禁止第一人称", true);
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.ACTION);
     private final Value<Double> distance = new NumberValue<>("Distance", "距离", 3.5, 1.0, 20.0, 0.5, () -> mode.is(Mode.NORMAL));
     private final Value<Double> speed = new NumberValue<>("Speed", "速度", 10.0, 1.0, 50.0, 0.5, () -> mode.is(Mode.NORMAL));

@@ -92,10 +92,9 @@ public class ModuleManager {
         add(new NoRender());
         add(new Shaders());
         add(new NameProtect());
-        add(new SwingAnimation());
         add(new TotemParticles());
+        add(new Trajectories());
         add(new ViewModel());
-        add(new XRay());
 
         // Client
         add(new AutoHeypixel());

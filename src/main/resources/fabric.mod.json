@@ -1,13 +1,14 @@
 {
   "schemaVersion": 1,
-  "id": "lemonclient",
+  "id": "mahiro",
   "version": "${version}",
-  "name": "LemonClient",
+  "name": "M4h1r0-Loader",
   "description": "M4h1r0 minecraft hacked client.",
   "authors": [
     "Fin_LemonKe",
-    "ShaoYuYo",
-    "Nykrop"
+    "Nykrop",
+    "Qiunai",
+    "_EeZ"
   ],
   "mixins": [
     "mahiro.mixins.json"

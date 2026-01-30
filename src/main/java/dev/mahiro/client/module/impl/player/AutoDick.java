@@ -127,7 +127,7 @@ public class AutoDick extends Module {
                     if (!BlockUtil.solid(neighbor)) continue;
 
                     Direction opposite = side.getOpposite();
-                    placeData = new PlaceData(pos, side, opposite, neighbor, randomRot(neighbor, opposite));
+                    placeData = new PlaceData(pos, side, opposite, neighbor);
                     break;
                 }
                 if (placeData != null) break;
@@ -135,14 +135,16 @@ public class AutoDick extends Module {
         }
 
         if (placeData != null) {
-            Rotation rotation = RotationUtil.calculate(placeData.hitVec);
+            Vec3d vec = randomRot(placeData.neighbor, placeData.opposite);
+
+            Rotation rotation = RotationUtil.calculate(vec);
             Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
 
             if (timer.passedMS(delay.get())) {
                 boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), placeData.opposite, placeData.neighbor, false);
                 if (!hasRotated) return;
 
-                if (placeBlock(placeData, new BlockHitResult(placeData.hitVec, placeData.opposite, placeData.neighbor, false))) {
+                if (placeBlock(placeData, new BlockHitResult(vec, placeData.opposite, placeData.neighbor, false))) {
                     blockList.remove(placeData.pos);
                     placeData = null;
                     timer.reset();
@@ -284,6 +286,6 @@ public class AutoDick extends Module {
         return !(block instanceof FallingBlock) || !FallingBlock.canFallThrough(mc.world.getBlockState(pos));
     }
 
-    private record PlaceData(BlockPos pos, Direction side, Direction opposite, BlockPos neighbor, Vec3d hitVec) {
+    private record PlaceData(BlockPos pos, Direction side, Direction opposite, BlockPos neighbor) {
     }
 }
