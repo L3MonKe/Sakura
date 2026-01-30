@@ -11,6 +11,7 @@ public class Managers {
     public static HealthManager HEALTH;
     public static RenderManager RENDER;
     public static RotationManager ROTATION;
+    public static ShaderManager SHADER;
     public static SoundManager SOUND;
 
     public static void init() {
@@ -22,6 +23,7 @@ public class Managers {
         HEALTH = new HealthManager();
         RENDER = new RenderManager();
         ROTATION = new RotationManager();
+        SHADER = new ShaderManager();
         SOUND = new SoundManager();
 
         initialized = true;

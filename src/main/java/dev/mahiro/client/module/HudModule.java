@@ -42,9 +42,6 @@ public class HudModule extends Module {
     public void onRender(DrawContext context) {
     }
 
-    public void onEditor(DrawContext context) {
-    }
-
     public void renderInEditor(DrawContext context, float mouseX, float mouseY) {
         if (dragging) {
             int gameWidth = mc.getWindow().getScaledWidth();
@@ -60,8 +57,6 @@ public class HudModule extends Module {
         onRender(context);
 
         NanoVGRenderer.INSTANCE.draw(canvas -> NanoVGHelper.drawRect(x, y, width, height, dragging ? new Color(100, 100, 255, 80) : new Color(0, 0, 0, 50)));
-
-        onEditor(context);
     }
 
     public void renderInGame(DrawContext context) {

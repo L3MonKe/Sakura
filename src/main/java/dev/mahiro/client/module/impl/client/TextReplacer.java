@@ -11,7 +11,7 @@ import java.util.List;
 public class TextReplacer {
     // Unicode for "布吉岛" (Bujidao) to avoid encoding issues
     private static final String BUJIDAO = "\u5e03\u5409\u5c9b";
-    
+
     // Priority list of targets to replace. Longer matches first to consume color codes.
     // 1. §d布吉岛 (Section sign d + Bujidao)
     // 2. &d布吉岛 (Ampersand d + Bujidao)
@@ -57,9 +57,9 @@ public class TextReplacer {
         while (index != -1) {
             result.append(Text.of(original.substring(lastIndex, index)));
             result.append(getGradientMahiro());
-            
+
             lastIndex = index + target.length();
-            
+
             // Search for next occurrence
             // We need to check which target matches next
             index = -1;
@@ -75,21 +75,21 @@ public class TextReplacer {
                     }
                 }
             }
-            
+
             if (nextMinIndex != -1) {
                 index = nextMinIndex;
                 target = nextTarget;
             }
         }
         result.append(Text.of(original.substring(lastIndex)));
-        
+
         return result;
     }
 
     public static Text getGradientText(String content) {
         MutableText text = Text.empty();
         long time = System.currentTimeMillis();
-        
+
         for (int i = 0; i < content.length(); i++) {
             int color = getPinkWhiteColor(i, time);
             text.append(Text.literal(String.valueOf(content.charAt(i)))
@@ -104,19 +104,19 @@ public class TextReplacer {
 
     private static int getPinkWhiteColor(int offset, long time) {
         // Dynamic gradient between Pink and White
-        double speed = 2.0; 
-        double width = 300.0; 
-        
+        double speed = 2.0;
+        double width = 300.0;
+
         // Sine wave for smooth transition
         double progress = (Math.sin((time * 0.003 * speed + offset * 0.5)) + 1.0) / 2.0;
-        
+
         Color pink = new Color(255, 180, 225); // Lighter Pink
         Color white = Color.WHITE;
-        
+
         int r = (int) (pink.getRed() + (white.getRed() - pink.getRed()) * progress);
         int g = (int) (pink.getGreen() + (white.getGreen() - pink.getGreen()) * progress);
         int b = (int) (pink.getBlue() + (white.getBlue() - pink.getBlue()) * progress);
-        
+
         return (r << 16) | (g << 8) | b;
     }
 }

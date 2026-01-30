@@ -6,9 +6,7 @@ import dev.mahiro.client.events.entity.BlockPushEvent;
 import dev.mahiro.client.events.player.MotionEvent;
 import dev.mahiro.client.events.player.PlayerTickEvent;
 import dev.mahiro.client.events.player.SlowdownEvent;
-import dev.mahiro.client.module.impl.render.OldHitting;
 import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.item.SwordItem;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -80,10 +78,6 @@ public class MixinClientPlayerEntity {
 
     @Redirect(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z"))
     private boolean onSlowDown(ClientPlayerEntity instance) {
-        if (Mahiro.MODULES.getModule(OldHitting.class).isEnabled() && instance.isUsingItem() && instance.getActiveItem().getItem() instanceof SwordItem) {
-            return false;
-        }
-
         SlowdownEvent event = new SlowdownEvent(instance.isUsingItem());
         Mahiro.EVENT_BUS.post(event);
         return event.isSlowdown();

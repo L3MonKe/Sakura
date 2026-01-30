@@ -55,7 +55,7 @@ public abstract class MixinTextRenderer {
             boolean modified = false;
             Text resultText = null;
 
-            NameProtect nameProtect = (NameProtect) Mahiro.MODULES.getModule(NameProtect.class);
+            NameProtect nameProtect = Mahiro.MODULES.getModule(NameProtect.class);
             if (nameProtect != null && nameProtect.isEnabled() && NameProtect.shouldReplace(string)) {
                 resultText = NameProtect.getGradientReplacement(string);
                 modified = true;
@@ -84,7 +84,7 @@ public abstract class MixinTextRenderer {
                 return true;
             });
             String string = sb.toString();
-            
+
             boolean modified = false;
             Text resultText = null;
 

@@ -2,8 +2,8 @@ package dev.mahiro.client.mixin.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.render.item.EatTransformationEvent;
-import dev.mahiro.client.events.render.item.EventHeldItemRenderer;
+import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
+import dev.mahiro.client.events.render.item.UpdateHeldItemEvent;
 import dev.mahiro.client.interfaces.IHeldItemRenderer;
 import dev.mahiro.client.module.impl.render.Animations;
 import dev.mahiro.client.module.impl.render.Chams;
@@ -11,6 +11,7 @@ import dev.mahiro.client.module.impl.render.NoRender;
 import dev.mahiro.client.module.impl.render.ViewModel;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.HeldItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
@@ -28,6 +29,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
@@ -92,10 +94,28 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
         this.offHand = stack;
     }
 
+    @Redirect(method = "updateHeldItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getMainHandStack()Lnet/minecraft/item/ItemStack;"))
+    public ItemStack hookMainHand(ClientPlayerEntity player) {
+        UpdateHeldItemEvent event = new UpdateHeldItemEvent(Hand.MAIN_HAND, player.getMainHandStack());
+        if (player == mc.player) {
+            Mahiro.EVENT_BUS.post(event);
+        }
+        return event.getItem();
+    }
+
+    @Redirect(method = "updateHeldItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getOffHandStack()Lnet/minecraft/item/ItemStack;"))
+    public ItemStack hookOffHand(ClientPlayerEntity player) {
+        UpdateHeldItemEvent event = new UpdateHeldItemEvent(Hand.OFF_HAND, player.getOffHandStack());
+        if (player == mc.player) {
+            Mahiro.EVENT_BUS.post(event);
+        }
+        return event.getItem();
+    }
+
     @Inject(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V", shift = At.Shift.AFTER), cancellable = true)
     private void onRenderItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
         if (mc.player == null || mc.world == null) return;
-        EventHeldItemRenderer event = new EventHeldItemRenderer(hand, item, equipProgress, matrices);
+        HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
         Mahiro.EVENT_BUS.post(event);
         if (event.isCancelled()) ci.cancel();
     }

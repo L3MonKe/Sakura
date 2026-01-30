@@ -51,7 +51,6 @@ public class ModuleManager {
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());
-        add(new Phase());
         add(new Scaffold());
         add(new Speed());
         add(new Step());
@@ -62,12 +61,12 @@ public class ModuleManager {
         add(new AntiHunger());
         add(new AutoArmor());
         add(new AutoDick());
-        add(new AutoPearl());
+        add(new AutoTool());
         add(new Blink());
         add(new BowBomb());
         add(new Disabler());
         add(new GrimFly());
-        add(new MiddleClickPearl());
+        add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());
         add(new NoRotate());
@@ -83,20 +82,18 @@ public class ModuleManager {
         add(new Atmosphere());
         add(new CameraClip());
         add(new Chams());
-        add(new Crystal());
         add(new Fullbright());
         add(new Hat());
+        add(new ItemPhysics());
         add(new JumpCircles());
         add(new MotionBlur());
         add(new NameTags());
         add(new NoRender());
-        add(new OldHitting());
         add(new Shaders());
         add(new NameProtect());
-        add(new SwingAnimation());
         add(new TotemParticles());
+        add(new Trajectories());
         add(new ViewModel());
-        add(new XRay());
 
         // Client
         add(new AutoHeypixel());

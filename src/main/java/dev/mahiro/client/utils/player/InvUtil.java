@@ -143,7 +143,7 @@ public class InvUtil {
         if (swapBack && previousSlot == -1) previousSlot = mc.player.getInventory().selectedSlot;
         else if (!swapBack) previousSlot = -1;
 
-        mc.player.getInventory().setSelectedSlot(slot);
+        mc.player.getInventory().selectedSlot = slot;
         mc.interactionManager.syncSelectedSlot();
         return true;
     }

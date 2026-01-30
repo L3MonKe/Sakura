@@ -29,7 +29,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
@@ -136,14 +135,16 @@ public class AutoDick extends Module {
         }
 
         if (placeData != null) {
-            Rotation rotation = RotationUtil.calculate(placeData.neighbor, placeData.opposite);
+            Vec3d vec = randomRot(placeData.neighbor, placeData.opposite);
+
+            Rotation rotation = RotationUtil.calculate(vec);
             Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
 
             if (timer.passedMS(delay.get())) {
                 boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), placeData.opposite, placeData.neighbor, false);
                 if (!hasRotated) return;
 
-                if (placeBlock(placeData, new BlockHitResult(getVec3(placeData.neighbor, placeData.opposite), placeData.opposite, placeData.neighbor, false))) {
+                if (placeBlock(placeData, new BlockHitResult(vec, placeData.opposite, placeData.neighbor, false))) {
                     blockList.remove(placeData.pos);
                     placeData = null;
                     timer.reset();
@@ -160,28 +161,12 @@ public class AutoDick extends Module {
         if (blockList.isEmpty()) {
             if (supportBlock != null) {
                 if (BlockUtil.solid(supportBlock)) {
-                    if (breakSide == null) {
-                        Direction playerFacing = mc.player.getHorizontalFacing().getOpposite();
-                        Rotation rot = RotationUtil.calculate(supportBlock, playerFacing);
-                        BlockHitResult hit = RaytraceUtil.rayCast(rot, 4.5);
-                        if (hit != null && hit.getType() == HitResult.Type.BLOCK && hit.getBlockPos().equals(supportBlock) && hit.getSide() == playerFacing) {
-                            breakSide = playerFacing;
-                        } else {
-                            for (Direction side : Direction.values()) {
-                                if (side == playerFacing) continue;
+                    Vec3d eyePos = mc.player.getEyePos();
+                    double dx = eyePos.x - (supportBlock.getX() + 0.5);
+                    double dy = eyePos.y - (supportBlock.getY() + 0.5);
+                    double dz = eyePos.z - (supportBlock.getZ() + 0.5);
 
-                                Rotation rotation = RotationUtil.calculate(getVec3(supportBlock, side), side);
-                                BlockHitResult sideHit = RaytraceUtil.rayCast(rotation, 4.5);
-
-                                if (sideHit != null && sideHit.getType() == HitResult.Type.BLOCK && sideHit.getBlockPos().equals(supportBlock) && sideHit.getSide() == side) {
-                                    breakSide = side;
-                                    break;
-                                }
-                            }
-
-                            if (breakSide == null) breakSide = playerFacing;
-                        }
-                    }
+                    breakSide = Direction.getFacing(dx, dy, dz);
 
                     breakBlock();
                     return;
@@ -214,19 +199,20 @@ public class AutoDick extends Module {
                 addBlock(center.offset(facing, i));
             }
 
-            // Left
+            // Left Egg
             addBlock(center.offset(facing.rotateYCounterclockwise()));
 
-            // Right
+            // Right Egg
             addBlock(center.offset(facing.rotateYClockwise()));
 
         } else {
             // Support
             addBlock(supportBlock = center);
 
-            // Left
+            // Left Egg
             addBlock(center.offset(facing.rotateYCounterclockwise()));
-            // Right
+
+            // Right Egg
             addBlock(center.offset(facing.rotateYClockwise()));
 
             for (int i = 0; i < length.get() - 1; i++) {
@@ -236,7 +222,7 @@ public class AutoDick extends Module {
     }
 
     private void breakBlock() {
-        Rotation rotation = RotationUtil.calculate(getVec3(supportBlock, breakSide), breakSide);
+        Rotation rotation = RotationUtil.calculate(randomRot(supportBlock, breakSide));
         Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
 
         mc.interactionManager.updateBlockBreakingProgress(supportBlock, breakSide);
@@ -266,21 +252,21 @@ public class AutoDick extends Module {
         return true;
     }
 
-    public static Vec3d getVec3(BlockPos pos, Direction face) {
+    public static Vec3d randomRot(BlockPos pos, Direction face) {
         double x = (double) pos.getX() + 0.5;
         double y = (double) pos.getY() + 0.5;
         double z = (double) pos.getZ() + 0.5;
         if (face != Direction.UP && face != Direction.DOWN) {
-            y += MathUtil.getRandom(0.3, -0.3);
+            y += MathUtil.getRandom(0.1, -0.1);
         } else {
-            x += MathUtil.getRandom(0.3, -0.3);
-            z += MathUtil.getRandom(0.3, -0.3);
+            x += MathUtil.getRandom(0.3, -0.1);
+            z += MathUtil.getRandom(0.1, -0.1);
         }
         if (face == Direction.WEST || face == Direction.EAST) {
-            z += MathUtil.getRandom(0.3, -0.3);
+            z += MathUtil.getRandom(0.1, -0.1);
         }
         if (face == Direction.SOUTH || face == Direction.NORTH) {
-            x += MathUtil.getRandom(0.3, -0.3);
+            x += MathUtil.getRandom(0.1, -0.1);
         }
         return new Vec3d(x, y, z);
     }

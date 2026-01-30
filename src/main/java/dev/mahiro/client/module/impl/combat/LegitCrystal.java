@@ -1,7 +1,7 @@
 package dev.mahiro.client.module.impl.combat;
 
-import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.EventType;
+import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
@@ -9,12 +9,10 @@ import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerInteractBlockC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
@@ -30,7 +28,7 @@ public class LegitCrystal extends Module {
     private final BoolValue selfToggle = new BoolValue("Self Toggle", "自动关闭", true);
 
     private final TimerUtil timerUtil = new TimerUtil();
-    
+
     private boolean hasAttacked = false;
     private boolean crystalBroken = false;
     private boolean crystalPlaced = false;
@@ -54,13 +52,13 @@ public class LegitCrystal extends Module {
         if (event.getType() == EventType.SEND && event.getPacket() instanceof PlayerInteractEntityC2SPacket) {
             HitResult hit = mc.crosshairTarget;
             if (hit instanceof EntityHitResult entityHit) {
-                 Entity target = entityHit.getEntity();
-                 if (!(target instanceof EndCrystalEntity)) {
-                     hasAttacked = true;
-                     crystalBroken = false;
-                     crystalPlaced = false;
-                     timerUtil.reset();
-                 }
+                Entity target = entityHit.getEntity();
+                if (!(target instanceof EndCrystalEntity)) {
+                    hasAttacked = true;
+                    crystalBroken = false;
+                    crystalPlaced = false;
+                    timerUtil.reset();
+                }
             }
         }
     }
@@ -97,33 +95,33 @@ public class LegitCrystal extends Module {
         if (!timerUtil.passedMS(cooldown.get())) return;
 
         if (isObsidianInCrosshair()) {
-             if (!crystalPlaced) {
-                 int crystalSlot = findSlot(Items.END_CRYSTAL);
-                 if (crystalSlot != -1) {
-                     if (mc.player.getInventory().selectedSlot != crystalSlot) {
-                         mc.player.getInventory().selectedSlot = crystalSlot;
-                         return; 
-                     }
-                     placeBlock();
-                     crystalPlaced = true;
-                     timerUtil.reset();
-                 }
-             }
+            if (!crystalPlaced) {
+                int crystalSlot = findSlot(Items.END_CRYSTAL);
+                if (crystalSlot != -1) {
+                    if (mc.player.getInventory().selectedSlot != crystalSlot) {
+                        mc.player.getInventory().selectedSlot = crystalSlot;
+                        return;
+                    }
+                    placeBlock();
+                    crystalPlaced = true;
+                    timerUtil.reset();
+                }
+            }
         } else if (isBlockInCrosshair()) {
             int obsidianSlot = findSlot(Items.OBSIDIAN);
             if (obsidianSlot != -1) {
-                 if (mc.player.getInventory().selectedSlot != obsidianSlot) {
-                     mc.player.getInventory().selectedSlot = obsidianSlot;
-                     timerUtil.reset();
-                     return;
-                 }
-                 placeBlock();
-                 
-                 int crystalSlot = findSlot(Items.END_CRYSTAL);
-                 if (crystalSlot != -1) {
-                     mc.player.getInventory().selectedSlot = crystalSlot;
-                 }
-                 timerUtil.reset();
+                if (mc.player.getInventory().selectedSlot != obsidianSlot) {
+                    mc.player.getInventory().selectedSlot = obsidianSlot;
+                    timerUtil.reset();
+                    return;
+                }
+                placeBlock();
+
+                int crystalSlot = findSlot(Items.END_CRYSTAL);
+                if (crystalSlot != -1) {
+                    mc.player.getInventory().selectedSlot = crystalSlot;
+                }
+                timerUtil.reset();
             }
         }
     }
@@ -142,7 +140,7 @@ public class LegitCrystal extends Module {
         }
         return false;
     }
-    
+
     private boolean isBlockInCrosshair() {
         return mc.crosshairTarget instanceof BlockHitResult;
     }

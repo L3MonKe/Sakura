@@ -16,19 +16,15 @@ public class NameProtect extends Module {
 
     public static String getReplacement(String original) {
         if (original == null) return null;
-        
-        try {
-            MinecraftClient mc = MinecraftClient.getInstance();
-            if (mc.player == null) return original;
-            
-            String playerName = mc.player.getName().getString();
-            if (playerName == null || playerName.isEmpty() || playerName.length() < 2) return original;
 
-            if (original.contains(playerName)) {
-                return original.replace(playerName, FAKE_NAME);
-            }
-        } catch (Exception e) {
-            return original;
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.player == null) return original;
+
+        String playerName = mc.player.getName().getString();
+        if (playerName == null || playerName.length() < 2) return original;
+
+        if (original.contains(playerName)) {
+            return original.replace(playerName, FAKE_NAME);
         }
         return original;
     }
@@ -41,7 +37,7 @@ public class NameProtect extends Module {
             if (mc.player == null) return Text.of(original);
 
             String playerName = mc.player.getName().getString();
-            if (playerName == null || playerName.isEmpty() || playerName.length() < 2) return Text.of(original);
+            if (playerName == null || playerName.length() < 2) return Text.of(original);
 
             if (original.contains(playerName)) {
                 MutableText result = Text.empty();
@@ -51,7 +47,7 @@ public class NameProtect extends Module {
                 while (index != -1) {
                     result.append(Text.of(original.substring(lastIndex, index)));
                     result.append(TextReplacer.getGradientText(FAKE_NAME));
-                    
+
                     lastIndex = index + playerName.length();
                     index = original.indexOf(playerName, lastIndex);
                 }
@@ -64,16 +60,12 @@ public class NameProtect extends Module {
         }
         return Text.of(original);
     }
-    
+
     public static boolean shouldReplace(String text) {
         if (text == null) return false;
-        try {
-            MinecraftClient mc = MinecraftClient.getInstance();
-            if (mc.player == null) return false;
-            String playerName = mc.player.getName().getString();
-            return playerName != null && !playerName.isEmpty() && playerName.length() >= 2 && text.contains(playerName);
-        } catch (Exception e) {
-            return false;
-        }
+        MinecraftClient mc = MinecraftClient.getInstance();
+        if (mc.player == null) return false;
+        String playerName = mc.player.getName().getString();
+        return playerName != null && playerName.length() >= 2 && text.contains(playerName);
     }
 }

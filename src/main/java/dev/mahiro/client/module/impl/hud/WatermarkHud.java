@@ -101,16 +101,16 @@ public class WatermarkHud extends HudModule {
                     float fontSize = 30 * s;
                     // Icon size logic from ModuleListHud adjusted for Watermark size
                     // Watermark uses larger font (30), let's make icon proportional
-                    float iconRenderSize = fontSize; // Match font size roughly
-                    
+                    // Match font size roughly
+
                     float iconX = x + (2.5f * s); // Starting X
                     float iconY = y + (2 * s); // Move down slightly to match render position
 
                     for (int i = particles.size(); i < particleCount.get(); i++) {
                         float angle = (float) (Math.random() * Math.PI * 2);
-                        float distance = (float) (Math.random() * iconRenderSize * 0.8f);
-                        float particleX = iconX + iconRenderSize / 2 + (float) Math.cos(angle) * distance;
-                        float particleY = iconY + iconRenderSize / 2 + (float) Math.sin(angle) * distance;
+                        float distance = (float) (Math.random() * fontSize * 0.8f);
+                        float particleX = iconX + fontSize / 2 + (float) Math.cos(angle) * distance;
+                        float particleY = iconY + fontSize / 2 + (float) Math.sin(angle) * distance;
 
                         Particle newParticle = new Particle(particleX, particleY);
                         newParticle.size = particleSize.get().floatValue();
@@ -141,15 +141,15 @@ public class WatermarkHud extends HudModule {
         float currentX = x;
         float currentY = y;
         float contentHeight = fontH; // Approximation
-        
+
         // Icon Logic
         boolean showIcon = mode.is(ListMode.Normal) ? normalShowIcon.get() : gradientShowIcon.get();
-        float iconRenderSize = fontSize; // Icon matches text height
+        // Icon matches text height
         float iconGap = 5 * s;
 
         if (showIcon && iconImage != -1) {
             float iconX = currentX;
-            float iconY = currentY + (contentHeight - iconRenderSize) / 2 + (2 * s); // Center vertically and move down slightly
+            float iconY = currentY + (contentHeight - fontSize) / 2 + (2 * s); // Center vertically and move down slightly
 
             // Draw Icon Particles
             if (enableParticles.get()) {
@@ -157,29 +157,29 @@ public class WatermarkHud extends HudModule {
             }
 
             // Draw Icon
-            float centerX = iconX + iconRenderSize / 2;
-            float centerY = iconY + iconRenderSize / 2;
+            float centerX = iconX + fontSize / 2;
+            float centerY = iconY + fontSize / 2;
 
             nvgSave(vg);
             nvgTranslate(vg, centerX, centerY);
             nvgRotate(vg, (float) Math.toRadians(rotationAngle));
-            nvgTranslate(vg, -iconRenderSize / 2, -iconRenderSize / 2);
+            nvgTranslate(vg, -fontSize / 2, -fontSize / 2);
 
             NVGPaint paint = NVGPaint.create();
-            nvgImagePattern(vg, 0, 0, iconRenderSize, iconRenderSize, 0, iconImage, 1.0f, paint);
+            nvgImagePattern(vg, 0, 0, fontSize, fontSize, 0, iconImage, 1.0f, paint);
             nvgBeginPath(vg);
-            nvgRect(vg, 0, 0, iconRenderSize, iconRenderSize);
+            nvgRect(vg, 0, 0, fontSize, fontSize);
             nvgFillPaint(vg, paint);
             nvgFill(vg);
 
             nvgRestore(vg);
 
-            currentX += iconRenderSize + iconGap;
+            currentX += fontSize + iconGap;
         }
 
         // Text Logic
         float textY = currentY + fontH; // Baseline
-        
+
         if (mode.is(ListMode.Normal)) {
             Color color = normalRainbowColor.get() ? ClickGui.color(0) : Color.WHITE;
             if (normalTextGlow.get()) {
@@ -197,10 +197,10 @@ public class WatermarkHud extends HudModule {
             double rad = Math.toRadians(angle);
             float cx = currentX + fontW / 2;
             float cy = textY - fontH / 2;
-            
+
             // Length of the gradient vector should cover the text
             float length = Math.max(fontW, fontH);
-            
+
             float sx = (float) (cx - Math.cos(rad) * length / 2);
             float sy = (float) (cy - Math.sin(rad) * length / 2);
             float ex = (float) (cx + Math.cos(rad) * length / 2);
@@ -213,34 +213,32 @@ public class WatermarkHud extends HudModule {
                 // Manual glow with gradient paint
                 float radius = gradientGlowRadius.get().floatValue() * s;
                 int intensity = gradientGlowIntensity.get();
-                
+
                 nvgFontFaceId(vg, font);
                 nvgFontSize(vg, fontSize);
                 nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
 
                 nvgFontBlur(vg, radius);
                 nvgFillPaint(vg, paint);
-                for(int i=0; i<intensity; i++) {
-                     nvgText(vg, currentX, textY, text);
+                for (int i = 0; i < intensity; i++) {
+                    nvgText(vg, currentX, textY, text);
                 }
 
                 nvgFontBlur(vg, 0);
-                nvgFillPaint(vg, paint);
-                nvgText(vg, currentX, textY, text);
             } else {
                 nvgFontFaceId(vg, font);
                 nvgFontSize(vg, fontSize);
                 nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
-                nvgFillPaint(vg, paint);
-                nvgText(vg, currentX, textY, text);
             }
+            nvgFillPaint(vg, paint);
+            nvgText(vg, currentX, textY, text);
         }
 
         // Update width/height for drag handling
-        this.width = (currentX - x) + fontW + (showIcon ? 0 : 0); // Correct width calc
+        this.width = (currentX - x) + fontW; // Correct width calc
         if (!showIcon) this.width = fontW;
-        else this.width = iconRenderSize + iconGap + fontW;
-        
+        else this.width = fontSize + iconGap + fontW;
+
         this.height = fontH;
     }
 

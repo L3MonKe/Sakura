@@ -66,6 +66,7 @@ public class Scaffold extends Module {
             if (minecraftClient.player == null || minecraftClient.world == null) return;
             if (!shouldSwapBack) return;
 
+            // TODO:改成手动切换selected
             shouldSwapBack = false;
             InvUtil.swapBack();
         });
@@ -73,7 +74,7 @@ public class Scaffold extends Module {
 
     @Override
     public String getSuffix() {
-        return telly.get() ? "Telly" : "Normal";
+        return telly.get() ? "Telly" : "GodBridge";
     }
 
     @EventHandler

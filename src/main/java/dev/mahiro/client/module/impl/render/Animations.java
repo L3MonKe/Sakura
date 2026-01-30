@@ -3,9 +3,16 @@ package dev.mahiro.client.module.impl.render;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
+import dev.mahiro.client.events.entity.LimbAnimationEvent;
+import dev.mahiro.client.events.entity.SwingSpeedEvent;
+import dev.mahiro.client.events.entity.UpdateServerPositionEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
-import dev.mahiro.client.events.render.item.EventHeldItemRenderer;
+import dev.mahiro.client.events.player.PlayerTickEvent;
+import dev.mahiro.client.events.render.item.EatTransformationEvent;
+import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
+import dev.mahiro.client.events.render.item.RenderSwingAnimationEvent;
 import dev.mahiro.client.interfaces.IHeldItemRenderer;
+import dev.mahiro.client.mixin.accessor.IAccessorBundlePacket;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.combat.KillAura;
@@ -19,26 +26,38 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.*;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
+import net.minecraft.network.packet.s2c.play.BundleS2CPacket;
+import net.minecraft.network.packet.s2c.play.EntityAnimationS2CPacket;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class Animations extends Module {
     public Animations() {
         super("Animations", "格挡动画", Category.Render);
     }
 
-    private final BoolValue onlySword = new BoolValue("OnlySword", "仅持剑", false);
-    private final BoolValue onlyaura = new BoolValue("OnlyAura", "仅光环时启用", false);
-    private final BoolValue noOffhand = new BoolValue("NoOffhand", "隐藏副手", false);
-    public final BoolValue oldAnimationsM = new BoolValue("DisableSwapMain", "禁用主手切换动画", true);
-    public final BoolValue oldAnimationsOff = new BoolValue("DisableSwapOff", "禁用副手切换动画", true);
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Default);
-    public static final BoolValue slowAnimation = new BoolValue("SlowAnimation", "慢速动画", true);
-    public static final NumberValue<Integer> slowAnimationVal = new NumberValue<>("SlowValue", "慢速值", 12, 1, 50, 1);
+    private final BoolValue onlySword = new BoolValue("Only Sword", "仅持剑", true);
+    private final BoolValue onlyAura = new BoolValue("Only Aura", "仅光环时启用", true);
+    private final BoolValue noOffhand = new BoolValue("No Offhand", "隐藏副手", false);
+    public final BoolValue oldAnimationsM = new BoolValue("Disable Swap Main", "禁用主手切换动画", true);
+    public final BoolValue oldAnimationsOff = new BoolValue("Disable Swap Off", "禁用副手切换动画", true);
+    private final BoolValue oldSwingConfig = new BoolValue("Old Swing Animation", "旧版挥手", false);
+    private final BoolValue swingSpeedConfig = new BoolValue("Swing Speed", "挥手速度", false);
+    private final NumberValue<Integer> swingFactorConfig = new NumberValue<>("Swing Factor", "挥手因子", 6, 1, 20, 1, swingSpeedConfig::get);
+    private final BoolValue selfOnlyConfig = new BoolValue("Self Only", "仅自己", true, () -> false);
+    private final BoolValue eatTransformConfig = new BoolValue("Eat Transform", "食用变换", false);
+    private final NumberValue<Double> eatTransformFactorConfig = new NumberValue<>("Eat Factor", "食物变换因子", 1.0, 0.0, 1.0, 0.1, eatTransformConfig::get);
+    private final BoolValue limbSwing = new BoolValue("No Limb Swing", "无肢体摆动", false);
+    private final BoolValue interpolationConfig = new BoolValue("No Interpolation", "无插值", false, limbSwing::get);
 
     public boolean flip;
 
@@ -49,18 +68,19 @@ public class Animations extends Module {
     public boolean shouldAnimate() {
         if (mc.player.isUsingItem()) return false;
         if (onlySword.get() && !(mc.player.getMainHandStack().getItem() instanceof SwordItem)) return false;
-        if (Mahiro.MODULES.getModule(KillAura.class).isEnabled() && Mahiro.MODULES.getModule(KillAura.class).getCurrentTarget() != null && Mahiro.MODULES.getModule(KillAura.class).isAutoBlock()) return true;
+        if (Mahiro.MODULES.getModule(KillAura.class).isEnabled() && Mahiro.MODULES.getModule(KillAura.class).getCurrentTarget() != null && Mahiro.MODULES.getModule(KillAura.class).isAutoBlock())
+            return true;
         return false;
     }
 
     public boolean shouldChangeAnimationDuration() {
-        return isEnabled()
-                && (!onlyaura.get() || (Mahiro.MODULES.getModule(KillAura.class).isEnabled() && Mahiro.MODULES.getModule(KillAura.class).getCurrentTarget() != null));
+        return isEnabled() && (!onlyAura.get() || (Mahiro.MODULES.getModule(KillAura.class).isEnabled() && Mahiro.MODULES.getModule(KillAura.class).getCurrentTarget() != null));
     }
 
     @EventHandler
-    public void onUpdate(TickEvent.Pre event) {
+    public void onTick(PlayerTickEvent event) {
         if (nullCheck()) return;
+
         if (oldAnimationsM.get() && ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).getEquippedProgressMainHand() <= 1f) {
             ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).setEquippedProgressMainHand(1f);
             ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).setItemStackMainHand(mc.player.getMainHandStack());
@@ -74,8 +94,72 @@ public class Animations extends Module {
 
     @EventHandler
     public void onPacketSend(PacketEvent event) {
-        if (event.getType() == EventType.SEND && event.getPacket() instanceof HandSwingC2SPacket)
+        if (event.getType() == EventType.SEND && event.getPacket() instanceof HandSwingC2SPacket) {
             flip = !flip;
+        }
+    }
+
+    @EventHandler
+    public void onSwingSpeed(SwingSpeedEvent event) {
+        if (swingSpeedConfig.get()) {
+            event.setCancelled(true);
+            event.setSwingSpeed(swingFactorConfig.get());
+            event.setSelfOnly(selfOnlyConfig.get());
+        }
+    }
+
+    @EventHandler
+    public void onEatTransformation(EatTransformationEvent event) {
+        if (eatTransformConfig.get()) {
+            event.setCancelled(true);
+            event.setFactor(eatTransformFactorConfig.get().floatValue());
+        }
+    }
+
+    @EventHandler
+    public void onLimbAnimation(LimbAnimationEvent event) {
+        if (limbSwing.get()) {
+            event.setCancelled(true);
+            event.setSpeed(0.0f);
+        }
+    }
+
+    @EventHandler
+    public void onUpdateServerPosition(UpdateServerPositionEvent event) {
+        if (limbSwing.get() && interpolationConfig.get()) {
+            event.getLivingEntity().setPos(event.getX(), event.getY(), event.getZ());
+            event.getLivingEntity().setYaw(event.getYaw());
+            event.getLivingEntity().setPitch(event.getPitch());
+        }
+    }
+
+    @EventHandler
+    public void onRenderSwing(RenderSwingAnimationEvent event) {
+        if (oldSwingConfig.get()) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onPacketInbound(PacketEvent event) {
+        if (mc.player == null || event.getType() != EventType.RECEIVE) return;
+
+        if (event.getPacket() instanceof BundleS2CPacket packet) {
+            List<Packet<?>> packets = new ArrayList<>();
+            for (Packet<?> packet1 : packet.getPackets()) {
+                if (packet1 instanceof EntityAnimationS2CPacket packet2 && oldSwingConfig.get()
+                        && packet2.getEntityId() == mc.player.getId()
+                        && (packet2.getAnimationId() == EntityAnimationS2CPacket.SWING_MAIN_HAND || packet2.getAnimationId() == EntityAnimationS2CPacket.SWING_OFF_HAND)) {
+                    continue;
+                }
+                packets.add(packet1);
+            }
+            ((IAccessorBundlePacket) packet).setIterable(packets);
+        } else if (event.getPacket() instanceof EntityAnimationS2CPacket packet && oldSwingConfig.get()
+                && packet.getEntityId() == mc.player.getId()
+                && (packet.getAnimationId() == EntityAnimationS2CPacket.SWING_MAIN_HAND || packet.getAnimationId() == EntityAnimationS2CPacket.SWING_OFF_HAND)) {
+            event.setCancelled(true);
+        }
     }
 
     private void renderSwordAnimation(MatrixStack matrices, float f, float swingProgress, float equipProgress, Arm arm) {
@@ -278,7 +362,7 @@ public class Animations extends Module {
                     }
                 }
 
-                EventHeldItemRenderer event = new EventHeldItemRenderer(hand, item, equipProgress, matrices);
+                HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
                 Mahiro.EVENT_BUS.post(event);
                 renderItem(player, item, bl3 ? ModelTransformationMode.FIRST_PERSON_RIGHT_HAND : ModelTransformationMode.FIRST_PERSON_LEFT_HAND, !bl3, matrices, vertexConsumers, light);
             } else {
@@ -348,7 +432,7 @@ public class Animations extends Module {
                     renderSwordAnimation(matrices, f, swingProgress, equipProgress, arm);
                 }
 
-                EventHeldItemRenderer event = new EventHeldItemRenderer(hand, item, equipProgress, matrices);
+                HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
                 Mahiro.EVENT_BUS.post(event);
                 renderItem(player, item, bl2 ? ModelTransformationMode.FIRST_PERSON_RIGHT_HAND : ModelTransformationMode.FIRST_PERSON_LEFT_HAND, !bl2, matrices, vertexConsumers, light);
             }
