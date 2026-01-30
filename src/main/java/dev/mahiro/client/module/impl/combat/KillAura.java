@@ -50,8 +50,8 @@ public class KillAura extends Module {
     private final BoolValue teamCheck = new BoolValue("Team Check", "队伍检测", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
 
-    private List<Entity> targets;
-    private Entity target;
+    private List<LivingEntity> targets;
+    private LivingEntity target;
 
     private long lastAttackTime = 0;
 
@@ -65,7 +65,7 @@ public class KillAura extends Module {
         return autoBlock.get();
     }
 
-    public Entity getCurrentTarget() {
+    public LivingEntity getCurrentTarget() {
         return target;
     }
 
@@ -118,46 +118,8 @@ public class KillAura extends Module {
 
     private void findTarget() {
         double range = Math.max(aimRange.get(), searchRange.get());
-
         this.target = null;
-        double minDstSq = Double.MAX_VALUE;
-
-        Box searchBox = mc.player.getBoundingBox().expand(range);
-
-        List<Entity> candidates = mc.world.getOtherEntities(mc.player, searchBox, e -> e instanceof LivingEntity && e != mc.player && e.isAlive() && !e.isSpectator() && isEnemy(e));
-
-        targets = candidates;
-
-        for (Entity entity : candidates) {
-            double distSq = mc.player.squaredDistanceTo(entity);
-            if (distSq < minDstSq && distSq <= range * range) {
-                minDstSq = distSq;
-                this.target = entity;
-            }
-        }
-    }
-
-    private boolean isEnemy(Entity entity) {
-        if (!teamCheck.get()) return true;
-        if (!(entity instanceof PlayerEntity player)) return true;
-        if (mc.player == null) return false;
-
-        int myColor = getLeatherArmorColor(mc.player);
-        int theirColor = getLeatherArmorColor(player);
-
-        if (myColor == -1 || theirColor == -1) return true;
-
-        return myColor != theirColor;
-    }
-
-    private int getLeatherArmorColor(PlayerEntity player) {
-        for (ItemStack stack : player.getArmorItems()) {
-            if (stack.isEmpty()) continue;
-            DyedColorComponent dyed = stack.get(DataComponentTypes.DYED_COLOR);
-            if (dyed != null) {
-                return dyed.rgb();
-            }
-        }
-        return -1;
+        this.targets = Managers.COMBAT.getEntities(range);
+        this.target = Managers.COMBAT.getClosestEnemy(range);
     }
 }

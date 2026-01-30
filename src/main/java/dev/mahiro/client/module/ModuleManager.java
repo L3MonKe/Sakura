@@ -84,7 +84,6 @@ public class ModuleManager {
         add(new Chams());
         add(new Fullbright());
         add(new Hat());
-        add(new ItemPhysics());
         add(new JumpCircles());
         add(new MotionBlur());
         add(new NameTags());
@@ -101,6 +100,8 @@ public class ModuleManager {
         add(new Chat());
         add(new ClickGui());
         add(new HudEditor());
+        add(new Targets());
+        add(new Teams());
 
         // HUD
         add(new DynamicIslandHud());
