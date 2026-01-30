@@ -77,7 +77,7 @@ public class WelcomeScreen extends Screen {
             panel.setOpened(true);
 
             for (ModuleComponent component : panel.getModuleComponents()) {
-                if (component.getModule().getEnglishName().equalsIgnoreCase("Scaffold") || component.getModule().getEnglishName().equalsIgnoreCase("Crystal")) {
+                if (component.getModule().getEnglishName().equalsIgnoreCase("Scaffold")) {
                     component.setOpened(true);
                 } else if (Math.random() > 0.9) {
                     component.setPreviewEnabled(true);

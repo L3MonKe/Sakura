@@ -16,11 +16,11 @@ public class NameProtect extends Module {
 
     public static String getReplacement(String original) {
         if (original == null) return null;
-        
+
         try {
             MinecraftClient mc = MinecraftClient.getInstance();
             if (mc.player == null) return original;
-            
+
             String playerName = mc.player.getName().getString();
             if (playerName == null || playerName.isEmpty() || playerName.length() < 2) return original;
 
@@ -51,7 +51,7 @@ public class NameProtect extends Module {
                 while (index != -1) {
                     result.append(Text.of(original.substring(lastIndex, index)));
                     result.append(TextReplacer.getGradientText(FAKE_NAME));
-                    
+
                     lastIndex = index + playerName.length();
                     index = original.indexOf(playerName, lastIndex);
                 }
@@ -64,7 +64,7 @@ public class NameProtect extends Module {
         }
         return Text.of(original);
     }
-    
+
     public static boolean shouldReplace(String text) {
         if (text == null) return false;
         try {

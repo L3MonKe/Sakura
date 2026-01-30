@@ -61,12 +61,12 @@ public class BlurProgram {
         }
 
         float factor = (float) mc.getWindow().getScaleFactor();
-        if (radius != null) radius.set(r * factor);
-        if (uLocation != null) uLocation.set(x * factor, -y * factor + mc.getWindow().getScaledHeight() * factor - height * factor);
-        if (uSize != null) uSize.set(width * factor, height * factor);
-        if (brightness != null) brightness.set(blurOpacity);
-        if (quality != null) quality.set(blurStrenth);
-        if (color1 != null) color1.set(c1.getRed() / 255f, c1.getGreen() / 255f, c1.getBlue() / 255f, 1f);
+        radius.set(r * factor);
+        uLocation.set(x * factor, -y * factor + mc.getWindow().getScaledHeight() * factor - height * factor);
+        uSize.set(width * factor, height * factor);
+        brightness.set(blurOpacity);
+        quality.set(blurStrenth);
+        color1.set(c1.getRed() / 255f, c1.getGreen() / 255f, c1.getBlue() / 255f, 1f);
         program.addSamplerTexture("InputSampler", input.getColorAttachment());
     }
 

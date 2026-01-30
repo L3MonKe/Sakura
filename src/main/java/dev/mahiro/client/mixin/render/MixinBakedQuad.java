@@ -8,7 +8,9 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(BakedQuad.class)
 public abstract class MixinBakedQuad implements IBakedQuad {
-    @Shadow @Final protected int[] vertexData;
+    @Shadow
+    @Final
+    protected int[] vertexData;
 
     @Override
     public float getX(int vertexI) {

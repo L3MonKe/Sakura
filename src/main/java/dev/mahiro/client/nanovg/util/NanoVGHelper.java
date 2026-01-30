@@ -1,9 +1,7 @@
 package dev.mahiro.client.nanovg.util;
 
 import dev.mahiro.client.nanovg.NanoVGRenderer;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.math.MatrixStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.nanovg.NanoVGGL3;
@@ -108,7 +106,7 @@ public class NanoVGHelper {
         NVGColor glowColor = nvgColor(color);
         nvgFontBlur(vg, glowRadius);
         nvgFillColor(vg, glowColor);
-        
+
         for (int i = 0; i < intensity; i++) {
             nvgText(vg, x, y, text);
         }
@@ -211,7 +209,7 @@ public class NanoVGHelper {
 
         float baseAlpha = color.getAlpha() / 255.0f;
         int glowSteps = (int) Math.max(10, glowRadius * 2);
-        
+
         nvgSave(vg);
         for (int i = 0; i < glowSteps; i++) {
             float progress = (float) i / glowSteps;
@@ -222,7 +220,7 @@ public class NanoVGHelper {
 
             if (currentAlpha <= 0.005f) continue;
 
-            Color glowColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), (int)(currentAlpha * 255));
+            Color glowColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (currentAlpha * 255));
             NVGColor nvgGlowColor = nvgColor(glowColor);
 
             nvgBeginPath(vg);

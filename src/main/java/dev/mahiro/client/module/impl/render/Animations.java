@@ -49,7 +49,8 @@ public class Animations extends Module {
     public boolean shouldAnimate() {
         if (mc.player.isUsingItem()) return false;
         if (onlySword.get() && !(mc.player.getMainHandStack().getItem() instanceof SwordItem)) return false;
-        if (Mahiro.MODULES.getModule(KillAura.class).isEnabled() && Mahiro.MODULES.getModule(KillAura.class).getCurrentTarget() != null && Mahiro.MODULES.getModule(KillAura.class).isAutoBlock()) return true;
+        if (Mahiro.MODULES.getModule(KillAura.class).isEnabled() && Mahiro.MODULES.getModule(KillAura.class).getCurrentTarget() != null && Mahiro.MODULES.getModule(KillAura.class).isAutoBlock())
+            return true;
         return false;
     }
 

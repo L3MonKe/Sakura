@@ -12,15 +12,16 @@ import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.util.Hand;
 
-public class MiddleClickPearl extends Module {
-    public MiddleClickPearl() {
-        super("MiddleClickPearl", "中键珍珠", Category.Player);
+public class MCP extends Module {
+    public MCP() {
+        super("MCP", "中键珍珠", Category.Player);
     }
+
     private final TimerUtil swapTimer = new TimerUtil();
     boolean click = false;
 
-    private final BoolValue swapBack = new BoolValue("SwapBack", "切换回原槽位", true);
-    private final NumberValue<Integer> delay = new NumberValue<>("SwapBackDelay", "切换延迟", 200, 0, 500, 10);
+    private final BoolValue swapBack = new BoolValue("Swap Back", "切换回原槽位", true);
+    private final NumberValue<Integer> delay = new NumberValue<>("Swap Back Delay", "切换延迟", 200, 0, 500, 10);
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {

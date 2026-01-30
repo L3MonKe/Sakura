@@ -84,7 +84,7 @@ public abstract class MixinTextRenderer {
                 return true;
             });
             String string = sb.toString();
-            
+
             boolean modified = false;
             Text resultText = null;
 

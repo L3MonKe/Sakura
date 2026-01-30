@@ -6,7 +6,6 @@ import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
-import dev.mahiro.client.module.impl.movement.Scaffold;
 import dev.mahiro.client.module.impl.player.Blink;
 import dev.mahiro.client.utils.rotation.MovementFix;
 import dev.mahiro.client.utils.rotation.RotationUtil;

@@ -38,8 +38,8 @@ public class ClientWorldMixin {
             )
     )
     public void hookSkipTicks(Entity instance) {
-        if (Mahiro.skipTicks > 0 && instance == MinecraftClient.getInstance().player){
-            Mahiro.skipTicks --;
+        if (Mahiro.skipTicks > 0 && instance == MinecraftClient.getInstance().player) {
+            Mahiro.skipTicks--;
         } else {
             instance.tick();
         }

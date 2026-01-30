@@ -12,14 +12,4 @@ public class Targets extends Module {
     public final BoolValue player = new BoolValue("player", "玩家", true);
     public final BoolValue mobs = new BoolValue("Mobs", "怪物", true);
     public final BoolValue animals = new BoolValue("Animals", "动物", true);
-
-    @Override
-    public void onEnable() {
-        setState(false);
-    }
-
-    @Override
-    public void onDisable() {
-        setState(true);
-    }
 }

@@ -67,7 +67,7 @@ public class ModuleManager {
         add(new BowBomb());
         add(new Disabler());
         add(new GrimFly());
-        add(new MiddleClickPearl());
+        add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());
         add(new NoRotate());
@@ -83,7 +83,6 @@ public class ModuleManager {
         add(new Atmosphere());
         add(new CameraClip());
         add(new Chams());
-        add(new Crystal());
         add(new Fullbright());
         add(new Hat());
         add(new ItemPhysics());
@@ -91,7 +90,6 @@ public class ModuleManager {
         add(new MotionBlur());
         add(new NameTags());
         add(new NoRender());
-        add(new OldHitting());
         add(new Shaders());
         add(new NameProtect());
         add(new SwingAnimation());

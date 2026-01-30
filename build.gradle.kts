@@ -147,3 +147,4 @@ tasks.register("buildClientOnly") {
     }
     finalizedBy("build")
 }
+

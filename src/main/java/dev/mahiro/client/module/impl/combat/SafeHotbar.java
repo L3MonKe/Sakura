@@ -21,10 +21,10 @@ public class SafeHotbar extends Module {
 
     private final NumberValue<Double> healthThreshold = new NumberValue<>("Health", "生命值阈值", 10.0, 0.0, 36.0, 0.5);
     private final NumberValue<Double> switchDelay = new NumberValue<>("Switch Delay", "切换延迟", 50.0, 0.0, 1000.0, 1.0);
-    
+
     private final BoolValue checkCrystal = new BoolValue("Check Crystal", "检查水晶", true);
     private final NumberValue<Double> crystalRange = new NumberValue<>("Crystal Range", "水晶范围", 6.0, 0.0, 10.0, 0.1);
-    
+
     private final BoolValue checkAnchor = new BoolValue("Check Anchor", "检查锚点", true);
     private final NumberValue<Double> anchorRange = new NumberValue<>("Anchor Range", "锚点范围", 6.0, 0.0, 10.0, 0.1);
     private final BoolValue onlyChargedAnchor = new BoolValue("Only Charged", "仅充能锚点", false);
@@ -73,7 +73,7 @@ public class SafeHotbar extends Module {
 
     private void checkEndCrystal() {
         if (!checkCrystal.get()) return;
-        
+
         double range = crystalRange.get();
         double pY = mc.player.getY();
 
@@ -116,7 +116,7 @@ public class SafeHotbar extends Module {
     }
 
     private boolean isProtectedByObsidian(BlockPos anchorPos) {
-        return false; 
+        return false;
     }
 
     private void checkHealth() {
@@ -130,10 +130,10 @@ public class SafeHotbar extends Module {
         if (mc.player.isOnGround()) return;
 
         if (mc.player.fallDistance > 3.0f) {
-             float damage = mc.player.fallDistance - 3.0f;
-             if (damage >= mc.player.getHealth() + mc.player.getAbsorptionAmount()) {
-                 switchToTotem();
-             }
+            float damage = mc.player.fallDistance - 3.0f;
+            if (damage >= mc.player.getHealth() + mc.player.getAbsorptionAmount()) {
+                switchToTotem();
+            }
         }
     }
 
