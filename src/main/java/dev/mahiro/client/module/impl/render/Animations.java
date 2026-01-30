@@ -7,6 +7,7 @@ import dev.mahiro.client.events.entity.LimbAnimationEvent;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
 import dev.mahiro.client.events.entity.UpdateServerPositionEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
+import dev.mahiro.client.events.player.PlayerTickEvent;
 import dev.mahiro.client.events.render.item.EatTransformationEvent;
 import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.events.render.item.RenderSwingAnimationEvent;
@@ -77,7 +78,7 @@ public class Animations extends Module {
     }
 
     @EventHandler
-    public void onTick(TickEvent.Pre event) {
+    public void onTick(PlayerTickEvent event) {
         if (nullCheck()) return;
 
         if (oldAnimationsM.get() && ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).getEquippedProgressMainHand() <= 1f) {

@@ -147,15 +147,3 @@ tasks.register("buildClientOnly") {
     }
     finalizedBy("build")
 }
-
-tasks.register<Copy>("extractRuntimeClasspath") {
-    group = "distribution"
-    description = "Extract runtime classpath to ZKM/libs directory"
-    
-    from(configurations.runtimeClasspath)
-    into("$projectDir/ZKM/libs")
-    
-    doFirst {
-        file("$projectDir/ZKM/libs").mkdirs()
-    }
-}
