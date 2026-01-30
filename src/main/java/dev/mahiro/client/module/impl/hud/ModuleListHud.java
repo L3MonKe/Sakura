@@ -4,7 +4,6 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.ClickGui;
-import dev.mahiro.client.module.impl.client.HudEditor;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
@@ -15,15 +14,12 @@ import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
-import org.lwjgl.nanovg.NVGPaint;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import static org.lwjgl.nanovg.NanoVG.*;
 
 public class ModuleListHud extends HudModule {
     public ModuleListHud() {
@@ -35,77 +31,73 @@ public class ModuleListHud extends HudModule {
         Gradient
     }
 
+    // --- 核心设置 (Core Settings) ---
     private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Normal);
+    private final NumberValue<Double> hudScale = new NumberValue<>("Hud Scale", "HUD缩放", 1.1, 0.5, 2.0, 0.1);
+    private final BoolValue alignRight = new BoolValue("Align Right", "右对齐", false);
+    private final BoolValue hideHudModules = new BoolValue("Hide HudModules", "隐藏HUD模块", true);
 
-    // Normal Mode Settings
-    private final BoolValue normalEnableBloom = new BoolValue("EnableBloom", "光晕", true, () -> mode.is(ListMode.Normal));
-    private final NumberValue<Double> normalRadius = new NumberValue<>("Radius", "圆角半径", 6.0, 0.0, 15.0, 1.0, () -> mode.is(ListMode.Normal));
-    private final BoolValue normalShowCategory = new BoolValue("ShowCategory", "显示分类", true, () -> mode.is(ListMode.Normal));
-    private final BoolValue normalRainbowColor = new BoolValue("RainbowColor", "彩虹色", false, () -> mode.is(ListMode.Normal));
-    private final NumberValue<Double> normalItemSpacing = new NumberValue<>("ItemSpacing", "项目间距", 7.0, 0.0, 10.0, 0.5, () -> mode.is(ListMode.Normal));
-    private final NumberValue<Integer> normalSuffixStyle = new NumberValue<>("SuffixStyle", "后缀符号", 0, 0, 3, 1, () -> mode.is(ListMode.Normal));
+    // --- 布局与限制 (Layout & Limits) ---
+    private final NumberValue<Double> maxWidth = new NumberValue<>("Max Width", "最大宽度", 150.0, 50.0, 300.0, 5.0);
+    private final NumberValue<Double> maxHeight = new NumberValue<>("Max Height", "最大高度", 200.0, 50.0, 500.0, 10.0);
+    private final NumberValue<Double> itemSpacing = new NumberValue<>("Item Spacing", "项目间距", 7.0, 0.0, 10.0, 0.5);
+    private final NumberValue<Integer> suffixStyle = new NumberValue<>("Suffix Style", "后缀符号", 0, 0, 3, 1);
 
-    // Shared Settings
-    private final NumberValue<Double> animationSpeed = new NumberValue<>("AnimationSpeed", "动画速度", 0.2, 0.05, 0.5, 0.05);
-    private final NumberValue<Double> sliderSpeed = new NumberValue<>("SliderSpeed", "滑动速度", 0.2, 0.01, 1.0, 0.01);
-    private final NumberValue<Double> maxWidth = new NumberValue<>("MaxWidth", "最大宽度", 150.0, 50.0, 300.0, 5.0);
-    private final NumberValue<Double> maxHeight = new NumberValue<>("MaxHeight", "最大高度", 200.0, 50.0, 500.0, 10.0);
-    private final BoolValue alignRight = new BoolValue("AlignRight", "右对齐", false);
-    private final BoolValue hideHudModules = new BoolValue("HideHudModules", "隐藏HUD模块", true);
-    private final NumberValue<Double> hudScale = new NumberValue<>("HudScale", "HUD缩放", 1.1, 0.5, 2.0, 0.1);
+    // --- 动画控制 (Animation Control) ---
+    private final NumberValue<Double> animationSpeed = new NumberValue<>("Animation Speed", "动画速度", 0.2, 0.05, 0.5, 0.05);
+    private final NumberValue<Double> sliderSpeed = new NumberValue<>("Slider Speed", "滑动速度", 0.2, 0.01, 1.0, 0.01);
 
-    // Gradient Mode Settings
-    private final NumberValue<Double> gradientItemSpacing = new NumberValue<>("GradientItemSpacing", "项目间距", 7.0, 0.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Integer> gradientSuffixStyle = new NumberValue<>("GradientSuffixStyle", "后缀符号", 0, 0, 3, 1, () -> mode.is(ListMode.Gradient));
-    private final BoolValue textGlow = new BoolValue("TextGlow", "文本发光", true, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> glowRadius = new NumberValue<>("GlowRadius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && textGlow.get());
-    private final NumberValue<Integer> glowIntensity = new NumberValue<>("GlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && textGlow.get());
-    private final BoolValue background = new BoolValue("Background", "背景", false, () -> mode.is(ListMode.Gradient));
-    private final EnumValue<BackgroundMode> backgroundMode = new EnumValue<>("BackgroundMode", "背景模式", BackgroundMode.Normal, () -> mode.is(ListMode.Gradient) && background.get());
-    private final ColorValue backgroundColor = new ColorValue("BackgroundColor", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> backgroundRadius = new NumberValue<>("BackgroundRadius", "背景圆角", 0.0, 0.0, 10.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("BackgroundOffsetY", "背景Y偏移", -3.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> textOffsetY = new NumberValue<>("TextOffsetY", "文字Y偏移", 1.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient));
+    // --- 普通模式设置 (Normal Mode) ---
+    private final BoolValue normalRainbowColor = new BoolValue("Normal Rainbow", "普通-彩虹色", false, () -> mode.is(ListMode.Normal));
+    private final BoolValue normalShowCategory = new BoolValue("Normal Show Category", "普通-显示分类", true, () -> mode.is(ListMode.Normal));
+    private final BoolValue normalEnableBloom = new BoolValue("Normal Enable Bloom", "普通-光晕", true, () -> mode.is(ListMode.Normal));
+    private final NumberValue<Double> normalRadius = new NumberValue<>("Normal Radius", "普通-圆角半径", 6.0, 0.0, 15.0, 1.0, () -> mode.is(ListMode.Normal));
 
-    public enum BackgroundMode {
-        Normal,
-        Blur
-    }
+    // --- 渐变模式设置 (Gradient Mode) ---
+    // 1. 文本与字体 (Text & Font)
+    private final NumberValue<Double> customFontSize = new NumberValue<>("Font Size", "渐变-字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> textOffsetY = new NumberValue<>("Text Offset Y", "渐变-文字Y偏移", 1.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient));
+    private final BoolValue textGlow = new BoolValue("Text Glow", "渐变-文本发光", true, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> glowRadius = new NumberValue<>("Glow Radius", "渐变-发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && textGlow.get());
+    private final NumberValue<Integer> glowIntensity = new NumberValue<>("Glow Intensity", "渐变-发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && textGlow.get());
 
-    // Gradient Line Settings
-    private final BoolValue showGradientLine = new BoolValue("ShowLine", "显示线条", false, () -> mode.is(ListMode.Gradient));
-    private final EnumValue<LineMode> lineMode = new EnumValue<>("LineMode", "线条模式", LineMode.Left, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
-    private final NumberValue<Double> lineWidth = new NumberValue<>("LineWidth", "线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
+    // 2. 渐变颜色 (Colors)
+    private final BoolValue autoColor = new BoolValue("Auto Color", "渐变-自动调色", false, () -> mode.is(ListMode.Gradient));
+    private final ColorValue gradientColor1 = new ColorValue("Color 1", "渐变-颜色1", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient));
+    private final ColorValue gradientColor2 = new ColorValue("Color 2", "渐变-颜色2", new Color(255, 0, 255), () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> gradientSpeed = new NumberValue<>("Gradient Speed", "渐变-速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> colorStep = new NumberValue<>("Color Step", "渐变-颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(ListMode.Gradient));
 
-    public enum LineMode {
-        Left,
-        Box
-    }
+    // 3. 背景设置 (Background)
+    private final BoolValue background = new BoolValue("Background", "渐变-背景", false, () -> mode.is(ListMode.Gradient));
 
-    // Gradient Bloom Settings
-    private final BoolValue bloom = new BoolValue("Bloom", "光晕", false, () -> mode.is(ListMode.Gradient));
-    private final EnumValue<BloomMode> bloomMode = new EnumValue<>("BloomMode", "光晕模式", BloomMode.Stencil, () -> mode.is(ListMode.Gradient) && bloom.get());
-    private final EnumValue<BloomStyle> bloomStyle = new EnumValue<>("BloomStyle", "光晕样式", BloomStyle.Gradient, () -> mode.is(ListMode.Gradient) && bloom.get());
-    private final ColorValue bloomColor = new ColorValue("BloomColor", "光晕颜色", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient) && bloom.get() && bloomStyle.is(BloomStyle.Static));
-    private final NumberValue<Double> bloomRadius = new NumberValue<>("BloomRadius", "光晕半径", 5.0, 1.0, 20.0, 1.0, () -> mode.is(ListMode.Gradient) && bloom.get());
+    public enum BackgroundMode { Normal, Blur }
 
-    public enum BloomMode {
-        Stencil,
-        Standard,
-        Kawase
-    }
+    private final EnumValue<BackgroundMode> backgroundMode = new EnumValue<>("Background Mode", "渐变-背景模式", BackgroundMode.Normal, () -> mode.is(ListMode.Gradient) && background.get());
+    private final ColorValue backgroundColor = new ColorValue("Background Color", "渐变-背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
+    private final NumberValue<Double> backgroundRadius = new NumberValue<>("Background Radius", "渐变-背景圆角", 0.0, 0.0, 10.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get());
+    private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("Background Offset Y", "渐变-背景Y偏移", -3.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && background.get());
 
-    public enum BloomStyle {
-        Gradient,
-        Static
-    }
+    // 4. 线条设置 (Lines)
+    private final BoolValue showGradientLine = new BoolValue("Show Line", "渐变-显示线条", false, () -> mode.is(ListMode.Gradient));
 
-    private final ColorValue gradientColor1 = new ColorValue("GradientColor1", "渐变色1", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient));
-    private final ColorValue gradientColor2 = new ColorValue("GradientColor2", "渐变色2", new Color(255, 0, 255), () -> mode.is(ListMode.Gradient));
-    private final BoolValue autoColor = new BoolValue("AutoColor", "自动颜色调节", false, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> gradientSpeed = new NumberValue<>("GradientSpeed", "渐变速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> customFontSize = new NumberValue<>("CustomFontSize", "字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> colorStep = new NumberValue<>("ColorStep", "颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(ListMode.Gradient));
+    public enum LineMode {Left, Box}
+
+    private final EnumValue<LineMode> lineMode = new EnumValue<>("Line Mode", "渐变-线条模式", LineMode.Left, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
+    private final NumberValue<Double> lineWidth = new NumberValue<>("Line Width", "渐变-线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
+
+    // 5. 光晕设置 (Bloom)
+    private final BoolValue bloom = new BoolValue("Bloom", "渐变-光晕", false, () -> mode.is(ListMode.Gradient));
+
+    public enum BloomMode {Stencil, Standard, Kawase}
+
+    private final EnumValue<BloomMode> bloomMode = new EnumValue<>("Bloom Mode", "渐变-光晕模式", BloomMode.Stencil, () -> mode.is(ListMode.Gradient) && bloom.get());
+
+    public enum BloomStyle {Gradient, Static}
+
+    private final EnumValue<BloomStyle> bloomStyle = new EnumValue<>("Bloom Style", "渐变-光晕样式", BloomStyle.Gradient, () -> mode.is(ListMode.Gradient) && bloom.get());
+    private final ColorValue bloomColor = new ColorValue("Bloom Color", "渐变-光晕颜色", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient) && bloom.get() && bloomStyle.is(BloomStyle.Static));
+    private final NumberValue<Double> bloomRadius = new NumberValue<>("Bloom Radius", "渐变-光晕半径", 5.0, 1.0, 20.0, 1.0, () -> mode.is(ListMode.Gradient) && bloom.get());
 
 
     private final List<ModuleEntry> moduleEntries = new ArrayList<>();
@@ -180,7 +172,7 @@ public class ModuleListHud extends HudModule {
     private void updateModulePositions() {
         float scale = hudScale.get().floatValue();
         float fontSize = mode.is(ListMode.Gradient) ? customFontSize.get().floatValue() : 10f;
-        float itemSpacing = mode.is(ListMode.Gradient) ? gradientItemSpacing.get().floatValue() : normalItemSpacing.get().floatValue();
+        float itemSpacing = this.itemSpacing.get().floatValue();
 
         float currentY = y + (PADDING_Y * scale) - (scrollOffset * scale);
 
@@ -271,7 +263,7 @@ public class ModuleListHud extends HudModule {
 
     private void calculateTargetSize() {
         boolean isGradient = mode.is(ListMode.Gradient);
-        double spacing = isGradient ? gradientItemSpacing.get() : normalItemSpacing.get();
+        double spacing = itemSpacing.get();
         boolean showCat = isGradient ? false : normalShowCategory.get();
         boolean showIconValue = false;
 
@@ -383,7 +375,7 @@ public class ModuleListHud extends HudModule {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
             double animationValue = animation != null ? animation.getOutput() : 1.0;
 
-            float itemFullHeight = (10 + normalItemSpacing.get().floatValue()) * scale;
+            float itemFullHeight = (10 + itemSpacing.get().floatValue()) * scale;
 
             // Calculate target Y for this module
             float targetY = currentY;
@@ -564,7 +556,7 @@ public class ModuleListHud extends HudModule {
         String prefixSymbol = "";
         String suffixSymbol = "";
 
-        int style = mode.is(ListMode.Gradient) ? gradientSuffixStyle.get() : normalSuffixStyle.get();
+        int style = suffixStyle.get();
 
         switch (style) {
             case 1: // []
@@ -594,7 +586,7 @@ public class ModuleListHud extends HudModule {
         String prefixSymbol = "";
         String suffixSymbol = "";
 
-        int style = mode.is(ListMode.Gradient) ? gradientSuffixStyle.get() : normalSuffixStyle.get();
+        int style = suffixStyle.get();
 
         switch (style) {
             case 1: // []
@@ -654,7 +646,7 @@ public class ModuleListHud extends HudModule {
 
             if (animationValue <= 0.01) continue;
 
-            float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
 
             // We use the stored renderY from update() logic
             Float renderYObj = moduleYPositions.get(entry.module);
@@ -672,7 +664,7 @@ public class ModuleListHud extends HudModule {
                     (startX + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
                     (startX + (PADDING_X * scale));
 
-            float heightAdjustment = gradientItemSpacing.get() == 0 ? 0.5f * scale : 0;
+            float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
             float bgOffset = backgroundOffsetY.get().floatValue() * scale;
             float bgY = renderY + bgOffset - heightAdjustment;
             float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
@@ -729,7 +721,7 @@ public class ModuleListHud extends HudModule {
 
             if (animationValue <= 0.01) continue;
 
-            float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
 
             // We use the stored renderY from update() logic
             Float renderYObj = moduleYPositions.get(entry.module);
@@ -747,7 +739,7 @@ public class ModuleListHud extends HudModule {
                     (startX + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
                     (startX + (PADDING_X * scale));
 
-            float heightAdjustment = gradientItemSpacing.get() == 0 ? 0.5f * scale : 0;
+            float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
             float bgOffset = backgroundOffsetY.get().floatValue() * scale;
             float bgY = renderY + bgOffset - heightAdjustment;
             float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
@@ -788,7 +780,7 @@ public class ModuleListHud extends HudModule {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
             double animationValue = animation != null ? animation.getOutput() : 1.0;
 
-            float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
 
             // Calculate target Y
             float targetY = startY + totalListHeight;
@@ -830,7 +822,7 @@ public class ModuleListHud extends HudModule {
                 double currentOffset = offset + (bgIndex * colorStep.get());
                 double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
 
-                float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
+                float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
                 float renderY = moduleYPositions.getOrDefault(entry.module, currentBgY);
 
                 String moduleName = entry.module.getEnglishName();
@@ -845,7 +837,7 @@ public class ModuleListHud extends HudModule {
                         (x + (PADDING_X * scale));
 
                 // If spacing is 0, add a tiny bit of height overlap to prevent gaps
-                float heightAdjustment = gradientItemSpacing.get() == 0 ? 0.5f * scale : 0;
+                float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
                 float bgOffset = backgroundOffsetY.get().floatValue() * scale;
                 float bgY = renderY + bgOffset - heightAdjustment;
                 float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
@@ -982,7 +974,7 @@ public class ModuleListHud extends HudModule {
                 double currentOffset = offset + (bgIndex * colorStep.get());
                 double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
 
-                float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
+                float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
                 float renderY = moduleYPositions.getOrDefault(entry.module, currentBgY);
 
                 String moduleName = entry.module.getEnglishName();
@@ -996,7 +988,7 @@ public class ModuleListHud extends HudModule {
                         (x + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
                         (x + (PADDING_X * scale));
 
-                float heightAdjustment = gradientItemSpacing.get() == 0 ? 0.5f * scale : 0;
+                float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
                 float bgOffset = backgroundOffsetY.get().floatValue() * scale;
                 float bgY = renderY + bgOffset - heightAdjustment;
                 float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
@@ -1062,7 +1054,7 @@ public class ModuleListHud extends HudModule {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
             double animationValue = animation != null ? animation.getOutput() : 1.0;
 
-            float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
             float renderY = moduleYPositions.getOrDefault(entry.module, currentY); // Use pre-calculated/interpolated Y
 
             // Increment currentY for next iteration logic (although we use renderY for drawing)
