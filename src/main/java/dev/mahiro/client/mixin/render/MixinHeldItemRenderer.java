@@ -2,8 +2,7 @@ package dev.mahiro.client.mixin.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.render.item.EatTransformationEvent;
-import dev.mahiro.client.events.render.item.EventHeldItemRenderer;
+import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.interfaces.IHeldItemRenderer;
 import dev.mahiro.client.module.impl.render.Animations;
 import dev.mahiro.client.module.impl.render.Chams;
@@ -95,7 +94,7 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
     @Inject(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V", shift = At.Shift.AFTER), cancellable = true)
     private void onRenderItem(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light, CallbackInfo ci) {
         if (mc.player == null || mc.world == null) return;
-        EventHeldItemRenderer event = new EventHeldItemRenderer(hand, item, equipProgress, matrices);
+        HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
         Mahiro.EVENT_BUS.post(event);
         if (event.isCancelled()) ci.cancel();
     }

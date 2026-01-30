@@ -2,7 +2,6 @@ package dev.mahiro.client.utils.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.shaders.BlurProgram;
-import dev.mahiro.client.shaders.KawaseBloomProgram;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import org.joml.Matrix4f;
@@ -11,11 +10,9 @@ import java.awt.*;
 
 public class Shader2DUtil {
     public static BlurProgram BLUR_PROGRAM;
-    public static KawaseBloomProgram KAWASE_BLOOM_PROGRAM;
 
     public static void init() {
         BLUR_PROGRAM = new BlurProgram();
-        KAWASE_BLOOM_PROGRAM = new KawaseBloomProgram();
     }
 
     public static void drawQuadBlur(MatrixStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
@@ -34,18 +31,6 @@ public class Shader2DUtil {
         BufferBuilder bb = preShaderDraw(matrices, x - 10, y - 10, width + 20, height + 20);
         BLUR_PROGRAM.setParameters(x, y, width, height, radius, c1, blurStrenth, blurOpacity);
         BLUR_PROGRAM.use();
-
-        BufferRenderer.drawWithGlobalProgram(bb.end());
-        endRender();
-    }
-
-    public static void drawRoundedKawaseBloom(MatrixStack matrices, float x, float y, float width, float height, float radius, Color c1, float bloomRadius, float brightness) {
-        // Expand drawing area to accommodate the glow
-        float padding = bloomRadius * 20.0f; // Extra padding for large glows
-        BufferBuilder bb = preShaderDraw(matrices, x - padding, y - padding, width + padding * 2, height + padding * 2);
-        
-        KAWASE_BLOOM_PROGRAM.setParameters(x, y, width, height, radius, c1, bloomRadius, brightness);
-        KAWASE_BLOOM_PROGRAM.use();
 
         BufferRenderer.drawWithGlobalProgram(bb.end());
         endRender();

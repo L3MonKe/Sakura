@@ -4,7 +4,7 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
-import dev.mahiro.client.events.render.item.EventHeldItemRenderer;
+import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.interfaces.IHeldItemRenderer;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
@@ -278,7 +278,7 @@ public class Animations extends Module {
                     }
                 }
 
-                EventHeldItemRenderer event = new EventHeldItemRenderer(hand, item, equipProgress, matrices);
+                HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
                 Mahiro.EVENT_BUS.post(event);
                 renderItem(player, item, bl3 ? ModelTransformationMode.FIRST_PERSON_RIGHT_HAND : ModelTransformationMode.FIRST_PERSON_LEFT_HAND, !bl3, matrices, vertexConsumers, light);
             } else {
@@ -348,7 +348,7 @@ public class Animations extends Module {
                     renderSwordAnimation(matrices, f, swingProgress, equipProgress, arm);
                 }
 
-                EventHeldItemRenderer event = new EventHeldItemRenderer(hand, item, equipProgress, matrices);
+                HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
                 Mahiro.EVENT_BUS.post(event);
                 renderItem(player, item, bl2 ? ModelTransformationMode.FIRST_PERSON_RIGHT_HAND : ModelTransformationMode.FIRST_PERSON_LEFT_HAND, !bl2, matrices, vertexConsumers, light);
             }
