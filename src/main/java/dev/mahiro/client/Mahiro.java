@@ -99,6 +99,7 @@ public class Mahiro {
     public static CommandManager COMMAND;
     public static ClickGuiScreen CLICKGUI;
     public static HudEditorScreen HUDEDITOR;
+
     public static int skipTicks;
 
     public static void init(MinecraftClient client) {
