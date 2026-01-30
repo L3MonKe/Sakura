@@ -55,11 +55,6 @@ public class FastWeb extends Module {
             return true;
         }
 
-        BlockPos belowPos = playerPos.down();
-        if (mc.world.getBlockState(belowPos).getBlock() instanceof CobwebBlock) {
-            return true;
-        }
-
         Box box = mc.player.getBoundingBox().expand(0.0);
 
         for (int x = MathHelper.floor(box.minX); x <= box.maxX; x++) {
