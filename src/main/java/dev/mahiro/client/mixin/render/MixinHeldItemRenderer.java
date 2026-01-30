@@ -4,7 +4,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.events.render.item.UpdateHeldItemEvent;
-import dev.mahiro.client.events.render.item.UpdateHeldItemsEvent;
 import dev.mahiro.client.interfaces.IHeldItemRenderer;
 import dev.mahiro.client.module.impl.render.Animations;
 import dev.mahiro.client.module.impl.render.Chams;
@@ -111,23 +110,6 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
             Mahiro.EVENT_BUS.post(event);
         }
         return event.getItem();
-    }
-
-    @Inject(method = "updateHeldItems", at = @At(value = "HEAD"), cancellable = true)
-    private void hookUpdateHeldItems(CallbackInfo ci) {
-        ItemStack itemStack = mc.player.getMainHandStack();
-        ItemStack itemStack2 = mc.player.getOffHandStack();
-        UpdateHeldItemsEvent updateHeldItemsEvent = new UpdateHeldItemsEvent();
-        Mahiro.EVENT_BUS.post(updateHeldItemsEvent);
-        if (updateHeldItemsEvent.isCancelled()) {
-            ci.cancel();
-            equipProgressMainHand = 1.0f;
-            equipProgressOffHand = 1.0f;
-            prevEquipProgressMainHand = 1.0f;
-            prevEquipProgressOffHand = 1.0f;
-            mainHand = itemStack;
-            offHand = itemStack2;
-        }
     }
 
     @Inject(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/math/MatrixStack;push()V", shift = At.Shift.AFTER), cancellable = true)
