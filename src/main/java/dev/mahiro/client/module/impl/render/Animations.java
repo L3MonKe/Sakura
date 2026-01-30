@@ -2,7 +2,6 @@ package dev.mahiro.client.module.impl.render;
 
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
-import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.entity.LimbAnimationEvent;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
 import dev.mahiro.client.events.entity.UpdateServerPositionEvent;

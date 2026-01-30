@@ -20,10 +20,16 @@ import org.lwjgl.nanovg.NVGPaint;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Random;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class ModuleListHud extends HudModule {
+    public ModuleListHud() {
+        super("ModuleList", "功能列表", 10, 10);
+    }
+
     public enum ListMode {
         Normal,
         Gradient
@@ -45,7 +51,7 @@ public class ModuleListHud extends HudModule {
     private final NumberValue<Double> maxWidth = new NumberValue<>("MaxWidth", "最大宽度", 150.0, 50.0, 300.0, 5.0);
     private final NumberValue<Double> maxHeight = new NumberValue<>("MaxHeight", "最大高度", 200.0, 50.0, 500.0, 10.0);
     private final BoolValue alignRight = new BoolValue("AlignRight", "右对齐", false);
-    private final BoolValue hideHudModules = new BoolValue("HideHudModules", "隐藏HUD模块", false);
+    private final BoolValue hideHudModules = new BoolValue("HideHudModules", "隐藏HUD模块", true);
     private final NumberValue<Double> hudScale = new NumberValue<>("HudScale", "HUD缩放", 1.1, 0.5, 2.0, 0.1);
 
     // Gradient Mode Settings
@@ -103,29 +109,13 @@ public class ModuleListHud extends HudModule {
 
 
     private final List<ModuleEntry> moduleEntries = new ArrayList<>();
-    private static ModuleListHud instance;
-    private final java.util.Map<Module, EaseInOutQuad> moduleAnimations = new java.util.HashMap<>();
-    private final java.util.Map<Module, Float> moduleYPositions = new java.util.HashMap<>();
+    private final Map<Module, EaseInOutQuad> moduleAnimations = new java.util.HashMap<>();
+    private final Map<Module, Float> moduleYPositions = new java.util.HashMap<>();
     private float targetWidth = 0;
     private float targetHeight = 0;
     private float currentWidth = 0;
     private float currentHeight = 0;
     private float scrollOffset = 0;
-
-    private int iconImage = -1;
-    private final BoolValue normalShowIcon = new BoolValue("ShowIcon", "显示图标", true, () -> mode.is(ListMode.Normal));
-    // 图标大小固定为15
-
-    private float rotationAngle = 0.0f;
-    private long lastUpdateTime = 0;
-
-    private final List<Particle> particles = new ArrayList<>();
-    private final BoolValue enableParticles = new BoolValue("Enable Particles", "启用粒子", true);
-    private final NumberValue<Double> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 1.0, 0.1, 5.0, 0.1);
-    private final NumberValue<Integer> particleCount = new NumberValue<>("Particle Count", "粒子数量", 10, 0, 50, 1, enableParticles::get);
-    private final NumberValue<Double> particleSize = new NumberValue<>("Particle Size", "粒子大小", 2.0, 1.0, 5.0, 0.1, enableParticles::get);
-    private final NumberValue<Double> particleSpeed = new NumberValue<>("Particle Speed", "粒子速度", 1.0, 0.1, 3.0, 0.1, enableParticles::get);
-
 
     private static final float PADDING_X = 6f;
     private static final float PADDING_Y = 4f;
@@ -138,20 +128,12 @@ public class ModuleListHud extends HudModule {
     private static final float ICON_BACKGROUND_WIDTH = 12f;
     private static final float ICON_BACKGROUND_HEIGHT = 12f;
 
-    private static final java.util.Random RANDOM = new java.util.Random();
-
-    public ModuleListHud() {
-        super("ModuleList", "功能列表", 10, 10);
-        this.currentWidth = 50;
-        this.currentHeight = 20;
-        this.width = currentWidth;
-        this.height = currentHeight;
-        this.lastUpdateTime = System.currentTimeMillis();
-        instance = this;
-    }
+    private static final Random RANDOM = new Random();
 
     public static void onModuleToggle(Module module, boolean enabled) {
-        if (instance != null && !module.isHidden() && (!instance.hideHudModules.get() || !(module instanceof HudModule))) {
+        ModuleListHud instance = Mahiro.MODULES.getModule(ModuleListHud.class);
+
+        if (!module.isHidden() && (!instance.hideHudModules.get() || !(module instanceof HudModule))) {
             if (enabled) {
                 EaseInOutQuad animation = instance.moduleAnimations.computeIfAbsent(module, k -> new EaseInOutQuad(200, 1.0));
                 animation.setDirection(Direction.FORWARDS);
@@ -165,295 +147,22 @@ public class ModuleListHud extends HudModule {
     }
 
     @Override
-    public void renderInGame(DrawContext context) {
-        if (isHudEditorOpen()) return;
-
+    public void onRender(DrawContext context) {
         update();
         ensureWithinScreenBounds();
 
-        /*
-        // Pass 1 & 2: Bloom Stencil Pass (Only for Gradient Mode with Bloom + Stencil Mode)
-        if (mode.is(ListMode.Gradient) && bloom.get() && bloomMode.is(BloomMode.Stencil)) {
-            // ... stencil code ...
-            GL11.glEnable(GL11.GL_STENCIL_TEST);
-            GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
-            
-            // Step 1: Draw Background Mask (Writes 1 to Stencil)
-            GL11.glStencilFunc(GL11.GL_ALWAYS, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
-            RenderSystem.colorMask(false, false, false, false);
-            
-            NanoVGRenderer.INSTANCE.draw(this::renderBackgroundShapes);
-            
-            // Step 2: Draw Bloom (Writes Color where Stencil != 1)
-            RenderSystem.colorMask(true, true, true, true);
-            GL11.glStencilFunc(GL11.GL_NOTEQUAL, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-            
-            NanoVGRenderer.INSTANCE.draw(this::renderBloom);
-            
-            GL11.glDisable(GL11.GL_STENCIL_TEST);
-        }
-        
-        if (mode.is(ListMode.Gradient) && bloom.get() && bloomMode.is(BloomMode.Kawase)) {
-            // To treat the background as a "whole", we must use Stencil Buffer.
-            // Shader-based per-module bloom will ALWAYS overlap adjacent modules.
-            // We enable Stencil Test to prevent bloom from drawing over ANY background part.
-            
-            GL11.glEnable(GL11.GL_STENCIL_TEST);
-            GL11.glStencilMask(0xFF); // Ensure stencil is writable
-            GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
-            
-            // 1. Draw ALL Background shapes into Stencil (Masking)
-            // This builds a unified silhouette of the entire list.
-            GL11.glStencilFunc(GL11.GL_ALWAYS, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
-            RenderSystem.colorMask(false, false, false, false);
-            
-            renderStencilMask(); // Use solid mask for stencil
-            
-            // 2. Render Kawase Bloom
-            // We set Stencil Function to NOTEQUAL 1.
-            // This means we only draw pixels that are NOT part of the background silhouette.
-            // This effectively merges the bloom of adjacent modules because their "internal" overlaps are masked out.
-            RenderSystem.colorMask(true, true, true, true);
-            GL11.glStencilFunc(GL11.GL_NOTEQUAL, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-            
-            renderKawaseBloom(context);
-            
-            GL11.glDisable(GL11.GL_STENCIL_TEST);
-        }
-        */
-
-        // Pass 3: Render blur backgrounds (if enabled)
         if (mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur)) {
             renderBlurBackgrounds();
         }
 
-        // Pass 4: Render NanoVG content
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
-    }
-
-    @Override
-    public void renderInEditor(DrawContext context, float mouseX, float mouseY) {
-        handleDrag(mouseX, mouseY);
-
-        update();
-        
-        /*
-        if (mode.is(ListMode.Gradient) && bloom.get() && bloomMode.is(BloomMode.Stencil)) {
-            // ... stencil code ...
-            // enableStencil is not available in some mappings/versions on Framebuffer
-            // But usually the main framebuffer has stencil if depth is enabled?
-            // Or we can't force it easily without Access Transformer.
-            // Let's just assume it works or skip the check.
-            // If it crashes, we might need to use reflection or mixin.
-            // For now, let's remove the call that causes the error and hope for the best,
-            // or use a known method to request stencil.
-            
-            GL11.glEnable(GL11.GL_STENCIL_TEST);
-            GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
-            GL11.glStencilFunc(GL11.GL_ALWAYS, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
-            RenderSystem.colorMask(false, false, false, false);
-            NanoVGRenderer.INSTANCE.draw(this::renderBackgroundShapes);
-            RenderSystem.colorMask(true, true, true, true);
-            GL11.glStencilFunc(GL11.GL_NOTEQUAL, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-            NanoVGRenderer.INSTANCE.draw(this::renderBloom);
-            GL11.glDisable(GL11.GL_STENCIL_TEST);
-        }
-        
-        if (mode.is(ListMode.Gradient) && bloom.get() && bloomMode.is(BloomMode.Kawase)) {
-            // To treat the background as a "whole", we must use Stencil Buffer.
-            // Shader-based per-module bloom will ALWAYS overlap adjacent modules.
-            // We enable Stencil Test to prevent bloom from drawing over ANY background part.
-            
-            GL11.glEnable(GL11.GL_STENCIL_TEST);
-            GL11.glStencilMask(0xFF);
-            GL11.glClear(GL11.GL_STENCIL_BUFFER_BIT);
-            
-            // 1. Draw ALL Background shapes into Stencil (Masking)
-            // This builds a unified silhouette of the entire list.
-            GL11.glStencilFunc(GL11.GL_ALWAYS, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
-            RenderSystem.colorMask(false, false, false, false);
-            
-            renderStencilMask(); // Use solid mask for stencil
-            
-            // 2. Render Kawase Bloom
-            // We set Stencil Function to NOTEQUAL 1.
-            // This means we only draw pixels that are NOT part of the background silhouette.
-            // This effectively merges the bloom of adjacent modules because their "internal" overlaps are masked out.
-            RenderSystem.colorMask(true, true, true, true);
-            GL11.glStencilFunc(GL11.GL_NOTEQUAL, 1, 0xFF);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-            
-            renderKawaseBloom(context);
-            
-            GL11.glDisable(GL11.GL_STENCIL_TEST);
-        }
-        */
-
-        // Pass 3: Render blur backgrounds (if enabled)
-        // Ensure blur background uses full transparency if it's meant to be "only blur"
-        if (mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur)) {
-            renderBlurBackgrounds();
-        }
-
-        // Pass 4: Render NanoVG content
-        NanoVGRenderer.INSTANCE.draw(vg -> {
-            float scaledWidth = currentWidth * hudScale.get().floatValue();
-            float scaledHeight = currentHeight * hudScale.get().floatValue();
-            NanoVGHelper.drawRect(x, y - 5, scaledWidth, scaledHeight + 4,
-                    dragging ? new Color(ClickGui.color(0).getRed(), ClickGui.color(0).getGreen(), ClickGui.color(0).getBlue(), 80) : BACKGROUND_COLOR);
-
-            renderContent();
-        });
-    }
-
-    private void renderBackgroundShapes(long vg) {
-        float scale = hudScale.get().floatValue();
-        float fontSize = customFontSize.get().floatValue();
-        int font = FontLoader.medium(fontSize);
-        float startY = y + (PADDING_Y * scale) - (scrollOffset * scale);
-
-        // Use pre-calculated positions from update()
-        for (ModuleEntry entry : moduleEntries) {
-            EaseInOutQuad animation = moduleAnimations.get(entry.module);
-            double animationValue = animation != null ? animation.getOutput() : 1.0;
-            if (animationValue <= 0.01) continue;
-
-            float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
-            Float renderYObj = moduleYPositions.get(entry.module);
-            if (renderYObj == null) continue;
-            float renderY = renderYObj;
-
-            String moduleName = entry.module.getEnglishName();
-            String suffix = entry.module.getSuffix();
-            String formattedSuffix = getFormattedSuffix(suffix);
-            float moduleNameWidth = NanoVGHelper.getTextWidth(moduleName, font, fontSize * scale);
-            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : NanoVGHelper.getTextWidth(formattedSuffix, font, fontSize * scale) + (2 * scale)) + (PADDING_X * 2 * scale);
-
-            float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
-            float itemBgX = alignRight.get() ?
-                    (x + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
-                    (x + (PADDING_X * scale));
-
-            float heightAdjustment = gradientItemSpacing.get() == 0 ? 0.5f * scale : 0;
-            float bgOffset = backgroundOffsetY.get().floatValue() * scale;
-            float bgY = renderY + bgOffset - heightAdjustment;
-            float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
-
-            NanoVGHelper.drawRoundRect(
-                    itemBgX - (4 * scale),
-                    bgY,
-                    bgWidth,
-                    bgH,
-                    backgroundRadius.get().floatValue() * scale,
-                    Color.WHITE // Color doesn't matter for mask
-            );
-        }
-    }
-
-    private void renderBloom(long vg) {
-        float scale = hudScale.get().floatValue();
-        float fontSize = customFontSize.get().floatValue();
-        int font = FontLoader.medium(fontSize);
-        int bgIndex = 0;
-
-        for (ModuleEntry entry : moduleEntries) {
-            EaseInOutQuad animation = moduleAnimations.get(entry.module);
-            double animationValue = animation != null ? animation.getOutput() : 1.0;
-            if (animationValue <= 0.01) continue;
-
-            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
-            double currentOffset = offset + (bgIndex * colorStep.get());
-            double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
-
-            float itemFullHeight = (fontSize + gradientItemSpacing.get().floatValue()) * scale;
-            Float renderYObj = moduleYPositions.get(entry.module);
-            if (renderYObj == null) continue;
-            float renderY = renderYObj;
-
-            String moduleName = entry.module.getEnglishName();
-            String suffix = entry.module.getSuffix();
-            String formattedSuffix = getFormattedSuffix(suffix);
-            float moduleNameWidth = NanoVGHelper.getTextWidth(moduleName, font, fontSize * scale);
-            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : NanoVGHelper.getTextWidth(formattedSuffix, font, fontSize * scale) + (2 * scale)) + (PADDING_X * 2 * scale);
-
-            float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
-            float itemBgX = alignRight.get() ?
-                    (x + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
-                    (x + (PADDING_X * scale));
-
-            float heightAdjustment = gradientItemSpacing.get() == 0 ? 0.5f * scale : 0;
-            float bgOffset = backgroundOffsetY.get().floatValue() * scale;
-            float bgY = renderY + bgOffset - heightAdjustment;
-            float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
-
-            Color c1 = gradientColor1.get();
-            Color c2 = gradientColor2.get();
-            if (autoColor.get()) {
-                float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
-                c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
-                c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
-            }
-
-            Color bColor;
-            if (bloomStyle.is(BloomStyle.Static)) {
-                bColor = bloomColor.get();
-            } else {
-                Color currentGradientColor = interpolateColor(c1, c2, (float) factor);
-                bColor = currentGradientColor;
-            }
-            bColor = new Color(bColor.getRed(), bColor.getGreen(), bColor.getBlue(), (int) (bColor.getAlpha() * animationValue));
-
-            NanoVGHelper.drawBloomBox(
-                    itemBgX - (4 * scale),
-                    bgY,
-                    bgWidth,
-                    bgH,
-                    backgroundRadius.get().floatValue() * scale,
-                    bloomRadius.get().floatValue() * scale,
-                    bColor
-            );
-
-            bgIndex++;
-        }
-    }
-
-    public float getRadius() {
-        return normalRadius.get().floatValue();
-    }
-
-    private boolean isHudEditorOpen() {
-        HudEditor editor = Mahiro.MODULES.getModule(HudEditor.class);
-        return editor != null && editor.isEnabled();
-    }
-
-    private void handleDrag(float mouseX, float mouseY) {
-        if (!dragging) return;
-        int sw = mc.getWindow().getScaledWidth();
-        int sh = mc.getWindow().getScaledHeight();
-        if (alignRight.get() && !isHudEditorOpen()) {
-            x = sw - (currentWidth * hudScale.get().floatValue());
-        } else {
-            x = clamp(mouseX - dragX, 0, sw - (currentWidth * hudScale.get().floatValue()));
-        }
-        y = clamp(mouseY - dragY, 0, sh - (currentHeight * hudScale.get().floatValue()));
-        relativeX = x / sw;
-        relativeY = y / sh;
     }
 
     private void update() {
         float oldWidth = currentWidth;
-        int oldScreenWidth = mc.getWindow().getScaledWidth();
-        int oldScreenHeight = mc.getWindow().getScaledHeight();
         updateModuleList();
         calculateTargetSize();
-        updateModulePositions(); // Move interpolation here
+        updateModulePositions();
         float speed = animationSpeed.get().floatValue();
         currentWidth += (targetWidth - currentWidth) * speed;
         currentHeight += (targetHeight - currentHeight) * speed;
@@ -463,27 +172,9 @@ public class ModuleListHud extends HudModule {
             x -= (currentWidth - oldWidth) * scale;
         }
 
-        // Handle screen resize to keep relative position or clamp
-        if (alignRight.get() && !isHudEditorOpen()) {
-            int screenWidth = mc.getWindow().getScaledWidth();
-            if (screenWidth != oldScreenWidth) {
-                // Try to keep distance from right edge constant
-                float distFromRight = oldScreenWidth - (x + oldWidth * hudScale.get().floatValue());
-                x = screenWidth - distFromRight - (currentWidth * hudScale.get().floatValue());
-            }
-        }
-
         this.width = currentWidth * hudScale.get().floatValue();
         this.height = currentHeight * hudScale.get().floatValue();
         updateScroll();
-
-        updateRotation();
-
-        updateParticles();
-
-        if (iconImage == -1 && normalShowIcon.get()) {
-            loadIcon();
-        }
     }
 
     private void updateModulePositions() {
@@ -582,27 +273,17 @@ public class ModuleListHud extends HudModule {
         boolean isGradient = mode.is(ListMode.Gradient);
         double spacing = isGradient ? gradientItemSpacing.get() : normalItemSpacing.get();
         boolean showCat = isGradient ? false : normalShowCategory.get();
-        boolean showIconValue = isGradient ? false : normalShowIcon.get();
+        boolean showIconValue = false;
 
         if (moduleEntries.isEmpty()) {
             targetWidth = 50;
             targetHeight = 20;
-
-            if (showIconValue) {
-                float iconRenderSize = 13.0f * hudScale.get().floatValue();
-                targetHeight = (PADDING_Y * 2 + iconRenderSize + 4 - 2) * hudScale.get().floatValue();
-            }
             return;
         }
         float maxWidthValue = maxWidth.get().floatValue();
         float maxHeightValue = maxHeight.get().floatValue();
         float scale = hudScale.get().floatValue();
         float totalHeight = PADDING_Y * 2 * scale;
-
-        if (showIconValue) {
-            float iconRenderSize = 13.0f * scale;
-            totalHeight += iconRenderSize + 4 * scale;
-        }
 
         float maxTextWidth = 0;
         float fontSize = isGradient ? customFontSize.get().floatValue() : 10f;
@@ -619,7 +300,7 @@ public class ModuleListHud extends HudModule {
                     textWidth += (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale;
                 }
                 maxTextWidth = Math.max(maxTextWidth, textWidth);
-                totalHeight += (fontSize + spacing) * scale;
+                totalHeight += (float) ((fontSize + spacing) * scale);
             }
         }
 
@@ -697,59 +378,6 @@ public class ModuleListHud extends HudModule {
 
         float currentY = y + (PADDING_Y * scale) - (scrollOffset * scale);
 
-        if (normalShowIcon.get() && iconImage != -1) {
-            float iconRenderSize = 13.0f * scale;
-            float iconX = alignRight.get() ?
-                    x + (currentWidth * scale) - iconRenderSize - (PADDING_X * scale) :
-                    x + (PADDING_X * scale);
-            float iconY = currentY - (2 * scale);
-
-            // 添加纯黑背景
-            String sakuraText = "ModuleList";
-            int font = FontLoader.bold(11);
-            float textWidth = NanoVGHelper.getTextWidth(sakuraText, font, 11 * scale);
-            float textHeight = NanoVGHelper.getFontHeight(font, 11 * scale);
-            float totalWidth = iconRenderSize + textWidth + (4 * scale) + 4;
-            float bgX = alignRight.get() ?
-                    x + (currentWidth * scale) - totalWidth - (PADDING_X * scale) :
-                    x + (PADDING_X * scale);
-            float bgY = currentY - (2 * scale) - (1.5f * scale);
-            float bgHeight = Math.max(iconRenderSize, textHeight) + (2 * scale);
-
-            NanoVGHelper.drawRoundRect(bgX, bgY - 1 - (1.5f * scale), totalWidth, bgHeight, getRadius(), new Color(0, 0, 0, 180));
-
-            float centerX = iconX + iconRenderSize / 2;
-            float centerY = iconY + iconRenderSize / 2 - (3 * scale);
-
-            nvgSave(vg);
-            nvgTranslate(vg, centerX, centerY);
-            nvgRotate(vg, (float) Math.toRadians(rotationAngle));
-            nvgTranslate(vg, -iconRenderSize / 2, -iconRenderSize / 2);
-
-            NVGPaint paint = NVGPaint.create();
-            nvgImagePattern(vg, 0, 0, iconRenderSize, iconRenderSize, 0, iconImage, 1.0f, paint);
-            nvgBeginPath(vg);
-            nvgRect(vg, 0, 0, iconRenderSize, iconRenderSize);
-            nvgFillPaint(vg, paint);
-            nvgFill(vg);
-
-            nvgRestore(vg);
-
-
-            float textX = alignRight.get() ?
-                    x + (currentWidth * scale) - textWidth - iconRenderSize - (4 * scale) - (PADDING_X * scale) :
-                    iconX + iconRenderSize + (4 * scale);
-            float textY = currentY + iconRenderSize / 2 + textHeight / 4;
-
-            NanoVGHelper.drawGlowingString(sakuraText, textX, textY - 1 - (3 * scale), font, 11 * scale, Color.WHITE, 3.0f * scale);
-
-            currentY += iconRenderSize + (4 * scale) - (2 * scale);
-        }
-
-        if (enableParticles.get()) {
-            renderParticles();
-        }
-
         int font = FontLoader.medium(10);
         for (ModuleEntry entry : moduleEntries) {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
@@ -766,7 +394,7 @@ public class ModuleListHud extends HudModule {
 
             // Increment currentY for the next module based on this module's animated height
             if (animationValue > 0.01) {
-                currentY += itemFullHeight * animationValue;
+                currentY += (float) (itemFullHeight * animationValue);
             }
 
             if (renderY + (10 * scale) < y || renderY > y + (currentHeight * scale)) {
@@ -923,91 +551,6 @@ public class ModuleListHud extends HudModule {
                 );
                 NanoVGHelper.drawString(formattedSuffix, suffixX, textY, font, 10 * scale, animatedSuffixColor);
             }
-        }
-    }
-
-    private void renderParticles() {
-        long vg = NanoVGRenderer.INSTANCE.getContext();
-
-        for (Particle particle : particles) {
-            if (particle.isAlive()) {
-                Color particleColor = new Color(
-                        particle.color.getRed(),
-                        particle.color.getGreen(),
-                        particle.color.getBlue(),
-                        (int) (particle.color.getAlpha() * particle.alpha)
-                );
-
-                nvgBeginPath(vg);
-                nvgCircle(vg, particle.x, particle.y, particle.size);
-
-                nvgFillColor(vg, NanoVGHelper.nvgColor(particleColor));
-                nvgFill(vg);
-
-                nvgBeginPath(vg);
-                nvgCircle(vg, particle.x, particle.y, particle.size * 1.5f);
-                nvgFillColor(vg, NanoVGHelper.nvgColor(new Color(255, 255, 255, (int) (50 * particle.alpha))));
-                nvgFill(vg);
-            }
-        }
-    }
-
-    private void updateRotation() {
-        long currentTime = System.currentTimeMillis();
-        long deltaTime = currentTime - lastUpdateTime;
-        lastUpdateTime = currentTime;
-
-        rotationAngle += (deltaTime * 0.05f * rotationSpeed.get().floatValue()) % 360.0f;
-        if (rotationAngle >= 360.0f) {
-            rotationAngle -= 360.0f;
-        }
-    }
-
-    private void updateParticles() {
-        if (enableParticles.get()) {
-            particles.removeIf(particle -> !particle.isAlive());
-
-            if (particles.size() < particleCount.get()) {
-                if (normalShowIcon.get() && iconImage != -1) {
-                    float scale = hudScale.get().floatValue();
-                    float iconRenderSize = 13.0f * scale;
-                    float iconX = alignRight.get() ?
-                            x + (currentWidth * scale) - iconRenderSize - (PADDING_X * scale) :
-                            x + (PADDING_X * scale);
-                    float iconY = y + (PADDING_Y * scale) - (2 * scale);
-
-                    for (int i = particles.size(); i < particleCount.get(); i++) {
-                        float angle = (float) (Math.random() * Math.PI * 2);
-                        float distance = (float) (Math.random() * iconRenderSize * 0.8f);
-                        float particleX = iconX + iconRenderSize / 2 + (float) Math.cos(angle) * distance;
-                        float particleY = iconY + iconRenderSize / 2 + (float) Math.sin(angle) * distance;
-
-                        Particle newParticle = new Particle(particleX, particleY);
-                        newParticle.size = particleSize.get().floatValue();
-                        float speed = particleSpeed.get().floatValue();
-                        double particleAngle = Math.random() * Math.PI * 2;
-                        newParticle.velocityX = (float) (Math.cos(particleAngle) * speed);
-                        newParticle.velocityY = (float) (Math.sin(particleAngle) * speed);
-                        particles.add(newParticle);
-                    }
-                }
-            }
-
-            for (Particle particle : particles) {
-                particle.update();
-            }
-        }
-    }
-
-    private void loadIcon() {
-        iconImage = NanoVGHelper.loadTexture("/assets/mahiro/icons/icon_32x32.png");
-    }
-
-    @Override
-    public void onDisable() {
-        if (iconImage != -1) {
-            NanoVGHelper.deleteTexture(iconImage);
-            iconImage = -1;
         }
     }
 

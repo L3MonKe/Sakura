@@ -1,5 +1,6 @@
 package dev.mahiro.client.auth;
 
+import dev.mahiro.obf.ZKMIndy;
 import oshi.SystemInfo;
 import oshi.hardware.*;
 
@@ -10,6 +11,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@ZKMIndy
 public final class DeviceFingerprint {
     private DeviceFingerprint() {
     }

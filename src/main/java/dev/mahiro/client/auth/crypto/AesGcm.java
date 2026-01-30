@@ -1,10 +1,13 @@
 package dev.mahiro.client.auth.crypto;
 
+import dev.mahiro.obf.ZKMIndy;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 
+@ZKMIndy
 public final class AesGcm {
     private AesGcm() {
     }

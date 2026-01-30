@@ -191,7 +191,7 @@ internal class JsonStore(dataDir: Path) {
     }
 
     fun findFirstLicenseForUser(userId: Long): LicenseRecord? = lock.read {
-        licenses.firstOrNull { it.userId == userId && it.status != "BANNED" && it.status != "REVOKED" }
+        licenses.firstOrNull { it.userId == userId }
     }
 
     fun claimLicense(licenseKey: String, userId: Long): Boolean {
@@ -256,6 +256,42 @@ internal class JsonStore(dataDir: Path) {
             val changed = bindings.size != before
             if (changed) persistBindingsLocked()
             return changed
+        }
+    }
+
+    fun deleteUser(userId: Long): Boolean {
+        lock.write {
+            val idx = users.indexOfFirst { it.id == userId }
+            if (idx < 0) return false
+            users.removeAt(idx)
+            val removedLicenses = licenses.filter { it.userId == userId }.map { it.key }.toSet()
+            if (removedLicenses.isNotEmpty()) {
+                licenses.removeIf { it.userId == userId }
+                val beforeBindings = bindings.size
+                bindings.removeIf { removedLicenses.contains(it.licenseKey) }
+                if (bindings.size != beforeBindings) persistBindingsLocked()
+                persistLicensesLocked()
+            }
+            persistUsersLocked()
+            return true
+        }
+    }
+
+    fun resetUserPassword(userId: Long, newPassword: String): Boolean {
+        if (newPassword.isBlank()) return false
+        lock.write {
+            val idx = users.indexOfFirst { it.id == userId }
+            if (idx < 0) return false
+            val salt = randomBytes(16)
+            val hash = pbkdf2(newPassword, salt, 200_000, 32)
+            val u = users[idx]
+            users[idx] = u.copy(
+                saltB64 = B64.encodeToString(salt),
+                hashB64 = B64.encodeToString(hash),
+                iterations = 200_000
+            )
+            persistUsersLocked()
+            return true
         }
     }
 

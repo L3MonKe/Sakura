@@ -1,6 +1,9 @@
 package dev.sakura.server
 
 import java.awt.*
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.nio.file.Paths
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -21,7 +24,7 @@ internal fun showAdminUi(store: JsonStore) {
 private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) {
     private val tabs = JTabbedPane()
 
-    private val usersModel = DefaultTableModel(arrayOf("ID", "用户名", "创建时间", "拥有卡密数"), 0)
+    private val usersModel = DefaultTableModel(arrayOf("用户名", "创建时间", "卡密"), 0)
     private val usersTable = JTable(usersModel)
 
     private val licensesModel =
@@ -30,6 +33,7 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
 
     private val genCountField = JTextField("10", 6)
     private val genDaysField = JTextField("30", 6)
+    private val genFileField = JTextField("卡密列表", 10)
     private val timeFmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(ZoneId.systemDefault())
 
     init {
@@ -51,27 +55,43 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
         gc.gridx = 3
         tools.add(genDaysField, gc)
         gc.gridx = 4
+        tools.add(JLabel("导出文件"), gc)
+        gc.gridx = 5
+        tools.add(genFileField, gc)
+        gc.gridx = 6
         val genBtn = JButton("生成卡密")
         tools.add(genBtn, gc)
-        gc.gridx = 5
+        gc.gridx = 7
         val refreshBtn = JButton("刷新")
         tools.add(refreshBtn, gc)
-        gc.gridx = 6
-        val banBtn = JButton("封禁选中卡密")
-        tools.add(banBtn, gc)
-        gc.gridx = 7
-        val revokeBtn = JButton("撤销选中卡密")
-        tools.add(revokeBtn, gc)
         top.add(tools, BorderLayout.EAST)
 
         add(top, BorderLayout.NORTH)
 
-        tabs.addTab("用户", JScrollPane(usersTable))
+        val userPanel = JPanel(BorderLayout())
+        userPanel.add(JScrollPane(usersTable), BorderLayout.CENTER)
+        val userActions = JPanel(GridBagLayout())
+        val ugc = GridBagConstraints().apply {
+            insets = Insets(4, 4, 4, 4)
+            anchor = GridBagConstraints.WEST
+        }
+        ugc.gridx = 0
+        val deleteUserBtn = JButton("删除用户")
+        userActions.add(deleteUserBtn, ugc)
+        ugc.gridx = 1
+        val resetPasswordBtn = JButton("重置密码")
+        userActions.add(resetPasswordBtn, ugc)
+        ugc.gridx = 2
+        val resetHwidBtn = JButton("重置HWID")
+        userActions.add(resetHwidBtn, ugc)
+        userPanel.add(userActions, BorderLayout.SOUTH)
+
+        tabs.addTab("用户", userPanel)
         tabs.addTab("卡密", JScrollPane(licensesTable))
         add(tabs, BorderLayout.CENTER)
 
         fun refreshAll() {
-            val selectedUserId = run {
+            val selectedUsername = run {
                 val row = usersTable.selectedRow
                 if (row < 0) null else usersModel.getValueAt(row, 0)?.toString()
             }
@@ -84,9 +104,9 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
             refreshUsers()
             refreshLicenses()
 
-            if (!selectedUserId.isNullOrBlank()) {
+            if (!selectedUsername.isNullOrBlank()) {
                 for (i in 0 until usersModel.rowCount) {
-                    if (usersModel.getValueAt(i, 0)?.toString() == selectedUserId) {
+                    if (usersModel.getValueAt(i, 0)?.toString() == selectedUsername) {
                         usersTable.setRowSelectionInterval(i, i)
                         usersTable.scrollRectToVisible(usersTable.getCellRect(i, 0, true))
                         break
@@ -107,27 +127,49 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
         genBtn.addActionListener {
             val count = genCountField.text.trim().toIntOrNull()?.coerceIn(1, 5000) ?: 10
             val days = genDaysField.text.trim().toIntOrNull()?.coerceIn(1, 3650) ?: 30
-            store.generateLicenses(count, days)
+            val keys = store.generateLicenses(count, days)
+            val nameRaw = genFileField.text.trim()
+            val name = if (nameRaw.isBlank()) "licenses" else nameRaw
+            val baseDir = Paths.get("").toAbsolutePath().normalize()
+            val outDir = baseDir.resolve("卡密")
+            Files.createDirectories(outDir)
+            val outPath = outDir.resolve("$name.txt")
+            Files.writeString(outPath, keys.joinToString(System.lineSeparator()), StandardCharsets.UTF_8)
             refreshAll()
         }
 
         refreshBtn.addActionListener { refreshAll() }
 
-        fun selectedLicenseKey(): String? {
-            val row = licensesTable.selectedRow
-            if (row < 0) return null
-            return licensesModel.getValueAt(row, 0)?.toString()
-        }
-
-        banBtn.addActionListener {
-            val key = selectedLicenseKey() ?: return@addActionListener
-            store.updateLicenseStatus(key, "BANNED")
+        deleteUserBtn.addActionListener {
+            val row = usersTable.selectedRow
+            if (row < 0) return@addActionListener
+            val username = usersModel.getValueAt(row, 0)?.toString()?.trim().orEmpty()
+            if (username.isBlank()) return@addActionListener
+            val user = store.findUserByUsername(username) ?: return@addActionListener
+            store.deleteUser(user.id)
             refreshAll()
         }
 
-        revokeBtn.addActionListener {
-            val key = selectedLicenseKey() ?: return@addActionListener
-            store.updateLicenseStatus(key, "REVOKED")
+        resetPasswordBtn.addActionListener {
+            val row = usersTable.selectedRow
+            if (row < 0) return@addActionListener
+            val username = usersModel.getValueAt(row, 0)?.toString()?.trim().orEmpty()
+            if (username.isBlank()) return@addActionListener
+            val user = store.findUserByUsername(username) ?: return@addActionListener
+            val newPassword = JOptionPane.showInputDialog(this, "请输入新密码")
+            if (newPassword == null || newPassword.isBlank()) return@addActionListener
+            store.resetUserPassword(user.id, newPassword.trim())
+            refreshAll()
+        }
+
+        resetHwidBtn.addActionListener {
+            val row = usersTable.selectedRow
+            if (row < 0) return@addActionListener
+            val username = usersModel.getValueAt(row, 0)?.toString()?.trim().orEmpty()
+            if (username.isBlank()) return@addActionListener
+            val user = store.findUserByUsername(username) ?: return@addActionListener
+            val lic = store.findFirstLicenseForUser(user.id) ?: return@addActionListener
+            store.deleteBinding(lic.key)
             refreshAll()
         }
 
@@ -148,10 +190,10 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
         usersModel.rowCount = 0
         val users = store.listUsers()
         val licenses = store.listLicenses()
-        val countByUser = licenses.groupingBy { it.userId }.eachCount()
+        val licenseByUser = licenses.filter { it.userId != null }.associateBy({ it.userId }, { it.key })
         for (u in users) {
-            val cnt = countByUser[u.id] ?: 0
-            usersModel.addRow(arrayOf<Any>(u.id, u.username, fmtSec(u.createdAt), cnt))
+            val licKey = licenseByUser[u.id] ?: ""
+            usersModel.addRow(arrayOf<Any>(u.username, fmtSec(u.createdAt), licKey))
         }
     }
 

@@ -5,6 +5,7 @@ import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
 import dev.mahiro.client.gui.mainmenu.MainMenuScreen;
 import dev.mahiro.client.gui.mainmenu.WelcomeScreen;
+import dev.mahiro.obf.ZKMIndy;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
@@ -13,6 +14,7 @@ import sun.misc.Unsafe;
 import java.lang.reflect.Field;
 import java.util.Objects;
 
+@ZKMIndy
 public final class AuthGate {
     private static volatile boolean initialized;
     private static volatile boolean pendingMainMenuIntro;

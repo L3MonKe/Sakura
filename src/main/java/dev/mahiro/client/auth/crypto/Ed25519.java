@@ -1,10 +1,13 @@
 package dev.mahiro.client.auth.crypto;
 
+import dev.mahiro.obf.ZKMIndy;
+
 import java.security.KeyFactory;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 
+@ZKMIndy
 public final class Ed25519 {
     private Ed25519() {
     }

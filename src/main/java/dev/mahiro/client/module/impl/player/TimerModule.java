@@ -1,17 +1,14 @@
 package dev.mahiro.client.module.impl.player;
 
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.client.TimerEvent;
 import dev.mahiro.client.events.misc.KeyAction;
 import dev.mahiro.client.events.misc.KeyEvent;
-import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render2DEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
-import dev.mahiro.client.values.impl.BoolValue;
-import dev.mahiro.client.values.impl.NumberValue;
 import dev.mahiro.client.utils.player.MoveUtil;
+import dev.mahiro.client.values.impl.BoolValue;
 import meteordevelopment.orbit.EventHandler;
 
 
@@ -20,7 +17,7 @@ public class TimerModule extends Module {
         super("Timer", "变速", Category.Player);
     }
 
-    public final BoolValue moveCharge = new BoolValue("MoveCharge", "移动充能", true);
+    public final BoolValue moveCharge = new BoolValue("Move Charge", "移动充能", true);
     public final BoolValue pulse = new BoolValue("Pulse", "脉冲模式", true);
 
 
@@ -73,7 +70,6 @@ public class TimerModule extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Post e) {
-        if (isDisabled()) return;
         if (nullCheck()) return;
 
         long now = System.nanoTime();
@@ -115,7 +111,7 @@ public class TimerModule extends Module {
     public void onKey(KeyEvent e) {
         if (isDisabled()) return;
         if (e.getAction() != KeyAction.Press) return;
-        
+
         // 硬编码按键
         if (e.getKey() == 88) {
             if (active) {
@@ -132,7 +128,7 @@ public class TimerModule extends Module {
     public void onTimerEvent(TimerEvent e) {
         if (isDisabled()) return;
         if (nullCheck()) return;
-        
+
         if (active && progress > 0) {
             e.set(getTimerSpeed());
         }
