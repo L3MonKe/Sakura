@@ -4,7 +4,6 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.ClickGui;
-import dev.mahiro.client.module.impl.client.HudEditor;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
@@ -15,15 +14,12 @@ import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
-import org.lwjgl.nanovg.NVGPaint;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
-import static org.lwjgl.nanovg.NanoVG.*;
 
 public class ModuleListHud extends HudModule {
     public ModuleListHud() {
