@@ -103,8 +103,6 @@ public class ModuleManager {
         add(new Chat());
         add(new ClickGui());
         add(new HudEditor());
-        add(new Targets());
-        add(new Teams());
 
         // HUD
         add(new DynamicIslandHud());

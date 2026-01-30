@@ -209,7 +209,7 @@ public class AutoDick extends Module {
 
             // Left Egg
             addBlock(center.offset(facing.rotateYCounterclockwise()));
-            
+
             // Right Egg
             addBlock(center.offset(facing.rotateYClockwise()));
 

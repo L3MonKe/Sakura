@@ -13,7 +13,6 @@ public class Managers {
     public static RotationManager ROTATION;
     public static ShaderManager SHADER;
     public static SoundManager SOUND;
-    public static CombatManager COMBAT;
 
     public static void init() {
         if (initialized) return;
@@ -26,7 +25,6 @@ public class Managers {
         ROTATION = new RotationManager();
         SHADER = new ShaderManager();
         SOUND = new SoundManager();
-        COMBAT = new CombatManager();
 
         initialized = true;
     }
