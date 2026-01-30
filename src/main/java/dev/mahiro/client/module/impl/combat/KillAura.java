@@ -17,15 +17,9 @@ import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.DyedColorComponent;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.Box;
 
 import java.awt.*;
 import java.util.List;
@@ -45,7 +39,6 @@ public class KillAura extends Module {
     private final NumberValue<Integer> rotateSpeed = new NumberValue<>("Rotation Speed", "转向速度", 10, 1, 10, 1);
     private final BoolValue autoBlock = new BoolValue("AutoBlock", "自动格挡", false);
     private final EnumValue<AutoBlockMode> autoBlockMode = new EnumValue<>("Block Mode", "格挡模式", AutoBlockMode.Fake, autoBlock::get);
-    private final BoolValue teamCheck = new BoolValue("Team Check", "队伍检测", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
 
     private List<Entity> targets;
@@ -75,7 +68,7 @@ public class KillAura extends Module {
         boolean blinkEnable = Mahiro.MODULES.getModule(Blink.class).isEnabled();
         if (scaffoldEnable || blinkEnable) return;
 
-        findTarget();
+        update();
 
         if (target != null) {
             if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
@@ -114,9 +107,9 @@ public class KillAura extends Module {
         }
     }
 
-    private void findTarget() {
+    private void update() {
         double range = Math.max(aimRange.get(), searchRange.get());
-        double rangeSq = range * range;
+        /*double rangeSq = range * range;
 
         this.target = null;
         double minDstSq = Double.MAX_VALUE;
@@ -133,32 +126,8 @@ public class KillAura extends Module {
                 minDstSq = distSq;
                 this.target = entity;
             }
-        }
-
-
-    }
-
-    private boolean isEnemy(Entity entity) {
-        if (!teamCheck.get()) return true;
-        if (!(entity instanceof PlayerEntity player)) return true;
-        if (mc.player == null) return false;
-
-        int myColor = getLeatherArmorColor(mc.player);
-        int theirColor = getLeatherArmorColor(player);
-
-        if (myColor == -1 || theirColor == -1) return true;
-
-        return myColor != theirColor;
-    }
-
-    private int getLeatherArmorColor(PlayerEntity player) {
-        for (ItemStack stack : player.getArmorItems()) {
-            if (stack.isEmpty()) continue;
-            DyedColorComponent dyed = stack.get(DataComponentTypes.DYED_COLOR);
-            if (dyed != null) {
-                return dyed.rgb();
-            }
-        }
-        return -1;
+        }*/
+        targets = Managers.COMBAT.getEntities(range);
+        target = Managers.COMBAT.getClosestEnemy(range);
     }
 }
