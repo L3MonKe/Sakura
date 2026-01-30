@@ -51,7 +51,6 @@ public class ModuleManager {
         add(new MoveFix());
         add(new NoFall());
         add(new NoSlow());
-        add(new Phase());
         add(new Scaffold());
         add(new Speed());
         add(new Step());
@@ -62,7 +61,7 @@ public class ModuleManager {
         add(new AntiHunger());
         add(new AutoArmor());
         add(new AutoDick());
-        add(new AutoPearl());
+        add(new AutoTool());
         add(new Blink());
         add(new BowBomb());
         add(new Disabler());

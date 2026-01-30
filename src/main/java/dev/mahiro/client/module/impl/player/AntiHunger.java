@@ -1,12 +1,10 @@
 package dev.mahiro.client.module.impl.player;
 
-import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.mixin.accessor.IPlayerMoveC2SPacket;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
-import dev.mahiro.client.module.impl.movement.Phase;
 import dev.mahiro.client.values.impl.BoolValue;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
@@ -26,7 +24,6 @@ public class AntiHunger extends Module {
         if (event.getType() != EventType.SEND) return;
 
         if (BowBomb.send) return;
-        if (AutoPearl.throwing || Mahiro.MODULES.getModule(Phase.class).isEnabled()) return;
         if (event.getPacket() instanceof ClientCommandC2SPacket packet && sprint.get()) {
             if (packet.getMode() == ClientCommandC2SPacket.Mode.START_SPRINTING) {
                 event.cancel();
