@@ -6,8 +6,8 @@ public class Managers {
     private static boolean initialized;
 
     public static AccountManager ACCOUNT;
-    public static CombatManager COMBAT;
     public static ChatAnimationUpdater CHAT_ANIMATION;
+    public static CombatManager COMBAT;
     public static ExtrapolationManager EXTRAPOLATION;
     public static HealthManager HEALTH;
     public static RenderManager RENDER;
@@ -19,8 +19,8 @@ public class Managers {
         if (initialized) return;
 
         ACCOUNT = new AccountManager();
-        COMBAT = new CombatManager();
         CHAT_ANIMATION = new ChatAnimationUpdater();
+        COMBAT = new CombatManager();
         EXTRAPOLATION = new ExtrapolationManager();
         HEALTH = new HealthManager();
         RENDER = new RenderManager();

@@ -14,14 +14,12 @@ import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.render.model.json.Transformation;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.random.Random;
 
 public class ItemPhysics extends Module {
-    private static final Direction[] FACES = { null, Direction.UP, Direction.DOWN, Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.WEST };
+    private static final Direction[] FACES = {null, Direction.UP, Direction.DOWN, Direction.EAST, Direction.NORTH, Direction.SOUTH, Direction.WEST};
     private static final float PIXEL_SIZE = 1f / 16f;
     private final Random random = Random.createLocal();
     private boolean skipTransformation;
@@ -165,5 +163,6 @@ public class ItemPhysics extends Module {
         return new ModelInfo(flat, 0.5f - minY, minZ - minY);
     }
 
-    record ModelInfo(boolean flat, float offsetY, float offsetZ) {}
+    record ModelInfo(boolean flat, float offsetY, float offsetZ) {
+    }
 }

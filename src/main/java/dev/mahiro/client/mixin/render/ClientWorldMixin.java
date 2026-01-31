@@ -4,7 +4,6 @@ package dev.mahiro.client.mixin.render;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.entity.EntitySpawnEvent;
 import dev.mahiro.client.module.impl.render.Atmosphere;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;

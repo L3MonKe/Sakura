@@ -71,7 +71,7 @@ public class ModuleListHud extends HudModule {
     // 3. 背景设置 (Background)
     private final BoolValue background = new BoolValue("Background", "渐变-背景", false, () -> mode.is(ListMode.Gradient));
 
-    public enum BackgroundMode { Normal, Blur }
+    public enum BackgroundMode {Normal, Blur}
 
     private final EnumValue<BackgroundMode> backgroundMode = new EnumValue<>("Background Mode", "渐变-背景模式", BackgroundMode.Normal, () -> mode.is(ListMode.Gradient) && background.get());
     private final ColorValue backgroundColor = new ColorValue("Background Color", "渐变-背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
