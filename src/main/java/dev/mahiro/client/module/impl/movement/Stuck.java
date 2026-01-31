@@ -40,8 +40,8 @@ public class Stuck extends Module {
     public void onEnable() {
         this.stage = 0;
         this.packet = null;
-        this.lastYaw = Managers.ROTATION.getYaw();
-        this.lastPitch = Managers.ROTATION.getPitch();
+        this.lastYaw = 0.0f;
+        this.lastPitch = 0.0f;
         this.tryDisable = false;
     }
 
@@ -55,11 +55,15 @@ public class Stuck extends Module {
             } else {
                 this.tryDisable = true;
             }
+        } else {
+            super.setState(state);
         }
     }
 
     @EventHandler
     public void onMotion(MotionEvent e) {
+        if (nullCheck()) return;
+
         Module scaffold = Mahiro.MODULES.getModule(Scaffold.class);
         if (scaffold.isEnabled()) {
             scaffold.toggle();
@@ -92,6 +96,7 @@ public class Stuck extends Module {
                     }
 
                     this.tryDisable = false;
+                    super.setState(false);
                 }
             }
         }
