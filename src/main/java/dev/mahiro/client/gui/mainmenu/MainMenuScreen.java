@@ -483,9 +483,10 @@ public class MainMenuScreen extends Screen {
                 "LemonClientDevelopment",
                 "Minecraft 1.21.4",
                 "Changelog :",
-                "* 人要写端",
-                "* 阻止妖猫开宝马",
-                "* 啦啦啦啦啦啦"
+                "* 你知道吗",
+                "* 这是第一个版本",
+                "* 可是大部分外挂都打不过这个外挂",
+                "* 除了Zen"
         );
 
         float fontSize = refFont(15f, scale);
