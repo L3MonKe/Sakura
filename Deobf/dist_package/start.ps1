@@ -1,3 +1,6 @@
+# Set JAVA_HOME to Java 23
+$env:JAVA_HOME = "C:\Program Files\Java\jdk-23"
+
 # Check for JAVA_HOME, fallback to java in PATH
 if ($env:JAVA_HOME) {
     $javaCmd = Join-Path $env:JAVA_HOME "bin\java.exe"
