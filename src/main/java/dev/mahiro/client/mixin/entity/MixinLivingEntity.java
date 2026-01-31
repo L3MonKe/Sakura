@@ -1,13 +1,13 @@
 package dev.mahiro.client.mixin.entity;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
 import dev.mahiro.client.events.entity.UpdateServerPositionEvent;
 import dev.mahiro.client.events.player.JumpEvent;
 import dev.mahiro.client.events.player.JumpRotationEvent;
 import dev.mahiro.client.events.player.SprintEvent;
 import dev.mahiro.client.events.player.TravelEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.impl.movement.JumpCooldown;
 import dev.mahiro.client.utils.vector.Rotation;

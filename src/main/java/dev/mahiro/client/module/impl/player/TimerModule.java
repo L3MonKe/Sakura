@@ -2,15 +2,14 @@ package dev.mahiro.client.module.impl.player;
 
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.client.TimerEvent;
-import dev.mahiro.client.events.misc.KeyAction;
-import dev.mahiro.client.events.misc.KeyEvent;
-import dev.mahiro.client.events.render.Render2DEvent;
+import dev.mahiro.client.events.key.KeyEvent;
+import dev.mahiro.client.events.type.KeyAction;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import meteordevelopment.orbit.EventHandler;
-
+import org.lwjgl.glfw.GLFW;
 
 public class TimerModule extends Module {
     public TimerModule() {
@@ -19,7 +18,6 @@ public class TimerModule extends Module {
 
     public final BoolValue moveCharge = new BoolValue("Move Charge", "移动充能", true);
     public final BoolValue pulse = new BoolValue("Pulse", "脉冲模式", true);
-
 
     private static final double CHARGE_SPEED = 0.9; //AntiSB
     private static final double CHARGE_TIME = 3.4;
@@ -30,10 +28,6 @@ public class TimerModule extends Module {
     private boolean active;
     private double progress;
     private long lastUpdateNs;
-    private float barX;
-    private float barY;
-    private float barW;
-    private float barH;
 
     public float getTimerSpeed() {
         if (isEnabled()) {
@@ -58,8 +52,6 @@ public class TimerModule extends Module {
         active = false;
         progress = 0.0;
         lastUpdateNs = System.nanoTime();
-        barW = 180f;
-        barH = 6f;
     }
 
     @Override
@@ -104,16 +96,11 @@ public class TimerModule extends Module {
     }
 
     @EventHandler
-    public void onRender2D(Render2DEvent e) {
-    }
+    public void onKey(KeyEvent event) {
+        if (event.getAction() != KeyAction.Press) return;
 
-    @EventHandler
-    public void onKey(KeyEvent e) {
-        if (isDisabled()) return;
-        if (e.getAction() != KeyAction.Press) return;
-
-        // 硬编码按键
-        if (e.getKey() == 88) {
+        // 硬编码按键 X
+        if (event.getKey() == GLFW.GLFW_KEY_X) {
             if (active) {
                 active = false;
             } else {
@@ -125,12 +112,11 @@ public class TimerModule extends Module {
     }
 
     @EventHandler
-    public void onTimerEvent(TimerEvent e) {
-        if (isDisabled()) return;
+    public void onTimerEvent(TimerEvent event) {
         if (nullCheck()) return;
 
         if (active && progress > 0) {
-            e.set(getTimerSpeed());
+            event.set(getTimerSpeed());
         }
     }
 }

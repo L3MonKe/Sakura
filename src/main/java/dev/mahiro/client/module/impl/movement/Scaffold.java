@@ -2,8 +2,8 @@ package dev.mahiro.client.module.impl.movement;
 
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.input.MouseButtonEvent;
-import dev.mahiro.client.events.misc.KeyAction;
 import dev.mahiro.client.events.player.StrafeEvent;
+import dev.mahiro.client.events.type.KeyAction;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.Category;

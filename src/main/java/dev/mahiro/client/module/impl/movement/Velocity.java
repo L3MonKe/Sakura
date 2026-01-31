@@ -1,10 +1,10 @@
 package dev.mahiro.client.module.impl.movement;
 
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.combat.AntiBot;

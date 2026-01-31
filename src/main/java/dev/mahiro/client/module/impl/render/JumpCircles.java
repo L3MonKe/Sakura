@@ -2,8 +2,8 @@ package dev.mahiro.client.module.impl.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.events.client.TickEvent;
-import dev.mahiro.client.events.misc.WorldLoadEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
+import dev.mahiro.client.events.render.WorldLoadEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.ClickGui;

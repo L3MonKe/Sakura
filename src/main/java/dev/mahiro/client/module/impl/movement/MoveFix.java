@@ -1,11 +1,11 @@
 package dev.mahiro.client.module.impl.movement;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.player.JumpEvent;
 import dev.mahiro.client.events.player.TravelEvent;
 import dev.mahiro.client.events.player.UpdateVelocityEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.impl.BoolValue;

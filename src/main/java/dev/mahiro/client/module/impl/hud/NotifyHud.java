@@ -1,8 +1,8 @@
 package dev.mahiro.client.module.impl.hud;
 
-import dev.mahiro.client.events.EventType;
-import dev.mahiro.client.events.misc.WorldLoadEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
+import dev.mahiro.client.events.render.WorldLoadEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;

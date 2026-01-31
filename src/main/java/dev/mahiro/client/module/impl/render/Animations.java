@@ -1,7 +1,6 @@
 package dev.mahiro.client.module.impl.render;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.entity.LimbAnimationEvent;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
 import dev.mahiro.client.events.entity.UpdateServerPositionEvent;
@@ -10,6 +9,7 @@ import dev.mahiro.client.events.player.PlayerTickEvent;
 import dev.mahiro.client.events.render.item.EatTransformationEvent;
 import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.events.render.item.RenderSwingAnimationEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.interfaces.IHeldItemRenderer;
 import dev.mahiro.client.mixin.accessor.IAccessorBundlePacket;
 import dev.mahiro.client.module.Category;

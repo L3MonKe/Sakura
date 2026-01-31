@@ -110,6 +110,12 @@ public class ModuleListHud extends HudModule {
     private float scrollOffset = 0;
     private boolean firstUpdate = true;
 
+    private int lastScaledScreenWidth = -1;
+    private int lastScaledScreenHeight = -1;
+    private float anchorXRatio = Float.NaN;
+    private float anchorYRatio = Float.NaN;
+    private boolean anchorUsesRightEdge = false;
+
     private static final float PADDING_X = 6f;
     private static final float PADDING_Y = 4f;
 
@@ -348,6 +354,19 @@ public class ModuleListHud extends HudModule {
         }
     }
 
+    private void updateAnchors(int screenWidth, int screenHeight, float scaledWidth, float scaledHeight) {
+        if (screenWidth <= 0 || screenHeight <= 0) {
+            return;
+        }
+        anchorUsesRightEdge = alignRight.get();
+        if (anchorUsesRightEdge) {
+            anchorXRatio = (x + scaledWidth) / screenWidth;
+        } else {
+            anchorXRatio = x / screenWidth;
+        }
+        anchorYRatio = y / screenHeight;
+    }
+
     private void ensureWithinScreenBounds() {
         if (Float.isNaN(x) || Float.isInfinite(x)) x = 10;
         if (Float.isNaN(y) || Float.isInfinite(y)) y = 10;
@@ -356,6 +375,25 @@ public class ModuleListHud extends HudModule {
         int screenHeight = mc.getWindow().getScaledHeight();
         float scaledWidth = currentWidth * hudScale.get().floatValue();
         float scaledHeight = currentHeight * hudScale.get().floatValue();
+
+        boolean alignChanged = anchorUsesRightEdge != alignRight.get();
+        if (alignChanged || Float.isNaN(anchorXRatio) || Float.isNaN(anchorYRatio)) {
+            updateAnchors(screenWidth, screenHeight, scaledWidth, scaledHeight);
+        }
+
+        boolean screenChanged = lastScaledScreenWidth > 0 && lastScaledScreenHeight > 0
+                && (screenWidth != lastScaledScreenWidth || screenHeight != lastScaledScreenHeight);
+        if (screenChanged) {
+            if (anchorUsesRightEdge) {
+                x = anchorXRatio * screenWidth - scaledWidth;
+            } else {
+                x = anchorXRatio * screenWidth;
+            }
+            y = anchorYRatio * screenHeight;
+        }
+
+        float oldX = x;
+        float oldY = y;
 
         if (x < 0) x = 0;
         float rightEdge = x + scaledWidth;
@@ -370,6 +408,13 @@ public class ModuleListHud extends HudModule {
             y = screenHeight - scaledHeight;
             if (y < 0) y = 0;
         }
+
+        boolean clamped = x != oldX || y != oldY;
+        if (!clamped) {
+            updateAnchors(screenWidth, screenHeight, scaledWidth, scaledHeight);
+        }
+        lastScaledScreenWidth = screenWidth;
+        lastScaledScreenHeight = screenHeight;
     }
 
     private void renderContent() {
@@ -681,17 +726,7 @@ public class ModuleListHud extends HudModule {
             float bgY = renderY + bgOffset - heightAdjustment;
             float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
 
-            // Draw blur using Shader2DUtil via our helper that handles GL state
-            // Note: The helper drawRoundedBlur inside NanoVGHelper was designed to pause NanoVG.
-            // Since we are OUTSIDE NanoVG here, we should use Shader2DUtil directly or a modified helper.
-            // However, our previous fix in NanoVGHelper.drawRoundedBlur handles GL state save/restore which is good.
-            // BUT, it calls nvgEndFrame which might be problematic if no frame is active?
-            // Actually, nvgEndFrame checks if frame is active.
-            // Better to call Shader2DUtil directly here to avoid NanoVG interference entirely.
-
-            // Ensure alpha is 0 to make it "only blur" and fully transparent color-wise
-            // But use the alpha from settings to control the blur opacity
-            float alpha = 1.0f; // Force full visibility for the blur effect
+            float alpha = 1.0f;
             Color blurColor = new Color(0, 0, 0, 0);
 
             dev.mahiro.client.utils.render.Shader2DUtil.drawRoundedBlur(
@@ -710,69 +745,6 @@ public class ModuleListHud extends HudModule {
         }
     }
 
-    private void renderStencilMask() {
-        float scale = hudScale.get().floatValue();
-        float fontSize = customFontSize.get().floatValue();
-
-        // Base coordinates
-        float startX = x;
-        float startY = y;
-
-        // Apply scrolling
-        startY -= (scrollOffset * scale);
-
-        // Initial padding offset
-        startY += (PADDING_Y * scale);
-
-        int font = FontLoader.medium(fontSize);
-        float currentBgY = startY;
-
-        for (ModuleEntry entry : moduleEntries) {
-            EaseInOutQuad animation = moduleAnimations.get(entry.module);
-            double animationValue = animation != null ? animation.getOutput() : 1.0;
-
-            if (animationValue <= 0.01) continue;
-
-            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
-
-            // We use the stored renderY from update() logic
-            Float renderYObj = moduleYPositions.get(entry.module);
-            if (renderYObj == null) continue;
-            float renderY = renderYObj;
-
-            String moduleName = entry.module.getEnglishName();
-            String suffix = entry.module.getSuffix();
-            String formattedSuffix = getFormattedSuffix(suffix);
-            float moduleNameWidth = NanoVGHelper.getTextWidth(moduleName, font, fontSize * scale);
-            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : NanoVGHelper.getTextWidth(formattedSuffix, font, fontSize * scale) + (2 * scale)) + (PADDING_X * 2 * scale);
-
-            float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
-            float itemBgX = alignRight.get() ?
-                    (startX + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
-                    (startX + (PADDING_X * scale));
-
-            float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
-            float bgOffset = backgroundOffsetY.get().floatValue() * scale;
-            float bgY = renderY + bgOffset - heightAdjustment;
-            float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
-
-            // Use Solid White for Mask
-            dev.mahiro.client.utils.render.Shader2DUtil.drawRoundedBlur(
-                    new net.minecraft.client.util.math.MatrixStack(),
-                    itemBgX - (4 * scale),
-                    bgY,
-                    bgWidth,
-                    bgH,
-                    backgroundRadius.get().floatValue() * scale,
-                    Color.WHITE,
-                    0, // 0 Blur radius for sharp mask
-                    1.0f // Full Alpha
-            );
-
-            currentBgY += itemFullHeight * animationValue;
-        }
-    }
-
     private void renderGradientContent() {
         long vg = NanoVGRenderer.INSTANCE.getContext();
         float scale = hudScale.get().floatValue();
@@ -783,7 +755,6 @@ public class ModuleListHud extends HudModule {
         int font = FontLoader.medium(fontSize);
         int index = 0;
 
-        // 1. Calculate the full height and max width first to draw the unified background
         float totalListHeight = 0;
         float maxItemWidth = 0;
         float startY = currentY;
@@ -801,7 +772,7 @@ public class ModuleListHud extends HudModule {
             float renderY = (renderYObj != null) ? renderYObj : targetY;
 
             if (animationValue > 0.01) {
-                totalListHeight += itemFullHeight * animationValue;
+                totalListHeight += (float) (itemFullHeight * animationValue);
 
                 String moduleName = entry.module.getEnglishName();
                 String suffix = entry.module.getSuffix();

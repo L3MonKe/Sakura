@@ -1,11 +1,11 @@
 package dev.mahiro.client.mixin.entity;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.entity.BlockPushEvent;
 import dev.mahiro.client.events.player.MotionEvent;
 import dev.mahiro.client.events.player.PlayerTickEvent;
 import dev.mahiro.client.events.player.SlowdownEvent;
+import dev.mahiro.client.events.type.EventType;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

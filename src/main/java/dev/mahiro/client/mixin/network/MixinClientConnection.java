@@ -1,8 +1,8 @@
 package dev.mahiro.client.mixin.network;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
+import dev.mahiro.client.events.type.EventType;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.OffThreadException;
 import net.minecraft.network.PacketCallbacks;

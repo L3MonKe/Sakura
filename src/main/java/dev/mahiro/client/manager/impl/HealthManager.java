@@ -1,8 +1,8 @@
 package dev.mahiro.client.manager.impl;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
+import dev.mahiro.client.events.type.EventType;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;

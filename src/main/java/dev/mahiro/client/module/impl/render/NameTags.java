@@ -1,9 +1,9 @@
 package dev.mahiro.client.module.impl.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render2DEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;

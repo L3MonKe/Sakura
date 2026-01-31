@@ -1,7 +1,7 @@
 package dev.mahiro.client.events.player;
 
 import dev.mahiro.client.events.Cancellable;
-import dev.mahiro.client.events.EventType;
+import dev.mahiro.client.events.type.EventType;
 
 public class JumpEvent extends Cancellable {
     private final EventType type;

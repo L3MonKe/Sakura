@@ -1,7 +1,7 @@
 package dev.mahiro.client.module.impl.player;
 
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.mixin.accessor.IPlayerMoveC2SPacket;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;

@@ -2,10 +2,10 @@ package dev.mahiro.client.module.impl.combat;
 
 import com.mojang.authlib.GameProfile;
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.player.PlayerTickEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.impl.NumberValue;

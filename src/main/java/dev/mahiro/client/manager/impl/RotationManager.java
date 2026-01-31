@@ -2,9 +2,9 @@ package dev.mahiro.client.manager.impl;
 
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.player.*;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.utils.player.MoveUtil;
 import dev.mahiro.client.utils.rotation.MovementFix;
 import dev.mahiro.client.utils.rotation.RotationUtil;

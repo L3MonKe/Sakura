@@ -1,8 +1,8 @@
 package dev.mahiro.client.module.impl.client;
 
 import dev.mahiro.client.config.ConfigManager;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.packet.PacketEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.client.ChatUtil;

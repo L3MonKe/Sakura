@@ -1,9 +1,9 @@
 package dev.mahiro.client.module.impl.player.inventory;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
+import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;

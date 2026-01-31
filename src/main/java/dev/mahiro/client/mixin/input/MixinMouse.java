@@ -2,7 +2,7 @@ package dev.mahiro.client.mixin.input;
 
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.input.MouseButtonEvent;
-import dev.mahiro.client.events.misc.KeyAction;
+import dev.mahiro.client.events.type.KeyAction;
 import net.minecraft.client.Mouse;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

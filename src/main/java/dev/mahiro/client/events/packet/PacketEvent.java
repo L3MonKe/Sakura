@@ -1,7 +1,7 @@
 package dev.mahiro.client.events.packet;
 
 import dev.mahiro.client.events.Cancellable;
-import dev.mahiro.client.events.EventType;
+import dev.mahiro.client.events.type.EventType;
 import net.minecraft.network.packet.Packet;
 
 public class PacketEvent extends Cancellable {
