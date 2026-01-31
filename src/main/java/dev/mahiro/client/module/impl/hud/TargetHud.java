@@ -15,6 +15,7 @@ import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseOutSine;
 import dev.mahiro.client.utils.color.ColorUtil;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
@@ -51,15 +52,40 @@ public class TargetHud extends HudModule {
     }
 
     public enum StyleEn {
-        ThunderHack, Modern
+        ThunderHack, Modern, Moonlight
     }
 
     public enum ImageModeEn {
         None, Anime, Custom
     }
 
+    public enum AvatarPosEn {
+        Left, OnBar
+    }
+
     private final EnumValue<StyleEn> style = new EnumValue<>("Style", "样式", StyleEn.ThunderHack);
     private final NumberValue<Double> blurRadius = new NumberValue<>("BallonBlur", "气泡模糊", 10.0, 1.0, 10.0, 1.0, () -> style.get() == StyleEn.ThunderHack);
+
+    // Moonlight Settings
+    private final NumberValue<Double> moonlightScale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 2.0, 0.1, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightWidth = new NumberValue<>("Width", "宽度", 150.0, 100.0, 300.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightHeight = new NumberValue<>("Height", "高度", 50.0, 30.0, 100.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightRadius = new NumberValue<>("Radius", "圆角半径", 10.0, 0.0, 20.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightBlurRadius = new NumberValue<>("BlurRadius", "模糊半径", 10.0, 1.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightBarHeight = new NumberValue<>("BarHeight", "血条粗细", 10.0, 2.0, 30.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightBarRadius = new NumberValue<>("BarRadius", "血条圆角", 4.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final EnumValue<AvatarPosEn> moonlightAvatarPos = new EnumValue<>("AvatarPos", "头像位置", AvatarPosEn.Left, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightNameSize = new NumberValue<>("NameSize", "名字大小", 14.0, 8.0, 24.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightNameX = new NumberValue<>("NameX", "名字X偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight);
+    private final NumberValue<Double> moonlightOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight && moonlightAvatarPos.get() == AvatarPosEn.OnBar);
+
+    // Moonlight Delay Settings
+    private final BoolValue moonlightDelay = new BoolValue("DelayBar", "延迟血条", true, () -> style.get() == StyleEn.Moonlight);
+    private final BoolValue moonlightDelayWait = new BoolValue("WaitMode", "受伤等待", true, () -> style.get() == StyleEn.Moonlight && moonlightDelay.get());
+    private final NumberValue<Integer> moonlightDelayTime = new NumberValue<>("DelayTime", "延迟时间(ms)", 600, 0, 2000, 50, () -> style.get() == StyleEn.Moonlight && moonlightDelay.get() && moonlightDelayWait.get());
+    private final NumberValue<Double> moonlightDelaySpeed = new NumberValue<>("DelaySpeed", "延迟动画速度", 2.0, 0.1, 10.0, 0.1, () -> style.get() == StyleEn.Moonlight && moonlightDelay.get());
+    private final ColorValue moonlightDelayColor = new ColorValue("DelayColor", "延迟血条颜色", new Color(255, 255, 0, 150), () -> style.get() == StyleEn.Moonlight && moonlightDelay.get());
 
     // Modern Settings
     private final NumberValue<Integer> modernBgAlpha = new NumberValue<>("BgAlpha", "背景透明度", 100, 0, 255, 1, () -> style.get() == StyleEn.Modern);
@@ -108,6 +134,8 @@ public class TargetHud extends HudModule {
 
     private float displayHealth = -1;
     private float lastTargetHealth = -1;
+    private float delayHealth = -1;
+    private final TimerUtil damageTimer = new TimerUtil();
 
     private LivingEntity target;
     private float rotation = 0f;
@@ -133,6 +161,7 @@ public class TargetHud extends HudModule {
         damageAnim.setDirection(Direction.BACKWARDS);
         displayHealth = -1;
         lastTargetHealth = -1;
+        delayHealth = -1;
         particles.clear();
         needsCacheClear = true; // Ensure clean state on enable
     }
@@ -204,6 +233,7 @@ public class TargetHud extends HudModule {
             if (lastTargetHealth == -1) lastTargetHealth = health;
             if (health < lastTargetHealth) {
                 damageAnim.setDirection(Direction.FORWARDS);
+                damageTimer.reset(); // Reset timer on damage
             }
             lastTargetHealth = health;
 
@@ -215,11 +245,29 @@ public class TargetHud extends HudModule {
 
         // Smooth Health Logic
         if (displayHealth == -1) displayHealth = health;
+        if (delayHealth == -1) delayHealth = health;
+
         // DrawContext doesn't have getTickDelta() directly in some mappings/versions
         // Usually we can get it from RenderTickCounter or just use a fixed step for smoothing
         // Since we are in onRender(DrawContext), let's check if we can get partial ticks from MC
         float tickDelta = mc.getRenderTickCounter().getTickDelta(false);
         displayHealth = MathHelper.lerp(tickDelta * 0.2f, displayHealth, health);
+
+        // Delay Health Logic
+        if (moonlightDelay.get()) {
+            if (health < delayHealth) {
+                // If WaitMode is ON, check timer. If OFF, bypass timer.
+                if (!moonlightDelayWait.get() || damageTimer.passedMS(moonlightDelayTime.get())) {
+                    // Slowly decrease delayHealth
+                    delayHealth = MathHelper.lerp(tickDelta * moonlightDelaySpeed.get().floatValue() * 0.05f, delayHealth, health);
+                }
+            } else if (health > delayHealth) {
+                // Heal or new target, reset delay bar immediately
+                delayHealth = health;
+            }
+        } else {
+            delayHealth = health;
+        }
 
         // Render Background and Main Elements via NanoVG
         final LivingEntity renderTarget = target;
@@ -230,6 +278,10 @@ public class TargetHud extends HudModule {
         /*
         renderKawaseBloom(context, animValue);
         */
+
+        if (style.get() == StyleEn.Moonlight) {
+            renderMoonlightBackground(animValue);
+        }
 
         // 1. Render NanoVG elements (Backgrounds, Bars, Text)
         NanoVGRenderer.INSTANCE.draw(vg -> {
@@ -246,6 +298,8 @@ public class TargetHud extends HudModule {
 
             if (style.get() == StyleEn.Modern) {
                 renderModern(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
+            } else if (style.get() == StyleEn.Moonlight) {
+                renderMoonlight(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
             } else {
                 renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
             }
@@ -720,6 +774,185 @@ public class TargetHud extends HudModule {
             skinImageCache.put(glId, imageId);
         }
         return imageId;
+    }
+
+    private void renderMoonlightBackground(float animValue) {
+        float globalScale = moonlightScale.get().floatValue();
+        
+        float baseW = moonlightWidth.get().floatValue();
+        float baseH = moonlightHeight.get().floatValue();
+        
+        AvatarPosEn avatarPos = moonlightAvatarPos.get();
+        float heightIncrease = 0;
+        float contentYOffset = 0;
+        
+        if (avatarPos == AvatarPosEn.OnBar) {
+            float offset = moonlightOnBarHeight.get().floatValue();
+            contentYOffset = offset; // Shift content down
+            heightIncrease = offset; // Increase background height
+        }
+        
+        this.width = baseW * globalScale;
+        this.height = (baseH + heightIncrease) * globalScale;
+
+        float cx = x + width / 2f;
+        float cy = y + height / 2f; 
+        
+        float w = width * animValue;
+        float h = height * animValue;
+        float rx = cx - w / 2f;
+        float ry = cy - h / 2f;
+
+        float r = moonlightRadius.get().floatValue() * globalScale * animValue;
+        float blur = moonlightBlurRadius.get().floatValue() * globalScale;
+
+        Shader2DUtil.drawRoundedBlur(
+                new MatrixStack(),
+                rx, ry, w, h,
+                r,
+                new Color(0, 0, 0, 0),
+                blur,
+                1.0f
+        );
+    }
+
+    private void renderMoonlight(long vg, LivingEntity target, float health, float maxHealth, float animationFactor, float damageFactor) {
+        float globalScale = moonlightScale.get().floatValue();
+        
+        NanoVGHelper.save();
+        NanoVGHelper.translate(vg, x, y);
+        NanoVGHelper.scale(vg, globalScale, globalScale);
+        NanoVGHelper.translate(vg, -x, -y);
+
+        float baseW = moonlightWidth.get().floatValue();
+        float baseH = moonlightHeight.get().floatValue();
+        float radius = moonlightRadius.get().floatValue();
+        float barRadius = moonlightBarRadius.get().floatValue();
+        float nameSize = moonlightNameSize.get().floatValue();
+        AvatarPosEn avatarPos = moonlightAvatarPos.get();
+
+        float padding = 6f;
+        float avatarSize = baseH - padding * 2;
+        float avatarX = x + padding;
+        float avatarY = y + padding; // Avatar stays at top
+
+        float contentYOffset = 0;
+        float heightIncrease = 0;
+
+        if (avatarPos == AvatarPosEn.OnBar) {
+             float offset = moonlightOnBarHeight.get().floatValue();
+             contentYOffset = offset; // Shift text/bar down
+             heightIncrease = offset; // Increase BG height
+        }
+
+        float totalH = baseH + heightIncrease;
+
+        // Background Rect
+        NanoVGHelper.drawRoundRect(x, y, baseW, totalH, radius, new Color(0, 0, 0, 80));
+
+        float contentX = x + padding + avatarSize + padding;
+        float contentW = baseW - (padding + avatarSize + padding + padding);
+
+        if (avatarPos == AvatarPosEn.OnBar) {
+            contentX = x + padding;
+            contentW = baseW - (padding + padding);
+        }
+
+        float barH = moonlightBarHeight.get().floatValue();
+
+        // Name
+        float nameXOffset = moonlightNameX.get().floatValue();
+        float nameYOffset = moonlightNameY.get().floatValue();
+        
+        float nameY = y + padding + (nameSize / 2) + 2 + contentYOffset + nameYOffset; 
+        
+        float textX = contentX + nameXOffset;
+        if (avatarPos == AvatarPosEn.OnBar) {
+            textX = x + padding + 2 + nameXOffset; 
+        }
+
+        if (glow.get()) {
+            NanoVGHelper.drawGlowingString(target.getName().getString(), textX, nameY, FontLoader.bold((int)nameSize), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
+        } else {
+            NanoVGHelper.drawString(target.getName().getString(), textX, nameY, FontLoader.bold((int)nameSize), nameSize, Color.WHITE);
+        }
+
+        // HP Text
+        String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
+        float hpW = NanoVGHelper.getTextWidth(hpText, FontLoader.bold((int)nameSize), nameSize);
+        NanoVGHelper.drawString(hpText, x + baseW - padding - hpW, nameY, FontLoader.bold((int)nameSize), nameSize, Color.WHITE);
+
+        // Health Bar
+        // barY calculation: start from bottom of total height
+        float barY = y + totalH - padding - barH;
+        
+        float healthPct = MathHelper.clamp(health / maxHealth, 0f, 1f);
+        float delayPct = MathHelper.clamp(delayHealth / maxHealth, 0f, 1f);
+        
+        float barW = contentW * healthPct;
+        float delayBarW = contentW * delayPct;
+
+        // Bar Bg
+        NanoVGHelper.drawRoundRect(contentX, barY, contentW, barH, barRadius, new Color(30, 30, 30));
+
+        // Delay Bar
+        if (moonlightDelay.get() && delayHealth > health) {
+             NanoVGHelper.drawRoundRect(contentX, barY, delayBarW, barH, barRadius, moonlightDelayColor.get());
+        }
+
+        // Bar Gradient Logic
+        Color c1 = healthColor.get();
+        Color c2 = healthColor.get().darker();
+        if (healthGradient.get()) {
+            double speed = gradientSpeed.get();
+            float time = (float) ((System.currentTimeMillis() % 2000000) * speed / 1000.0);
+            float length = colorLength.get().floatValue();
+            float frequency = 1.0f / length;
+            float t1 = (float) ((Math.sin(time) + 1.0) / 2.0);
+            float t2 = (float) ((Math.sin(time + frequency) + 1.0) / 2.0);
+            c1 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t1);
+            c2 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t2);
+        }
+
+        // Bar Glow
+        if (glow.get()) {
+            float strength = glowStrength.get().floatValue();
+            for (float i = 0.5f; i <= strength; i += 0.5f) {
+                float normalizedDist = i / (strength + 2);
+                float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
+                float a = alphaFactor * 0.15f;
+                int alphaInt = MathHelper.clamp((int) (a * 255), 0, 255);
+
+                if (alphaInt > 0) {
+                    if (healthGradient.get()) {
+                        Color gc1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt);
+                        Color gc2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alphaInt);
+                        NanoVGHelper.drawGradientRRect2(contentX - i, barY - i, barW + i * 2, barH + i * 2, barRadius + i, gc1, gc2);
+                    } else {
+                        Color glowColor = c1;
+                        Color c = new Color(glowColor.getRed(), glowColor.getGreen(), glowColor.getBlue(), alphaInt);
+                        NanoVGHelper.drawRoundRect(contentX - i, barY - i, barW + i * 2, barH + i * 2, barRadius + i, c);
+                    }
+                }
+            }
+        }
+
+        // Draw Main Bar
+        if (healthGradient.get()) {
+            NanoVGHelper.drawGradientRRect2(contentX, barY, barW, barH, barRadius, c1, c2);
+        } else {
+            NanoVGHelper.drawGradientRRect(contentX, barY, barW, barH, barRadius, c1, c2);
+        }
+        
+        // Draw Avatar last if it's "OnBar" so it overlays
+        if (target instanceof PlayerEntity player) {
+            float damageScale = 1.0f - (damageFactor * 0.15f);
+            drawPlayerAvatar(player, avatarX, avatarY, avatarSize, 6f, damageScale, damageFactor);
+        } else {
+            NanoVGHelper.drawRoundRect(avatarX, avatarY, avatarSize, avatarSize, 6f, new Color(80, 80, 80));
+        }
+
+        NanoVGHelper.restore();
     }
 
     // ====================================================================================

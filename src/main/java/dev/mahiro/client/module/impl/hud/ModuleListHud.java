@@ -108,6 +108,7 @@ public class ModuleListHud extends HudModule {
     private float currentWidth = 0;
     private float currentHeight = 0;
     private float scrollOffset = 0;
+    private boolean firstUpdate = true;
 
     private static final float PADDING_X = 6f;
     private static final float PADDING_Y = 4f;
@@ -151,6 +152,14 @@ public class ModuleListHud extends HudModule {
     }
 
     private void update() {
+        if (firstUpdate) {
+            updateModuleList();
+            calculateTargetSize();
+            currentWidth = targetWidth;
+            currentHeight = targetHeight;
+            firstUpdate = false;
+        }
+
         float oldWidth = currentWidth;
         updateModuleList();
         calculateTargetSize();
@@ -340,6 +349,9 @@ public class ModuleListHud extends HudModule {
     }
 
     private void ensureWithinScreenBounds() {
+        if (Float.isNaN(x) || Float.isInfinite(x)) x = 10;
+        if (Float.isNaN(y) || Float.isInfinite(y)) y = 10;
+
         int screenWidth = mc.getWindow().getScaledWidth();
         int screenHeight = mc.getWindow().getScaledHeight();
         float scaledWidth = currentWidth * hudScale.get().floatValue();

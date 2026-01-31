@@ -111,6 +111,7 @@ public class ClickGuiScreen extends Screen {
     @Override
     public void close() {
         Mahiro.MODULES.getModule(ClickGui.class).setState(false);
+        Mahiro.CONFIG.saveClickGui();
     }
 
     @Override
