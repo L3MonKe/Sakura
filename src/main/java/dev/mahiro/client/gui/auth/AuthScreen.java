@@ -3,15 +3,20 @@ package dev.mahiro.client.gui.auth;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.auth.net.AuthClient;
 import dev.mahiro.client.auth.net.AuthVerifyResult;
-import dev.mahiro.client.gui.component.SakuraButton;
-import dev.mahiro.client.gui.component.SakuraTextField;
 import dev.mahiro.client.gui.theme.SakuraTheme;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.utils.animations.Animation;
+import dev.mahiro.client.utils.animations.Direction;
+import dev.mahiro.client.utils.animations.impl.DecelerateAnimation;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.gui.widget.ButtonWidget;
+import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
+import net.minecraft.util.math.MathHelper;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
@@ -34,14 +39,13 @@ public class AuthScreen extends Screen {
     private String registerPassword = "";
     private String registerLicense = "";
 
-    private SakuraTextField licenseField;
-    private SakuraTextField usernameField;
-    private SakuraTextField passwordField;
+    private AuthTextField licenseField;
+    private AuthTextField usernameField;
+    private AuthTextField passwordField;
 
-    private SakuraButton loginTabButton;
-    private SakuraButton registerTabButton;
-    private SakuraButton verifyButton;
-    private SakuraButton exitButton;
+    private AuthButton primaryButton;
+    private AuthButton switchModeButton;
+    private AuthButton exitButton;
 
     private String statusLine = "";
     private volatile boolean verifying;
@@ -81,48 +85,35 @@ public class AuthScreen extends Screen {
         statusLine = prevStatusLine == null ? "" : prevStatusLine;
         clearChildren();
 
-        int panelWidth = Math.min(540, width - 40);
-        int panelHeight = 376;
-        int panelX = (width - panelWidth) / 2;
-        int panelY = (height - panelHeight) / 2;
+        Layout l = computeLayout(width, height);
+        addDrawable((context, mouseX, mouseY, delta) -> renderNanoBackground(context, mouseX, mouseY, delta));
 
-        int tabY = panelY + 58;
-        int tabW = (panelWidth - 20 * 2 - 8) / 2;
+        float rx = l.rightX() + 10;
+        float ry = l.y + 10;
+        float rw = l.rightW() - 20;
+        float rh = l.h - 20;
 
-        loginTabButton = new SakuraButton(panelX + 20, tabY, tabW, 22, "登录", button -> {
-            saveInputs(mode);
-            mode = Mode.Login;
-            init();
-        });
-        registerTabButton = new SakuraButton(panelX + 20 + tabW + 8, tabY, tabW, 22, "注册", button -> {
-            saveInputs(mode);
-            mode = Mode.Register;
-            init();
-        });
-        loginTabButton.setSelected(mode == Mode.Login);
-        registerTabButton.setSelected(mode == Mode.Register);
+        int formX = (int) (rx + 22);
+        int formW = (int) (rw - 44);
 
-        addDrawableChild(loginTabButton);
-        addDrawableChild(registerTabButton);
+        int fieldsTop = (int) (ry + 92);
+        int fieldH = 34;
+        int fieldGap = 12;
 
-        int fieldY = panelY + 92;
-        int fieldH = 24;
-        int fieldGap = 10;
-
-        usernameField = new SakuraTextField(textRenderer, panelX + 20, fieldY, panelWidth - 40, fieldH, Text.of(""));
+        usernameField = new AuthTextField(textRenderer, formX, fieldsTop, formW, fieldH, Text.of(""));
         usernameField.setPlaceholder("用户名");
         String usernameToSet = mode == Mode.Login ? loginUsername : registerUsername;
         if (usernameToSet != null && !usernameToSet.isEmpty()) usernameField.setText(usernameToSet);
         addDrawableChild(usernameField);
 
-        passwordField = new SakuraTextField(textRenderer, panelX + 20, fieldY + (fieldH + fieldGap), panelWidth - 40, fieldH, Text.of(""));
+        passwordField = new AuthTextField(textRenderer, formX, fieldsTop + (fieldH + fieldGap), formW, fieldH, Text.of(""));
         passwordField.setPlaceholder("密码");
         String passwordToSet = mode == Mode.Login ? loginPassword : registerPassword;
         if (passwordToSet != null && !passwordToSet.isEmpty()) passwordField.setText(passwordToSet);
         addDrawableChild(passwordField);
 
         if (mode == Mode.Register) {
-            licenseField = new SakuraTextField(textRenderer, panelX + 20, fieldY + (fieldH + fieldGap) * 2, panelWidth - 40, fieldH, Text.of(""));
+            licenseField = new AuthTextField(textRenderer, formX, fieldsTop + (fieldH + fieldGap) * 2, formW, fieldH, Text.of(""));
             licenseField.setPlaceholder("卡密");
             licenseField.setMaxLength(128);
             String licenseToSet = registerLicense == null || registerLicense.isBlank() ? AuthGate.getLicenseKey() : registerLicense;
@@ -132,235 +123,47 @@ public class AuthScreen extends Screen {
             licenseField = null;
         }
 
-        int buttonY = panelY + panelHeight - 44;
+        int primaryH = 34;
+        int switchH = 22;
+        int bottomPad = 22;
+        int switchY = (int) (ry + rh - bottomPad - switchH);
+        int primaryY = switchY - 10 - primaryH;
+        primaryButton = new AuthButton(formX, primaryY, formW, primaryH, mode == Mode.Login ? "登录" : "注册", b -> startAuth());
+        primaryButton.setVariant(AuthButton.Variant.Primary);
 
-        verifyButton = new SakuraButton(panelX + 20, buttonY - 60, panelWidth - 40, 24, mode == Mode.Login ? "登录" : "注册", button -> {
-            if (verifying) return;
-            long attempt = ++verifyAttemptSeq;
-            verifying = true;
-            statusLine = mode == Mode.Login ? "登录中..." : "注册中...";
-            verifyButton.setLoading(true);
-            loginTabButton.active = false;
-            registerTabButton.active = false;
-            usernameField.setEditable(false);
-            passwordField.setEditable(false);
-            if (licenseField != null) licenseField.setEditable(false);
-            exitButton.active = false;
-
-            String deviceId = AuthGate.getDeviceId();
-            String username = usernameField.getText();
-            String password = passwordField.getText();
-
-            if (username == null || username.isBlank() || password == null || password.isBlank()) {
-                verifying = false;
-                statusLine = "请输入用户名和密码";
-                verifyButton.setLoading(false);
-                loginTabButton.active = true;
-                registerTabButton.active = true;
-                usernameField.setEditable(true);
-                passwordField.setEditable(true);
-                if (licenseField != null) licenseField.setEditable(true);
-                exitButton.active = true;
-                usernameField.pulseError();
-                passwordField.pulseError();
-                return;
-            }
-
-            CompletableFuture<AuthVerifyResult> fut;
-            if (mode == Mode.Register) {
-                String license = licenseField == null ? "" : licenseField.getText();
-                if (license == null || license.isBlank()) {
-                    verifying = false;
-                    statusLine = "请输入卡密";
-                    verifyButton.setLoading(false);
-                    loginTabButton.active = true;
-                    registerTabButton.active = true;
-                    usernameField.setEditable(true);
-                    passwordField.setEditable(true);
-                    if (licenseField != null) licenseField.setEditable(true);
-                    exitButton.active = true;
-                    if (licenseField != null) licenseField.pulseError();
-                    return;
-                }
-                String licenseNorm = license.trim().toUpperCase(java.util.Locale.ROOT);
-                AuthGate.saveLicenseKey(licenseNorm);
-                fut = new AuthClient().register(username, password, licenseNorm, deviceId);
-            } else {
-                fut = new AuthClient().login(username, password, deviceId);
-            }
-
-            fut.whenComplete((res, err) -> {
-                MinecraftClient c = this.client != null ? this.client : MinecraftClient.getInstance();
-                if (c == null) return;
-                c.execute(() -> {
-                    if (verifyAttemptSeq != attempt) return;
-                    verifying = false;
-                    verifyButton.setLoading(false);
-                    loginTabButton.active = true;
-                    registerTabButton.active = true;
-                    usernameField.setEditable(true);
-                    passwordField.setEditable(true);
-                    if (licenseField != null) licenseField.setEditable(true);
-                    exitButton.active = true;
-                    if (err != null) {
-                        String msg = err.getMessage();
-                        if (msg == null || msg.isBlank()) msg = err.getClass().getSimpleName();
-                        statusLine = translateStatus(msg);
-                        usernameField.pulseError();
-                        passwordField.pulseError();
-                        if (licenseField != null && mode == Mode.Register) {
-                            licenseField.pulseError();
-                        }
-                        return;
-                    }
-                    if (res == null) {
-                        statusLine = "验证失败，请稍后重试";
-                        usernameField.pulseError();
-                        passwordField.pulseError();
-                        if (licenseField != null && mode == Mode.Register) {
-                            licenseField.pulseError();
-                        }
-                        return;
-                    }
-                    if (!res.ok()) {
-                        String code = res.error();
-                        statusLine = translateStatus(code);
-                        if ("BAD_CREDENTIALS".equalsIgnoreCase(code) || "AUTH_FAILED".equalsIgnoreCase(code) || "USER_NOT_FOUND".equalsIgnoreCase(code)) {
-                            usernameField.pulseError();
-                            passwordField.pulseError();
-                        }
-                        if (mode == Mode.Register && ("LICENSE_NOT_FOUND".equalsIgnoreCase(code) || "LICENSE_KEY_EMPTY".equalsIgnoreCase(code) || "LICENSE_EXPIRED".equalsIgnoreCase(code) || "LICENSE_REVOKED".equalsIgnoreCase(code))) {
-                            if (licenseField != null) {
-                                licenseField.pulseError();
-                            }
-                        }
-                        return;
-                    }
-                    String token = res.token();
-                    if (token == null || token.isBlank()) {
-                        statusLine = translateStatus("NO_TOKEN");
-                        return;
-                    }
-
-                    verifying = true;
-                    statusLine = "验证中...";
-                    verifyButton.setLoading(true);
-                    verifyButton.active = false;
-                    loginTabButton.active = false;
-                    registerTabButton.active = false;
-                    usernameField.setEditable(false);
-                    passwordField.setEditable(false);
-                    if (licenseField != null) licenseField.setEditable(false);
-                    exitButton.active = false;
-
-                    new AuthClient().verifyToken(token, deviceId).whenComplete((vRes, vErr) -> {
-                        MinecraftClient c2 = this.client != null ? this.client : MinecraftClient.getInstance();
-                        if (c2 == null) return;
-                        c2.execute(() -> {
-                            if (verifyAttemptSeq != attempt) return;
-                            verifying = false;
-                            verifyButton.setLoading(false);
-                            verifyButton.active = true;
-                            loginTabButton.active = true;
-                            registerTabButton.active = true;
-                            usernameField.setEditable(true);
-                            passwordField.setEditable(true);
-                            if (licenseField != null) licenseField.setEditable(true);
-                            exitButton.active = true;
-
-                            if (vErr != null) {
-                                String msg = vErr.getMessage();
-                                if (msg == null || msg.isBlank()) msg = vErr.getClass().getSimpleName();
-                                statusLine = translateStatus(msg);
-                                return;
-                            }
-                            if (vRes == null || !vRes.ok()) {
-                                String code = vRes != null ? vRes.error() : "DENIED";
-                                statusLine = translateStatus(code);
-                                return;
-                            }
-
-                            AuthGate.requestMainMenuIntro();
-                            AuthGate.acceptVerifiedToken(token);
-                            c2.setScreen(parent);
-                        });
-                    });
+        switchModeButton = new AuthButton(formX, switchY, formW, switchH,
+                mode == Mode.Login ? "没有账号？去注册" : "已有账号？去登录",
+                b -> {
+                    if (verifying) return;
+                    saveInputs(mode);
+                    mode = mode == Mode.Login ? Mode.Register : Mode.Login;
+                    init();
                 });
-            });
-        });
-        verifyButton.setPrimary(true);
+        switchModeButton.setVariant(AuthButton.Variant.Ghost);
 
-        exitButton = new SakuraButton(panelX + 20, buttonY - 30, panelWidth - 40, 24, "退出游戏", button -> {
+        exitButton = new AuthButton(l.x + l.w - 62, l.y + 16, 46, 24, "退出", b -> {
             MinecraftClient c = this.client != null ? this.client : MinecraftClient.getInstance();
             if (c != null) c.scheduleStop();
         });
-        exitButton.setDanger(true);
+        exitButton.setVariant(AuthButton.Variant.DangerGhost);
 
+        addDrawableChild(primaryButton);
+        addDrawableChild(switchModeButton);
         addDrawableChild(exitButton);
-        addDrawableChild(verifyButton);
 
-        if (verifying) {
-            verifyButton.setLoading(true);
-            verifyButton.active = false;
-            loginTabButton.active = false;
-            registerTabButton.active = false;
-            usernameField.setEditable(false);
-            passwordField.setEditable(false);
-            if (licenseField != null) licenseField.setEditable(false);
-            exitButton.active = false;
-            if (statusLine == null || statusLine.isBlank()) {
-                statusLine = mode == Mode.Login ? "登录中..." : "注册中...";
-            }
-        }
-
-        addDrawable((context, mouseX, mouseY, delta) -> {
-            int w = context.getScaledWindowWidth();
-            int h = context.getScaledWindowHeight();
-            int pw = Math.min(540, w - 40);
-            int ph = 376;
-            int px = (w - pw) / 2;
-            int py = (h - ph) / 2;
-            int verifyY = verifyButton != null ? verifyButton.getY() : (py + ph - 44 - 60);
-            int statusY = verifyY - 18;
-
-            String statusText;
-            if (statusLine == null || statusLine.isBlank()) {
-                statusText = mode == Mode.Login ? "请输入用户名和密码" : "请输入用户名、密码和卡密";
-            } else {
-                statusText = statusLine;
-            }
-
-            Color statusColor;
-            if (verifying) {
-                statusColor = SakuraTheme.ACCENT;
-            } else if (statusLine == null || statusLine.isBlank()) {
-                statusColor = new Color(SakuraTheme.TEXT_SECONDARY.getRed(), SakuraTheme.TEXT_SECONDARY.getGreen(), SakuraTheme.TEXT_SECONDARY.getBlue(), 150);
-            } else {
-                statusColor = SakuraTheme.DANGER;
-            }
-
-            NanoVGRenderer.INSTANCE.draw(vg -> NanoVGHelper.drawString(
-                    statusText,
-                    px + 20,
-                    statusY,
-                    FontLoader.regular(13.0f),
-                    13.0f,
-                    NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP,
-                    statusColor
-            ));
-        });
+        applyVerifyingState(verifying, statusLine == null ? "" : statusLine);
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (verifyButton == null) return;
+        if (primaryButton == null) return;
 
         boolean userOk = usernameField != null && usernameField.getText() != null && !usernameField.getText().isBlank();
         boolean passOk = passwordField != null && passwordField.getText() != null && !passwordField.getText().isBlank();
         boolean licenseOk = mode != Mode.Register || (licenseField != null && licenseField.getText() != null && !licenseField.getText().isBlank());
 
-        verifyButton.active = !verifying && userOk && passOk && licenseOk;
+        primaryButton.active = !verifying && userOk && passOk && licenseOk;
     }
 
     private static String translateStatus(String raw) {
@@ -421,6 +224,591 @@ public class AuthScreen extends Screen {
             registerUsername = u == null ? "" : u;
             registerPassword = p == null ? "" : p;
             registerLicense = lic == null ? "" : lic;
+        }
+    }
+
+    private void startAuth() {
+        if (verifying) return;
+
+        long attempt = ++verifyAttemptSeq;
+        String username = usernameField != null ? usernameField.getText() : "";
+        String password = passwordField != null ? passwordField.getText() : "";
+
+        if (username == null || username.isBlank() || password == null || password.isBlank()) {
+            applyVerifyingState(false, "请输入用户名和密码");
+            if (usernameField != null) usernameField.pulseError();
+            if (passwordField != null) passwordField.pulseError();
+            return;
+        }
+
+        String deviceId = AuthGate.getDeviceId();
+
+        CompletableFuture<AuthVerifyResult> fut;
+        if (mode == Mode.Register) {
+            String license = licenseField == null ? "" : licenseField.getText();
+            if (license == null || license.isBlank()) {
+                applyVerifyingState(false, "请输入卡密");
+                if (licenseField != null) licenseField.pulseError();
+                return;
+            }
+            String licenseNorm = license.trim().toUpperCase(Locale.ROOT);
+            AuthGate.saveLicenseKey(licenseNorm);
+            applyVerifyingState(true, "注册中...");
+            fut = new AuthClient().register(username, password, licenseNorm, deviceId);
+        } else {
+            applyVerifyingState(true, "登录中...");
+            fut = new AuthClient().login(username, password, deviceId);
+        }
+
+        fut.whenComplete((res, err) -> {
+            MinecraftClient c = this.client != null ? this.client : MinecraftClient.getInstance();
+            if (c == null) return;
+            c.execute(() -> {
+                if (verifyAttemptSeq != attempt) return;
+
+                if (err != null) {
+                    String msg = err.getMessage();
+                    if (msg == null || msg.isBlank()) msg = err.getClass().getSimpleName();
+                    applyVerifyingState(false, translateStatus(msg));
+                    if (usernameField != null) usernameField.pulseError();
+                    if (passwordField != null) passwordField.pulseError();
+                    if (licenseField != null && mode == Mode.Register) licenseField.pulseError();
+                    return;
+                }
+
+                if (res == null) {
+                    applyVerifyingState(false, "验证失败，请稍后重试");
+                    if (usernameField != null) usernameField.pulseError();
+                    if (passwordField != null) passwordField.pulseError();
+                    if (licenseField != null && mode == Mode.Register) licenseField.pulseError();
+                    return;
+                }
+
+                if (!res.ok()) {
+                    String code = res.error();
+                    applyVerifyingState(false, translateStatus(code));
+                    if ("BAD_CREDENTIALS".equalsIgnoreCase(code) || "AUTH_FAILED".equalsIgnoreCase(code) || "USER_NOT_FOUND".equalsIgnoreCase(code)) {
+                        if (usernameField != null) usernameField.pulseError();
+                        if (passwordField != null) passwordField.pulseError();
+                    }
+                    if (mode == Mode.Register && ("LICENSE_NOT_FOUND".equalsIgnoreCase(code) || "LICENSE_KEY_EMPTY".equalsIgnoreCase(code) || "LICENSE_EXPIRED".equalsIgnoreCase(code) || "LICENSE_REVOKED".equalsIgnoreCase(code) || "LICENSE_ALREADY_CLAIMED".equalsIgnoreCase(code))) {
+                        if (licenseField != null) licenseField.pulseError();
+                    }
+                    return;
+                }
+
+                String token = res.token();
+                if (token == null || token.isBlank()) {
+                    applyVerifyingState(false, translateStatus("NO_TOKEN"));
+                    return;
+                }
+
+                applyVerifyingState(true, "验证中...");
+                if (primaryButton != null) primaryButton.active = false;
+
+                new AuthClient().verifyToken(token, deviceId).whenComplete((vRes, vErr) -> {
+                    MinecraftClient c2 = this.client != null ? this.client : MinecraftClient.getInstance();
+                    if (c2 == null) return;
+                    c2.execute(() -> {
+                        if (verifyAttemptSeq != attempt) return;
+
+                        if (vErr != null) {
+                            String msg = vErr.getMessage();
+                            if (msg == null || msg.isBlank()) msg = vErr.getClass().getSimpleName();
+                            applyVerifyingState(false, translateStatus(msg));
+                            return;
+                        }
+
+                        if (vRes == null || !vRes.ok()) {
+                            String code = vRes != null ? vRes.error() : "DENIED";
+                            applyVerifyingState(false, translateStatus(code));
+                            return;
+                        }
+
+                        applyVerifyingState(false, "");
+                        AuthGate.requestMainMenuIntro();
+                        AuthGate.acceptVerifiedToken(token);
+                        c2.setScreen(parent);
+                    });
+                });
+            });
+        });
+    }
+
+    private void applyVerifyingState(boolean v, String status) {
+        verifying = v;
+        statusLine = status == null ? "" : status;
+
+        if (primaryButton != null) primaryButton.setLoading(v);
+        if (primaryButton != null) primaryButton.active = !v;
+        if (switchModeButton != null) switchModeButton.active = !v;
+        if (exitButton != null) exitButton.active = !v;
+
+        if (usernameField != null) usernameField.setEditable(!v);
+        if (passwordField != null) passwordField.setEditable(!v);
+        if (licenseField != null) licenseField.setEditable(!v);
+    }
+
+    private void renderNanoBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+        int w = context.getScaledWindowWidth();
+        int h = context.getScaledWindowHeight();
+        Layout l = computeLayout(w, h);
+
+        String headline = mode == Mode.Login ? "欢迎回来" : "创建账号";
+        String subtitle = mode == Mode.Login ? "请先完成身份验证以继续使用客户端" : "注册后需要验证令牌才能继续";
+
+        String statusText;
+        if (statusLine == null || statusLine.isBlank()) {
+            statusText = mode == Mode.Login ? "输入用户名与密码" : "输入用户名、密码与卡密";
+        } else {
+            statusText = statusLine;
+        }
+
+        Color statusColor;
+        if (verifying) {
+            statusColor = withAlpha(SakuraTheme.ACCENT, 220);
+        } else if (statusLine == null || statusLine.isBlank()) {
+            statusColor = withAlpha(new Color(255, 255, 255), 140);
+        } else {
+            statusColor = withAlpha(SakuraTheme.DANGER, 220);
+        }
+
+        NanoVGRenderer.INSTANCE.draw(vg -> {
+            Color bg0 = new Color(10, 10, 14, 240);
+            Color bg1 = new Color(18, 18, 24, 240);
+            NanoVGHelper.drawGradientRRect(0, 0, w, h, 0, bg0, bg1);
+            NanoVGHelper.drawGradientRRect2(0, 0, w, h, 0, new Color(92, 124, 255, 18), new Color(236, 72, 153, 0));
+
+            float t = (System.currentTimeMillis() % 12000L) / 12000.0f;
+            float cx = l.x + l.w * (0.18f + 0.06f * (float) Math.sin(t * Math.PI * 2));
+            float cy = l.y + l.h * (0.25f + 0.08f * (float) Math.cos(t * Math.PI * 2));
+            NanoVGHelper.drawCircle(cx, cy, l.w * 0.38f, withAlpha(SakuraTheme.ACCENT, 24));
+            NanoVGHelper.drawCircle(cx + l.w * 0.14f, cy + l.h * 0.22f, l.w * 0.28f, withAlpha(new Color(236, 72, 153), 16));
+
+            float r = 22f;
+            NanoVGHelper.drawShadow(l.x, l.y, l.w, l.h, r, new Color(0, 0, 0, 120), 34, 0, 16);
+            NanoVGHelper.drawRoundRect(l.x, l.y, l.w, l.h, r, new Color(18, 18, 24, 238));
+            NanoVGHelper.drawRoundRectOutline(l.x, l.y, l.w, l.h, r, 1.0f, new Color(255, 255, 255, 26));
+
+            float leftR = 18f;
+            float lx = l.x + 10;
+            float ly = l.y + 10;
+            float lw = l.leftW() - 20;
+            float lh = l.h - 20;
+
+            Color a0 = withAlpha(SakuraTheme.ACCENT, 255);
+            Color a1 = withAlpha(new Color(140, 92, 255), 255);
+            Color a2 = withAlpha(new Color(236, 72, 153), 255);
+            NanoVGHelper.drawGradientRRect(lx, ly, lw, lh, leftR, withAlpha(a0, 228), withAlpha(a1, 212));
+            NanoVGHelper.drawCircle(lx + lw * 0.18f, ly + lh * 0.18f, lw * 0.55f, withAlpha(a2, 22));
+            NanoVGHelper.drawCircle(lx + lw * 0.62f, ly + lh * 0.68f, lw * 0.42f, withAlpha(new Color(255, 255, 255), 12));
+            NanoVGHelper.drawRoundRectOutline(lx, ly, lw, lh, leftR, 1.0f, new Color(255, 255, 255, 28));
+
+            float badgeX = lx + 20;
+            float badgeY = ly + 18;
+            String badgeText = "Mahiro Verification";
+            float badgePadX = 10f;
+            float badgeH = 20;
+            float badgeTextW = NanoVGHelper.getTextWidth(badgeText, FontLoader.bold(12), 12);
+            float badgeW = badgePadX * 2 + badgeTextW;
+            NanoVGHelper.drawRoundRect(badgeX, badgeY, badgeW, badgeH, 10, new Color(0, 0, 0, 46));
+            NanoVGHelper.drawRoundRectOutline(badgeX, badgeY, badgeW, badgeH, 10, 1f, new Color(255, 255, 255, 26));
+            NanoVGHelper.drawString(badgeText, badgeX + badgePadX, badgeY + badgeH / 2f,
+                    FontLoader.bold(12), 12, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, withAlpha(new Color(255, 255, 255), 190));
+
+            NanoVGHelper.drawString(headline, lx + 20, ly + 76,
+                    FontLoader.bold(30), 30, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 240));
+            NanoVGHelper.drawString(subtitle, lx + 20, ly + 104,
+                    FontLoader.regular(14), 14, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 170));
+
+            float rx = l.rightX() + 10;
+            float ry = l.y + 10;
+            float rw = l.rightW() - 20;
+            float rh = l.h - 20;
+            NanoVGHelper.drawRoundRect(rx, ry, rw, rh, 18f, new Color(0, 0, 0, 38));
+            NanoVGHelper.drawRoundRectOutline(rx, ry, rw, rh, 18f, 1f, new Color(255, 255, 255, 22));
+
+            NanoVGHelper.drawString(mode == Mode.Login ? "登录" : "注册",
+                    rx + 22, ry + 40,
+                    FontLoader.bold(20), 20, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 230));
+            NanoVGHelper.drawString(mode == Mode.Login ? "输入凭据以继续" : "填写信息以创建账号",
+                    rx + 22, ry + 62,
+                    FontLoader.regular(13), 13, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 150));
+
+            float hintX = primaryButton != null ? primaryButton.getX() : (rx + 22);
+            float hintY = primaryButton != null ? (primaryButton.getY() - 14) : (ry + rh - 88);
+            NanoVGHelper.drawString(statusText,
+                    hintX, hintY,
+                    FontLoader.regular(12), 12, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, statusColor);
+        });
+    }
+
+    private static Layout computeLayout(int w, int h) {
+        int outerW = Math.min(820, Math.max(560, w - 110));
+        int outerH = Math.min(460, Math.max(410, h - 110));
+        int x = (w - outerW) / 2;
+        int y = (h - outerH) / 2;
+        int pad = 26;
+        int leftW = (int) (outerW * 0.44f);
+        return new Layout(x, y, outerW, outerH, pad, leftW);
+    }
+
+    private record Layout(int x, int y, int w, int h, int pad, int leftW) {
+        float rightX() {
+            return x + leftW;
+        }
+
+        float rightW() {
+            return w - leftW;
+        }
+    }
+
+    private static Color withAlpha(Color c, int alpha) {
+        int a = MathHelper.clamp(alpha, 0, 255);
+        return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
+    }
+
+    private static final class AuthTextField extends TextFieldWidget {
+        private String placeholderText = "";
+        private final Animation hoverAnim = new DecelerateAnimation(180, 1.0, Direction.BACKWARDS);
+        private final Animation focusAnim = new DecelerateAnimation(220, 1.0, Direction.BACKWARDS);
+        private final Animation errorAnim = new DecelerateAnimation(260, 1.0, Direction.BACKWARDS);
+        private long errorUntilMs;
+        private long errorStartMs;
+        private int scrollStart;
+
+        public AuthTextField(net.minecraft.client.font.TextRenderer textRenderer, int x, int y, int width, int height, Text message) {
+            super(textRenderer, x, y, width, height, message);
+            this.setDrawsBackground(false);
+        }
+
+        public void setPlaceholder(String text) {
+            this.placeholderText = text == null ? "" : text;
+            this.setPlaceholder(Text.of(this.placeholderText));
+        }
+
+        public void pulseError() {
+            errorStartMs = System.currentTimeMillis();
+            errorUntilMs = errorStartMs + 900L;
+            errorAnim.setDirection(Direction.FORWARDS);
+            errorAnim.reset();
+        }
+
+        @Override
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
+            if (!this.active || !this.visible) return super.mouseClicked(mouseX, mouseY, button);
+
+            boolean hovered = mouseX >= getX() && mouseX <= getX() + getWidth() && mouseY >= getY() && mouseY <= getY() + getHeight();
+            if (!hovered) return super.mouseClicked(mouseX, mouseY, button);
+
+            setFocused(true);
+            setSelectionStart(getCursor());
+
+            VisibleText visible = computeVisibleText(getInnerAvailableWidth());
+            double localX = mouseX - (getX() + 12);
+            if (localX <= 0) {
+                int idx = MathHelper.clamp(visible.start, 0, visible.display.length());
+                setCursor(idx, false);
+                setSelectionStart(idx);
+                return true;
+            }
+
+            int best = visible.start;
+            int max = visible.text.length();
+            float prevW = 0f;
+            boolean decided = false;
+            for (int i = 1; i <= max; i++) {
+                String prefix = visible.text.substring(0, i);
+                float w = NanoVGHelper.getTextWidth(prefix, FontLoader.regular(15), 15);
+                if (localX < w) {
+                    float mid = (prevW + w) * 0.5f;
+                    int localPos = localX < mid ? (i - 1) : i;
+                    best = visible.start + localPos;
+                    decided = true;
+                    break;
+                }
+                prevW = w;
+            }
+            if (!decided) {
+                best = visible.start + max;
+            }
+
+            best = MathHelper.clamp(best, 0, visible.display.length());
+            setCursor(best, false);
+            setSelectionStart(best);
+            return true;
+        }
+
+        @Override
+        public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            boolean hovered = mouseX >= getX() && mouseX <= getX() + getWidth() && mouseY >= getY() && mouseY <= getY() + getHeight();
+            hoverAnim.setDirection(hovered ? Direction.FORWARDS : Direction.BACKWARDS);
+            focusAnim.setDirection(isFocused() ? Direction.FORWARDS : Direction.BACKWARDS);
+
+            long now = System.currentTimeMillis();
+            boolean errorActive = now <= errorUntilMs;
+            errorAnim.setDirection(errorActive ? Direction.FORWARDS : Direction.BACKWARDS);
+
+            NanoVGRenderer.INSTANCE.draw(vg -> {
+                float hoverT = MathHelper.clamp(hoverAnim.getOutput().floatValue(), 0f, 1f);
+                float focusT = MathHelper.clamp(focusAnim.getOutput().floatValue(), 0f, 1f);
+                float errorT = MathHelper.clamp(errorAnim.getOutput().floatValue(), 0f, 1f);
+
+                float shake = 0.0f;
+                if (errorActive) {
+                    float p = (now - errorStartMs) / 900.0f;
+                    p = MathHelper.clamp(p, 0f, 1f);
+                    float amp = (1.0f - p) * 2.2f;
+                    shake = (float) Math.sin((now - errorStartMs) / 28.0) * amp;
+                }
+
+                float x = getX() + shake;
+                float y = getY();
+                float w = getWidth();
+                float h = getHeight();
+                float r = 12f;
+
+                Color fill = new Color(255, 255, 255, (int) (12 + 10 * hoverT + 8 * focusT));
+                NanoVGHelper.drawRoundRect(x, y, w, h, r, fill);
+
+                Color baseBorder = new Color(255, 255, 255, (int) (26 + 20 * hoverT));
+                Color focusBorder = withAlpha(SakuraTheme.ACCENT, (int) (60 + 140 * focusT));
+                Color errorBorder = withAlpha(SakuraTheme.DANGER, (int) (40 + 180 * errorT));
+
+                Color border = mixColors(baseBorder, focusBorder, focusT);
+                border = mixColors(border, errorBorder, errorT);
+                NanoVGHelper.drawRoundRectOutline(x, y, w, h, r, 1.1f, border);
+
+                NanoVG.nvgScissor(vg, x + 10, y, w - 20, h);
+
+                VisibleText visible = computeVisibleText(getInnerAvailableWidth());
+
+                if (visible.text.isEmpty() && !isFocused() && !placeholderText.isEmpty()) {
+                    NanoVGHelper.drawString(placeholderText, x + 12, y + h / 2f,
+                            FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 110));
+                } else {
+                    NanoVGHelper.drawString(visible.text, x + 12, y + h / 2f, FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 210));
+
+                    if (isFocused() && (System.currentTimeMillis() / 500) % 2 == 0) {
+                        int cursor = getCursor();
+                        cursor = MathHelper.clamp(cursor, 0, visible.display.length());
+                        int localCursor = MathHelper.clamp(cursor - visible.start, 0, visible.text.length());
+                        String beforeCursor = visible.text.substring(0, localCursor);
+                        float textWidth = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(15), 15);
+                        NanoVG.nvgBeginPath(vg);
+                        NanoVG.nvgMoveTo(vg, x + 12 + textWidth + 1, y + 7);
+                        NanoVG.nvgLineTo(vg, x + 12 + textWidth + 1, y + h - 7);
+                        NanoVG.nvgStrokeColor(vg, SakuraTheme.color(withAlpha(new Color(255, 255, 255), 230)));
+                        NanoVG.nvgStrokeWidth(vg, 1.0f);
+                        NanoVG.nvgStroke(vg);
+                    }
+                }
+
+                NanoVG.nvgResetScissor(vg);
+            });
+        }
+
+        private int getInnerAvailableWidth() {
+            return Math.max(0, getWidth() - 24);
+        }
+
+        private VisibleText computeVisibleText(int availableWidth) {
+            String display = getText() == null ? "" : getText();
+
+            int len = display.length();
+            int cursor = MathHelper.clamp(getCursor(), 0, len);
+
+            scrollStart = MathHelper.clamp(scrollStart, 0, len);
+            if (cursor < scrollStart) scrollStart = cursor;
+
+            if (availableWidth <= 0 || len == 0) {
+                return new VisibleText(scrollStart, "", display);
+            }
+
+            float totalW = NanoVGHelper.getTextWidth(display, FontLoader.regular(15), 15);
+            if (totalW <= availableWidth) {
+                scrollStart = 0;
+                return new VisibleText(0, display, display);
+            }
+
+            while (scrollStart < cursor) {
+                String beforeCursor = display.substring(scrollStart, cursor);
+                float w = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(15), 15);
+                if (w <= availableWidth) break;
+                scrollStart++;
+            }
+
+            while (scrollStart > 0) {
+                String beforeCursor = display.substring(scrollStart - 1, cursor);
+                float w = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(15), 15);
+                if (w > availableWidth) break;
+                scrollStart--;
+            }
+
+            int end = len;
+            while (end > scrollStart) {
+                String s = display.substring(scrollStart, end);
+                float w = NanoVGHelper.getTextWidth(s, FontLoader.regular(15), 15);
+                if (w <= availableWidth) {
+                    return new VisibleText(scrollStart, s, display);
+                }
+                end--;
+            }
+
+            return new VisibleText(scrollStart, "", display);
+        }
+
+        private record VisibleText(int start, String text, String display) {
+        }
+
+        private static Color mixColors(Color a, Color b, float t) {
+            t = MathHelper.clamp(t, 0f, 1f);
+            int r = (int) (a.getRed() + (b.getRed() - a.getRed()) * t);
+            int g = (int) (a.getGreen() + (b.getGreen() - a.getGreen()) * t);
+            int bl = (int) (a.getBlue() + (b.getBlue() - a.getBlue()) * t);
+            int al = (int) (a.getAlpha() + (b.getAlpha() - a.getAlpha()) * t);
+            return new Color(
+                    MathHelper.clamp(r, 0, 255),
+                    MathHelper.clamp(g, 0, 255),
+                    MathHelper.clamp(bl, 0, 255),
+                    MathHelper.clamp(al, 0, 255)
+            );
+        }
+    }
+
+    private static final class AuthButton extends ButtonWidget {
+        enum Variant {
+            Primary,
+            Ghost,
+            DangerGhost
+        }
+
+        private Variant variant = Variant.Primary;
+        private final Animation hoverAnim = new DecelerateAnimation(200, 1.0);
+        private final Animation pressAnim = new DecelerateAnimation(120, 1.0, Direction.BACKWARDS);
+        private final Animation loadingAnim = new DecelerateAnimation(160, 1.0, Direction.BACKWARDS);
+        private boolean pressed;
+        private boolean loading;
+        private long loadingStartMs;
+
+        public AuthButton(int x, int y, int width, int height, String message, PressAction onPress) {
+            super(x, y, width, height, Text.of(message), onPress, DEFAULT_NARRATION_SUPPLIER);
+        }
+
+        public void setVariant(Variant variant) {
+            this.variant = variant == null ? Variant.Primary : variant;
+        }
+
+        public void setLoading(boolean loading) {
+            if (this.loading == loading) return;
+            this.loading = loading;
+            this.loadingStartMs = System.currentTimeMillis();
+            this.loadingAnim.setDirection(loading ? Direction.FORWARDS : Direction.BACKWARDS);
+            this.loadingAnim.reset();
+        }
+
+        @Override
+        public boolean mouseClicked(double mouseX, double mouseY, int button) {
+            boolean hovered = mouseX >= getX() && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height;
+            if (button == 0 && hovered && this.active && this.visible) {
+                pressed = true;
+                pressAnim.setDirection(Direction.FORWARDS);
+            }
+            return super.mouseClicked(mouseX, mouseY, button);
+        }
+
+        @Override
+        public boolean mouseReleased(double mouseX, double mouseY, int button) {
+            if (button == 0) {
+                pressed = false;
+                pressAnim.setDirection(Direction.BACKWARDS);
+            }
+            return super.mouseReleased(mouseX, mouseY, button);
+        }
+
+        @Override
+        public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+            boolean hovered = mouseX >= getX() && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height;
+            hoverAnim.setDirection(hovered ? Direction.FORWARDS : Direction.BACKWARDS);
+            if (!hovered && pressed) {
+                pressed = false;
+                pressAnim.setDirection(Direction.BACKWARDS);
+            }
+            if (!loadingAnim.finished(loading ? Direction.FORWARDS : Direction.BACKWARDS)) {
+                loadingAnim.setDirection(loading ? Direction.FORWARDS : Direction.BACKWARDS);
+            }
+
+            NanoVGRenderer.INSTANCE.draw(vg -> {
+                float hoverT = MathHelper.clamp(hoverAnim.getOutput().floatValue(), 0f, 1f);
+                float pressT = MathHelper.clamp(pressAnim.getOutput().floatValue(), 0f, 1f);
+                float loadingT = MathHelper.clamp(loadingAnim.getOutput().floatValue(), 0f, 1f);
+
+                float scale = 1.0f + 0.02f * hoverT - 0.02f * pressT;
+                float cx = getX() + width / 2.0f;
+                float cy = getY() + height / 2.0f;
+
+                NanoVG.nvgSave(vg);
+                NanoVG.nvgTranslate(vg, cx, cy);
+                NanoVG.nvgScale(vg, scale, scale);
+                NanoVG.nvgTranslate(vg, -cx, -cy);
+
+                float r = height >= 30 ? 12f : 10f;
+
+                Color fill;
+                Color border;
+                Color text;
+
+                if (!this.active) {
+                    fill = new Color(255, 255, 255, 10);
+                    border = new Color(255, 255, 255, 18);
+                    text = new Color(255, 255, 255, 120);
+                } else if (variant == Variant.Primary) {
+                    fill = withAlpha(SakuraTheme.ACCENT, (int) (220 + 25 * hoverT));
+                    border = withAlpha(new Color(255, 255, 255), (int) (28 + 32 * hoverT));
+                    text = new Color(12, 12, 16, 230);
+                } else if (variant == Variant.DangerGhost) {
+                    fill = withAlpha(SakuraTheme.DANGER, (int) (10 + 26 * hoverT));
+                    border = withAlpha(SakuraTheme.DANGER, (int) (55 + 60 * hoverT));
+                    text = withAlpha(SakuraTheme.DANGER, 220);
+                } else {
+                    fill = new Color(255, 255, 255, (int) (8 + 16 * hoverT));
+                    border = new Color(255, 255, 255, (int) (22 + 26 * hoverT));
+                    text = new Color(255, 255, 255, 190);
+                }
+
+                NanoVGHelper.drawRoundRect(getX(), getY(), width, height, r, fill);
+                NanoVGHelper.drawRoundRectOutline(getX(), getY(), width, height, r, 1.0f, border);
+
+                NanoVG.nvgScissor(vg, getX() + 6, getY() + 2, Math.max(0, width - 12), Math.max(0, height - 4));
+
+                float textX = cx;
+                if (loadingT > 0.001f) textX -= 8.0f * loadingT;
+
+                NanoVG.nvgFontSize(vg, height >= 30 ? 15.0f : 12.0f);
+                NanoVG.nvgFontFaceId(vg, FontLoader.medium(height >= 30 ? 15.0f : 12.0f));
+                NanoVG.nvgTextAlign(vg, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE);
+                NanoVG.nvgFillColor(vg, SakuraTheme.color(text));
+                NanoVG.nvgText(vg, textX, cy + 0.5f, getMessage().getString());
+
+                if (loadingT > 0.001f) {
+                    float rr = 5.0f;
+                    float sx = getX() + width - 18.0f;
+                    float sy = cy + 0.5f;
+                    float tt = ((System.currentTimeMillis() - loadingStartMs) / 1000.0f) * 6.0f;
+                    float start = tt;
+                    float end = tt + 4.4f;
+
+                    NanoVG.nvgBeginPath(vg);
+                    NanoVG.nvgArc(vg, sx, sy, rr, start, end, NanoVG.NVG_CW);
+                    NanoVG.nvgStrokeWidth(vg, 1.75f);
+                    NanoVG.nvgStrokeColor(vg, SakuraTheme.color(withAlpha(new Color(255, 255, 255), (int) (180 * loadingT))));
+                    NanoVG.nvgStroke(vg);
+                }
+
+                NanoVG.nvgResetScissor(vg);
+                NanoVG.nvgRestore(vg);
+            });
         }
     }
 

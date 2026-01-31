@@ -122,10 +122,10 @@ public class MainMenuScreen extends Screen {
 
     private void setupSocialLinks() {
         socialLinks.clear();
-        socialLinks.add(new SocialLink("W", "https://kook.vip/BSYpt8"));
-        socialLinks.add(new SocialLink("V", "https://discord.gg/yh3nqbnupB"));
-        socialLinks.add(new SocialLink("Y", "https://www.youtube.com/@guyuemang"));
-        socialLinks.add(new SocialLink("Z", "https://github.com/guyuemang"));
+        socialLinks.add(new SocialLink("W", "https://kook.vip/"));
+        socialLinks.add(new SocialLink("V", "https://discord.gg/"));
+        socialLinks.add(new SocialLink("Y", "https://www.youtube.com/"));
+        socialLinks.add(new SocialLink("Z", "https://github.com/L3MonKe"));
     }
 
     private float getScale() {
@@ -273,7 +273,7 @@ public class MainMenuScreen extends Screen {
     private void drawTitleBlock(Layout layout, Color iconColor, float opacity, float socialOpacity) {
         float titleSize = refFont(40f, layout.scale);
         NanoVGHelper.drawString(
-                "LEMON CLIENT",
+                "Minecraft 1.21.4",
                 layout.centerX,
                 layout.titleY,
                 FontLoader.bold(titleSize),
@@ -297,7 +297,7 @@ public class MainMenuScreen extends Screen {
 
         float loveSize = refFont(15f, layout.scale);
         NanoVGHelper.drawString(
-                "love by M4h1r0",
+                "Love By Mahiro#1337",
                 layout.centerX,
                 layout.loveY,
                 FontLoader.bold(loveSize),
@@ -311,7 +311,7 @@ public class MainMenuScreen extends Screen {
 
     private void drawVersion(Layout layout, Color color, float opacity) {
         float logoSize = refFont(80f, layout.scale);
-        float versionX = width / 2f + NanoVGHelper.getTextWidth("Sakura", FontLoader.bold(logoSize), logoSize) / 2f - 5f * layout.scale;
+        float versionX = width / 2f + NanoVGHelper.getTextWidth(Mahiro.MOD_NAME, FontLoader.bold(logoSize), logoSize) / 2f - 5f * layout.scale;
         float versionY = 7f * layout.scale + height / 2f - 50f * layout.scale - 100f * layout.scale;
         float versionSize = refFont(15f, layout.scale);
         NanoVGHelper.drawString(
@@ -332,15 +332,15 @@ public class MainMenuScreen extends Screen {
 
     private void drawLogo(Layout layout, float liftY, float opacity) {
         float logoSize = refFont(80f, layout.scale);
-        float aWidth = NanoVGHelper.getTextWidth("S", FontLoader.bold(logoSize), logoSize);
+        float aWidth = NanoVGHelper.getTextWidth("M", FontLoader.bold(logoSize), logoSize);
         float baseY = 7f * layout.scale + height / 2f - 50f * layout.scale - liftY;
 
-        float etaWidth = NanoVGHelper.getTextWidth("akura", FontLoader.bold(logoSize), logoSize);
+        float etaWidth = NanoVGHelper.getTextWidth("4h1r0", FontLoader.bold(logoSize), logoSize);
         float zX = width / 2f - aWidth / 2f - etaWidth / 2f;
         float etaX = width / 2f - etaWidth / 2f + aWidth / 2f;
 
         NanoVGHelper.drawString(
-                "S",
+                "M",
                 zX,
                 baseY,
                 FontLoader.bold(logoSize),
@@ -350,7 +350,7 @@ public class MainMenuScreen extends Screen {
         );
 
         NanoVGHelper.drawString(
-                "akura",
+                "4h1r0",
                 etaX,
                 baseY,
                 FontLoader.bold(logoSize),
@@ -484,7 +484,8 @@ public class MainMenuScreen extends Screen {
                 "Minecraft 1.21.4",
                 "Changelog :",
                 "* 人要写端",
-                "* 阻止妖猫开宝马"
+                "* 阻止妖猫开宝马",
+                "* 啦啦啦啦啦啦"
         );
 
         float fontSize = refFont(15f, scale);

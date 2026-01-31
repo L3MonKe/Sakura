@@ -522,9 +522,9 @@ public class DynamicIslandHud extends HudModule {
     private void drawCenteredTitle(float alpha) {
         if (alpha <= 0.05f) return;
         int font = FontLoader.bold((int) Size.LOGO_FONT_SIZE);
-        String name = "Sakura";
-        float textW = NanoVGHelper.getTextWidth(name, font, Size.LOGO_FONT_SIZE);
-        NanoVGHelper.drawGlowingString(name, animX + (animW - textW) / 2f, animY + animH / 2f + 4, font, Size.LOGO_FONT_SIZE, withAlpha(ClickGui.color(0), (int) (255 * alpha)), Size.GLOW_RADIUS);
+        String title = "Mahiro";
+        float textW = NanoVGHelper.getTextWidth(title, font, Size.LOGO_FONT_SIZE);
+        NanoVGHelper.drawGlowingString(title, animX + (animW - textW) / 2f, animY + animH / 2f + 4, font, Size.LOGO_FONT_SIZE, withAlpha(ClickGui.color(0), (int) (255 * alpha)), Size.GLOW_RADIUS);
     }
 
     private void drawSideInfo(float expandProgress, float alpha) {
