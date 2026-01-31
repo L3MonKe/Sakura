@@ -45,8 +45,8 @@ public class AttackCrystal extends Module {
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        boolean blinkEnable = Mahiro.MODULES.getModule(Blink.class).isEnabled();
-        if (blinkEnable) return;
+        //boolean blinkEnable = Mahiro.MODULES.getModule(Blink.class).isEnabled();
+        //if (blinkEnable) return;
 
         findTarget();
 

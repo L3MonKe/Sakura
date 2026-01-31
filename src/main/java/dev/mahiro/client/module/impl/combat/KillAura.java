@@ -69,8 +69,9 @@ public class KillAura extends Module {
         if (nullCheck()) return;
 
         boolean scaffoldEnable = Mahiro.MODULES.getModule(Scaffold.class).isEnabled();
-        boolean blinkEnable = Mahiro.MODULES.getModule(Blink.class).isEnabled();
-        if (scaffoldEnable || blinkEnable) return;
+        //boolean blinkEnable = Mahiro.MODULES.getModule(Blink.class).isEnabled();
+        //if (scaffoldEnable || blinkEnable) return;
+        if (scaffoldEnable) return;
 
         findTarget();
 
