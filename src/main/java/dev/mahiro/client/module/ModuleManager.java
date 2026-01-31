@@ -64,12 +64,11 @@ public class ModuleManager {
 //        add(new Blink());
 //        add(new BowBomb());
         add(new Disabler());
-//        add(new GrimFly());
         add(new MCP());
-//        add(new FakePlayer());
+        add(new FakePlayer());
         add(new GhostHand());
         add(new NoRotate());
-//        add(new PacketEat());
+        add(new PacketEat());
 //        add(new PacketMine());
         add(new Stealer());
         add(new TimerModule());
@@ -125,10 +124,10 @@ public class ModuleManager {
     }
 
     private void add(Module module) {
-        for (final Field field : module.getClass().getDeclaredFields()) {
+        for (Field field : module.getClass().getDeclaredFields()) {
             try {
                 field.setAccessible(true);
-                final Object obj = field.get(module);
+                Object obj = field.get(module);
                 if (obj instanceof Value<?>) module.getValues().add((Value<?>) obj);
             } catch (IllegalAccessException ignored) {
             }

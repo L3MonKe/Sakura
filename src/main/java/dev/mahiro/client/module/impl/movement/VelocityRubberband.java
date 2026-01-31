@@ -98,9 +98,9 @@ public class VelocityRubberband extends Module {
             if (groundOnly.get() && !mc.player.isOnGround()) return;
             if (onlyHurt.get() && !wasHurt) return;
 
-            double vx = packet.getVelocityX() / 8000.0;
-            double vy = packet.getVelocityY() / 8000.0;
-            double vz = packet.getVelocityZ() / 8000.0;
+            double vx = packet.getVelocityX();
+            double vy = packet.getVelocityY();
+            double vz = packet.getVelocityZ();
 
             if (Math.abs(vx) < 0.005 && Math.abs(vz) < 0.005) return;
 
