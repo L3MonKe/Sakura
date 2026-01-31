@@ -61,12 +61,12 @@ repositories {
 }
 
 dependencies {
-    "minecraft"("com.mojang:minecraft:${property("minecraft_version")}")
-    "mappings"("net.fabricmc:yarn:${property("yarn_version")}:v2")
+    minecraft("com.mojang:minecraft:${property("minecraft_version")}")
+    mappings("net.fabricmc:yarn:${property("yarn_version")}:v2")
 
-    "modImplementation"("net.fabricmc:fabric-loader:${property("loader_version")}")
-    "modImplementation"("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
-    "modImplementation"("com.github.cabaletta:baritone:${property("baritone_api_version")}")
+    modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
+    //"modImplementation"("com.github.cabaletta:baritone:${property("baritone_api_version")}")
 
     implementation(include("meteordevelopment:orbit:${property("orbit_version")}")!!)
 
