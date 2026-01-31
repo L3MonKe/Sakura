@@ -9,5 +9,8 @@ accessible field net/minecraft/world/entity/SectionedEntityCache trackedPosition
 accessible field net/minecraft/world/entity/SectionedEntityCache trackingSections Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
 accessible field net/minecraft/client/render/item/ItemRenderState$LayerRenderState model Lnet/minecraft/client/render/model/BakedModel;
 accessible field net/minecraft/client/render/item/ItemRenderer itemRenderState Lnet/minecraft/client/render/item/ItemRenderState;
+accessible field net/minecraft/client/render/item/ItemRenderState layers [Lnet/minecraft/client/render/item/ItemRenderState$LayerRenderState;
+accessible field net/minecraft/client/render/item/ItemRenderState layerCount I
+accessible method net/minecraft/client/render/item/ItemRenderState$LayerRenderState getTransformation ()Lnet/minecraft/client/render/model/json/Transformation;
 accessible class net/minecraft/client/render/BackgroundRenderer$StatusEffectFogModifier
 accessible method net/minecraft/client/world/ClientWorld getPendingUpdateManager ()Lnet/minecraft/client/network/PendingUpdateManager;

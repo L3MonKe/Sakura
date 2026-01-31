@@ -84,6 +84,7 @@ public class ModuleManager {
         add(new Chams());
         add(new Fullbright());
         add(new Hat());
+        add(new ItemPhysics());
         add(new JumpCircles());
 //        add(new MotionBlur());
         add(new NameTags());

@@ -2,6 +2,7 @@ package dev.mahiro.client.events.render.item;
 
 import dev.mahiro.client.events.Cancellable;
 import dev.mahiro.client.interfaces.IEntityRenderState;
+import net.minecraft.client.item.ItemModelManager;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.state.ItemEntityRenderState;
 import net.minecraft.client.render.item.ItemRenderer;
@@ -17,9 +18,9 @@ public class RenderItemEntityEvent extends Cancellable {
     public MatrixStack matrixStack;
     public VertexConsumerProvider vertexConsumerProvider;
     public int light;
-    public ItemRenderer itemRenderer;
+    public ItemModelManager itemModelManager;
 
-    public static RenderItemEntityEvent get(ItemEntityRenderState renderState, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, ItemRenderer itemRenderer) {
+    public static RenderItemEntityEvent get(ItemEntityRenderState renderState, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, int light, ItemModelManager itemModelManager) {
         INSTANCE.setCancelled(false);
         INSTANCE.itemEntity = (ItemEntity) ((IEntityRenderState) renderState).getEntity();
         INSTANCE.renderState = renderState;
@@ -27,7 +28,7 @@ public class RenderItemEntityEvent extends Cancellable {
         INSTANCE.matrixStack = matrixStack;
         INSTANCE.vertexConsumerProvider = vertexConsumerProvider;
         INSTANCE.light = light;
-        INSTANCE.itemRenderer = itemRenderer;
+        INSTANCE.itemModelManager = itemModelManager;
         return INSTANCE;
     }
 }
