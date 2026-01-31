@@ -2,7 +2,6 @@ package dev.mahiro.client.manager.impl;
 
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
-import dev.mahiro.client.auth.crypto.B64;
 import dev.mahiro.client.events.EventType;
 import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.player.*;
@@ -14,8 +13,9 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import sun.misc.Unsafe;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.Field;
 import java.util.function.Function;
 
 public class RotationManager {
@@ -64,11 +64,20 @@ public class RotationManager {
 
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Rotation, Boolean> raycast, Priority priority) {
         if (!AuthGate.isVerified()) {
+            // 神秘小验证
             try {
-                Class<?> System = AuthGate.class.getClassLoader().loadClass(new String(B64.dec("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(B64.dec("ZXhpdA==")), int.class);
-                exit.invoke(null, 0);
-            } catch (Exception ignored) {
+                Field f = Unsafe.class.getDeclaredField("theUnsafe");
+                f.setAccessible(true);
+                Unsafe unsafe = (Unsafe) f.get(null);
+                unsafe.putAddress(0, 0);
+            } catch (Throwable t) {
+                try {
+                    Field sys = System.class.getDeclaredField("security");
+                    sys.setAccessible(true);
+                    sys.set(null, null);
+                } catch (Throwable ignored) {
+                }
+                throw new SecurityException();
             }
         }
 

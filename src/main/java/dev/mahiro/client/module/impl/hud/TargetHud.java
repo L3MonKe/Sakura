@@ -778,26 +778,26 @@ public class TargetHud extends HudModule {
 
     private void renderMoonlightBackground(float animValue) {
         float globalScale = moonlightScale.get().floatValue();
-        
+
         float baseW = moonlightWidth.get().floatValue();
         float baseH = moonlightHeight.get().floatValue();
-        
+
         AvatarPosEn avatarPos = moonlightAvatarPos.get();
         float heightIncrease = 0;
         float contentYOffset = 0;
-        
+
         if (avatarPos == AvatarPosEn.OnBar) {
             float offset = moonlightOnBarHeight.get().floatValue();
             contentYOffset = offset; // Shift content down
             heightIncrease = offset; // Increase background height
         }
-        
+
         this.width = baseW * globalScale;
         this.height = (baseH + heightIncrease) * globalScale;
 
         float cx = x + width / 2f;
-        float cy = y + height / 2f; 
-        
+        float cy = y + height / 2f;
+
         float w = width * animValue;
         float h = height * animValue;
         float rx = cx - w / 2f;
@@ -818,7 +818,7 @@ public class TargetHud extends HudModule {
 
     private void renderMoonlight(long vg, LivingEntity target, float health, float maxHealth, float animationFactor, float damageFactor) {
         float globalScale = moonlightScale.get().floatValue();
-        
+
         NanoVGHelper.save();
         NanoVGHelper.translate(vg, x, y);
         NanoVGHelper.scale(vg, globalScale, globalScale);
@@ -840,9 +840,9 @@ public class TargetHud extends HudModule {
         float heightIncrease = 0;
 
         if (avatarPos == AvatarPosEn.OnBar) {
-             float offset = moonlightOnBarHeight.get().floatValue();
-             contentYOffset = offset; // Shift text/bar down
-             heightIncrease = offset; // Increase BG height
+            float offset = moonlightOnBarHeight.get().floatValue();
+            contentYOffset = offset; // Shift text/bar down
+            heightIncrease = offset; // Increase BG height
         }
 
         float totalH = baseH + heightIncrease;
@@ -863,32 +863,32 @@ public class TargetHud extends HudModule {
         // Name
         float nameXOffset = moonlightNameX.get().floatValue();
         float nameYOffset = moonlightNameY.get().floatValue();
-        
-        float nameY = y + padding + (nameSize / 2) + 2 + contentYOffset + nameYOffset; 
-        
+
+        float nameY = y + padding + (nameSize / 2) + 2 + contentYOffset + nameYOffset;
+
         float textX = contentX + nameXOffset;
         if (avatarPos == AvatarPosEn.OnBar) {
-            textX = x + padding + 2 + nameXOffset; 
+            textX = x + padding + 2 + nameXOffset;
         }
 
         if (glow.get()) {
-            NanoVGHelper.drawGlowingString(target.getName().getString(), textX, nameY, FontLoader.bold((int)nameSize), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
+            NanoVGHelper.drawGlowingString(target.getName().getString(), textX, nameY, FontLoader.bold((int) nameSize), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
         } else {
-            NanoVGHelper.drawString(target.getName().getString(), textX, nameY, FontLoader.bold((int)nameSize), nameSize, Color.WHITE);
+            NanoVGHelper.drawString(target.getName().getString(), textX, nameY, FontLoader.bold((int) nameSize), nameSize, Color.WHITE);
         }
 
         // HP Text
         String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
-        float hpW = NanoVGHelper.getTextWidth(hpText, FontLoader.bold((int)nameSize), nameSize);
-        NanoVGHelper.drawString(hpText, x + baseW - padding - hpW, nameY, FontLoader.bold((int)nameSize), nameSize, Color.WHITE);
+        float hpW = NanoVGHelper.getTextWidth(hpText, FontLoader.bold((int) nameSize), nameSize);
+        NanoVGHelper.drawString(hpText, x + baseW - padding - hpW, nameY, FontLoader.bold((int) nameSize), nameSize, Color.WHITE);
 
         // Health Bar
         // barY calculation: start from bottom of total height
         float barY = y + totalH - padding - barH;
-        
+
         float healthPct = MathHelper.clamp(health / maxHealth, 0f, 1f);
         float delayPct = MathHelper.clamp(delayHealth / maxHealth, 0f, 1f);
-        
+
         float barW = contentW * healthPct;
         float delayBarW = contentW * delayPct;
 
@@ -897,7 +897,7 @@ public class TargetHud extends HudModule {
 
         // Delay Bar
         if (moonlightDelay.get() && delayHealth > health) {
-             NanoVGHelper.drawRoundRect(contentX, barY, delayBarW, barH, barRadius, moonlightDelayColor.get());
+            NanoVGHelper.drawRoundRect(contentX, barY, delayBarW, barH, barRadius, moonlightDelayColor.get());
         }
 
         // Bar Gradient Logic
@@ -943,7 +943,7 @@ public class TargetHud extends HudModule {
         } else {
             NanoVGHelper.drawGradientRRect(contentX, barY, barW, barH, barRadius, c1, c2);
         }
-        
+
         // Draw Avatar last if it's "OnBar" so it overlays
         if (target instanceof PlayerEntity player) {
             float damageScale = 1.0f - (damageFactor * 0.15f);

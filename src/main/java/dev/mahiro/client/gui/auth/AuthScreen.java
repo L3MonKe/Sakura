@@ -585,8 +585,7 @@ public class AuthScreen extends Screen {
                 VisibleText visible = computeVisibleText(getInnerAvailableWidth());
 
                 if (visible.text.isEmpty() && !isFocused() && !placeholderText.isEmpty()) {
-                    NanoVGHelper.drawString(placeholderText, x + 12, y + h / 2f,
-                            FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 110));
+                    NanoVGHelper.drawString(placeholderText, x + 12, y + h / 2f, FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 110));
                 } else {
                     NanoVGHelper.drawString(visible.text, x + 12, y + h / 2f, FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 210));
 
