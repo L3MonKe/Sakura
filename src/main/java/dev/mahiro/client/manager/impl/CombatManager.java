@@ -35,16 +35,16 @@ public class CombatManager extends Managers {
         return list;
     }
 
-    public LivingEntity getClosestEnemy(double distance) {
-        return getClosestEnemy(distance, Mahiro.MODULES.getModule(Targets.class).targetBy.get());
+    public LivingEntity getClosestEnemy(double range) {
+        return getClosestEnemy(range, Mahiro.MODULES.getModule(Targets.class).targetBy.get());
     }
 
-    public LivingEntity getClosestEnemy(double distance, TargetBy targetBy) {
+    public LivingEntity getClosestEnemy(double range, TargetBy targetBy) {
         LivingEntity target = null;
         switch (targetBy) {
-            case FOV -> target = getTargetByFOV(distance);
-            case Health -> target = getTargetByHealth(distance);
-            case Distance -> target = getNearestTarget(distance);
+            case FOV -> target = getTargetByFOV(range);
+            case Health -> target = getTargetByHealth(range);
+            case Distance -> target = getNearestTarget(range);
         }
         return target;
     }
@@ -103,7 +103,7 @@ public class CombatManager extends Managers {
     }
 
     public LivingEntity getTargetByHealth(double range) {
-        return getEntities(range).stream().min(Comparator.comparing(t -> (t.getHealth() + t.getAbsorptionAmount()))).orElse(null);
+        return getEntities(range).stream().min(Comparator.comparing(t -> (Managers.HEALTH.getHealth(t)))).orElse(null);
     }
 
     public LivingEntity getTargetByFOV(double range) {
