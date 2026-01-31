@@ -34,6 +34,7 @@ public class Stuck extends Module {
     private float lastPitch;
     private boolean tryDisable = false;
     private final Queue<CommonPongC2SPacket> packets = new ConcurrentLinkedQueue<>();
+    private boolean bypassPacketEvent = false;
 
     @Override
     public void onEnable() {
@@ -42,6 +43,19 @@ public class Stuck extends Module {
         this.lastYaw = 0.0f;
         this.lastPitch = 0.0f;
         this.tryDisable = false;
+        this.packets.clear();
+        this.bypassPacketEvent = false;
+    }
+
+    @Override
+    protected void onDisable() {
+        this.stage = 0;
+        this.packet = null;
+        this.lastYaw = 0.0f;
+        this.lastPitch = 0.0f;
+        this.tryDisable = false;
+        this.packets.clear();
+        this.bypassPacketEvent = false;
     }
 
     @Override
@@ -52,10 +66,46 @@ public class Stuck extends Module {
             } else if (this.stage == 3) {
                 super.setState(false);
             } else {
-                this.tryDisable = true;
+                this.tryDisable = false;
+                this.disableNow();
             }
         } else {
             super.setState(state);
+        }
+    }
+
+    private void disableNow() {
+        this.sendBypass(new PlayerMoveC2SPacket.PositionAndOnGround(
+                mc.player.getX() + 1337.0,
+                mc.player.getY(),
+                mc.player.getZ() + 1337.0,
+                mc.player.isOnGround(),
+                mc.player.horizontalCollision
+        ));
+        this.flushQueuedPongs();
+
+        super.setState(false);
+    }
+
+    private void sendBypass(Packet<?> toSend) {
+        boolean old = this.bypassPacketEvent;
+        this.bypassPacketEvent = true;
+        try {
+            mc.getNetworkHandler().sendPacket(toSend);
+        } finally {
+            this.bypassPacketEvent = old;
+        }
+    }
+
+    private void flushQueuedPongs() {
+        boolean old = this.bypassPacketEvent;
+        this.bypassPacketEvent = true;
+        try {
+            while (!packets.isEmpty()) {
+                mc.getNetworkHandler().sendPacket(packets.poll());
+            }
+        } finally {
+            this.bypassPacketEvent = old;
         }
     }
 
@@ -74,28 +124,19 @@ public class Stuck extends Module {
                     float rotationYaw = mc.player.getYaw();
                     float rotationPitch = mc.player.getPitch();
                     if (this.shouldRotate() && (this.lastYaw != rotationYaw || this.lastPitch != rotationPitch)) {
-                        mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(rotationYaw, rotationPitch, mc.player.isOnGround(), mc.player.horizontalCollision));
-
-                        while (!this.packets.isEmpty()) {
-                            mc.getNetworkHandler().sendPacket(this.packets.poll());
-                        }
+                        this.sendBypass(new PlayerMoveC2SPacket.LookAndOnGround(rotationYaw, rotationPitch, mc.player.isOnGround(), mc.player.horizontalCollision));
+                        this.flushQueuedPongs();
 
                         lastYaw = rotationYaw;
                         lastPitch = rotationPitch;
                     }
 
-                    mc.getNetworkHandler().sendPacket(packet);
+                    this.sendBypass(packet);
                 }
 
                 if (tryDisable) {
-                    mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.PositionAndOnGround(mc.player.getX() + 1337.0, mc.player.getY(), mc.player.getZ() + 1337.0, mc.player.isOnGround(), mc.player.horizontalCollision));
-
-                    while (!this.packets.isEmpty()) {
-                        mc.getNetworkHandler().sendPacket(this.packets.poll());
-                    }
-
+                    this.disableNow();
                     this.tryDisable = false;
-                    super.setState(false);
                 }
             }
         }
@@ -130,6 +171,12 @@ public class Stuck extends Module {
 
     @EventHandler
     public void onPacket(PacketEvent e) {
+        if (bypassPacketEvent) return;
+        if (nullCheck()) {
+            this.packets.clear();
+            return;
+        }
+
         if (e.getPacket() instanceof PlayerMoveC2SPacket) {
             e.setCancelled(true);
         } else if (e.getPacket() instanceof CommonPongC2SPacket) {
@@ -140,9 +187,7 @@ public class Stuck extends Module {
             stage = 1;
             e.setCancelled(true);
         } else if (e.getPacket() instanceof PlayerPositionLookS2CPacket) {
-            while (!packets.isEmpty()) {
-                mc.getNetworkHandler().sendPacket(packets.poll());
-            }
+            this.flushQueuedPongs();
             stage = 3;
             toggle();
         }
