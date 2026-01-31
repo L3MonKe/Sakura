@@ -22,7 +22,7 @@ public class TimerModule extends Module {
 
 
     private static final double CHARGE_SPEED = 0.9; //AntiSB
-    private static final double CHARGE_TIME = 4.0;
+    private static final double CHARGE_TIME = 3.4;
     private static final double SPEED = 1.3;
     private static final double PULSE_DURATION = 1.1;
     private static final double NORMAL_DURATION = 0.58;
