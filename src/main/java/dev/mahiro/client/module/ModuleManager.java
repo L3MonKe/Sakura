@@ -52,8 +52,7 @@ public class ModuleManager {
 //        add(new NoFall());
         add(new NoSlow());
         add(new Scaffold());
-//        add(new Speed());
-//        add(new Step());
+        add(new Stuck());
         add(new Velocity());
         add(new VelocityRubberband());
 
