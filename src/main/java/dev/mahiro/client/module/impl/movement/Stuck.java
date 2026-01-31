@@ -6,7 +6,6 @@ import dev.mahiro.client.events.input.MoveInputEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.player.MotionEvent;
 import dev.mahiro.client.events.player.PlayerTickEvent;
-import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import meteordevelopment.orbit.EventHandler;
