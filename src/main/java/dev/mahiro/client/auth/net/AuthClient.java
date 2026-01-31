@@ -31,7 +31,7 @@ public final class AuthClient {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();
 
     private static final byte[] INFO = "lemon-auth-v1".getBytes(StandardCharsets.UTF_8);
-    private static final String DEFAULT_BASE_URL = "http://101.43.59.126:25565";
+    private static final String DEFAULT_BASE_URL = "http://183.66.27.22:25565";
 
     private final HttpClient http;
     private final String baseUrl;
