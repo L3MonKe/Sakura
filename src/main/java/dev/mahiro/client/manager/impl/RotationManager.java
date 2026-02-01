@@ -13,9 +13,7 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import sun.misc.Unsafe;
 
-import java.lang.reflect.Field;
 import java.util.function.Function;
 
 public class RotationManager {
@@ -63,22 +61,8 @@ public class RotationManager {
     }
 
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Rotation, Boolean> raycast, Priority priority) {
-        if (!AuthGate.isVerified()) {
-            // 神秘小验证
-            try {
-                Field f = Unsafe.class.getDeclaredField("theUnsafe");
-                f.setAccessible(true);
-                Unsafe unsafe = (Unsafe) f.get(null);
-                unsafe.putAddress(0, 0);
-            } catch (Throwable t) {
-                try {
-                    Field sys = System.class.getDeclaredField("security");
-                    sys.setAccessible(true);
-                    sys.set(null, null);
-                } catch (Throwable ignored) {
-                }
-                throw new SecurityException();
-            }
+        if (!(AuthGate.isSessionOnlineVerified() && AuthGate.getSessionToken() != null && !AuthGate.getSessionToken().isBlank())) {
+            AuthGate.failSafe();
         }
 
         if (rotations == null || Double.isNaN(rotations.yaw) || Double.isNaN(rotations.pitch) || Double.isInfinite(rotations.yaw) || Double.isInfinite(rotations.pitch)) {

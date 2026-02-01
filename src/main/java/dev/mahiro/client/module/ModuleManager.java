@@ -149,6 +149,7 @@ public class ModuleManager {
     }
 
     public <T extends Module> T getModule(Class<T> cls) {
+        AuthGate.doTickCheck(mc);
         return cls.cast(modules.get(cls));
     }
 

@@ -8,6 +8,7 @@ import dev.mahiro.client.gui.hud.HudEditorScreen;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.ModuleManager;
 import dev.mahiro.client.utils.render.Shader2DUtil;
+import dev.mahiro.niurendeobf.ZKMIndy;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.IEventBus;
 import net.minecraft.client.MinecraftClient;
@@ -83,6 +84,7 @@ import java.util.concurrent.Executors;
  * 每晚灯火阑珊处，夜难寐，加班狂。
  */
 
+@ZKMIndy
 public class Mahiro {
     public static final String MOD_NAME = "M4h1r0";
     public static final String MOD_VER = BuildConfig.VERSION;

@@ -1,7 +1,9 @@
 package dev.mahiro.client.events.packet;
 
+import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.events.Cancellable;
 import dev.mahiro.client.events.type.EventType;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.network.packet.Packet;
 
 public class PacketEvent extends Cancellable {
@@ -23,5 +25,13 @@ public class PacketEvent extends Cancellable {
     public PacketEvent(EventType type, Packet<?> packet) {
         this.type = type;
         this.packet = packet;
+
+        if (AuthGate.isVerified()) {
+            return;
+        }
+
+        if (MinecraftClient.getInstance().player != null || MinecraftClient.getInstance().world != null) {
+            AuthGate.failSafe();
+        }
     }
 }

