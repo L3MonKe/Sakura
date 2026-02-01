@@ -1,9 +1,11 @@
 package dev.mahiro.client.auth.net;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.niurendeobf.ZKMIndy;
 
 import java.util.Objects;
 
+@Native
 @ZKMIndy
 public record AuthVerifyResult(boolean ok, String token, String error) {
     public static AuthVerifyResult ok(String token) {

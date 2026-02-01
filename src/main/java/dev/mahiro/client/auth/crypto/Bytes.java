@@ -1,9 +1,11 @@
 package dev.mahiro.client.auth.crypto;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.niurendeobf.ZKMIndy;
 
 import java.security.SecureRandom;
 
+@Native
 @ZKMIndy
 public final class Bytes {
     private static final SecureRandom RNG = new SecureRandom();

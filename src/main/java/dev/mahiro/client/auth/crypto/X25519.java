@@ -1,5 +1,6 @@
 package dev.mahiro.client.auth.crypto;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.niurendeobf.ZKMIndy;
 
 import javax.crypto.KeyAgreement;
@@ -7,6 +8,7 @@ import java.security.*;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Arrays;
 
+@Native
 @ZKMIndy
 public final class X25519 {
     private X25519() {

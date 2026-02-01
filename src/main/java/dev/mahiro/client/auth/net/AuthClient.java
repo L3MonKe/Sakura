@@ -1,5 +1,6 @@
 package dev.mahiro.client.auth.net;
 
+import by.radioegor146.nativeobfuscator.Native;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -26,6 +27,7 @@ import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
+@Native
 @ZKMIndy
 public final class AuthClient {
     private static final Gson GSON = new GsonBuilder().disableHtmlEscaping().create();

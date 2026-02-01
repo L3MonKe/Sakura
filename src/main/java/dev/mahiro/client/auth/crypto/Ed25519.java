@@ -1,5 +1,6 @@
 package dev.mahiro.client.auth.crypto;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.niurendeobf.ZKMIndy;
 
 import java.security.KeyFactory;
@@ -7,6 +8,7 @@ import java.security.PublicKey;
 import java.security.Signature;
 import java.security.spec.X509EncodedKeySpec;
 
+@Native
 @ZKMIndy
 public final class Ed25519 {
     private Ed25519() {

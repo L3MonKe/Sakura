@@ -1,11 +1,13 @@
 package dev.mahiro.client.auth.crypto;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.niurendeobf.ZKMIndy;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Arrays;
 
+@Native
 @ZKMIndy
 public final class HkdfSha256 {
     private HkdfSha256() {

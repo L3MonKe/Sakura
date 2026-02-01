@@ -1,5 +1,6 @@
 package dev.mahiro.client;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.command.CommandManager;
 import dev.mahiro.client.config.ConfigManager;
@@ -84,6 +85,7 @@ import java.util.concurrent.Executors;
  * 每晚灯火阑珊处，夜难寐，加班狂。
  */
 
+@Native
 @ZKMIndy
 public class Mahiro {
     public static final String MOD_NAME = "M4h1r0";

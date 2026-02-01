@@ -1,5 +1,6 @@
 package dev.mahiro.client.auth;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.client.auth.crypto.B64;
 import dev.mahiro.client.gui.auth.AuthScreen;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
@@ -22,6 +23,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Objects;
 import java.util.Random;
 
+@Native
 @ZKMIndy
 public final class AuthGate {
     private static volatile boolean initialized;

@@ -1,9 +1,11 @@
 package dev.mahiro.client.auth.crypto;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.niurendeobf.ZKMIndy;
 
 import java.util.Base64;
 
+@Native
 @ZKMIndy
 public final class B64 {
     private B64() {

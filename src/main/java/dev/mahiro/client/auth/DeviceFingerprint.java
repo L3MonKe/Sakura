@@ -1,5 +1,6 @@
 package dev.mahiro.client.auth;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.niurendeobf.ZKMIndy;
 import oshi.SystemInfo;
 import oshi.hardware.*;
@@ -11,6 +12,7 @@ import java.util.Locale;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+@Native
 @ZKMIndy
 public final class DeviceFingerprint {
     private DeviceFingerprint() {

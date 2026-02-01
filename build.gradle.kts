@@ -70,6 +70,9 @@ dependencies {
 
     implementation(include("meteordevelopment:orbit:${property("orbit_version")}")!!)
 
+    // native-obfuscator annotations
+    implementation(files("libs/annotations.jar"))
+
     // NanoVG 运行库
     val lwjglVersion = property("nanovg_version")
     implementation(include("org.lwjgl:lwjgl-nanovg:$lwjglVersion")!!)
