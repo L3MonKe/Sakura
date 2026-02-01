@@ -240,8 +240,4 @@ public final class AuthGate {
         pendingMainMenuIntro = false;
         return true;
     }
-
-    private static void tryVerify() {
-        failSafe();
-    }
 }
