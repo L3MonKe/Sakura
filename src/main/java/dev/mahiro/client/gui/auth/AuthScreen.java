@@ -88,17 +88,31 @@ public class AuthScreen extends Screen {
         Layout l = computeLayout(width, height);
         addDrawable((context, mouseX, mouseY, delta) -> renderNanoBackground(context, mouseX, mouseY, delta));
 
-        float rx = l.rightX() + 10;
-        float ry = l.y + 10;
-        float rw = l.rightW() - 20;
-        float rh = l.h - 20;
+        float s = l.scale;
+        float rx = l.rightX() + ss(10, s);
+        float ry = l.y + ss(10, s);
+        float rw = l.rightW() - ss(20, s);
+        float rh = l.h - ss(20, s);
 
-        int formX = (int) (rx + 22);
-        int formW = (int) (rw - 44);
+        int formX = (int) (rx + ss(22, s));
+        int formW = (int) (rw - ss(44, s));
 
-        int fieldsTop = (int) (ry + 92);
-        int fieldH = 34;
-        int fieldGap = 12;
+        int fieldsTop = (int) (ry + ss(92, s));
+        int fieldH = Math.max(24, ss(34, s));
+        int fieldGap = Math.max(6, ss(12, s));
+
+        if (mode == Mode.Register && !client.getWindow().isFullscreen()) {
+            fieldH = Math.max(22, Math.round(fieldH * 0.92f));
+            fieldGap = Math.max(5, Math.round(fieldGap * 0.9f));
+            fieldsTop -= ss(6, s);
+
+            int hintY = (int) ((ry + rh - Math.max(12, ss(22, s)) - Math.max(18, ss(22, s))) - ss(10, s) - Math.max(24, ss(34, s)) - ss(14, s));
+            int maxBottom = hintY - ss(10, s);
+            int licenseBottom = fieldsTop + (fieldH + fieldGap) * 2 + fieldH;
+            if (licenseBottom > maxBottom) {
+                fieldsTop -= (licenseBottom - maxBottom);
+            }
+        }
 
         usernameField = new AuthTextField(textRenderer, formX, fieldsTop, formW, fieldH, Text.of(""));
         usernameField.setPlaceholder("用户名");
@@ -123,13 +137,14 @@ public class AuthScreen extends Screen {
             licenseField = null;
         }
 
-        int primaryH = 34;
-        int switchH = 22;
-        int bottomPad = 22;
+        int primaryH = Math.max(24, ss(34, s));
+        int switchH = Math.max(18, ss(22, s));
+        int bottomPad = Math.max(12, ss(22, s));
         int switchY = (int) (ry + rh - bottomPad - switchH);
-        int primaryY = switchY - 10 - primaryH;
+        int primaryY = switchY - ss(10, s) - primaryH;
         primaryButton = new AuthButton(formX, primaryY, formW, primaryH, mode == Mode.Login ? "登录" : "注册", b -> startAuth());
         primaryButton.setVariant(AuthButton.Variant.Primary);
+        primaryButton.setDesignMetrics(34f, 12f);
 
         switchModeButton = new AuthButton(formX, switchY, formW, switchH,
                 mode == Mode.Login ? "没有账号？去注册" : "已有账号？去登录",
@@ -140,12 +155,16 @@ public class AuthScreen extends Screen {
                     init();
                 });
         switchModeButton.setVariant(AuthButton.Variant.Ghost);
+        switchModeButton.setDesignMetrics(22f, 10f);
 
-        exitButton = new AuthButton(l.x + l.w - 62, l.y + 16, 46, 24, "退出", b -> {
+        int exitW = Math.max(36, ss(46, s));
+        int exitH = Math.max(18, ss(24, s));
+        exitButton = new AuthButton(l.x + l.w - ss(16, s) - exitW, l.y + ss(16, s), exitW, exitH, "退出", b -> {
             MinecraftClient c = this.client != null ? this.client : MinecraftClient.getInstance();
             if (c != null) c.scheduleStop();
         });
         exitButton.setVariant(AuthButton.Variant.DangerGhost);
+        exitButton.setDesignMetrics(24f, 10f);
 
         addDrawableChild(primaryButton);
         addDrawableChild(switchModeButton);
@@ -353,6 +372,7 @@ public class AuthScreen extends Screen {
         int w = context.getScaledWindowWidth();
         int h = context.getScaledWindowHeight();
         Layout l = computeLayout(w, h);
+        float s = l.scale;
 
         String headline = mode == Mode.Login ? "欢迎回来" : "创建账号";
         String subtitle = mode == Mode.Login ? "请先完成身份验证以继续使用客户端" : "注册后需要验证令牌才能继续";
@@ -385,16 +405,16 @@ public class AuthScreen extends Screen {
             NanoVGHelper.drawCircle(cx, cy, l.w * 0.38f, withAlpha(SakuraTheme.ACCENT, 24));
             NanoVGHelper.drawCircle(cx + l.w * 0.14f, cy + l.h * 0.22f, l.w * 0.28f, withAlpha(new Color(236, 72, 153), 16));
 
-            float r = 22f;
+            float r = 22f * s;
             NanoVGHelper.drawShadow(l.x, l.y, l.w, l.h, r, new Color(0, 0, 0, 120), 34, 0, 16);
             NanoVGHelper.drawRoundRect(l.x, l.y, l.w, l.h, r, new Color(18, 18, 24, 238));
             NanoVGHelper.drawRoundRectOutline(l.x, l.y, l.w, l.h, r, 1.0f, new Color(255, 255, 255, 26));
 
-            float leftR = 18f;
-            float lx = l.x + 10;
-            float ly = l.y + 10;
-            float lw = l.leftW() - 20;
-            float lh = l.h - 20;
+            float leftR = 18f * s;
+            float lx = l.x + ss(10, s);
+            float ly = l.y + ss(10, s);
+            float lw = l.leftW() - ss(20, s);
+            float lh = l.h - ss(20, s);
 
             Color a0 = withAlpha(SakuraTheme.ACCENT, 255);
             Color a1 = withAlpha(new Color(140, 92, 255), 255);
@@ -404,56 +424,82 @@ public class AuthScreen extends Screen {
             NanoVGHelper.drawCircle(lx + lw * 0.62f, ly + lh * 0.68f, lw * 0.42f, withAlpha(new Color(255, 255, 255), 12));
             NanoVGHelper.drawRoundRectOutline(lx, ly, lw, lh, leftR, 1.0f, new Color(255, 255, 255, 28));
 
-            float badgeX = lx + 20;
-            float badgeY = ly + 18;
+            float badgeX = lx + ss(20, s);
+            float badgeY = ly + ss(18, s);
             String badgeText = "Mahiro Verification";
-            float badgePadX = 10f;
-            float badgeH = 20;
-            float badgeTextW = NanoVGHelper.getTextWidth(badgeText, FontLoader.bold(12), 12);
+            float badgePadX = ss(10, s);
+            float badgeH = ss(20, s);
+            int badgeFont = Math.max(7, ss(12, s));
+            float badgeTextW = NanoVGHelper.getTextWidth(badgeText, FontLoader.bold(badgeFont), badgeFont);
             float badgeW = badgePadX * 2 + badgeTextW;
-            NanoVGHelper.drawRoundRect(badgeX, badgeY, badgeW, badgeH, 10, new Color(0, 0, 0, 46));
-            NanoVGHelper.drawRoundRectOutline(badgeX, badgeY, badgeW, badgeH, 10, 1f, new Color(255, 255, 255, 26));
+            float badgeR = ss(10, s);
+            NanoVGHelper.drawRoundRect(badgeX, badgeY, badgeW, badgeH, badgeR, new Color(0, 0, 0, 46));
+            NanoVGHelper.drawRoundRectOutline(badgeX, badgeY, badgeW, badgeH, badgeR, 1f, new Color(255, 255, 255, 26));
             NanoVGHelper.drawString(badgeText, badgeX + badgePadX, badgeY + badgeH / 2f,
-                    FontLoader.bold(12), 12, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, withAlpha(new Color(255, 255, 255), 190));
+                    FontLoader.bold(badgeFont), badgeFont, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, withAlpha(new Color(255, 255, 255), 190));
 
-            NanoVGHelper.drawString(headline, lx + 20, ly + 76,
-                    FontLoader.bold(30), 30, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 240));
-            NanoVGHelper.drawString(subtitle, lx + 20, ly + 104,
-                    FontLoader.regular(14), 14, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 170));
+            int headlineFont = Math.max(12, ss(30, s));
+            int subtitleFont = Math.max(8, ss(14, s));
+            NanoVGHelper.drawString(headline, lx + ss(20, s), ly + ss(76, s),
+                    FontLoader.bold(headlineFont), headlineFont, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 240));
+            NanoVGHelper.drawString(subtitle, lx + ss(20, s), ly + ss(104, s),
+                    FontLoader.regular(subtitleFont), subtitleFont, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 170));
 
-            float rx = l.rightX() + 10;
-            float ry = l.y + 10;
-            float rw = l.rightW() - 20;
-            float rh = l.h - 20;
-            NanoVGHelper.drawRoundRect(rx, ry, rw, rh, 18f, new Color(0, 0, 0, 38));
-            NanoVGHelper.drawRoundRectOutline(rx, ry, rw, rh, 18f, 1f, new Color(255, 255, 255, 22));
+            float rx = l.rightX() + ss(10, s);
+            float ry = l.y + ss(10, s);
+            float rw = l.rightW() - ss(20, s);
+            float rh = l.h - ss(20, s);
+            float rightR = 18f * s;
+            NanoVGHelper.drawRoundRect(rx, ry, rw, rh, rightR, new Color(0, 0, 0, 38));
+            NanoVGHelper.drawRoundRectOutline(rx, ry, rw, rh, rightR, 1f, new Color(255, 255, 255, 22));
 
+            int rightTitleFont = Math.max(10, ss(20, s));
+            int rightSubFont = Math.max(8, ss(13, s));
             NanoVGHelper.drawString(mode == Mode.Login ? "登录" : "注册",
-                    rx + 22, ry + 40,
-                    FontLoader.bold(20), 20, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 230));
+                    rx + ss(22, s), ry + ss(40, s),
+                    FontLoader.bold(rightTitleFont), rightTitleFont, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 230));
             NanoVGHelper.drawString(mode == Mode.Login ? "输入凭据以继续" : "填写信息以创建账号",
-                    rx + 22, ry + 62,
-                    FontLoader.regular(13), 13, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 150));
+                    rx + ss(22, s), ry + ss(62, s),
+                    FontLoader.regular(rightSubFont), rightSubFont, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, withAlpha(new Color(255, 255, 255), 150));
 
             float hintX = primaryButton != null ? primaryButton.getX() : (rx + 22);
-            float hintY = primaryButton != null ? (primaryButton.getY() - 14) : (ry + rh - 88);
+            float hintY = primaryButton != null ? (primaryButton.getY() - ss(14, s)) : (ry + rh - ss(88, s));
             NanoVGHelper.drawString(statusText,
                     hintX, hintY,
-                    FontLoader.regular(12), 12, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, statusColor);
+                    FontLoader.regular(Math.max(7, ss(12, s))), Math.max(7, ss(12, s)), NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE, statusColor);
         });
     }
 
     private static Layout computeLayout(int w, int h) {
-        int outerW = Math.min(820, Math.max(560, w - 110));
-        int outerH = Math.min(460, Math.max(410, h - 110));
+        float designW = 820f;
+        float designH = 460f;
+
+        float margin = 18f;
+        float availW = Math.max(1f, w - margin * 2);
+        float availH = Math.max(1f, h - margin * 2);
+
+        float scale = Math.min(1f, Math.min(availW / designW, availH / designH));
+        scale = MathHelper.clamp(scale, 0.15f, 1.0f);
+
+        int outerW = Math.max(1, Math.round(designW * scale));
+        int outerH = Math.max(1, Math.round(designH * scale));
+        outerW = Math.min(outerW, w);
+        outerH = Math.min(outerH, h);
+
         int x = (w - outerW) / 2;
         int y = (h - outerH) / 2;
-        int pad = 26;
-        int leftW = (int) (outerW * 0.44f);
-        return new Layout(x, y, outerW, outerH, pad, leftW);
+
+        int pad = Math.max(8, Math.round(26f * scale));
+        int leftW = Math.round(outerW * 0.44f);
+
+        int minLeft = Math.max(160, Math.round(220f * scale));
+        int minRight = Math.max(180, Math.round(240f * scale));
+        leftW = MathHelper.clamp(leftW, minLeft, Math.max(minLeft, outerW - minRight));
+
+        return new Layout(x, y, outerW, outerH, pad, leftW, scale);
     }
 
-    private record Layout(int x, int y, int w, int h, int pad, int leftW) {
+    private record Layout(int x, int y, int w, int h, int pad, int leftW, float scale) {
         float rightX() {
             return x + leftW;
         }
@@ -461,6 +507,10 @@ public class AuthScreen extends Screen {
         float rightW() {
             return w - leftW;
         }
+    }
+
+    private static int ss(int px, float s) {
+        return Math.max(1, Math.round(px * s));
     }
 
     private static Color withAlpha(Color c, int alpha) {
@@ -505,7 +555,8 @@ public class AuthScreen extends Screen {
             setFocused(true);
             setSelectionStart(getCursor());
 
-            VisibleText visible = computeVisibleText(getInnerAvailableWidth());
+            int fontSize = getFontSize();
+            VisibleText visible = computeVisibleText(getInnerAvailableWidth(), fontSize);
             double localX = mouseX - (getX() + 12);
             if (localX <= 0) {
                 int idx = MathHelper.clamp(visible.start, 0, visible.display.length());
@@ -520,7 +571,7 @@ public class AuthScreen extends Screen {
             boolean decided = false;
             for (int i = 1; i <= max; i++) {
                 String prefix = visible.text.substring(0, i);
-                float w = NanoVGHelper.getTextWidth(prefix, FontLoader.regular(15), 15);
+                float w = NanoVGHelper.getTextWidth(prefix, FontLoader.regular(fontSize), fontSize);
                 if (localX < w) {
                     float mid = (prevW + w) * 0.5f;
                     int localPos = localX < mid ? (i - 1) : i;
@@ -567,7 +618,7 @@ public class AuthScreen extends Screen {
                 float y = getY();
                 float w = getWidth();
                 float h = getHeight();
-                float r = 12f;
+                float r = (h / 34.0f) * 12.0f;
 
                 Color fill = new Color(255, 255, 255, (int) (12 + 10 * hoverT + 8 * focusT));
                 NanoVGHelper.drawRoundRect(x, y, w, h, r, fill);
@@ -582,19 +633,20 @@ public class AuthScreen extends Screen {
 
                 NanoVG.nvgScissor(vg, x + 10, y, w - 20, h);
 
-                VisibleText visible = computeVisibleText(getInnerAvailableWidth());
+                int fontSize = getFontSize();
+                VisibleText visible = computeVisibleText(getInnerAvailableWidth(), fontSize);
 
                 if (visible.text.isEmpty() && !isFocused() && !placeholderText.isEmpty()) {
-                    NanoVGHelper.drawString(placeholderText, x + 12, y + h / 2f, FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 110));
+                    NanoVGHelper.drawString(placeholderText, x + 12, y + h / 2f, FontLoader.regular(fontSize), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 110));
                 } else {
-                    NanoVGHelper.drawString(visible.text, x + 12, y + h / 2f, FontLoader.regular(15), 15, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 210));
+                    NanoVGHelper.drawString(visible.text, x + 12, y + h / 2f, FontLoader.regular(fontSize), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(255, 255, 255, 210));
 
                     if (isFocused() && (System.currentTimeMillis() / 500) % 2 == 0) {
                         int cursor = getCursor();
                         cursor = MathHelper.clamp(cursor, 0, visible.display.length());
                         int localCursor = MathHelper.clamp(cursor - visible.start, 0, visible.text.length());
                         String beforeCursor = visible.text.substring(0, localCursor);
-                        float textWidth = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(15), 15);
+                        float textWidth = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(fontSize), fontSize);
                         NanoVG.nvgBeginPath(vg);
                         NanoVG.nvgMoveTo(vg, x + 12 + textWidth + 1, y + 7);
                         NanoVG.nvgLineTo(vg, x + 12 + textWidth + 1, y + h - 7);
@@ -612,7 +664,11 @@ public class AuthScreen extends Screen {
             return Math.max(0, getWidth() - 24);
         }
 
-        private VisibleText computeVisibleText(int availableWidth) {
+        private int getFontSize() {
+            return MathHelper.clamp(Math.round(getHeight() * 0.44f), 8, 18);
+        }
+
+        private VisibleText computeVisibleText(int availableWidth, int fontSize) {
             String display = getText() == null ? "" : getText();
 
             int len = display.length();
@@ -625,7 +681,7 @@ public class AuthScreen extends Screen {
                 return new VisibleText(scrollStart, "", display);
             }
 
-            float totalW = NanoVGHelper.getTextWidth(display, FontLoader.regular(15), 15);
+            float totalW = NanoVGHelper.getTextWidth(display, FontLoader.regular(fontSize), fontSize);
             if (totalW <= availableWidth) {
                 scrollStart = 0;
                 return new VisibleText(0, display, display);
@@ -633,14 +689,14 @@ public class AuthScreen extends Screen {
 
             while (scrollStart < cursor) {
                 String beforeCursor = display.substring(scrollStart, cursor);
-                float w = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(15), 15);
+                float w = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(fontSize), fontSize);
                 if (w <= availableWidth) break;
                 scrollStart++;
             }
 
             while (scrollStart > 0) {
                 String beforeCursor = display.substring(scrollStart - 1, cursor);
-                float w = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(15), 15);
+                float w = NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(fontSize), fontSize);
                 if (w > availableWidth) break;
                 scrollStart--;
             }
@@ -648,7 +704,7 @@ public class AuthScreen extends Screen {
             int end = len;
             while (end > scrollStart) {
                 String s = display.substring(scrollStart, end);
-                float w = NanoVGHelper.getTextWidth(s, FontLoader.regular(15), 15);
+                float w = NanoVGHelper.getTextWidth(s, FontLoader.regular(fontSize), fontSize);
                 if (w <= availableWidth) {
                     return new VisibleText(scrollStart, s, display);
                 }
@@ -690,13 +746,22 @@ public class AuthScreen extends Screen {
         private boolean pressed;
         private boolean loading;
         private long loadingStartMs;
+        private float designHeight;
+        private float designRadius;
 
         public AuthButton(int x, int y, int width, int height, String message, PressAction onPress) {
             super(x, y, width, height, Text.of(message), onPress, DEFAULT_NARRATION_SUPPLIER);
+            this.designHeight = Math.max(1f, height);
+            this.designRadius = height >= 30 ? 12f : 10f;
         }
 
         public void setVariant(Variant variant) {
             this.variant = variant == null ? Variant.Primary : variant;
+        }
+
+        public void setDesignMetrics(float designHeight, float designRadius) {
+            this.designHeight = Math.max(1f, designHeight);
+            this.designRadius = Math.max(0f, designRadius);
         }
 
         public void setLoading(boolean loading) {
@@ -752,7 +817,8 @@ public class AuthScreen extends Screen {
                 NanoVG.nvgScale(vg, scale, scale);
                 NanoVG.nvgTranslate(vg, -cx, -cy);
 
-                float r = height >= 30 ? 12f : 10f;
+                float r = designRadius * (height / designHeight);
+                r = Math.max(1f, r);
 
                 Color fill;
                 Color border;
@@ -782,17 +848,18 @@ public class AuthScreen extends Screen {
                 NanoVG.nvgScissor(vg, getX() + 6, getY() + 2, Math.max(0, width - 12), Math.max(0, height - 4));
 
                 float textX = cx;
-                if (loadingT > 0.001f) textX -= 8.0f * loadingT;
+                if (loadingT > 0.001f) textX -= (height * 0.22f) * loadingT;
 
-                NanoVG.nvgFontSize(vg, height >= 30 ? 15.0f : 12.0f);
-                NanoVG.nvgFontFaceId(vg, FontLoader.medium(height >= 30 ? 15.0f : 12.0f));
+                int fontSize = MathHelper.clamp(Math.round(height * 0.44f), 8, 18);
+                NanoVG.nvgFontSize(vg, fontSize);
+                NanoVG.nvgFontFaceId(vg, FontLoader.medium(fontSize));
                 NanoVG.nvgTextAlign(vg, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE);
                 NanoVG.nvgFillColor(vg, SakuraTheme.color(text));
                 NanoVG.nvgText(vg, textX, cy + 0.5f, getMessage().getString());
 
                 if (loadingT > 0.001f) {
-                    float rr = 5.0f;
-                    float sx = getX() + width - 18.0f;
+                    float rr = MathHelper.clamp(height * 0.16f, 3.0f, 6.5f);
+                    float sx = getX() + width - (height * 0.55f);
                     float sy = cy + 0.5f;
                     float tt = ((System.currentTimeMillis() - loadingStartMs) / 1000.0f) * 6.0f;
                     float start = tt;
@@ -800,7 +867,7 @@ public class AuthScreen extends Screen {
 
                     NanoVG.nvgBeginPath(vg);
                     NanoVG.nvgArc(vg, sx, sy, rr, start, end, NanoVG.NVG_CW);
-                    NanoVG.nvgStrokeWidth(vg, 1.75f);
+                    NanoVG.nvgStrokeWidth(vg, MathHelper.clamp(height * 0.05f, 1.15f, 2.0f));
                     NanoVG.nvgStrokeColor(vg, SakuraTheme.color(withAlpha(new Color(255, 255, 255), (int) (180 * loadingT))));
                     NanoVG.nvgStroke(vg);
                 }

@@ -34,7 +34,6 @@ public class WelcomeScreen extends Screen {
     private final List<MenuButton> buttons = new ArrayList<>();
     private AdvancedColorPicker mainColorPicker;
     private final List<CategoryPanel> previewPanels = new ArrayList<>();
-    private DrawContext currentContext;
 
     private boolean exiting = false;
     private long exitTime = 0;
@@ -58,10 +57,6 @@ public class WelcomeScreen extends Screen {
         super(Text.of("Welcome"));
     }
 
-    public DrawContext getDrawContext() {
-        return currentContext;
-    }
-
     @Override
     protected void init() {
         if (initTime == 0) {
@@ -77,7 +72,7 @@ public class WelcomeScreen extends Screen {
             panel.setOpened(true);
 
             for (ModuleComponent component : panel.getModuleComponents()) {
-                if (component.getModule().getEnglishName().equalsIgnoreCase("Scaffold")) {
+                if (component.getModule().getEnglishName().equalsIgnoreCase("KillAura")) {
                     component.setOpened(true);
                 } else if (Math.random() > 0.9) {
                     component.setPreviewEnabled(true);
@@ -165,10 +160,18 @@ public class WelcomeScreen extends Screen {
 
         btnColorMode = new MenuButton(modeBtnX, modeBtnY, modeBtnWidth, modeBtnHeight, getColorModeText(), () -> {
             ClickGui.ColorMode[] modes = ClickGui.ColorMode.values();
-            int index = ClickGui.colorMode.get().ordinal();
+            ClickGui.ColorMode current = ClickGui.colorMode.get();
+            int index = 0;
+            for (int i = 0; i < modes.length; i++) {
+                if (modes[i] == current) {
+                    index = i;
+                    break;
+                }
+            }
             int nextIndex = (index + 1) % modes.length;
             ClickGui.colorMode.set(modes[nextIndex]);
             btnColorMode.text = getColorModeText();
+            //Mahiro.CONFIG.saveDefaultConfig();
         });
 
         updateButtonsState();
@@ -213,9 +216,6 @@ public class WelcomeScreen extends Screen {
         ClickGui clickGui = Mahiro.MODULES.getModule(ClickGui.class);
         if (clickGui != null) {
             clickGui.setKey(GLFW.GLFW_KEY_RIGHT_SHIFT);
-            if (Math.random() > 0.5) {
-                ClickGui.colorMode.set(ClickGui.ColorMode.values()[(int) (Math.random() * ClickGui.ColorMode.values().length)]);
-            }
             Mahiro.CONFIG.saveDefaultConfig();
         }
         exiting = true;
@@ -240,7 +240,6 @@ public class WelcomeScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.currentContext = context;
         long currentTime = System.currentTimeMillis();
 
         float fadeInProgress = Math.min(1.0f, (currentTime - initTime) / 800.0f);
@@ -276,7 +275,7 @@ public class WelcomeScreen extends Screen {
             NanoVGHelper.translate(vg, -width / 2f, -height / 2f);
             NanoVGHelper.globalAlpha(vg, finalAlpha);
 
-            renderStep(vg, mouseX, mouseY);
+            renderStep(context, vg, mouseX, mouseY);
 
             for (MenuButton button : buttons) {
                 if (button == btnLanguage || button == btnColorMode) continue;
@@ -285,7 +284,7 @@ public class WelcomeScreen extends Screen {
                 button.render(hovered, 1.0f, hovered ? 1.1f : 1.0f);
             }
 
-            renderProgressDots(vg);
+            renderProgressDots();
         });
     }
 
@@ -339,7 +338,7 @@ public class WelcomeScreen extends Screen {
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
 
-    private void renderStep(long vg, int mouseX, int mouseY) {
+    private void renderStep(DrawContext context, long vg, int mouseX, int mouseY) {
         float animProgress = 0;
         float offset = 0;
         float opacity = 1.0f;
@@ -400,7 +399,7 @@ public class WelcomeScreen extends Screen {
                 NanoVGHelper.translate(width / 2f, height / 2f);
                 NanoVGHelper.scale(contentScale, contentScale);
 
-                drawPreviewPanel(180, -160);
+                drawPreviewPanel(context, 180, -160);
 
                 double localMouseX = (mouseX - width / 2.0) / contentScale;
                 double localMouseY = (mouseY - height / 2.0) / contentScale;
@@ -523,7 +522,7 @@ public class WelcomeScreen extends Screen {
         NanoVGHelper.translate(vg, -offset, 0);
     }
 
-    private void drawPreviewPanel(float x, float y) {
+    private void drawPreviewPanel(DrawContext context, float x, float y) {
         if (previewPanels.isEmpty()) return;
 
         float scale = 0.80f;
@@ -537,7 +536,6 @@ public class WelcomeScreen extends Screen {
         NanoVGHelper.translate(x - (totalWidth * scale) / 2f, y);
         NanoVGHelper.scale(scale, scale);
 
-        DrawContext context = getDrawContext();
         for (CategoryPanel panel : previewPanels) {
             panel.render(context, -1000, -1000, 0);
         }
@@ -545,7 +543,7 @@ public class WelcomeScreen extends Screen {
         NanoVGHelper.restore();
     }
 
-    private void renderProgressDots(long vg) {
+    private void renderProgressDots() {
         int centerX = width / 2;
         int bottomY = (int) (height - 80 * contentScale);
         int dotSpacing = (int) (20 * contentScale);

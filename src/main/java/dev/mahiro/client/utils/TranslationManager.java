@@ -1,5 +1,6 @@
 package dev.mahiro.client.utils;
 
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.ClickGui;
 
 import java.util.HashMap;
@@ -9,7 +10,7 @@ public class TranslationManager {
     private static final Map<String, Map<ClickGui.Language, String>> translations = new HashMap<>();
 
     static {
-        register("welcome.title", "Welcome to LemonClient", "欢迎使用 LemonClient");
+        register("welcome.title", "Welcome to LemonClient", "欢迎使用 " + Mahiro.MOD_NAME);
         register("welcome.subtitle", "The best utility mod for BJD", "布吉岛最强辅助模组");
 
         register("nav.prev", "Previous", "上一步");
