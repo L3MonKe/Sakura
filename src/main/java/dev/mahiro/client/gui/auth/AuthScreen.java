@@ -303,7 +303,7 @@ public class AuthScreen extends Screen {
                     return;
                 }
 
-                applyVerifyingState(true, "验证中...");
+                //applyVerifyingState(true, "验证中...");
                 if (primaryButton != null) primaryButton.active = false;
 
                 new AuthClient().verifyToken(token, deviceId).whenComplete((vRes, vErr) -> {

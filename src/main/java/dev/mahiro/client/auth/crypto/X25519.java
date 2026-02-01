@@ -1,6 +1,6 @@
 package dev.mahiro.client.auth.crypto;
 
-import dev.mahiro.obf.ZKMIndy;
+import dev.mahiro.niurendeobf.ZKMIndy;
 
 import javax.crypto.KeyAgreement;
 import java.security.*;

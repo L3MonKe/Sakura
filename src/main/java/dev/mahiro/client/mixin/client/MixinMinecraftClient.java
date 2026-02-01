@@ -45,8 +45,7 @@ public class MixinMinecraftClient {
 
     @Inject(method = "tick", at = @At("TAIL"))
     private void onPostTick(CallbackInfo info) {
-        TickEvent.Post event = new TickEvent.Post();
-        Mahiro.EVENT_BUS.post(event);
+        Mahiro.EVENT_BUS.post(new TickEvent.Post());
     }
 
     @Inject(method = "setScreen", at = @At("HEAD"), cancellable = true)

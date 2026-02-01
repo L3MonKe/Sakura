@@ -1,6 +1,6 @@
 package dev.mahiro.client.auth;
 
-import dev.mahiro.obf.ZKMIndy;
+import dev.mahiro.niurendeobf.ZKMIndy;
 import oshi.SystemInfo;
 import oshi.hardware.*;
 

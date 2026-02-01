@@ -1,5 +1,6 @@
 package dev.mahiro.client.manager.impl;
 
+import dev.mahiro.client.auth.AuthGate;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;
@@ -29,6 +30,7 @@ public class SoundManager {
 
     public void playSound(SoundEvent sound, float volume, float pitch) {
         if (sound == null || mc.player == null) return;
+        AuthGate.doTickCheck(mc);
         mc.executeSync(() -> mc.player.playSound(sound, volume, pitch));
     }
 }
