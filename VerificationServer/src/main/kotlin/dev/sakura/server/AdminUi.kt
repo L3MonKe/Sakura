@@ -28,7 +28,7 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
     private val usersTable = JTable(usersModel)
 
     private val licensesModel =
-        DefaultTableModel(arrayOf("卡密", "状态", "有效天数", "激活时间", "到期时间", "用户ID"), 0)
+        DefaultTableModel(arrayOf("卡密", "状态", "有效天数", "激活时间", "到期时间", "用户名", "批卡名字"), 0)
     private val licensesTable = JTable(licensesModel)
 
     private val genCountField = JTextField("10", 6)
@@ -127,7 +127,17 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
         genBtn.addActionListener {
             val count = genCountField.text.trim().toIntOrNull()?.coerceIn(1, 5000) ?: 10
             val days = genDaysField.text.trim().toIntOrNull()?.coerceIn(1, 3650) ?: 30
-            val keys = store.generateLicenses(count, days)
+            val batchName = genFileField.text.trim().ifBlank { "卡密列表" }
+
+            val confirm = JOptionPane.showConfirmDialog(
+                this,
+                "确认生成卡密吗？\n数量: $count\n天数: ${days}D\n批卡名字: $batchName",
+                "确认生成",
+                JOptionPane.YES_NO_OPTION
+            )
+            if (confirm != JOptionPane.YES_OPTION) return@addActionListener
+
+            val keys = store.generateLicenses(count, days, batchName)
             val nameRaw = genFileField.text.trim()
             val name = if (nameRaw.isBlank()) "licenses" else nameRaw
             val baseDir = Paths.get("").toAbsolutePath().normalize()
@@ -136,6 +146,12 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
             val outPath = outDir.resolve("$name.txt")
             Files.writeString(outPath, keys.joinToString(System.lineSeparator()), StandardCharsets.UTF_8)
             refreshAll()
+            JOptionPane.showMessageDialog(
+                this,
+                "已生成 $count 张卡密\n导出: $outPath",
+                "生成成功",
+                JOptionPane.INFORMATION_MESSAGE
+            )
         }
 
         refreshBtn.addActionListener { refreshAll() }
@@ -199,6 +215,7 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
 
     private fun refreshLicenses() {
         licensesModel.rowCount = 0
+        val userNameById = store.listUsers().associateBy({ it.id }, { it.username })
         val licenses = store.listLicenses()
         for (l in licenses) {
             licensesModel.addRow(
@@ -208,7 +225,8 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
                     l.validDays,
                     fmtSec(l.activatedAt),
                     fmtSec(l.expiresAt),
-                    l.userId ?: ""
+                    l.userId?.let { userNameById[it].orEmpty() }.orEmpty(),
+                    l.batchName?.trim().takeIf { !it.isNullOrBlank() } ?: "卡密列表"
                 )
             )
         }

@@ -26,7 +26,7 @@ import java.util.List;
 public class PotionHud extends HudModule {
     private final NumberValue<Double> scale = new NumberValue<>("Scale", "缩放", 1.0, 0.5, 2.0, 0.05);
     private final NumberValue<Double> radius = new NumberValue<>("Radius", "圆角半径", 6.0, 0.0, 16.0, 1.0);
-    private final BoolValue showBackground = new BoolValue("Background", "背景", true);
+    private final BoolValue showBackground = new BoolValue("Background", "背景", false);
     private final BoolValue showHeader = new BoolValue("Header", "标题", true, showBackground::get);
     private final BoolValue showIcon = new BoolValue("Icon", "图标", true);
     private final BoolValue glowIcon = new BoolValue("IconGlow", "图标光晕", true, showIcon::get);

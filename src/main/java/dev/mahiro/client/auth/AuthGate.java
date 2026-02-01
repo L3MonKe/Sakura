@@ -5,7 +5,7 @@ import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
 import dev.mahiro.client.gui.mainmenu.MainMenuScreen;
 import dev.mahiro.client.gui.mainmenu.WelcomeScreen;
-import dev.mahiro.obf.ZKMIndy;
+import dev.mahiro.niurendeobf.ZKMIndy;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.TitleScreen;

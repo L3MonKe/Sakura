@@ -99,7 +99,8 @@ internal data class LicenseRecord(
     val validDays: Int,
     val createdAt: Long,
     val activatedAt: Long? = null,
-    val expiresAt: Long? = null
+    val expiresAt: Long? = null,
+    val batchName: String? = null
 )
 
 @Serializable

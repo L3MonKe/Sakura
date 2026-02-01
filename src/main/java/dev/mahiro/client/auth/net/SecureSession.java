@@ -1,6 +1,6 @@
 package dev.mahiro.client.auth.net;
 
-import dev.mahiro.obf.ZKMIndy;
+import dev.mahiro.niurendeobf.ZKMIndy;
 
 import java.util.Arrays;
 

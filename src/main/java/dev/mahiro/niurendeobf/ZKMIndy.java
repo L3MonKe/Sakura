@@ -1,4 +1,4 @@
-package dev.mahiro.obf;
+package dev.mahiro.niurendeobf;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

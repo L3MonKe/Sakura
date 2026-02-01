@@ -149,13 +149,16 @@ internal class JsonStore(dataDir: Path) {
         }
     }
 
-    fun generateLicenses(count: Int, validDays: Int): List<String> {
+    fun generateLicenses(count: Int, validDays: Int, batchName: String? = null): List<String> {
         val now = Instant.now().epochSecond
         val out = mutableListOf<String>()
+        val batch = batchName?.trim()?.takeIf { it.isNotBlank() }
         lock.write {
             val existing = licenses.map { it.key }.toHashSet()
             while (out.size < count) {
-                val k = normalizeLicenseKeyForStore("LEMON-" + java.util.UUID.randomUUID().toString().replace("-", ""))
+                val k = normalizeLicenseKeyForStore(
+                    "${validDays}D-" + java.util.UUID.randomUUID().toString().replace("-", "")
+                )
                 if (existing.contains(k)) continue
                 existing.add(k)
                 out.add(k)
@@ -167,7 +170,8 @@ internal class JsonStore(dataDir: Path) {
                         validDays = validDays,
                         createdAt = now,
                         activatedAt = null,
-                        expiresAt = null
+                        expiresAt = null,
+                        batchName = batch
                     )
                 )
             }

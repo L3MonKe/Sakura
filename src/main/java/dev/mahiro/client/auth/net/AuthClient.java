@@ -6,7 +6,7 @@ import com.google.gson.JsonObject;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.auth.crypto.*;
-import dev.mahiro.obf.ZKMIndy;
+import dev.mahiro.niurendeobf.ZKMIndy;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
