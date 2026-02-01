@@ -1,9 +1,5 @@
 package dev.mahiro.client.events.client;
 
-import dev.mahiro.client.auth.AuthGate;
-
-import static dev.mahiro.client.Mahiro.mc;
-
 public class TickEvent {
     public static class Pre extends TickEvent {
         public Pre() {
@@ -12,7 +8,6 @@ public class TickEvent {
 
     public static class Post extends TickEvent {
         public Post() {
-            AuthGate.doTickCheck(mc);
         }
     }
 }
