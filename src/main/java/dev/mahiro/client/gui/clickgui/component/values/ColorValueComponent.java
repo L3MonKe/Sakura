@@ -46,7 +46,7 @@ public class ColorValueComponent extends Component {
         float fontHeight = NanoVGHelper.getFontHeight(FontLoader.regular(titleFontSize), titleFontSize);
 
         float collapsedHeight = 14 * scale;
-        float padding = 2 * scale;
+        float padding = 3 * scale;
         float gap = 3 * scale;
         float panelHeight = 52 * scale;
         float hueBarWidth = 10 * scale;
