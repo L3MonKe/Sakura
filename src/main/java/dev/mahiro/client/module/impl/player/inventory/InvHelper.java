@@ -174,25 +174,50 @@ public class InvHelper {
     }
 
     public static float getProtection(ItemStack itemStack) {
-        int valence = 0;
         if (itemStack == null) {
             return 0.0F;
         } else if (itemStack.isEmpty()) {
             return 0.0F;
+        } else if (!(itemStack.getItem() instanceof ArmorItem)) {
+            return 0.0F;
         } else {
-            if (itemStack.getItem() instanceof ArmorItem) {
-                AttributeModifiersComponent attrComp = itemStack.get(DataComponentTypes.ATTRIBUTE_MODIFIERS);
-                if (attrComp != null) {
-                    for (var entry : attrComp.modifiers()) {
-                        if (entry.attribute().value() == EntityAttributes.ARMOR.value()) {
-                            valence += (int) entry.modifier().value();
-                        }
+            float armor = 0.0F;
+            float toughness = 0.0F;
+            float knockbackResistance = 0.0F;
+
+            AttributeModifiersComponent attrComp = itemStack.get(DataComponentTypes.ATTRIBUTE_MODIFIERS);
+            if (attrComp != null) {
+                for (var entry : attrComp.modifiers()) {
+                    if (entry.attribute().value() == EntityAttributes.ARMOR.value()) {
+                        armor += (float) entry.modifier().value();
+                    } else if (entry.attribute().value() == EntityAttributes.ARMOR_TOUGHNESS.value()) {
+                        toughness += (float) entry.modifier().value();
+                    } else if (entry.attribute().value() == EntityAttributes.KNOCKBACK_RESISTANCE.value()) {
+                        knockbackResistance += (float) entry.modifier().value();
                     }
                 }
             }
 
-            valence += EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.PROTECTION);
-            return (float) valence;
+            int protection = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.PROTECTION);
+            int blastProtection = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.BLAST_PROTECTION);
+            int fireProtection = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.FIRE_PROTECTION);
+            int projectileProtection = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.PROJECTILE_PROTECTION);
+            int featherFalling = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.FEATHER_FALLING);
+            int thorns = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.THORNS);
+            int unbreaking = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.UNBREAKING);
+            int mending = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.MENDING);
+            int bindingCurse = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.BINDING_CURSE);
+            int vanishingCurse = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.VANISHING_CURSE);
+
+            float durabilityScore = 0.0F;
+            if (itemStack.isDamageable() && itemStack.getMaxDamage() > 0) {
+                float remaining = 1.0F - ((float) itemStack.getDamage() / (float) itemStack.getMaxDamage());
+                durabilityScore = remaining * 0.75F;
+            }
+
+            float enchantScore = protection * 4.0F + (blastProtection + fireProtection + projectileProtection) * 3.0F + featherFalling * 2.5F + thorns * 0.5F + unbreaking * 0.25F + mending * 1.5F - (bindingCurse + vanishingCurse) * 50.0F;
+
+            return armor * 10.0F + toughness * 8.0F + knockbackResistance * 30.0F + durabilityScore + enchantScore;
         }
     }
 
