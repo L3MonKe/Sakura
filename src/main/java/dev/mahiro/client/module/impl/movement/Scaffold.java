@@ -181,7 +181,7 @@ public class Scaffold extends Module {
     public void place() {
         if (!onAir()) return;
 
-        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position, false);
+        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position);
         if (!hasRotated) return;
 
         BlockPos targetPos = blockCache.position.offset(blockCache.facing);
