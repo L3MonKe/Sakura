@@ -78,7 +78,6 @@ public class Module {
     }
 
     public void setState(boolean state) {
-        if (!AuthGate.isVerified()) return;
         if (this.state != state) {
             this.state = state;
             DynamicIslandHud.onModuleToggle(this, state);
