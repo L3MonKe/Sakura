@@ -65,6 +65,7 @@ public class AutoDick extends Module {
     private final EnumValue<SwitchMode> switchMode = new EnumValue<>("Switch Mode", "切换模式", SwitchMode.Normal);
     private final BoolValue swapBack = new BoolValue("Swap Back", "切回", true, () -> switchMode.is(SwitchMode.Normal));
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
+    private final BoolValue sideCheck = new BoolValue("Side Check", "放置面检测", false);
     private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true);
     private final NumberValue<Integer> length = new NumberValue<>("Length", "长度", 3, 1, 5, 1);
     private final NumberValue<Integer> delay = new NumberValue<>("Delay", "延迟", 0, 0, 150, 1);
@@ -141,7 +142,8 @@ public class AutoDick extends Module {
             Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
 
             if (timer.passedMS(delay.get())) {
-                if (!RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), placeData.opposite, placeData.neighbor, true)) return;
+                if (!RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), placeData.opposite, placeData.neighbor, sideCheck.get()))
+                    return;
 
                 if (placeBlock(placeData, new BlockHitResult(vec, placeData.opposite, placeData.neighbor, false))) {
                     blockList.remove(placeData.pos);
@@ -239,7 +241,7 @@ public class AutoDick extends Module {
     private void breakBlock() {
         Rotation rotation = RotationUtil.calculate(getVec3(supportBlock, breakSide));
         Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
-        if (!RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), breakSide, supportBlock, true)) return;
+        if (!RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), breakSide, supportBlock, sideCheck.get())) return;
 
         mc.interactionManager.updateBlockBreakingProgress(supportBlock, breakSide);
         if (swingHand.get()) {
