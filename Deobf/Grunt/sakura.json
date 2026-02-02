@@ -1,7 +1,7 @@
 {
   "Settings": {
-    "Input": "C:\\Users\\36797\\Desktop\\M4h1r0-1.0-Release.jar",
-    "Output": "C:\\Users\\36797\\Desktop\\M4h1r0-1.0-Release_obf.jar",
+    "Input": "D:\\GitHub\\Sakura\\Deobf\\ZKM\\obfuscated\\M4h1r0-1.0.1.jar",
+    "Output": "D:\\GitHub\\Sakura\\Deobf\\Grunt\\obfuscated\\M4h1r0-1.0.1_obf.jar",
     "Libraries": [],
     "Exclusions": [],
     "MixinPackage": [
@@ -22,7 +22,7 @@
     "DarkTheme": true
   },
   "SourceDebugRemove": {
-    "Enabled": true,
+    "Enabled": false,
     "SourceDebug": true,
     "LineDebug": true,
     "RenameSourceDebug": false,
