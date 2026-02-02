@@ -17,6 +17,7 @@
     "accessor.IMinecraftClient",
     "accessor.IParticle",
     "accessor.IPlayerMoveC2SPacket",
+    "accessor.IPlayerInteractEntityC2SPacket",
     "accessor.IPostEffectProcessor",
     "accessor.ISuggestionWindow",
     "client.MixinAbstractClientPlayerEntity",
