@@ -24,10 +24,12 @@ import org.joml.Matrix4f;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class JumpCircles extends Module {
+    public JumpCircles() {
+        super("JumpCircles", "跳跃光圈", Category.Render);
+    }
 
     public enum ColorMode {
         Custom, Client, Rainbow, Astolfo
@@ -53,10 +55,6 @@ public class JumpCircles extends Module {
 
     private final List<JumpCircle> circles = new ArrayList<>();
     private boolean wasOnGround = true;
-
-    public JumpCircles() {
-        super("JumpCircles", "跳跃光圈", Category.Render);
-    }
 
     @Override
     protected void onEnable() {
@@ -135,7 +133,7 @@ public class JumpCircles extends Module {
             rotation = (System.currentTimeMillis() % 36000) / 100.0 * rotateSpeed.get();
         }
 
-        Color baseColor = getCircleColor(circle.getAge());
+        Color baseColor = getCircleColor();
         int r = baseColor.getRed();
         int g = baseColor.getGreen();
         int b = baseColor.getBlue();
@@ -151,7 +149,6 @@ public class JumpCircles extends Module {
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-        // Main Circle
         if (mode.is(Mode.Fill) || mode.is(Mode.Both)) {
             if (glow.get()) {
                 for (int i = 0; i < glowLayers.get(); i++) {
@@ -190,7 +187,6 @@ public class JumpCircles extends Module {
             double angle = Math.PI * 2 * i / segs;
             float x = (float) (Math.cos(angle) * radius);
             float z = (float) (Math.sin(angle) * radius);
-            // Outer vertices have 0 alpha for a smooth gradient from center
             buffer.vertex(matrix, x, 0, z).color(r, g, b, 0f);
         }
 
@@ -218,7 +214,7 @@ public class JumpCircles extends Module {
         RenderSystem.lineWidth(1.0f);
     }
 
-    private Color getCircleColor(long age) {
+    private Color getCircleColor() {
         return switch (colorMode.get()) {
             case Custom -> circleColor.get();
             case Client -> ClickGui.color(0);
@@ -227,10 +223,9 @@ public class JumpCircles extends Module {
                 yield Color.getHSBColor(hue, 0.8f, 1f);
             }
             case Astolfo -> {
-                double speed = 0.5; // Astolfo speed
+                double speed = 0.5;
                 double offset = 0;
                 double hue = (System.currentTimeMillis() * speed + offset * 10) / 1000.0;
-                // Simple Astolfo approximation
                 hue = hue % 1.0;
                 if (hue > 0.5) hue = 0.5 - (hue - 0.5);
                 hue = hue + 0.5;
