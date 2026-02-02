@@ -1,5 +1,6 @@
 package dev.mahiro.client.utils.render;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
@@ -238,6 +239,42 @@ public class Render3DUtil {
         cleanup3D();
     }
 
+    public static void drawBoxOutlineAdditive(MatrixStack stack, Box box, int color, float thickness) {
+        setup3DAdditive();
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
+        RenderSystem.lineWidth(thickness);
+
+        Vec3d camPos = mc.getEntityRenderDispatcher().camera.getPos();
+        float minX = (float) (box.minX - camPos.getX());
+        float minY = (float) (box.minY - camPos.getY());
+        float minZ = (float) (box.minZ - camPos.getZ());
+        float maxX = (float) (box.maxX - camPos.getX());
+        float maxY = (float) (box.maxY - camPos.getY());
+        float maxZ = (float) (box.maxZ - camPos.getZ());
+
+        Matrix4f matrix = stack.peek().getPositionMatrix();
+        MatrixStack.Entry entry = stack.peek();
+
+        vertexLine(buffer, matrix, entry, minX, minY, minZ, maxX, minY, minZ, color);
+        vertexLine(buffer, matrix, entry, maxX, minY, minZ, maxX, minY, maxZ, color);
+        vertexLine(buffer, matrix, entry, maxX, minY, maxZ, minX, minY, maxZ, color);
+        vertexLine(buffer, matrix, entry, minX, minY, maxZ, minX, minY, minZ, color);
+
+        vertexLine(buffer, matrix, entry, minX, maxY, minZ, maxX, maxY, minZ, color);
+        vertexLine(buffer, matrix, entry, maxX, maxY, minZ, maxX, maxY, maxZ, color);
+        vertexLine(buffer, matrix, entry, maxX, maxY, maxZ, minX, maxY, maxZ, color);
+        vertexLine(buffer, matrix, entry, minX, maxY, maxZ, minX, maxY, minZ, color);
+
+        vertexLine(buffer, matrix, entry, minX, minY, minZ, minX, maxY, minZ, color);
+        vertexLine(buffer, matrix, entry, maxX, minY, minZ, maxX, maxY, minZ, color);
+        vertexLine(buffer, matrix, entry, maxX, minY, maxZ, maxX, maxY, maxZ, color);
+        vertexLine(buffer, matrix, entry, minX, minY, maxZ, minX, maxY, maxZ, color);
+
+        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        cleanup3D();
+    }
+
     public static void drawBottomOutline(MatrixStack stack, Box box, int color) {
         setup3D();
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
@@ -292,6 +329,12 @@ public class Render3DUtil {
     public static void setup3D() {
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
+        RenderSystem.disableCull();
+    }
+
+    public static void setup3DAdditive() {
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE);
         RenderSystem.disableCull();
     }
 

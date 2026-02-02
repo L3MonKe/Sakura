@@ -7,6 +7,7 @@ import dev.mahiro.client.events.render.WorldLoadEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.ClickGui;
+import dev.mahiro.client.utils.animations.Easing;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
@@ -29,18 +30,25 @@ import java.util.List;
 public class JumpCircles extends Module {
 
     public enum ColorMode {
-        Custom, Client, Rainbow
+        Custom, Client, Rainbow, Astolfo
     }
 
-    private final NumberValue<Integer> maxTime = new NumberValue<>("Max Time", "最大时间", 3000, 1000, 8000, 100);
-    private final NumberValue<Double> radius = new NumberValue<>("Radius", "半径", 2.0, 0.5, 5.0, 0.1);
+    public enum Mode {
+        Fill, Outline, Both
+    }
+
+    private final NumberValue<Integer> maxTime = new NumberValue<>("Max Time", "最大时间", 2000, 500, 5000, 100);
+    private final NumberValue<Double> radius = new NumberValue<>("Radius", "半径", 2.5, 0.5, 5.0, 0.1);
     private final NumberValue<Integer> segments = new NumberValue<>("Segments", "分段数", 60, 20, 120, 5);
+    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Both);
     private final EnumValue<ColorMode> colorMode = new EnumValue<>("Color Mode", "颜色模式", ColorMode.Client);
     private final ColorValue circleColor = new ColorValue("Circle Color", "光圈颜色", new Color(255, 100, 255, 200), () -> colorMode.is(ColorMode.Custom));
+
+    private final BoolValue depthTest = new BoolValue("DepthTest", "深度测试", false);
     private final BoolValue fade = new BoolValue("Fade Effect", "淡出效果", true);
     private final BoolValue glow = new BoolValue("Glow", "发光", true);
-    private final NumberValue<Integer> glowLayers = new NumberValue<>("Glow Layers", "发光层数", 5, 1, 10, 1, glow::get);
-    private final BoolValue rotate = new BoolValue("Rotate", "旋转", true);
+    private final NumberValue<Integer> glowLayers = new NumberValue<>("Glow Layers", "发光层数", 3, 1, 10, 1, glow::get);
+    private final BoolValue rotate = new BoolValue("Rotate", "旋转", false);
     private final NumberValue<Double> rotateSpeed = new NumberValue<>("Rotate Speed", "旋转速度", 2.0, 0.5, 10.0, 0.5, rotate::get);
 
     private final List<JumpCircle> circles = new ArrayList<>();
@@ -76,7 +84,7 @@ public class JumpCircles extends Module {
                 y += 0.125;
             }
 
-            circles.add(new JumpCircle(new Vec3d(pos.x, y, pos.z), circles.size()));
+            circles.add(new JumpCircle(new Vec3d(pos.x, y, pos.z)));
         }
 
         wasOnGround = onGround;
@@ -86,20 +94,16 @@ public class JumpCircles extends Module {
     public void onRender3D(Render3DEvent event) {
         if (circles.isEmpty()) return;
 
-        Iterator<JumpCircle> iterator = circles.iterator();
-        while (iterator.hasNext()) {
-            JumpCircle circle = iterator.next();
-            if (circle.getProgress() >= 1.0f) {
-                iterator.remove();
-            }
-        }
+        circles.removeIf(circle -> circle.getProgress() >= 1.0f);
 
         if (circles.isEmpty()) return;
 
         RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
+        if (!depthTest.get()) {
+            RenderSystem.disableDepthTest();
+            RenderSystem.depthMask(false);
+        }
         RenderSystem.disableCull();
         RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
 
@@ -116,26 +120,22 @@ public class JumpCircles extends Module {
 
     private void renderCircle(MatrixStack matrices, JumpCircle circle, float tickDelta) {
         float progress = circle.getProgress();
-        float waveProgress = valWave01(1.0f - progress);
+        // Use a smoother ease out for expansion
+        float expansion = (float) Easing.CUBIC_OUT.ease(progress);
 
-        float currentRadius = (float) ((progress > 0.5f ?
-                easeOutElastic(waveProgress * waveProgress) :
-                easeOutBack(waveProgress)) * radius.get());
+        float currentRadius = (float) (expansion * radius.get());
 
-        float alpha = (float) easeOutCirc(valWave01(1.0f - progress));
-        if (progress < 0.5f) {
-            alpha *= (float) easeInOutExpo(alpha);
-        }
+        // Alpha fades out as it expands
+        float alpha = 1.0f - (float) Easing.QUAD_IN.ease(progress);
 
         if (alpha < 0.01f || currentRadius < 0.01f) return;
 
         double rotation = 0;
         if (rotate.get()) {
-            rotation = easeInOutElastic(waveProgress) * 90.0 / (1.0 + waveProgress);
-            rotation += (System.currentTimeMillis() % 36000) / 100.0 * rotateSpeed.get();
+            rotation = (System.currentTimeMillis() % 36000) / 100.0 * rotateSpeed.get();
         }
 
-        Color baseColor = getCircleColor(circle.getIndex());
+        Color baseColor = getCircleColor(circle.getAge());
         int r = baseColor.getRed();
         int g = baseColor.getGreen();
         int b = baseColor.getBlue();
@@ -145,30 +145,32 @@ public class JumpCircles extends Module {
 
         matrices.push();
         matrices.translate(pos.x - camPos.x, pos.y - camPos.y, pos.z - camPos.z);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) rotation));
+        if (rotate.get()) {
+            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) rotation));
+        }
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
 
-        if (glow.get()) {
-            for (int i = glowLayers.get(); i > 0; i--) {
-                float layerRadius = currentRadius * (1.0f + i * 0.15f);
-                float layerAlpha = alpha * (1.0f - (float) i / (glowLayers.get() + 1)) * 0.5f;
-                drawFilledCircle(matrix, layerRadius, new Color(r, g, b, (int) (layerAlpha * 255)));
+        // Main Circle
+        if (mode.is(Mode.Fill) || mode.is(Mode.Both)) {
+            if (glow.get()) {
+                for (int i = 0; i < glowLayers.get(); i++) {
+                    float layerAlpha = alpha * 0.4f * (1.0f - (float) i / glowLayers.get());
+                    float layerRadius = currentRadius * (1.0f - i * 0.05f);
+                    if (layerRadius <= 0) break;
+                    drawFilledCircle(matrix, layerRadius, new Color(r, g, b, (int) (layerAlpha * 255)));
+                }
+            } else if (fade.get()) {
+                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 100))); // Softer fill
+                drawFilledCircle(matrix, currentRadius * 0.8f, new Color(r, g, b, (int) (alpha * 150)));
+            } else {
+                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 180)));
             }
         }
 
-        if (fade.get()) {
-            int fadeSteps = 8;
-            for (int i = fadeSteps; i > 0; i--) {
-                float stepRadius = currentRadius * ((float) i / fadeSteps);
-                float stepAlpha = alpha * ((float) i / fadeSteps);
-                drawFilledCircle(matrix, stepRadius, new Color(r, g, b, (int) (stepAlpha * 200)));
-            }
-        } else {
-            drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 200)));
+        if (mode.is(Mode.Outline) || mode.is(Mode.Both)) {
+            drawCircleOutline(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 255)), 2.0f);
         }
-
-        drawCircleOutline(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 255)));
 
         matrices.pop();
     }
@@ -188,13 +190,15 @@ public class JumpCircles extends Module {
             double angle = Math.PI * 2 * i / segs;
             float x = (float) (Math.cos(angle) * radius);
             float z = (float) (Math.sin(angle) * radius);
-            buffer.vertex(matrix, x, 0, z).color(r, g, b, a * 0.5f);
+            // Outer vertices have 0 alpha for a smooth gradient from center
+            buffer.vertex(matrix, x, 0, z).color(r, g, b, 0f);
         }
 
         BufferRenderer.drawWithGlobalProgram(buffer.end());
     }
 
-    private void drawCircleOutline(Matrix4f matrix, float radius, Color color) {
+    private void drawCircleOutline(Matrix4f matrix, float radius, Color color, float width) {
+        RenderSystem.lineWidth(width);
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
 
         float r = color.getRed() / 255f;
@@ -211,15 +215,26 @@ public class JumpCircles extends Module {
         }
 
         BufferRenderer.drawWithGlobalProgram(buffer.end());
+        RenderSystem.lineWidth(1.0f);
     }
 
-    private Color getCircleColor(int index) {
+    private Color getCircleColor(long age) {
         return switch (colorMode.get()) {
             case Custom -> circleColor.get();
-            case Client -> ClickGui.color(index * 50);
+            case Client -> ClickGui.color(0);
             case Rainbow -> {
-                float hue = ((System.currentTimeMillis() % 3000) / 3000f + index * 0.1f) % 1f;
+                float hue = ((System.currentTimeMillis() % 3000) / 3000f) % 1f;
                 yield Color.getHSBColor(hue, 0.8f, 1f);
+            }
+            case Astolfo -> {
+                double speed = 0.5; // Astolfo speed
+                double offset = 0;
+                double hue = (System.currentTimeMillis() * speed + offset * 10) / 1000.0;
+                // Simple Astolfo approximation
+                hue = hue % 1.0;
+                if (hue > 0.5) hue = 0.5 - (hue - 0.5);
+                hue = hue + 0.5;
+                yield Color.getHSBColor((float) hue, 0.5f, 1f);
             }
         };
     }
@@ -232,55 +247,22 @@ public class JumpCircles extends Module {
     private class JumpCircle {
         private final long startTime;
         private final Vec3d pos;
-        private final int index;
 
-        public JumpCircle(Vec3d pos, int index) {
+        public JumpCircle(Vec3d pos) {
             this.startTime = System.currentTimeMillis();
             this.pos = pos;
-            this.index = index;
         }
 
         public float getProgress() {
             return (float) (System.currentTimeMillis() - startTime) / maxTime.get();
         }
 
+        public long getAge() {
+            return System.currentTimeMillis() - startTime;
+        }
+
         public Vec3d getPos() {
             return pos;
         }
-
-        public int getIndex() {
-            return index;
-        }
-    }
-
-    private static double easeOutElastic(double value) {
-        double c4 = (2 * Math.PI) / 3;
-        return value <= 0 ? 0 : value >= 1 ? 1 : Math.pow(2, -10 * value) * Math.sin((value * 10 - 0.75) * c4) + 1;
-    }
-
-    private static double easeOutBack(double value) {
-        double c1 = 1.70158, c3 = c1 + 1;
-        return 1 + c3 * Math.pow(value - 1, 3) + c1 * Math.pow(value - 1, 2);
-    }
-
-    private static double easeInOutElastic(double value) {
-        double c5 = (2 * Math.PI) / 4.5;
-        return value <= 0 ? 0 : value >= 1 ? 1 : value < 0.5 ?
-                -(Math.pow(2, 20 * value - 10) * Math.sin((20 * value - 11.125) * c5)) / 2 :
-                (Math.pow(2, -20 * value + 10) * Math.sin((20 * value - 11.125) * c5)) / 2 + 1;
-    }
-
-    private static double easeOutCirc(double value) {
-        return Math.sqrt(1 - Math.pow(value - 1, 2));
-    }
-
-    private static double easeInOutExpo(double value) {
-        return value <= 0 ? 0 : value >= 1 ? 1 : value < 0.5 ?
-                Math.pow(2, 20 * value - 10) / 2 :
-                (2 - Math.pow(2, -20 * value + 10)) / 2;
-    }
-
-    private static float valWave01(float value) {
-        return (value > 0.5f ? 1.0f - value : value) * 2.0f;
     }
 }

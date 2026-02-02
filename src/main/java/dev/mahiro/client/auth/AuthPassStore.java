@@ -71,6 +71,10 @@ public final class AuthPassStore {
         }
     }
 
+    public static void save(String deviceId, String token, long expiresAtMillis, String passPayloadB64, String passSigB64) {
+        save(deviceId, token, expiresAtMillis);
+    }
+
     public static void clear() {
         try {
             Files.deleteIfExists(FILE);
@@ -148,7 +152,8 @@ public final class AuthPassStore {
     }
 
     private static AuthPass parsePayload(String deviceId, JsonObject payload) throws Exception {
-        if (payload == null || !payload.has("token") || !payload.has("expiresAt") || !payload.has("device")) return null;
+        if (payload == null || !payload.has("token") || !payload.has("expiresAt") || !payload.has("device"))
+            return null;
         String token = payload.get("token").getAsString();
         long expiresAt = payload.get("expiresAt").getAsLong();
         String deviceHash = payload.get("device").getAsString();

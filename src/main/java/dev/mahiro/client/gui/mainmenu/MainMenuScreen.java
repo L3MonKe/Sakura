@@ -486,7 +486,7 @@ public class MainMenuScreen extends Screen {
                 "* 你知道吗",
                 "* 这是第一个版本",
                 "* 可是大部分外挂都打不过这个外挂",
-                "* 除了Zen"
+                "* 包括Zen"
         );
 
         float fontSize = refFont(15f, scale);
