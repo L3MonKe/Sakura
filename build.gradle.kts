@@ -28,6 +28,12 @@ buildConfig {
     buildConfigField("String", "BUILD_IDENTIFIER", "\"${property("build_identifier")}\"")
     buildConfigField("String", "BUILD_TIME", "\"${SimpleDateFormat("MM/dd/yyyy HH:mm").format(Date())}\"")
 
+    val pinnedKeyRaw = (findProperty("pinned_server_signing_key_x509_base64") as String?)
+        ?: System.getenv("PINNED_SERVER_SIGNING_KEY_X509_BASE64")
+        ?: ""
+    val pinnedKey = pinnedKeyRaw.replace("\\", "\\\\").replace("\"", "\\\"")
+    buildConfigField("String", "PINNED_SERVER_SIGNING_KEY_X509_BASE64", "\"$pinnedKey\"")
+
     packageName("dev.mahiro.client")
     useJavaOutput()
     generateAtSync.set(true)
@@ -122,7 +128,7 @@ val isMyHome = run {
     userHome == "L3MonKe" || normalized.endsWith("/L3MonKe")
 }
 
-val minecraftModsDir = file("C:/Users/L3MonKe/Desktop/MC/.minecraft/versions/1.21.4-Fabric 0.18.2/mods")
+val minecraftModsDir = file("C:/Users/L3MonKe/Desktop/MC/.minecraft/versions/Mahiro-1.21.4/mods")
 
 val copyJarToMinecraftMods = tasks.register<Copy>("copyJarToMinecraftMods") {
     group = "distribution"

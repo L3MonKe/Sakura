@@ -64,6 +64,7 @@ obfuscate   changeLogFileIn=""
             newNamesPrefix="Mahiro_"
             localVariables=delete
             lineNumbers=delete
+            inline=aggressive
             obfuscateReferences=normal
             autoReflectionHandling=normal
             methodParameterChanges=flowObfuscate

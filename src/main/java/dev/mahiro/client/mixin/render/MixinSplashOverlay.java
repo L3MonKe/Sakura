@@ -1,7 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
-import dev.mahiro.client.auth.AuthGate;
-import dev.mahiro.client.gui.auth.AuthScreen;
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.mainmenu.MainMenuScreen;
 import dev.mahiro.client.shaders.SplashShader;
 import dev.mahiro.client.utils.animations.AnimationUtil;
@@ -62,16 +61,7 @@ public class MixinSplashOverlay {
     private long sakura$handoffStartTime = -1L;
 
     @Unique
-    private MainMenuScreen mainMenuScreen = null;
-
-    @Unique
-    private MainMenuScreen authTargetScreen = null;
-
-    @Unique
-    private AuthScreen authScreen = null;
-
-    @Unique
-    private boolean sakura$handoffToMainMenu = false;
+    private boolean sakura$handoffScreenReady = false;
 
     @Unique
     private static final float PROGRESS_SMOOTH_SPEED = 0.3f;
@@ -129,17 +119,14 @@ public class MixinSplashOverlay {
             fadeOut = AnimationUtil.smoothstep(0.02f, 1.0f, ease);
 
             if (!this.reloading) {
-                if (sakura$handoffToMainMenu && mainMenuScreen != null) {
-                    if (mainMenuScreen.width != width || mainMenuScreen.height != height) {
-                        mainMenuScreen.init(this.client, width, height);
+                if (sakura$handoffScreenReady && this.client.currentScreen != null) {
+                    if (this.client.currentScreen.width != width || this.client.currentScreen.height != height) {
+                        this.client.currentScreen.init(this.client, width, height);
                     }
-                    mainMenuScreen.setEntranceProgress(ease);
-                    mainMenuScreen.render(context, 0, 0, delta);
-                } else if (!sakura$handoffToMainMenu && authScreen != null) {
-                    if (authScreen.width != width || authScreen.height != height) {
-                        authScreen.init(this.client, width, height);
+                    if (this.client.currentScreen instanceof MainMenuScreen menu) {
+                        menu.setEntranceProgress(ease);
                     }
-                    authScreen.render(context, 0, 0, delta);
+                    this.client.currentScreen.render(context, 0, 0, delta);
                 }
             } else if (this.client.currentScreen != null) {
                 this.client.currentScreen.render(context, 0, 0, delta);
@@ -153,15 +140,11 @@ public class MixinSplashOverlay {
         if (fadeOutProgress >= 0.6F || (sakura$handoffStartTime > 0L && currentTime - sakura$handoffStartTime >= HANDOFF_DURATION_MS)) {
             this.client.setOverlay(null);
             if (!this.reloading) {
-                if (sakura$handoffToMainMenu && mainMenuScreen != null) {
-                    this.client.setScreen(mainMenuScreen);
-                } else {
-                    this.client.setScreen(authScreen != null ? authScreen : new AuthScreen(new MainMenuScreen()));
+                if (this.client.currentScreen == null) {
+                    Mahiro.redirectToMainMenu();
                 }
             }
-            mainMenuScreen = null;
-            authScreen = null;
-            authTargetScreen = null;
+            sakura$handoffScreenReady = false;
             SplashShader.getInstance().cleanup();
             shaderInitialized = false;
             sakura$handoffStartTime = -1L;
@@ -181,16 +164,11 @@ public class MixinSplashOverlay {
             sakura$handoffStartTime = this.reloadCompleteTime;
 
             if (!this.reloading) {
-                sakura$handoffToMainMenu = AuthGate.isVerified();
-                if (sakura$handoffToMainMenu) {
-                    mainMenuScreen = new MainMenuScreen();
-                    mainMenuScreen.init(this.client, width, height);
-                } else {
-                    mainMenuScreen = null;
-                    authTargetScreen = new MainMenuScreen();
-                    authScreen = new AuthScreen(authTargetScreen);
-                    authScreen.init(this.client, width, height);
+                Mahiro.redirectToMainMenu();
+                if (this.client.currentScreen != null) {
+                    this.client.currentScreen.init(this.client, width, height);
                 }
+                sakura$handoffScreenReady = true;
             } else if (this.client.currentScreen != null) {
                 this.client.currentScreen.init(this.client, width, height);
             }

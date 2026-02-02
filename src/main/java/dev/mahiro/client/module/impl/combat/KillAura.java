@@ -1,6 +1,7 @@
 package dev.mahiro.client.module.impl.combat;
 
 import dev.mahiro.client.Mahiro;
+import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.manager.Managers;
@@ -66,6 +67,13 @@ public class KillAura extends Module {
     @EventHandler
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
+
+        boolean verified = AuthGate.sessionOnlineVerified ||
+                (AuthGate.sessionPassVerified && System.currentTimeMillis() < AuthGate.sessionPassExpiresAtMillis);
+        if (!verified || AuthGate.sessionToken == null || AuthGate.sessionToken.isEmpty()) {
+            if (target != null) AuthGate.failSafe();
+            return;
+        }
 
         boolean scaffoldEnable = Mahiro.MODULES.getModule(Scaffold.class).isEnabled();
         //boolean blinkEnable = Mahiro.MODULES.getModule(Blink.class).isEnabled();

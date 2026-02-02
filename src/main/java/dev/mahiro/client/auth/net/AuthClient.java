@@ -275,10 +275,11 @@ public final class AuthClient {
                     nonce
             );
 
-            if (serverSigningKey != null) {
-                boolean ok = Ed25519.verify(serverSigningKey, transcript, sig);
-                if (!ok) throw new IllegalStateException("BAD_SIGNATURE");
+            if (serverSigningKey == null) {
+                throw new IllegalStateException("SERVER_KEY_MISSING");
             }
+            boolean ok = Ed25519.verify(serverSigningKey, transcript, sig);
+            if (!ok) throw new IllegalStateException("BAD_SIGNATURE");
 
             PublicKey serverEphemeral = X25519.decodePublicX509(serverPubX509);
             byte[] shared = X25519.agree(clientEphemeral.getPrivate(), serverEphemeral);

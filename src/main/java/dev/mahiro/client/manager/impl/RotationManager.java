@@ -61,9 +61,9 @@ public class RotationManager {
     }
 
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Rotation, Boolean> raycast, Priority priority) {
-        if (!(AuthGate.isSessionOnlineVerified() && AuthGate.getSessionToken() != null && !AuthGate.getSessionToken().isBlank())) {
-            AuthGate.failSafe();
-        }
+        String token = AuthGate.getSessionToken();
+        boolean ok = (AuthGate.sessionOnlineVerified || (AuthGate.sessionPassVerified && System.currentTimeMillis() < AuthGate.sessionPassExpiresAtMillis));
+        if (!(ok && token != null && !token.isBlank())) return;
 
         if (rotations == null || Double.isNaN(rotations.yaw) || Double.isNaN(rotations.pitch) || Double.isInfinite(rotations.yaw) || Double.isInfinite(rotations.pitch)) {
             return;

@@ -56,7 +56,6 @@
     "render.MixinRenderTickCounter",
     "render.MixinScreen",
     "render.MixinSplashOverlay",
-    "render.MixinTextRenderer",
     "render.MixinTitleScreen",
     "render.MixinTransformation",
     "render.MixinWindow",

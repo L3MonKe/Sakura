@@ -67,8 +67,6 @@ public class ModuleManager {
         add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());
-        add(new NoRotate());
-        add(new PacketEat());
 //        add(new PacketMine());
         add(new Stealer());
         add(new TimerModule());
@@ -80,6 +78,7 @@ public class ModuleManager {
         add(new Atmosphere());
         add(new CameraClip());
         add(new Chams());
+        add(new ChestESP());
         add(new Fullbright());
         add(new Hat());
         add(new ItemPhysics());
@@ -88,7 +87,6 @@ public class ModuleManager {
         add(new NameTags());
         add(new NoRender());
 //        add(new Shaders());
-        add(new NameProtect());
         add(new TotemParticles());
         add(new Trajectories());
         add(new ViewModel());
@@ -162,7 +160,7 @@ public class ModuleManager {
     @EventHandler
     public void onKey(KeyEvent event) {
         if (mc.currentScreen != null) return;
-        if (!AuthGate.canToggleModules()) return;
+        if (!AuthGate.isVerified()) return;
 
         int keyCode = event.getKey();
         if (keyCode == GLFW.GLFW_KEY_UNKNOWN) return;
@@ -230,7 +228,7 @@ public class ModuleManager {
 
     @EventHandler
     public void onKey(MouseButtonEvent e) {
-        if (!AuthGate.canToggleModules()) return;
+        if (!AuthGate.isVerified()) return;
         if (e.getAction() == KeyAction.Press) {
             if (e.getButton() == 3 || e.getButton() == 4) {
                 for (Module module : modules.values()) {

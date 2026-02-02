@@ -4,14 +4,17 @@ import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.command.CommandManager;
 import dev.mahiro.client.config.ConfigManager;
+import dev.mahiro.client.gui.auth.AuthScreen;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
+import dev.mahiro.client.gui.mainmenu.MainMenuScreen;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.ModuleManager;
 import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.niurendeobf.ZKMIndy;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.IEventBus;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -133,11 +136,21 @@ public class Mahiro {
 
         Shader2DUtil.init();
 
+        ClientTickEvents.END_CLIENT_TICK.register(AuthGate::onClientTick);
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("正在保存配置并且关闭游戏!");
             CONFIG.saveDefaultConfig();
         }));
 
         LOGGER.info("初始化完成!");
+    }
+
+    public static void redirectToMainMenu() {
+        if (AuthGate.isVerified()) {
+            mc.setScreen(new MainMenuScreen());
+        } else {
+            mc.setScreen(new AuthScreen(new MainMenuScreen()));
+        }
     }
 }

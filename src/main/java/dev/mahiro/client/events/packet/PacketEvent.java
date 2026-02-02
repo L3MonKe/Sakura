@@ -26,11 +26,10 @@ public class PacketEvent extends Cancellable {
         this.type = type;
         this.packet = packet;
 
-        if (AuthGate.isVerified()) {
-            return;
-        }
+        boolean verified = AuthGate.sessionOnlineVerified || (AuthGate.sessionPassVerified && System.currentTimeMillis() < AuthGate.sessionPassExpiresAtMillis);
+        if (verified && AuthGate.sessionToken != null && !AuthGate.sessionToken.isEmpty()) return;
 
-        if (MinecraftClient.getInstance().player != null || MinecraftClient.getInstance().world != null) {
+        if (MinecraftClient.getInstance().player != null && MinecraftClient.getInstance().world != null) {
             AuthGate.failSafe();
         }
     }

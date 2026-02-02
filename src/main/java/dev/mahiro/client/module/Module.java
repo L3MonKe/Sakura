@@ -1,6 +1,7 @@
 package dev.mahiro.client.module;
 
 import dev.mahiro.client.Mahiro;
+import dev.mahiro.client.auth.AuthGate;
 import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.module.impl.hud.DynamicIslandHud;
 import dev.mahiro.client.module.impl.hud.ModuleListHud;
@@ -77,6 +78,7 @@ public class Module {
     }
 
     public void setState(boolean state) {
+        if (!AuthGate.isVerified()) return;
         if (this.state != state) {
             this.state = state;
             DynamicIslandHud.onModuleToggle(this, state);

