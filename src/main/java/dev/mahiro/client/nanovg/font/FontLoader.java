@@ -32,4 +32,8 @@ public class FontLoader {
     public static int cjk(float size) {
         return FontManager.font("kuriyama.ttf", size);
     }
+
+    public static int comfortaa(float size) {
+        return FontManager.fontWithCJK("Comfortaa.ttf", size);
+    }
 }

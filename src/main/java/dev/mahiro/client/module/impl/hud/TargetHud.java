@@ -52,7 +52,7 @@ public class TargetHud extends HudModule {
     }
 
     public enum StyleEn {
-        ThunderHack, Modern, Moonlight
+        ThunderHack, Modern, Mahiro
     }
 
     public enum ImageModeEn {
@@ -66,26 +66,26 @@ public class TargetHud extends HudModule {
     private final EnumValue<StyleEn> style = new EnumValue<>("Style", "样式", StyleEn.ThunderHack);
     private final NumberValue<Double> blurRadius = new NumberValue<>("BallonBlur", "气泡模糊", 10.0, 1.0, 10.0, 1.0, () -> style.get() == StyleEn.ThunderHack);
 
-    // Moonlight Settings
-    private final NumberValue<Double> moonlightScale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 2.0, 0.1, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightWidth = new NumberValue<>("Width", "宽度", 150.0, 100.0, 300.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightHeight = new NumberValue<>("Height", "高度", 50.0, 30.0, 100.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightRadius = new NumberValue<>("Radius", "圆角半径", 10.0, 0.0, 20.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightBlurRadius = new NumberValue<>("BlurRadius", "模糊半径", 10.0, 1.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightBarHeight = new NumberValue<>("BarHeight", "血条粗细", 10.0, 2.0, 30.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightBarRadius = new NumberValue<>("BarRadius", "血条圆角", 4.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final EnumValue<AvatarPosEn> moonlightAvatarPos = new EnumValue<>("AvatarPos", "头像位置", AvatarPosEn.Left, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightNameSize = new NumberValue<>("NameSize", "名字大小", 14.0, 8.0, 24.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightNameX = new NumberValue<>("NameX", "名字X偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight);
-    private final NumberValue<Double> moonlightOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Moonlight && moonlightAvatarPos.get() == AvatarPosEn.OnBar);
+    // Mahiro Settings
+    private final NumberValue<Double> MahiroScale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 2.0, 0.1, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroWidth = new NumberValue<>("Width", "宽度", 150.0, 100.0, 300.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroHeight = new NumberValue<>("Height", "高度", 50.0, 30.0, 100.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroRadius = new NumberValue<>("Radius", "圆角半径", 10.0, 0.0, 20.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroBlurRadius = new NumberValue<>("BlurRadius", "模糊半径", 10.0, 1.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroBarHeight = new NumberValue<>("BarHeight", "血条粗细", 10.0, 2.0, 30.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroBarRadius = new NumberValue<>("BarRadius", "血条圆角", 4.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final EnumValue<AvatarPosEn> MahiroAvatarPos = new EnumValue<>("AvatarPos", "头像位置", AvatarPosEn.Left, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroNameSize = new NumberValue<>("NameSize", "名字大小", 14.0, 8.0, 24.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroNameX = new NumberValue<>("NameX", "名字X偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro);
+    private final NumberValue<Double> MahiroOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro && MahiroAvatarPos.get() == AvatarPosEn.OnBar);
 
-    // Moonlight Delay Settings
-    private final BoolValue moonlightDelay = new BoolValue("DelayBar", "延迟血条", true, () -> style.get() == StyleEn.Moonlight);
-    private final BoolValue moonlightDelayWait = new BoolValue("WaitMode", "受伤等待", true, () -> style.get() == StyleEn.Moonlight && moonlightDelay.get());
-    private final NumberValue<Integer> moonlightDelayTime = new NumberValue<>("DelayTime", "延迟时间(ms)", 600, 0, 2000, 50, () -> style.get() == StyleEn.Moonlight && moonlightDelay.get() && moonlightDelayWait.get());
-    private final NumberValue<Double> moonlightDelaySpeed = new NumberValue<>("DelaySpeed", "延迟动画速度", 2.0, 0.1, 10.0, 0.1, () -> style.get() == StyleEn.Moonlight && moonlightDelay.get());
-    private final ColorValue moonlightDelayColor = new ColorValue("DelayColor", "延迟血条颜色", new Color(255, 255, 0, 150), () -> style.get() == StyleEn.Moonlight && moonlightDelay.get());
+    // Mahiro Delay Settings
+    private final BoolValue MahiroDelay = new BoolValue("DelayBar", "延迟血条", true, () -> style.get() == StyleEn.Mahiro);
+    private final BoolValue MahiroDelayWait = new BoolValue("WaitMode", "受伤等待", true, () -> style.get() == StyleEn.Mahiro && MahiroDelay.get());
+    private final NumberValue<Integer> MahiroDelayTime = new NumberValue<>("DelayTime", "延迟时间(ms)", 600, 0, 2000, 50, () -> style.get() == StyleEn.Mahiro && MahiroDelay.get() && MahiroDelayWait.get());
+    private final NumberValue<Double> MahiroDelaySpeed = new NumberValue<>("DelaySpeed", "延迟动画速度", 2.0, 0.1, 10.0, 0.1, () -> style.get() == StyleEn.Mahiro && MahiroDelay.get());
+    private final ColorValue MahiroDelayColor = new ColorValue("DelayColor", "延迟血条颜色", new Color(255, 255, 0, 150), () -> style.get() == StyleEn.Mahiro && MahiroDelay.get());
 
     // Modern Settings
     private final NumberValue<Integer> modernBgAlpha = new NumberValue<>("BgAlpha", "背景透明度", 100, 0, 255, 1, () -> style.get() == StyleEn.Modern);
@@ -254,12 +254,12 @@ public class TargetHud extends HudModule {
         displayHealth = MathHelper.lerp(tickDelta * 0.2f, displayHealth, health);
 
         // Delay Health Logic
-        if (moonlightDelay.get()) {
+        if (MahiroDelay.get()) {
             if (health < delayHealth) {
                 // If WaitMode is ON, check timer. If OFF, bypass timer.
-                if (!moonlightDelayWait.get() || damageTimer.passedMS(moonlightDelayTime.get())) {
+                if (!MahiroDelayWait.get() || damageTimer.passedMS(MahiroDelayTime.get())) {
                     // Slowly decrease delayHealth
-                    delayHealth = MathHelper.lerp(tickDelta * moonlightDelaySpeed.get().floatValue() * 0.05f, delayHealth, health);
+                    delayHealth = MathHelper.lerp(tickDelta * MahiroDelaySpeed.get().floatValue() * 0.05f, delayHealth, health);
                 }
             } else if (health > delayHealth) {
                 // Heal or new target, reset delay bar immediately
@@ -279,8 +279,8 @@ public class TargetHud extends HudModule {
         renderKawaseBloom(context, animValue);
         */
 
-        if (style.get() == StyleEn.Moonlight) {
-            renderMoonlightBackground(animValue);
+        if (style.get() == StyleEn.Mahiro) {
+            renderMahiroBackground(animValue);
         }
 
         // 1. Render NanoVG elements (Backgrounds, Bars, Text)
@@ -298,8 +298,8 @@ public class TargetHud extends HudModule {
 
             if (style.get() == StyleEn.Modern) {
                 renderModern(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
-            } else if (style.get() == StyleEn.Moonlight) {
-                renderMoonlight(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
+            } else if (style.get() == StyleEn.Mahiro) {
+                renderMahiro(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
             } else {
                 renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
             }
@@ -776,18 +776,18 @@ public class TargetHud extends HudModule {
         return imageId;
     }
 
-    private void renderMoonlightBackground(float animValue) {
-        float globalScale = moonlightScale.get().floatValue();
+    private void renderMahiroBackground(float animValue) {
+        float globalScale = MahiroScale.get().floatValue();
 
-        float baseW = moonlightWidth.get().floatValue();
-        float baseH = moonlightHeight.get().floatValue();
+        float baseW = MahiroWidth.get().floatValue();
+        float baseH = MahiroHeight.get().floatValue();
 
-        AvatarPosEn avatarPos = moonlightAvatarPos.get();
+        AvatarPosEn avatarPos = MahiroAvatarPos.get();
         float heightIncrease = 0;
         float contentYOffset = 0;
 
         if (avatarPos == AvatarPosEn.OnBar) {
-            float offset = moonlightOnBarHeight.get().floatValue();
+            float offset = MahiroOnBarHeight.get().floatValue();
             contentYOffset = offset; // Shift content down
             heightIncrease = offset; // Increase background height
         }
@@ -803,8 +803,8 @@ public class TargetHud extends HudModule {
         float rx = cx - w / 2f;
         float ry = cy - h / 2f;
 
-        float r = moonlightRadius.get().floatValue() * globalScale * animValue;
-        float blur = moonlightBlurRadius.get().floatValue() * globalScale;
+        float r = MahiroRadius.get().floatValue() * globalScale * animValue;
+        float blur = MahiroBlurRadius.get().floatValue() * globalScale;
 
         Shader2DUtil.drawRoundedBlur(
                 new MatrixStack(),
@@ -816,20 +816,20 @@ public class TargetHud extends HudModule {
         );
     }
 
-    private void renderMoonlight(long vg, LivingEntity target, float health, float maxHealth, float animationFactor, float damageFactor) {
-        float globalScale = moonlightScale.get().floatValue();
+    private void renderMahiro(long vg, LivingEntity target, float health, float maxHealth, float animationFactor, float damageFactor) {
+        float globalScale = MahiroScale.get().floatValue();
 
         NanoVGHelper.save();
         NanoVGHelper.translate(vg, x, y);
         NanoVGHelper.scale(vg, globalScale, globalScale);
         NanoVGHelper.translate(vg, -x, -y);
 
-        float baseW = moonlightWidth.get().floatValue();
-        float baseH = moonlightHeight.get().floatValue();
-        float radius = moonlightRadius.get().floatValue();
-        float barRadius = moonlightBarRadius.get().floatValue();
-        float nameSize = moonlightNameSize.get().floatValue();
-        AvatarPosEn avatarPos = moonlightAvatarPos.get();
+        float baseW = MahiroWidth.get().floatValue();
+        float baseH = MahiroHeight.get().floatValue();
+        float radius = MahiroRadius.get().floatValue();
+        float barRadius = MahiroBarRadius.get().floatValue();
+        float nameSize = MahiroNameSize.get().floatValue();
+        AvatarPosEn avatarPos = MahiroAvatarPos.get();
 
         float padding = 6f;
         float avatarSize = baseH - padding * 2;
@@ -840,7 +840,7 @@ public class TargetHud extends HudModule {
         float heightIncrease = 0;
 
         if (avatarPos == AvatarPosEn.OnBar) {
-            float offset = moonlightOnBarHeight.get().floatValue();
+            float offset = MahiroOnBarHeight.get().floatValue();
             contentYOffset = offset; // Shift text/bar down
             heightIncrease = offset; // Increase BG height
         }
@@ -858,11 +858,11 @@ public class TargetHud extends HudModule {
             contentW = baseW - (padding + padding);
         }
 
-        float barH = moonlightBarHeight.get().floatValue();
+        float barH = MahiroBarHeight.get().floatValue();
 
         // Name
-        float nameXOffset = moonlightNameX.get().floatValue();
-        float nameYOffset = moonlightNameY.get().floatValue();
+        float nameXOffset = MahiroNameX.get().floatValue();
+        float nameYOffset = MahiroNameY.get().floatValue();
 
         float nameY = y + padding + (nameSize / 2) + 2 + contentYOffset + nameYOffset;
 
@@ -896,8 +896,8 @@ public class TargetHud extends HudModule {
         NanoVGHelper.drawRoundRect(contentX, barY, contentW, barH, barRadius, new Color(30, 30, 30));
 
         // Delay Bar
-        if (moonlightDelay.get() && delayHealth > health) {
-            NanoVGHelper.drawRoundRect(contentX, barY, delayBarW, barH, barRadius, moonlightDelayColor.get());
+        if (MahiroDelay.get() && delayHealth > health) {
+            NanoVGHelper.drawRoundRect(contentX, barY, delayBarW, barH, barRadius, MahiroDelayColor.get());
         }
 
         // Bar Gradient Logic
