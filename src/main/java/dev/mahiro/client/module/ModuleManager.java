@@ -19,6 +19,7 @@ import dev.mahiro.client.module.impl.render.*;
 import dev.mahiro.client.values.Value;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
+import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -164,6 +165,9 @@ public class ModuleManager {
         if (mc.currentScreen != null) return;
         if (!AuthGate.canToggleModules()) return;
 
+        int keyCode = event.getKey();
+        if (keyCode == GLFW.GLFW_KEY_UNKNOWN) return;
+
         boolean isPress = event.getAction() == KeyAction.Press;
         boolean isRelease = event.getAction() == KeyAction.Release;
 
@@ -171,7 +175,7 @@ public class ModuleManager {
         boolean hasEnabling = false;
 
         for (Module module : modules.values()) {
-            if (module.getKey() != event.getKey()) continue;
+            if (module.getKey() != keyCode) continue;
 
             if (module.getBindMode() == Module.BindMode.Toggle && isPress) {
                 if (!module.isEnabled()) hasEnabling = true;
