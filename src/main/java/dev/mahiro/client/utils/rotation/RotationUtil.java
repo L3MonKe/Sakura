@@ -104,7 +104,7 @@ public class RotationUtil {
                 }
 
                 Rotation testRotation = calculate(new Vector3d(testX, testY, testZ));
-                if (RaytraceUtil.overBlock(testRotation, direction, position, false)) {
+                if (RaytraceUtil.overBlock(testRotation, direction, position)) {
                     return testRotation;
                 }
             }

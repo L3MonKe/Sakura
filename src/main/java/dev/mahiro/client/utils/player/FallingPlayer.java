@@ -1,6 +1,5 @@
 package dev.mahiro.client.utils.player;
 
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
 
@@ -31,20 +30,10 @@ public class FallingPlayer {
     }
 
     public FallingPlayer(PlayerEntity player) {
-        this(
-                player.getX(),
-                player.getY(),
-                player.getZ(),
-                player.getVelocity().x,
-                player.getVelocity().y,
-                player.getVelocity().z,
-                player.getHeadYaw(),
-                player.sidewaysSpeed,
-                player.forwardSpeed
-        );
+        this(player.getX(), player.getY(), player.getZ(), player.getVelocity().x, player.getVelocity().y, player.getVelocity().z, player.getHeadYaw(), player.sidewaysSpeed, player.forwardSpeed);
         float f = player.getWorld().getBlockState(player.getBlockPos()).getBlock().getJumpVelocityMultiplier();
         float f1 = player.getWorld().getBlockState(player.getLandingPos()).getBlock().getJumpVelocityMultiplier();
-        float jumpingVelocity = 0.42F * ((double)f == 1.0 ? f1 : f) + player.getJumpBoostVelocityModifier();
+        float jumpingVelocity = 0.42F * ((double) f == 1.0 ? f1 : f) + player.getJumpBoostVelocityModifier();
         this.jumpMovementFactor = jumpingVelocity;
     }
 
@@ -99,8 +88,8 @@ public class FallingPlayer {
             fw *= v;
             float f1 = MathHelper.sin(this.yaw * (float) Math.PI / 180.0F);
             float f2 = MathHelper.cos(this.yaw * (float) Math.PI / 180.0F);
-            this.motionX += (double)(sr * f2 - fw * f1);
-            this.motionZ += (double)(fw * f2 + sr * f1);
+            this.motionX += (double) (sr * f2 - fw * f1);
+            this.motionZ += (double) (fw * f2 + sr * f1);
         }
 
         this.motionY -= 0.08;

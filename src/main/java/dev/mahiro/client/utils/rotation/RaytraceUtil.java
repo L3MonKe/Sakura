@@ -134,6 +134,10 @@ public class RaytraceUtil {
         return distance <= rangeSquared && canSeePointFrom(cameraVec, entityHitResult.getPos()) || distance <= wallsRangeSquared;
     }
 
+    public static boolean overBlock(final Rotation rotation, final Direction direction, final BlockPos pos) {
+        return overBlock(rotation, direction, pos, false);
+    }
+
     public static boolean overBlock(final Rotation rotation, final Direction direction, final BlockPos pos, final boolean strict) {
         if (mc.player == null || mc.world == null) return false;
 

@@ -11,7 +11,6 @@ public class MotionEvent extends Cancellable {
     private float yaw;
     private float pitch;
     private boolean onGround;
-    private boolean shouldSendExtraC03;
 
     public MotionEvent(EventType type, float yaw, float pitch) {
         this.type = type;
@@ -71,14 +70,6 @@ public class MotionEvent extends Cancellable {
         this.onGround = onGround;
     }
 
-    public boolean isShouldSendExtraC03() {
-        return shouldSendExtraC03;
-    }
-
-    public void setShouldSendExtraC03(boolean shouldSendExtraC03) {
-        this.shouldSendExtraC03 = shouldSendExtraC03;
-    }
-
     public MotionEvent(EventType type, double x, double y, double z, float yaw, float pitch, boolean onGround) {
         this.type = type;
         this.x = x;
@@ -87,6 +78,5 @@ public class MotionEvent extends Cancellable {
         this.yaw = yaw;
         this.pitch = pitch;
         this.onGround = onGround;
-        this.shouldSendExtraC03 = false;
     }
 }
