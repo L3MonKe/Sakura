@@ -2,9 +2,6 @@ package dev.mahiro.client.config;
 
 import com.google.gson.*;
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.account.type.MinecraftAccount;
-import dev.mahiro.client.account.type.impl.CrackedAccount;
-import dev.mahiro.client.account.type.impl.MicrosoftAccount;
 import dev.mahiro.client.gui.clickgui.panel.CategoryPanel;
 import dev.mahiro.client.gui.hud.HudPanel;
 import dev.mahiro.client.manager.Managers;
@@ -34,17 +31,12 @@ public class ConfigManager {
     public static final Path CONFIG_DIR = Paths.get("mahiro-config");
     private static final Path MODULES_DIR = CONFIG_DIR.resolve("modules");
     private static final Path CLICKGUI_FILE = CONFIG_DIR.resolve("clickgui.json");
-    private static final Path ACCOUNTS_FILE = CONFIG_DIR.resolve("accounts.json");
-    private static final Path ENCRYPTED_ACCOUNTS_FILE = CONFIG_DIR.resolve("accounts_enc.json");
-
-    private String currentPassword = null;
 
     public ConfigManager() {
         createConfigDir();
 
         loadModules();
         loadClickGui();
-        loadAccounts();
     }
 
     private void createConfigDir() {
@@ -63,154 +55,6 @@ public class ConfigManager {
     public void saveDefaultConfig() {
         saveModules();
         saveClickGui();
-        saveAccounts();
-    }
-
-    public void saveAccounts() {
-        try {
-            JsonArray array = new JsonArray();
-            for (final MinecraftAccount account : Managers.ACCOUNT.getAccounts()) {
-                try {
-                    array.add(account.toJSON());
-                } catch (RuntimeException e) {
-                    Mahiro.LOGGER.error(e.getMessage());
-                }
-            }
-
-            String jsonString = GSON.toJson(array);
-
-            if (currentPassword != null) {
-                // 加密保存
-                try {
-                    String encrypted = encrypt(jsonString, currentPassword);
-                    Files.writeString(ENCRYPTED_ACCOUNTS_FILE, encrypted, StandardCharsets.UTF_8);
-
-                    // 如果存在明文文件则删除
-                    if (Files.exists(ACCOUNTS_FILE)) {
-                        Files.delete(ACCOUNTS_FILE);
-                    }
-                } catch (Exception e) {
-                    Mahiro.LOGGER.error("Failed to encrypt accounts: {}", e.getMessage());
-                }
-            } else {
-                // 明文保存
-                try (Writer writer = new OutputStreamWriter(
-                        new FileOutputStream(ACCOUNTS_FILE.toFile()), StandardCharsets.UTF_8)) {
-                    writer.write(jsonString);
-                }
-
-                // 如果存在加密文件则删除
-                if (Files.exists(ENCRYPTED_ACCOUNTS_FILE)) {
-                    Files.delete(ENCRYPTED_ACCOUNTS_FILE);
-                }
-            }
-        } catch (IOException e) {
-            Mahiro.LOGGER.error("Failed to save accounts: {}", e.getMessage());
-        }
-    }
-
-    public void loadAccounts() {
-        try {
-            String content = null;
-
-            if (Files.exists(ENCRYPTED_ACCOUNTS_FILE)) {
-                if (currentPassword != null) {
-                    try {
-                        String encrypted = Files.readString(ENCRYPTED_ACCOUNTS_FILE, StandardCharsets.UTF_8);
-                        content = decrypt(encrypted, currentPassword);
-                    } catch (Exception e) {
-                        Mahiro.LOGGER.error("Failed to decrypt accounts: {}", e.getMessage());
-                        return;
-                    }
-                } else {
-                    Mahiro.LOGGER.info("Encrypted accounts file found, waiting for password.");
-                    return;
-                }
-            } else if (Files.exists(ACCOUNTS_FILE)) {
-                content = Files.readString(ACCOUNTS_FILE, StandardCharsets.UTF_8);
-            }
-
-            if (content == null) return;
-
-            JsonArray json = JsonParser.parseString(content).getAsJsonArray();
-
-            Managers.ACCOUNT.getAccounts().clear();
-            for (JsonElement element : json) {
-                if (!(element instanceof JsonObject object)) {
-                    continue;
-                }
-
-                MinecraftAccount account = null;
-                if (object.has("email") && object.has("password")) {
-                    account = new MicrosoftAccount(object.get("email").getAsString(),
-                            object.get("password").getAsString());
-                    if (object.has("username")) {
-                        ((MicrosoftAccount) account).setUsername(object.get("username").getAsString());
-                    }
-                } else if (object.has("token")) {
-                    if (!object.has("username")) {
-                        Mahiro.LOGGER.error("Browser account does not have a username set?");
-                        continue;
-                    }
-                    account = new MicrosoftAccount(object.get("token").getAsString());
-                    ((MicrosoftAccount) account).setUsername(object.get("username").getAsString());
-                } else {
-                    if (object.has("username")) {
-                        account = new CrackedAccount(object.get("username").getAsString());
-                    }
-                }
-
-                if (account != null) {
-                    Managers.ACCOUNT.register(account, false);
-                } else {
-                    Mahiro.LOGGER.error("Could not parse account JSON.\nRaw: {}", object.toString());
-                }
-            }
-        } catch (IOException | IllegalStateException e) {
-            Mahiro.LOGGER.error("Failed to load accounts: {}", e.getMessage());
-        }
-    }
-
-    public void setEncryptionPassword(String password) {
-        this.currentPassword = password;
-        if (password != null) {
-            if (Files.exists(ENCRYPTED_ACCOUNTS_FILE) && Managers.ACCOUNT.getAccounts().isEmpty()) {
-                loadAccounts();
-            } else {
-                saveAccounts();
-            }
-        } else {
-            saveAccounts();
-        }
-    }
-
-    public boolean isEncrypted() {
-        return Files.exists(ENCRYPTED_ACCOUNTS_FILE) || currentPassword != null;
-    }
-
-    private static String encrypt(String data, String password) throws Exception {
-        SecretKeySpec key = generateKey(password);
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, key);
-        byte[] encrypted = cipher.doFinal(data.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(encrypted);
-    }
-
-    private static String decrypt(String encryptedData, String password) throws Exception {
-        SecretKeySpec key = generateKey(password);
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.DECRYPT_MODE, key);
-        byte[] decoded = Base64.getDecoder().decode(encryptedData);
-        byte[] decrypted = cipher.doFinal(decoded);
-        return new String(decrypted, StandardCharsets.UTF_8);
-    }
-
-    private static SecretKeySpec generateKey(String password) throws Exception {
-        MessageDigest sha = MessageDigest.getInstance("SHA-256");
-        byte[] key = password.getBytes(StandardCharsets.UTF_8);
-        key = sha.digest(key);
-        key = Arrays.copyOf(key, 16);
-        return new SecretKeySpec(key, "AES");
     }
 
     private void saveModules() {
