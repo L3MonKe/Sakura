@@ -49,6 +49,7 @@ public class Scaffold extends Module {
     private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, telly::get);
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, telly::get);
+    private final BoolValue sideCheck = new BoolValue("Side Check", "放置面检测", false);
     private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
     private final BoolValue shrink = new BoolValue("Shrink", "收缩", true, render::get);
@@ -181,7 +182,7 @@ public class Scaffold extends Module {
     public void place() {
         if (!onAir()) return;
 
-        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position);
+        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position, sideCheck.get());
         if (!hasRotated) return;
 
         BlockPos targetPos = blockCache.position.offset(blockCache.facing);
@@ -303,7 +304,7 @@ public class Scaffold extends Module {
                 : RotationUtil.calculate(blockCache.position);
 
         Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), rotations.pitch);
-        boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, false);
+        boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, sideCheck.get());
         if (hasRotated) return reverseYaw;
         return rotations;
     }
