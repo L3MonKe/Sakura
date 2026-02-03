@@ -68,19 +68,14 @@ public class BlinkNoSlow extends Module {
     @EventHandler
     public void onMotion(MotionEvent event) {
         if (event.getType() == EventType.POST) return;
-        if (nullCheck() || mc.getNetworkHandler() == null || mc.world == null) {
+        if (nullCheck() || nullCheck()) {
             packets.clear();
             return;
         }
 
         if (mc.player.isUsingItem() && canNoSlow()) {
             if (MoveUtil.isMoving()) {
-                PlayerInteractItemC2SPacket usePacket = new PlayerInteractItemC2SPacket(
-                        Hand.MAIN_HAND,
-                        mc.world.getPendingUpdateManager().incrementSequence().getSequence(),
-                        event.getYaw(),
-                        event.getPitch()
-                );
+                PlayerInteractItemC2SPacket usePacket = new PlayerInteractItemC2SPacket(Hand.MAIN_HAND, mc.world.getPendingUpdateManager().incrementSequence().getSequence(), event.getYaw(), event.getPitch());
                 packets.add(usePacket);
                 flush();
                 PlayerActionC2SPacket releasePacket = new PlayerActionC2SPacket(
@@ -90,12 +85,7 @@ public class BlinkNoSlow extends Module {
                 );
                 packets.add(releasePacket);
             } else {
-                mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(
-                        Hand.MAIN_HAND,
-                        mc.world.getPendingUpdateManager().incrementSequence().getSequence(),
-                        event.getYaw(),
-                        event.getPitch()
-                ));
+                mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(Hand.MAIN_HAND, mc.world.getPendingUpdateManager().incrementSequence().getSequence(), event.getYaw(), event.getPitch()));
             }
         } else {
             flush();

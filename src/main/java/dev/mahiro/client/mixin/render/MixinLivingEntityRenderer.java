@@ -10,6 +10,7 @@ import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.impl.render.Chams;
 import dev.mahiro.client.module.impl.render.NameTags;
 import dev.mahiro.client.utils.vector.Rotation;
+import dev.mahiro.client.values.impl.BoolValue;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -61,6 +62,9 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
         if (!(((IEntityRenderState) state).getEntity() instanceof PlayerEntity player) || player == mc.player) return;
 
         if (Mahiro.MODULES.getModule(Chams.class).isEnabled()) {
+            if (vertexConsumerProvider instanceof VertexConsumerProvider.Immediate immediate) {
+                immediate.draw();
+            }
             glEnable(GL_POLYGON_OFFSET_FILL);
             glPolygonOffset(1.0f, -1100000.0f);
         }
@@ -71,6 +75,9 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
         if (!(((IEntityRenderState) state).getEntity() instanceof PlayerEntity player) || player == mc.player) return;
 
         if (Mahiro.MODULES.getModule(Chams.class).isEnabled()) {
+            if (vertexConsumerProvider instanceof VertexConsumerProvider.Immediate immediate) {
+                immediate.draw();
+            }
             glPolygonOffset(1.0f, 1100000.0f);
             glDisable(GL_POLYGON_OFFSET_FILL);
         }
