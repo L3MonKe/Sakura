@@ -7,6 +7,7 @@ import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
+import org.joml.Matrix3x2fStack;
 import org.joml.Matrix4f;
 
 import java.awt.*;
@@ -18,7 +19,7 @@ public class Shader2DUtil {
         BLUR_PROGRAM = new BlurProgram();
     }
 
-    public static void drawQuadBlur(MatrixStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
+    public static void drawQuadBlur(Matrix3x2fStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
         BufferBuilder bb = preShaderDraw(matrices, x - 10, y - 10, width + 20, height + 20);
 
         BLUR_PROGRAM.setParameters(x, y, width, height, 0f, new Color(0, 0, 0, 0), blurStrength, blurOpacity);
@@ -28,7 +29,7 @@ public class Shader2DUtil {
         endRender();
     }
 
-    public static void drawRoundedBlur(MatrixStack matrices, float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
+    public static void drawRoundedBlur(Matrix3x2fStack matrices, float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
         blurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
 
         BufferBuilder bb = preShaderDraw(matrices, x - 10, y - 10, width + 20, height + 20);
@@ -46,7 +47,7 @@ public class Shader2DUtil {
         buffer.vertex(matrix, x1, y, 0).color(1f, 1f, 1f, 1f);
     }
 
-    public static BufferBuilder preShaderDraw(MatrixStack matrices, float x, float y, float width, float height) {
+    public static BufferBuilder preShaderDraw(Matrix3x2fStack matrices, float x, float y, float width, float height) {
         beginRender();
         Matrix4f matrix = matrices.peek().getPositionMatrix();
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);

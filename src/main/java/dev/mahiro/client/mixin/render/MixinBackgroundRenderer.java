@@ -1,5 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.NoRender;
@@ -10,12 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(FogRenderer.class)
 public class MixinBackgroundRenderer {
-    @ModifyReturnValue(method = "applyFog", at = @At("RETURN"))
-    private static Fog onApplyFog(Fog original) {
-        NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
-        if (noRender.noFog() || noRender.noBlindness() || noRender.noDarkness()) {
-            return Fog.DUMMY;
-        }
-        return original;
+    @ModifyExpressionValue(method = "getFogBuffer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/fog/FogRenderer;fogEnabled:Z"))
+    private boolean modifyFogEnabled(boolean original) {
+        return original && !Mahiro.MODULES.getModule(NoRender.class).noFog();
     }
 }

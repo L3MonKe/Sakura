@@ -115,10 +115,12 @@ public class NoRender extends Module {
     }
 
     public boolean noBlindness() {
+        //TODO:
         return isEnabled() && noBlindness.get();
     }
 
     public boolean noDarkness() {
+        //TODO:
         return isEnabled() && noDarkness.get();
     }
 
