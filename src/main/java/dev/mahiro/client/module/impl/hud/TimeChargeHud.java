@@ -93,13 +93,12 @@ public class TimeChargeHud extends HudModule {
         NanoVGRenderer.INSTANCE.draw(vg -> {
             NanoVGHelper.save();
 
-            // 整个模块的外发光 (Bloom)
-            if (bloom.get()) {
-                NanoVGHelper.drawShadow(bgX, bgY, bgW, bgH, bgR, bloomColor.get(), bloomRadius.get().floatValue(), 0, 0);
-            }
-
             // 整个模块的背景
-            NanoVGHelper.drawRoundRect(bgX, bgY, bgW, bgH, bgR, BACKGROUND_COLOR);
+            if (bloom.get()) {
+                NanoVGHelper.drawRoundRectBloom(bgX, bgY, bgW, bgH, bgR, bloomRadius.get().floatValue(), BACKGROUND_COLOR);
+            } else {
+                NanoVGHelper.drawRoundRect(bgX, bgY, bgW, bgH, bgR, BACKGROUND_COLOR);
+            }
 
             // 标题 "Timer"
             int font = FontLoader.medium(12);
