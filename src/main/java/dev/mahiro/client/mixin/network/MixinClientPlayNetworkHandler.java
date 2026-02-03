@@ -41,17 +41,17 @@ public abstract class MixinClientPlayNetworkHandler extends ClientCommonNetworkH
 
     @Inject(method = "onEntityVelocityUpdate", at = @At("HEAD"), cancellable = true)
     public void onEntityVelocityUpdate(EntityVelocityUpdateS2CPacket packet, CallbackInfo ci) {
-        NetworkThreadUtils.forceMainThread(packet, (ClientPlayNetworkHandler) (Object) this, this.client);
+        NetworkThreadUtils.forceMainThread(packet, (ClientPlayNetworkHandler)(Object)this, this.client.getPacketApplyBatcher());
         Entity entity = this.world.getEntityById(packet.getEntityId());
         if (entity != null) {
             if (entity == MinecraftClient.getInstance().player) {
                 EntityVelocityUpdateEvent event = new EntityVelocityUpdateEvent();
                 Mahiro.EVENT_BUS.post(event);
                 if (!event.isCancelled()) {
-                    entity.setVelocityClient(packet.getVelocityX(), packet.getVelocityY(), packet.getVelocityZ());
+                    entity.setVelocityClient(packet.getVelocity());
                 }
             } else {
-                entity.setVelocityClient(packet.getVelocityX(), packet.getVelocityY(), packet.getVelocityZ());
+                entity.setVelocityClient(packet.getVelocity());
             }
         }
         ci.cancel();
