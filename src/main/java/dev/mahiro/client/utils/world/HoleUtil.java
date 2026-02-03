@@ -43,7 +43,7 @@ public class HoleUtil {
         BlockPos bestPos = null;
         double bestDistance = range + 1;
 
-        for (BlockPos pos : getSphere(range, mc.player.getPos())) {
+        for (BlockPos pos : getSphere(range, mc.player.getBlockPos().toCenterPos())) {
             if (pos.getX() != mc.player.getBlockX() || pos.getZ() != mc.player.getBlockZ()) {
                 if (!up && pos.getY() + 1 > mc.player.getY()) continue;
             }

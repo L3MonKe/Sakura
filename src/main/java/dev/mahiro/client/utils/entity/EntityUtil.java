@@ -31,7 +31,7 @@ public class EntityUtil {
     }
 
     public static boolean isInsideBlock() {
-        if (mc.world.getBlockState(BlockPos.ofFloored(mc.player.getPos())).getBlock() == Blocks.ENDER_CHEST)
+        if (mc.world.getBlockState(BlockPos.ofFloored(mc.player.getBlockPos().toCenterPos())).getBlock() == Blocks.ENDER_CHEST)
             return true;
         return mc.world.canCollide(mc.player, mc.player.getBoundingBox());
     }

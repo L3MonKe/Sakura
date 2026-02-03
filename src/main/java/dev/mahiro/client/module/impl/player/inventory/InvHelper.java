@@ -48,8 +48,8 @@ public class InvHelper {
         if (stack == null) {
             return -1;
         } else {
-            for (int i = 0; i < mc.player.getInventory().main.size(); i++) {
-                if (mc.player.getInventory().main.get(i) == stack) {
+            for (int i = 0; i < mc.player.getInventory().getMainStacks().size(); i++) {
+                if (mc.player.getInventory().getMainStacks().get(i) == stack) {
                     return i;
                 }
             }
@@ -124,8 +124,8 @@ public class InvHelper {
     }
 
     public static int getItemSlot(Item item) {
-        for (int i = 0; i < mc.player.getInventory().main.size(); i++) {
-            ItemStack itemStack = mc.player.getInventory().main.get(i);
+        for (int i = 0; i < mc.player.getInventory().getMainStacks().size(); i++) {
+            ItemStack itemStack = mc.player.getInventory().getMainStacks().get(i);
             if (itemStack.getItem() == item) {
                 return i;
             }
@@ -135,7 +135,7 @@ public class InvHelper {
 
     public static List<ItemStack> getAllItems() {
         ArrayList<ItemStack> list = new ArrayList<>(40);
-        list.addAll(mc.player.getInventory().main);
+        list.addAll(mc.player.getInventory().getMainStacks());
         list.addAll(mc.player.getInventory().armor);
         return list;
     }

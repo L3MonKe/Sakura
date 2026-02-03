@@ -81,7 +81,7 @@ public class InvUtil {
         }
 
         if (testInMainHand(isGood)) {
-            return new FindItemResult(mc.player.getInventory().selectedSlot, mc.player.getMainHandStack().getCount(), mc.player.getMainHandStack().getMaxCount());
+            return new FindItemResult(mc.player.getInventory().getSelectedSlot(), mc.player.getMainHandStack().getCount(), mc.player.getMainHandStack().getMaxCount());
         }
 
         return find(isGood, 0, 8);
@@ -140,10 +140,10 @@ public class InvUtil {
     public static boolean swap(int slot, boolean swapBack) {
         if (slot == SlotUtil.OFFHAND) return true;
         if (slot < 0 || slot > 8) return false;
-        if (swapBack && previousSlot == -1) previousSlot = mc.player.getInventory().selectedSlot;
+        if (swapBack && previousSlot == -1) previousSlot = mc.player.getInventory().getSelectedSlot();
         else if (!swapBack) previousSlot = -1;
 
-        mc.player.getInventory().selectedSlot = slot;
+        mc.player.getInventory().setSelectedSlot(slot);
         mc.interactionManager.syncSelectedSlot();
         return true;
     }
@@ -163,7 +163,7 @@ public class InvUtil {
             else if (slot == 40) containerSlot = 45;
 
             ScreenHandler handler = mc.player.currentScreenHandler;
-            int selectedSlot = mc.player.getInventory().selectedSlot;
+            int selectedSlot = mc.player.getInventory().getSelectedSlot();
 
             mc.interactionManager.clickSlot(handler.syncId, containerSlot, selectedSlot, SlotActionType.SWAP, mc.player);
 

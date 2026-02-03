@@ -104,6 +104,6 @@ public class CrystalUtil {
     }
 
     public static float calculateDamage(Entity crystal, Entity target) {
-        return calculateDamage(crystal.getPos(), target);
+        return calculateDamage(crystal.getBlockPos().toCenterPos(), target);
     }
 }

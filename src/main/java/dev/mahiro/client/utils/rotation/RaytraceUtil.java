@@ -45,8 +45,8 @@ public class RaytraceUtil {
     }
 
     public static EntityHitResult rayTraceEntity(double range, Rotation rotation, Predicate<Entity> filter) {
-        if (mc.cameraEntity == null) return null;
-        Entity entity = mc.cameraEntity;
+        if (mc.getCameraEntity() == null) return null;
+        Entity entity = mc.getCameraEntity();
 
         Vec3d cameraVec = entity.getEyePos();
         Vec3d rotationVec = getRotationVector(rotation);
@@ -65,8 +65,8 @@ public class RaytraceUtil {
     }
 
     public static BlockHitResult rayTraceBlock(double range, Rotation rotation, BlockPos pos, BlockState state) {
-        if (mc.cameraEntity == null || mc.world == null || mc.player == null) return null;
-        Entity entity = mc.cameraEntity;
+        if (mc.getCameraEntity() == null || mc.world == null || mc.player == null) return null;
+        Entity entity = mc.getCameraEntity();
 
         Vec3d start = entity.getEyePos();
         Vec3d rotationVec = getRotationVector(rotation);
