@@ -15,7 +15,9 @@ import dev.mahiro.client.utils.color.ColorUtil;
 import dev.mahiro.client.utils.render.RenderUtil;
 import dev.mahiro.client.values.Value;
 import dev.mahiro.client.values.impl.*;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
@@ -154,37 +156,35 @@ public class ModuleComponent implements IComponent {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (isBindBoxHovered((int) mouseX, (int) mouseY)) {
-            if (mouseButton == 0) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (isBindBoxHovered(click)) {
+            if (click.button() == 0) {
                 listening = !listening;
-                return true;
-            } else if (mouseButton == 2) {
+            } else if (click.button() == 2) {
                 module.setBindMode(module.getBindMode() == Module.BindMode.Toggle ? Module.BindMode.Hold : Module.BindMode.Toggle);
-                return true;
             }
         } else if (listening) {
             listening = false;
         }
 
-        if (isHovered((int) mouseX, (int) mouseY) && !isBindBoxHovered((int) mouseX, (int) mouseY)) {
-            switch (mouseButton) {
+        if (isHovered((int) click.x(), (int) click.y()) && !isBindBoxHovered(click)) {
+            switch (click.button()) {
                 case 0 -> module.toggle();
                 case 1 -> opened = !opened;
             }
         }
-        if (opened && !isHovered((int) mouseX, (int) mouseY)) {
-            settings.forEach(setting -> setting.mouseClicked(mouseX, mouseY, mouseButton));
+        if (opened && !isHovered((int) click.x(), (int) click.y())) {
+            settings.forEach(setting -> setting.mouseClicked(click, doubled));
         }
-        return IComponent.super.mouseClicked(mouseX, mouseY, mouseButton);
+        return IComponent.super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int state) {
-        if (opened && !isHovered((int) mouseX, (int) mouseY)) {
-            settings.forEach(setting -> setting.mouseReleased(mouseX, mouseY, state));
+    public boolean mouseReleased(Click click) {
+        if (opened && !isHovered((int) click.x(), (int) click.y())) {
+            settings.forEach(setting -> setting.mouseReleased(click));
         }
-        return IComponent.super.mouseReleased(mouseX, mouseY, state);
+        return IComponent.super.mouseReleased(click);
     }
 
     @Override
@@ -205,27 +205,27 @@ public class ModuleComponent implements IComponent {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         if (opened) {
             for (Component setting : settings) {
-                if (setting.charTyped(chr, modifiers)) {
+                if (setting.charTyped(input)) {
                     return true;
                 }
             }
         }
-        return IComponent.super.charTyped(chr, modifiers);
+        return IComponent.super.charTyped(input);
     }
 
     public boolean isHovered(int mouseX, int mouseY) {
         return RenderUtil.isHovering(x, y, width, MODULE_HEIGHT * scale, mouseX, mouseY);
     }
 
-    public boolean isBindBoxHovered(int mouseX, int mouseY) {
+    public boolean isBindBoxHovered(Click click) {
         float boxWidth = 18 * scale;
         float boxHeight = 8 * scale;
         float boxX = x + width - boxWidth - 4 * scale;
         float boxY = y + (MODULE_HEIGHT * scale - boxHeight) / 2;
-        return RenderUtil.isHovering(boxX, boxY, boxWidth, boxHeight, mouseX, mouseY);
+        return RenderUtil.isHovering(boxX, boxY, boxWidth, boxHeight, click.x(), click.y());
     }
 
     public boolean isListening() {

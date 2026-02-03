@@ -28,7 +28,6 @@ import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.SwordItem;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.s2c.play.BundleS2CPacket;

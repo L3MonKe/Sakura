@@ -14,3 +14,4 @@ accessible field net/minecraft/client/render/item/ItemRenderState layerCount I
 accessible method net/minecraft/client/render/item/ItemRenderState$LayerRenderState getTransformation ()Lnet/minecraft/client/render/model/json/Transformation;
 accessible class net/minecraft/client/render/BackgroundRenderer$StatusEffectFogModifier
 accessible method net/minecraft/client/world/ClientWorld getPendingUpdateManager ()Lnet/minecraft/client/network/PendingUpdateManager;
+accessible method net/minecraft/client/render/BufferBuilder build ()Lnet/minecraft/client/render/BuiltBuffer;

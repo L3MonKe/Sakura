@@ -5,21 +5,20 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.Capes;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.player.SkinTextures;
+import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(AbstractClientPlayerEntity.class)
 public abstract class MixinAbstractClientPlayerEntity {
-    @ModifyReturnValue(method = "getSkinTextures", at = @At("RETURN"))
+    @ModifyReturnValue(method = "getSkin", at = @At("RETURN"))
     private SkinTextures modifySkinTextures(SkinTextures original) {
-        Capes capes = Mahiro.MODULES.getModule(Capes.class);
-        if (capes == null) return original;
-
         AbstractClientPlayerEntity player = (AbstractClientPlayerEntity) (Object) this;
 
-        Identifier newCape = capes.getCape(player, false);
-        Identifier newElytra = capes.getCape(player, true);
+        Capes capes = Mahiro.MODULES.getModule(Capes.class);
+        AssetInfo.TextureAsset newCape = capes.getCape(player, false);
+        AssetInfo.TextureAsset newElytra = capes.getCape(player, true);
 
         if (newCape == null) newCape = original.cape();
         if (newElytra == null) newElytra = original.elytra();
@@ -28,13 +27,6 @@ public abstract class MixinAbstractClientPlayerEntity {
             return original;
         }
 
-        return new SkinTextures(
-                original.body(),
-                original.textureUrl(),
-                newCape,
-                newElytra,
-                original.model(),
-                original.secure()
-        );
+        return new SkinTextures(original.body(), newCape, newElytra, original.model(), original.secure());
     }
 }

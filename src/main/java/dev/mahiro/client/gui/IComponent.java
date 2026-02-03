@@ -1,16 +1,18 @@
 package dev.mahiro.client.gui;
 
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
 
 public interface IComponent {
     default void render(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks) {
     }
 
-    default boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    default boolean mouseClicked(Click click, boolean doubled) {
         return false;
     }
 
-    default boolean mouseReleased(double mouseX, double mouseY, int state) {
+    default boolean mouseReleased(Click click) {
         return false;
     }
 
@@ -18,7 +20,7 @@ public interface IComponent {
         return false;
     }
 
-    default boolean charTyped(char chr, int modifiers) {
+    default boolean charTyped(CharInput input) {
         return false;
     }
 }

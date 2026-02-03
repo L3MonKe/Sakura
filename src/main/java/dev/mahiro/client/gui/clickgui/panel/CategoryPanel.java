@@ -13,7 +13,9 @@ import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseInOutQuad;
 import dev.mahiro.client.utils.render.RenderUtil;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
 
 import java.awt.*;
 
@@ -74,13 +76,13 @@ public class CategoryPanel implements IComponent {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (isHovered((int) mouseX, (int) mouseY)) {
-            switch (mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (isHovered((int) click.x(), (int) click.y())) {
+            switch (click.button()) {
                 case 0 -> {
                     dragging = true;
-                    dragX = (float) (x - mouseX);
-                    dragY = (float) (y - mouseY);
+                    dragX = (float) (x - click.x());
+                    dragY = (float) (y - click.y());
                 }
                 case 1 -> opened = !opened;
             }
@@ -89,12 +91,12 @@ public class CategoryPanel implements IComponent {
 
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (component.mouseClicked(mouseX, mouseY, mouseButton)) {
+            if (component.mouseClicked(click, doubled)) {
                 handled = true;
             }
         }
 
-        return handled || IComponent.super.mouseClicked(mouseX, mouseY, mouseButton);
+        return handled || IComponent.super.mouseClicked(click, doubled);
     }
 
     @Override
@@ -109,28 +111,28 @@ public class CategoryPanel implements IComponent {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (component.charTyped(chr, modifiers)) {
+            if (component.charTyped(input)) {
                 handled = true;
             }
         }
-        return handled || IComponent.super.charTyped(chr, modifiers);
+        return handled || IComponent.super.charTyped(input);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int state) {
-        if (state == 0) dragging = false;
+    public boolean mouseReleased(Click click) {
+        //if (state == 0) dragging = false;
 
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (component.mouseReleased(mouseX, mouseY, state)) {
+            if (component.mouseReleased(click)) {
                 handled = true;
             }
         }
 
-        return handled || IComponent.super.mouseReleased(mouseX, mouseY, state);
+        return handled || IComponent.super.mouseReleased(click);
     }
 
     public void update(int mouseX, int mouseY) {

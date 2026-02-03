@@ -99,7 +99,7 @@ public class FakePlayer extends Module {
                 fakePlayer.setHeadYaw(p.yaw);
 
                 fakePlayer.updateTrackedPosition(p.x, p.y, p.z);
-                fakePlayer.updateTrackedPositionAndAngles(p.x, p.y, p.z, p.yaw, p.pitch, 3);
+                fakePlayer.updateTrackedPositionAndAngles(new Vec3d(p.x, p.y, p.z), p.yaw, p.pitch);
             } else movementTick = 0;
 
             if (fakePlayer.isDead()) {
@@ -115,7 +115,7 @@ public class FakePlayer extends Module {
         if (event.getType() != EventType.RECEIVE) return;
         if (fakePlayer == null) return;
 
-        if (!(fakePlayer.isAlive() && fakePlayer.clientWorld == mc.world)) {
+        if (!(fakePlayer.isAlive() && fakePlayer.getEntityWorld() == mc.world)) {
             setState(false);
             return;
         }
@@ -128,7 +128,7 @@ public class FakePlayer extends Module {
 
         if (damage.get() && fakePlayer.hurtTime == 0 && event.getPacket() instanceof ExplosionS2CPacket explosion) {
             Vec3d center = explosion.center();
-            double distance = center.distanceTo(fakePlayer.getPos());
+            double distance = center.distanceTo(fakePlayer.getEntityPos());
 
             if (distance > 12) return;
 

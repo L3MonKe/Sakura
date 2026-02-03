@@ -10,8 +10,11 @@ import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseOutSine;
 import dev.mahiro.client.utils.render.Shader2DUtil;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 import java.awt.*;
@@ -51,8 +54,8 @@ public class ClickGuiScreen extends Screen {
     }
 
     @Override
-    public void render(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks) {
-        this.currentContext = guiGraphics;
+    public void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+        this.currentContext = context;
         final float wheel = getDWheel();
         if (wheel != 0) {
             scroll += wheel > 0 ? 15 : -15;
@@ -66,7 +69,7 @@ public class ClickGuiScreen extends Screen {
         if (ClickGui.backgroundBlur.get()) {
             float blurStrength = ClickGui.blurStrength.get().floatValue();
             Shader2DUtil.drawQuadBlur(
-                    guiGraphics.getMatrices(),
+                    context.getMatrices(),
                     0, 0,
                     mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(),
                     blurStrength,
@@ -79,33 +82,31 @@ public class ClickGuiScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (currentContext != null) {
-            int finalMouseY = (int) mouseY;
             boolean handled = false;
             for (CategoryPanel panel : panels) {
-                if (panel.mouseClicked(mouseX, finalMouseY, mouseButton)) {
+                if (panel.mouseClicked(click.x(), click.y(), click.button())) {
                     handled = true;
                 }
             }
-            return handled || super.mouseClicked(mouseX, mouseY, mouseButton);
+            return handled || super.mouseClicked(click, doubled);
         }
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int state) {
+    public boolean mouseReleased(Click click) {
         if (currentContext != null) {
-            int finalMouseY = (int) mouseY;
             boolean handled = false;
             for (CategoryPanel panel : panels) {
-                if (panel.mouseReleased(mouseX, finalMouseY, state)) {
+                if (panel.mouseReleased(click)) {
                     handled = true;
                 }
             }
-            return handled || super.mouseReleased(mouseX, mouseY, state);
+            return handled || super.mouseReleased(click);
         }
-        return super.mouseReleased(mouseX, mouseY, state);
+        return super.mouseReleased(click);
     }
 
     @Override
@@ -114,25 +115,25 @@ public class ClickGuiScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         boolean handled = false;
         for (CategoryPanel panel : panels) {
-            if (panel.keyPressed(keyCode, scanCode, modifiers)) {
+            if (panel.keyPressed(input.getKeycode(), input.scancode(), input.modifiers())) {
                 handled = true;
             }
         }
-        return handled || super.keyPressed(keyCode, scanCode, modifiers);
+        return handled || super.keyPressed(input);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         boolean handled = false;
         for (CategoryPanel panel : panels) {
-            if (panel.charTyped(chr, modifiers)) {
+            if (panel.charTyped(input)) {
                 handled = true;
             }
         }
-        return handled || super.charTyped(chr, modifiers);
+        return handled || super.charTyped(input);
     }
 
     @Override

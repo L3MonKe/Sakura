@@ -11,7 +11,6 @@ import dev.mahiro.client.events.type.KeyAction;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
-import net.minecraft.client.network.ClientCommandSource;
 import net.minecraft.command.CommandSource;
 import org.lwjgl.glfw.GLFW;
 
@@ -27,7 +26,6 @@ public class CommandManager {
     private int prefixKey = GLFW.GLFW_KEY_PERIOD;
 
     private final CommandDispatcher<CommandSource> dispatcher = new CommandDispatcher<>();
-    private final CommandSource source = new ClientCommandSource(null, mc);
 
     public CommandManager() {
         Mahiro.EVENT_BUS.subscribe(this);
@@ -94,7 +92,7 @@ public class CommandManager {
             event.setCancelled(true);
             mc.inGameHud.getChatHud().addToMessageHistory(text);
             try {
-                dispatcher.execute(dispatcher.parse(literal, source));
+                dispatcher.execute(dispatcher.parse(literal, mc.getNetworkHandler().getCommandSource()));
             } catch (Exception ignored) {
             }
         }
@@ -104,7 +102,7 @@ public class CommandManager {
     public void onKey(KeyEvent event) {
         if (event.getAction() == KeyAction.Press && event.getKey() == prefixKey && mc.currentScreen == null) {
             event.setCancelled(true);
-            mc.setScreen(new ChatScreen(""));
+            mc.setScreen(new ChatScreen("", true));
         }
     }
 
@@ -112,7 +110,7 @@ public class CommandManager {
     public void onChatSuggest(SuggestChatEvent event) {
         event.setPrefix(prefix);
         event.setDispatcher(dispatcher);
-        event.setSource(source);
+        event.setSource(mc.getNetworkHandler().getCommandSource());
     }
 
     private void register(Command... commands) {
@@ -139,14 +137,6 @@ public class CommandManager {
     public void setPrefix(String prefix, int prefixKey) {
         this.prefix = prefix;
         this.prefixKey = prefixKey;
-    }
-
-    public CommandDispatcher<CommandSource> getDispatcher() {
-        return dispatcher;
-    }
-
-    public CommandSource getSource() {
-        return source;
     }
 
     private int getPrefixKey(String prefix) {

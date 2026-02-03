@@ -15,6 +15,7 @@ import dev.mahiro.client.utils.color.ColorUtil;
 import dev.mahiro.client.utils.render.RenderUtil;
 import dev.mahiro.client.values.Value;
 import dev.mahiro.client.values.impl.*;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
@@ -112,9 +113,9 @@ public class HudModuleComponent implements IComponent {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (isHovered((int) mouseX, (int) mouseY)) {
-            switch (mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (isHovered((int) click.x(), (int) click.y())) {
+            switch (click.button()) {
                 case 0 -> hudModule.toggle();
                 case 1 -> opened = !opened;
             }

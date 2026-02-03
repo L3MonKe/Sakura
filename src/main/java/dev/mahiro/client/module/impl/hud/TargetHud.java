@@ -45,13 +45,11 @@ import org.lwjgl.system.MemoryStack;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class TargetHud extends HudModule {
-
     public enum HPmodeEn {
         HP, Percentage
     }
@@ -597,11 +595,11 @@ public class TargetHud extends HudModule {
         float xItemOffset = x + 60;
         for (ItemStack itemStack : items) {
             if (itemStack.isEmpty()) continue;
-            context.getMatrices().push();
-            context.getMatrices().translate(xItemOffset, y + 35, 0);
-            context.getMatrices().scale(0.75f, 0.75f, 0.75f);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(xItemOffset, y + 35);
+            context.getMatrices().scale(0.75f, 0.75f);
             context.drawItem(itemStack, 0, 0);
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
             xItemOffset += 14;
         }
     }
@@ -642,10 +640,6 @@ public class TargetHud extends HudModule {
             }
         }
     }
-
-    // ====================================================================================
-    //                                  3D ESP
-    // ====================================================================================
 
     @EventHandler
     public void onRender3D(Render3DEvent event) {

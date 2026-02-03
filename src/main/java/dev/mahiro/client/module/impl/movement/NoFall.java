@@ -8,7 +8,8 @@ import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.impl.EnumValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.item.ItemStack;
+import net.minecraft.component.type.AttributeModifierSlot;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
@@ -39,8 +40,8 @@ public class NoFall extends Module {
     public void onPacketSend(PacketEvent event) {
         if (mc.world == null || mc.player == null || event.getType() != EventType.SEND) return;
 
-        for (ItemStack is : mc.player.getArmorItems()) {
-            if (is.getItem() == Items.ELYTRA) {
+        for (EquipmentSlot slot : AttributeModifierSlot.ARMOR) {
+            if (mc.player.getEquippedStack(slot).getItem() == Items.ELYTRA) {
                 return;
             }
         }
