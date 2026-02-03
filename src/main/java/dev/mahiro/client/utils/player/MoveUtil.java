@@ -11,7 +11,7 @@ import static dev.mahiro.client.Mahiro.mc;
 
 public class MoveUtil {
     public static boolean isMoving() {
-        return mc.player.input.movementForward != 0 || mc.player.input.movementSideways != 0;
+        return mc.player.forwardSpeed != 0 || mc.player.sidewaysSpeed != 0;
     }
 
     public static double getSpeed() {
@@ -106,8 +106,8 @@ public class MoveUtil {
 
     public static double getDirection() {
         float yaw = mc.player.getYaw();
-        float forward = mc.player.input.movementForward;
-        float strafe = mc.player.input.movementSideways;
+        float forward = mc.player.forwardSpeed;
+        float strafe = mc.player.sidewaysSpeed;
 
         if (forward < 0) {
             yaw += 180;
@@ -142,21 +142,11 @@ public class MoveUtil {
         return Math.toRadians(rotationYaw);
     }
 
-    public static float getMoveForward() {
-        if (mc.player == null) return 0;
-        return mc.player.input.movementForward;
-    }
-
-    public static float getMoveStrafe() {
-        if (mc.player == null) return 0;
-        return mc.player.input.movementSideways;
-    }
-
     public static double[] getMotion(double speed) {
         if (mc.player == null) return new double[]{0, 0};
 
-        float forward = mc.player.input.movementForward;
-        float strafe = mc.player.input.movementSideways;
+        float forward = mc.player.forwardSpeed;
+        float strafe = mc.player.sidewaysSpeed;
         float yaw = mc.player.getYaw();
 
         if (forward == 0 && strafe == 0) {
@@ -249,8 +239,8 @@ public class MoveUtil {
     public static double[] directionSpeed(double speed) {
         if (mc.player == null) return new double[]{0, 0};
 
-        float forward = mc.player.input.movementForward;
-        float side = mc.player.input.movementSideways;
+        float forward = mc.player.forwardSpeed;
+        float side = mc.player.sidewaysSpeed;
         float yaw = mc.player.lastYaw + (mc.player.getYaw() - mc.player.lastYaw) * getTickDelta();
 
         if (forward != 0.0f) {
