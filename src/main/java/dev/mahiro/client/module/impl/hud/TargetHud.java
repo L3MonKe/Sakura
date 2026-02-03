@@ -1,6 +1,7 @@
 package dev.mahiro.client.module.impl.hud;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
@@ -30,6 +31,7 @@ import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
@@ -312,7 +314,7 @@ public class TargetHud extends HudModule {
 
         // 2. Render Items (Armor, Hands) - Must be done outside NanoVG frame usually to use DrawContext
         if (target instanceof PlayerEntity player && animValue > 0.1f) {
-            context.getMatrices().push();
+            context.getMatrices().pushMatrix();
 
             // No custom X/Y animation translation anymore as per request
 
@@ -325,7 +327,7 @@ public class TargetHud extends HudModule {
 
             renderThunderHackItems(context, player);
 
-            context.getMatrices().pop();
+            context.getMatrices().popMatrix();
         }
     }
 
@@ -590,8 +592,7 @@ public class TargetHud extends HudModule {
         }
 
         // Armor
-        List<ItemStack> armor = target.getInventory().armor;
-        ItemStack[] items = new ItemStack[]{target.getMainHandStack(), armor.get(3), armor.get(2), armor.get(1), armor.get(0), target.getOffHandStack()};
+        ItemStack[] items = new ItemStack[]{target.getMainHandStack(), target.getEquippedStack(EquipmentSlot.HEAD), target.getEquippedStack(EquipmentSlot.CHEST), target.getEquippedStack(EquipmentSlot.LEGS), target.getEquippedStack(EquipmentSlot.FEET), target.getOffHandStack()};
 
         float xItemOffset = x + 60;
         for (ItemStack itemStack : items) {
@@ -606,7 +607,7 @@ public class TargetHud extends HudModule {
     }
 
     private void updateParticles(long vg) {
-        if (timer.passedMS(1000 / 60)) {
+        if (timer.passedMS(1000D / 60D)) {
             ticks += 0.1f;
             for (int i = 0; i < particles.size(); i++) {
                 Particles p = particles.get(i);
@@ -656,7 +657,7 @@ public class TargetHud extends HudModule {
         if (rotation <= -360f) rotation += 360f;
 
         MatrixStack matrices = event.getMatrices();
-        Vec3d cam = mc.getEntityRenderDispatcher().camera.getPos();
+        Vec3d cam = mc.getEntityRenderDispatcher().camera.getCameraPos();
 
         double ex = MathHelper.lerp(event.getTickDelta(), target.lastX, target.getX()) - cam.x;
         double ey = MathHelper.lerp(event.getTickDelta(), target.lastY, target.getY()) - cam.y;
