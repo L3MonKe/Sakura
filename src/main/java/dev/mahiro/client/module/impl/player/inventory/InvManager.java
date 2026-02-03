@@ -21,6 +21,7 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.*;
 import net.minecraft.network.packet.c2s.play.*;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.screen.slot.SlotActionType;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -129,9 +130,9 @@ public class InvManager extends Module {
                 float bestArmor = InvHelper.getBestArmorScore(equippable.slot());
                 return !(protection < bestArmor);
             }
-        } else if (stack.getItem() instanceof SwordItem) {
+        } else if (stack.isIn(ItemTags.SWORDS)) {
             return InvHelper.getBestSword() == stack;
-        } else if (stack.getItem() instanceof PickaxeItem) {
+        } else if (stack.isIn(ItemTags.PICKAXES)) {
             return InvHelper.getBestPickaxe() == stack;
         } else if (stack.getItem() instanceof AxeItem && !InvHelper.isSharpnessAxe(stack)) {
             return InvHelper.getBestAxe() == stack;
@@ -273,8 +274,8 @@ public class InvManager extends Module {
                 }
             }
 
-            for (int ix = 0; ix < mc.player.getInventory().main.size(); ix++) {
-                ItemStack stack = mc.player.getInventory().main.get(ix);
+            for (int ix = 0; ix < mc.player.getInventory().getMainStacks().size(); ix++) {
+                ItemStack stack = mc.player.getInventory().getMainStacks().get(ix);
                 if (!stack.isEmpty() && stack.getItem() instanceof ArmorItem) {
                     float currentItemScore = InvHelper.getProtection(stack);
                     var equipment = stack.get(DataComponentTypes.EQUIPPABLE);
@@ -308,7 +309,7 @@ public class InvManager extends Module {
             int slot = InvHelper.getItemSlot(Items.GOLDEN_APPLE);
             if (slot != -1 && timer.passedMS(MathUtil.getRandom(minDelay.get(), maxDelay.get()))) {
                 if (offHand.getItem() == Items.GOLDEN_APPLE) {
-                    ItemStack goldenAppleStack = mc.player.getInventory().main.get(slot);
+                    ItemStack goldenAppleStack = mc.player.getInventory().getMainStacks().get(slot);
                     if (offHand.getCount() + goldenAppleStack.getCount() <= 64) {
                         if (slot < 9) {
                             mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot + 36, 0, SlotActionType.PICKUP, mc.player);
@@ -372,7 +373,7 @@ public class InvManager extends Module {
 
         if (this.switchBlock.get()) {
             int blockSlot = (int) (this.blockSlot.get() - 1.0F);
-            ItemStack currentBlock = mc.player.getInventory().main.get(blockSlot);
+            ItemStack currentBlock = mc.player.getInventory().getMainStacks().get(blockSlot);
             ItemStack bestBlock = InvHelper.getBestBlock();
             if (bestBlock != null
                     && (bestBlock.getCount() > currentBlock.getCount() || !InvHelper.isValidStack(currentBlock))
@@ -388,7 +389,7 @@ public class InvManager extends Module {
 
         if (this.switchSword.get()) {
             int slotxx = (int) (this.swordSlot.get() - 1.0F);
-            ItemStack currentSword = mc.player.getInventory().main.get(slotxx);
+            ItemStack currentSword = mc.player.getInventory().getMainStacks().get(slotxx);
             ItemStack bestSword = InvHelper.getBestSword();
             ItemStack bestShapeAxe = InvHelper.getBestShapeAxe();
             if (InvHelper.getAxeDamage(bestShapeAxe) > InvHelper.getSwordDamage(bestSword)) {
@@ -396,10 +397,10 @@ public class InvManager extends Module {
             }
 
             if (bestSword != null) {
-                float currentDamage = currentSword.getItem() instanceof SwordItem
+                float currentDamage = currentSword.isIn(ItemTags.SWORDS)
                         ? InvHelper.getSwordDamage(currentSword)
                         : InvHelper.getAxeDamage(currentSword);
-                float bestWeaponDamage = bestSword.getItem() instanceof SwordItem
+                float bestWeaponDamage = bestSword.isIn(ItemTags.SWORDS)
                         ? InvHelper.getSwordDamage(bestSword)
                         : InvHelper.getAxeDamage(bestSword);
                 if (bestWeaponDamage > currentDamage) {
@@ -411,10 +412,10 @@ public class InvManager extends Module {
         if (this.switchPickaxe.get()) {
             int slotxxx = (int) (this.pickaxeSlot.get() - 1.0F);
             ItemStack bestPickaxe = InvHelper.getBestPickaxe();
-            ItemStack currentPickaxe = mc.player.getInventory().main.get(slotxxx);
+            ItemStack currentPickaxe = mc.player.getInventory().getMainStacks().get(slotxxx);
             if (bestPickaxe != null
-                    && bestPickaxe.getItem() instanceof PickaxeItem
-                    && (InvHelper.getToolScore(bestPickaxe) > InvHelper.getToolScore(currentPickaxe) || !(currentPickaxe.getItem() instanceof PickaxeItem))
+                    && bestPickaxe.isIn(ItemTags.PICKAXES)
+                    && (InvHelper.getToolScore(bestPickaxe) > InvHelper.getToolScore(currentPickaxe) || !currentPickaxe.isIn(ItemTags.PICKAXES))
             ) {
                 this.swapItem(slotxxx, bestPickaxe);
             }
@@ -423,7 +424,7 @@ public class InvManager extends Module {
         if (this.switchAxe.get()) {
             int slotxxx = (int) (this.axeSlot.get() - 1.0F);
             ItemStack bestAxe = InvHelper.getBestAxe();
-            ItemStack currentAxe = mc.player.getInventory().main.get(slotxxx);
+            ItemStack currentAxe = mc.player.getInventory().getMainStacks().get(slotxxx);
             if (bestAxe != null
                     && bestAxe.getItem() instanceof AxeItem
                     && (InvHelper.getToolScore(bestAxe) > InvHelper.getToolScore(currentAxe) || !(currentAxe.getItem() instanceof AxeItem))) {
@@ -434,7 +435,7 @@ public class InvManager extends Module {
         if (this.switchRod.get() && !this.offhandItems.is(OffhandItemMode.FishingRod)) {
             int slotxxx = (int) (this.rodSlot.get() - 1.0F);
             ItemStack bestRod = InvHelper.getFishingRod();
-            ItemStack currentRod = mc.player.getInventory().main.get(slotxxx);
+            ItemStack currentRod = mc.player.getInventory().getMainStacks().get(slotxxx);
             if (!(currentRod.getItem() instanceof FishingRodItem)) {
                 this.swapItem(slotxxx, bestRod);
             }
@@ -442,7 +443,7 @@ public class InvManager extends Module {
 
         if (this.switchBow.get()) {
             int slotxxx = (int) (this.bowSlot.get() - 1.0F);
-            ItemStack currentBow = mc.player.getInventory().main.get(slotxxx);
+            ItemStack currentBow = mc.player.getInventory().getMainStacks().get(slotxxx);
             ItemStack bestBow;
             float bestBowScore;
             float currentBowScore;
@@ -517,11 +518,11 @@ public class InvManager extends Module {
         }
 
         if (this.throwItems.get()) {
-            List<Integer> slots = IntStream.range(0, mc.player.getInventory().main.size()).boxed().collect(Collectors.toList());
+            List<Integer> slots = IntStream.range(0, mc.player.getInventory().getMainStacks().size()).boxed().collect(Collectors.toList());
             Collections.shuffle(slots);
 
             for (Integer slotxxxx : slots) {
-                ItemStack stack = mc.player.getInventory().main.get(slotxxxx);
+                ItemStack stack = mc.player.getInventory().getMainStacks().get(slotxxxx);
                 if (!stack.isEmpty() && !this.isItemUseful(stack)) {
                     this.throwItem(stack);
                 }
@@ -557,7 +558,7 @@ public class InvManager extends Module {
     }
 
     private void swapItem(int targetSlot, ItemStack bestItem) {
-        ItemStack currentSlot = mc.player.getInventory().main.get(targetSlot);
+        ItemStack currentSlot = mc.player.getInventory().getMainStacks().get(targetSlot);
         if (InvHelper.isItemValid(currentSlot) && bestItem != currentSlot && timer.passedMS(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
             int bestItemSlot = InvHelper.getItemStackSlot(bestItem);
             if (bestItemSlot != -1) {
@@ -574,7 +575,7 @@ public class InvManager extends Module {
     }
 
     private void swapItem(int targetSlot, Item item) {
-        ItemStack currentSlot = mc.player.getInventory().main.get(targetSlot);
+        ItemStack currentSlot = mc.player.getInventory().getMainStacks().get(targetSlot);
         if (InvHelper.isItemValid(currentSlot) && timer.passedMS(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
             int bestItemSlot = InvHelper.getItemSlot(item);
             if (bestItemSlot != -1) {

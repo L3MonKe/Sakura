@@ -8,6 +8,7 @@ import net.minecraft.enchantment.Enchantments;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.item.*;
+import net.minecraft.registry.tag.ItemTags;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -270,7 +271,7 @@ public class InvHelper {
         } else if (isSharpnessAxe(stack)) {
             return 0.0F;
         } else {
-            if (stack.getItem() instanceof PickaxeItem) {
+            if (stack.isIn(ItemTags.PICKAXES)) {
                 valence += stack.getMiningSpeedMultiplier(Blocks.STONE.getDefaultState());
             } else if (stack.getItem() instanceof AxeItem) {
                 valence += stack.getMiningSpeedMultiplier(Blocks.OAK_LOG.getDefaultState());
@@ -294,7 +295,7 @@ public class InvHelper {
     public static float getBestSwordDamage() {
         return getAllItems()
                 .stream()
-                .filter(item -> !item.isEmpty() && item.getItem() instanceof SwordItem)
+                .filter(item -> !item.isEmpty() && item.isIn(ItemTags.SWORDS))
                 .map(InvHelper::getSwordDamage)
                 .max(Float::compareTo)
                 .orElse(0.0F);
@@ -303,7 +304,7 @@ public class InvHelper {
     public static float getBestPickaxeScore() {
         return getAllItems()
                 .stream()
-                .filter(item -> !item.isEmpty() && item.getItem() instanceof PickaxeItem && isItemValid(item))
+                .filter(item -> !item.isEmpty() && item.isIn(ItemTags.PICKAXES) && isItemValid(item))
                 .map(InvHelper::getToolScore)
                 .max(Float::compareTo)
                 .orElse(0.0F);
@@ -542,7 +543,7 @@ public class InvHelper {
     public static ItemStack getBestPickaxe() {
         return getAllItems()
                 .stream()
-                .filter(item -> !item.isEmpty() && item.getItem() instanceof PickaxeItem && isItemValid(item))
+                .filter(item -> !item.isEmpty() && item.isIn(ItemTags.PICKAXES) && isItemValid(item))
                 .max(Comparator.comparingInt(s -> (int) (getToolScore(s) * 100.0F)))
                 .orElse(null);
     }
@@ -590,7 +591,7 @@ public class InvHelper {
     public static ItemStack getBestSword() {
         return getAllItems()
                 .stream()
-                .filter(item -> !item.isEmpty() && item.getItem() instanceof SwordItem)
+                .filter(item -> !item.isEmpty() && item.isIn(ItemTags.SWORDS))
                 .max(Comparator.comparingInt(s -> (int) (getSwordDamage(s) * 100.0F)))
                 .orElse(null);
     }

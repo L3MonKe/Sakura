@@ -25,6 +25,7 @@ import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.CrossbowItem;
+import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.SwordItem;
@@ -32,6 +33,7 @@ import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.s2c.play.BundleS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityAnimationS2CPacket;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
@@ -69,7 +71,7 @@ public class Animations extends Module {
 
     public boolean shouldAnimate() {
         if (mc.player.isUsingItem()) return false;
-        if (onlySword.get() && !(mc.player.getMainHandStack().getItem() instanceof SwordItem)) return false;
+        if (onlySword.get() && !(mc.player.getMainHandStack().isIn(ItemTags.SWORDS))) return false;
         if (Mahiro.MODULES.getModule(KillAura.class).isEnabled() && Mahiro.MODULES.getModule(KillAura.class).getCurrentTarget() != null && Mahiro.MODULES.getModule(KillAura.class).isAutoBlock())
             return true;
         return false;

@@ -12,6 +12,7 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.*;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.screen.GenericContainerScreenHandler;
 import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.text.Text;
@@ -48,11 +49,11 @@ public class Stealer extends Module {
             if (equippable == null) return false;
             float bestArmor = InvHelper.getBestArmorScore(equippable.slot());
             return !(protection <= bestArmor);
-        } else if (stack.getItem() instanceof SwordItem) {
+        } else if (stack.isIn(ItemTags.SWORDS)) {
             float damage = InvHelper.getSwordDamage(stack);
             float bestDamage = InvHelper.getBestSwordDamage();
             return !(damage <= bestDamage);
-        } else if (stack.getItem() instanceof PickaxeItem) {
+        } else if (stack.isIn(ItemTags.PICKAXES)) {
             float score = InvHelper.getToolScore(stack);
             float bestScore = InvHelper.getBestPickaxeScore();
             return !(score <= bestScore);
@@ -149,11 +150,11 @@ public class Stealer extends Module {
                             && InvHelper.getProtection(checkStack) > InvHelper.getProtection(stack)) {
                         return false;
                     }
-                } else if (stack.getItem() instanceof SwordItem && checkStack.getItem() instanceof SwordItem) {
+                } else if (stack.isIn(ItemTags.SWORDS) && checkStack.isIn(ItemTags.SWORDS)) {
                     if (InvHelper.getSwordDamage(checkStack) > InvHelper.getSwordDamage(stack)) {
                         return false;
                     }
-                } else if (stack.getItem() instanceof PickaxeItem && checkStack.getItem() instanceof PickaxeItem) {
+                } else if (stack.isIn(ItemTags.PICKAXES) && checkStack.isIn(ItemTags.PICKAXES)) {
                     if (InvHelper.getToolScore(checkStack) > InvHelper.getToolScore(stack)) {
                         return false;
                     }
