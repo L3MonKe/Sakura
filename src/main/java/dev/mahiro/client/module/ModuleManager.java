@@ -46,10 +46,10 @@ public class ModuleManager {
 
         // Movement
         add(new AutoSprint());
+        add(new BlinkNoSlow());
         add(new FastWeb());
         add(new JumpCooldown());
         add(new KeepSprint());
-        add(new MoveFix());
 //        add(new NoFall());
         add(new NoSlow());
         add(new Scaffold());
@@ -61,7 +61,7 @@ public class ModuleManager {
         add(new AntiHunger());
         add(new AutoDick());
         add(new AutoTool());
-//        add(new Blink());
+        add(new Blink());
         add(new BowBomb());
         add(new Disabler());
         add(new MCP());

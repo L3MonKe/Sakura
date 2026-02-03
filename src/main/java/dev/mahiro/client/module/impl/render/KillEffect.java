@@ -44,17 +44,17 @@ public class KillEffect extends Module {
             lastTargetId = ((IPlayerInteractEntityC2SPacket) packet).getEntityId();
             lastAttackTime = System.currentTimeMillis();
         }
-        
+
         if (event.getType() == EventType.RECEIVE && event.getPacket() instanceof EntityStatusS2CPacket packet) {
             if (packet.getStatus() == 3) { // Death status
                 Entity entity = packet.getEntity(mc.world);
                 if (entity != null && entity.getId() == lastTargetId) {
-                     if (entity instanceof PlayerEntity && entity != mc.player) {
-                         if (System.currentTimeMillis() - lastAttackTime < 5000) { // 增加到5秒
-                             triggerEffect(entity);
-                             lastTargetId = -1;
-                         }
-                     }
+                    if (entity instanceof PlayerEntity && entity != mc.player) {
+                        if (System.currentTimeMillis() - lastAttackTime < 5000) { // 增加到5秒
+                            triggerEffect(entity);
+                            lastTargetId = -1;
+                        }
+                    }
                 }
             }
         }
@@ -67,13 +67,13 @@ public class KillEffect extends Module {
                 // Redstone block break particles
                 for (int i = 0; i < 200; i++) {
                     mc.world.addParticle(
-                        new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.getDefaultState()),
-                        pos.x + (Math.random() - 0.5),
-                        pos.y + Math.random() * 2,
-                        pos.z + (Math.random() - 0.5),
-                        (Math.random() - 0.5) * 0.2,
-                        Math.random() * 0.2,
-                        (Math.random() - 0.5) * 0.2
+                            new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.getDefaultState()),
+                            pos.x + (Math.random() - 0.5),
+                            pos.y + Math.random() * 2,
+                            pos.z + (Math.random() - 0.5),
+                            (Math.random() - 0.5) * 0.2,
+                            Math.random() * 0.2,
+                            (Math.random() - 0.5) * 0.2
                     );
                 }
                 // Stone place sound
@@ -84,7 +84,7 @@ public class KillEffect extends Module {
                 LightningEntity lightning = new LightningEntity(EntityType.LIGHTNING_BOLT, mc.world);
                 lightning.setPosition(pos);
                 mc.world.addEntity(lightning);
-                
+
                 // Lightning sound
                 mc.world.playSound(pos.x, pos.y, pos.z, SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.WEATHER, 1.0f, 1.0f, false);
             }

@@ -1186,7 +1186,7 @@ public class ModuleListHud extends HudModule {
 
             float drawY = renderY;
             float textYOffset = textOffsetY.get().floatValue() * scale;
-            
+
             float finalFontSize = fontSize * scale;
             // Center roughly based on NanoVG logic
             float textY_Center = drawY + (finalFontSize / 2.0f) + (2 * scale) + textYOffset;
@@ -1220,10 +1220,10 @@ public class ModuleListHud extends HudModule {
             matrices.push();
 
             float fontScale = (fontSize * scale) / 9.0f;
-            
+
             matrices.translate(animatedTextX, textY_Center, 0);
             matrices.scale(fontScale, fontScale, 1f);
-            
+
             // Draw centered vertically (approx) - 9px height, so -4.5
             context.drawTextWithShadow(mc.textRenderer, moduleName, 0, (int) -4.5f, animatedTextColor.getRGB());
 
@@ -1241,9 +1241,9 @@ public class ModuleListHud extends HudModule {
                 matrices.push();
                 matrices.translate(suffixX, textY_Center, 0);
                 matrices.scale(fontScale, fontScale, 1f);
-                
+
                 context.drawTextWithShadow(mc.textRenderer, formattedSuffix, 0, (int) -4.5f, animatedSuffixColor.getRGB());
-                
+
                 matrices.pop();
             }
         }

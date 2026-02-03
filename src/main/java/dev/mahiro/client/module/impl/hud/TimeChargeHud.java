@@ -29,24 +29,29 @@ public class TimeChargeHud extends HudModule {
     private final NumberValue<Double> heightValue = new NumberValue<>("Height", "高度", 6.0, 2.0, 20.0, 0.5);
     private final NumberValue<Double> radiusValue = new NumberValue<>("Radius", "圆角", 3.0, 0.0, 10.0, 0.5);
 
-    private final ColorValue chargeColor1 = new ColorValue("ChargeColor1", "充能颜色1", new Color(95, 155, 245, 230));
-    private final ColorValue chargeColor2 = new ColorValue("ChargeColor2", "充能颜色2", new Color(140, 200, 255, 230));
-    
+    private final ColorValue chargeColor1 = new ColorValue("Charge Color1", "充能颜色1", new Color(95, 155, 245, 230));
+    private final ColorValue chargeColor2 = new ColorValue("Charge Color2", "充能颜色2", new Color(140, 200, 255, 230));
+
     // Old 模式专用
-    private final ColorValue activeColor1 = new ColorValue("ActiveColor1", "消耗颜色1", new Color(255, 100, 100, 230), () -> mode.is(Mode.Old));
-    private final ColorValue activeColor2 = new ColorValue("ActiveColor2", "消耗颜色2", new Color(255, 150, 50, 230), () -> mode.is(Mode.Old));
+    private final ColorValue activeColor1 = new ColorValue("Active Color1", "消耗颜色1", new Color(255, 100, 100, 230), () -> mode.is(Mode.Old));
+    private final ColorValue activeColor2 = new ColorValue("Active Color2", "消耗颜色2", new Color(255, 150, 50, 230), () -> mode.is(Mode.Old));
 
     private final BoolValue glow = new BoolValue("Glow", "发光效果", true);
-    private final NumberValue<Double> glowStrength = new NumberValue<>("GlowStrength", "发光强度", 5.0, 1.0, 20.0, 1.0, glow::get);
+    private final NumberValue<Double> glowStrength = new NumberValue<>("Glow Strength", "发光强度", 5.0, 1.0, 20.0, 1.0, glow::get);
 
     private final BoolValue blur = new BoolValue("Blur", "背景模糊", true);
-    private final NumberValue<Double> blurRadius = new NumberValue<>("BlurRadius", "模糊半径", 10.0, 1.0, 20.0, 1.0, blur::get);
+    private final NumberValue<Double> blurRadius = new NumberValue<>("Blur Radius", "模糊半径", 10.0, 1.0, 20.0, 1.0, blur::get);
+
+    private final BoolValue bloom = new BoolValue("Bloom", "外发光", true);
+    private final NumberValue<Double> bloomRadius = new NumberValue<>("Bloom Radius", "发光半径", 5.0, 1.0, 20.0, 1.0, bloom::get);
+    private final ColorValue bloomColor = new ColorValue("Bloom Color", "外发光颜色", new Color(0, 0, 0, 100), bloom::get);
+
     private final NumberValue<Double> padding = new NumberValue<>("Padding", "背景边距", 5.0, 0.0, 20.0, 0.5);
 
     private static final Color BACKGROUND_COLOR = new Color(18, 18, 18, 70);
 
     public TimeChargeHud() {
-        super("TimeCharge", "蓄力条", 200, 200);
+        super("TimeCharge", "Timer蓄力条", 200, 200);
 
         // 默认位置：屏幕底部居中
         int sw = mc.getWindow().getScaledWidth();
@@ -58,44 +63,43 @@ public class TimeChargeHud extends HudModule {
     @Override
     public void onRender(DrawContext context) {
         TimerModule timerModule = Mahiro.MODULES.getModule(TimerModule.class);
-
-        // 仅当 TimerModule 和 TimeChargeHud 同时开启时显示
-        if (timerModule == null || !timerModule.isEnabled()) return;
+        if (!timerModule.isEnabled()) return;
 
         // 更新尺寸
         this.width = widthValue.get().floatValue();
-        
+
         // New 模式下增加高度以容纳下方的百分比文本
         float extraHeight = mode.is(Mode.New) ? 25 : 15;
         this.height = heightValue.get().floatValue() + extraHeight;
-        
+
         float r = radiusValue.get().floatValue();
         float pad = padding.get().floatValue();
+
+        float bgX = x - pad;
+        float bgY = y - 5 - pad;
+        float bgW = width + pad * 2;
+        float bgH = height + 4 + pad * 2;
+        float bgR = r + pad;
 
         double progress = timerModule.getProgress();
         boolean active = timerModule.isActive();
 
         // 1. 绘制模糊背景 (如果启用)
         if (blur.get()) {
-            Shader2DUtil.drawRoundedBlur(
-                    context.getMatrices(),
-                    x - pad,
-                    y - 5 - pad,
-                    width + pad * 2,
-                    height + 4 + pad * 2,
-                    r + pad,
-                    new Color(0, 0, 0, 0), // 纯模糊，无颜色叠加
-                    blurRadius.get().floatValue(),
-                    1.0f
-            );
+            Shader2DUtil.drawRoundedBlur(context.getMatrices(), bgX, bgY, bgW, bgH, bgR, new Color(0, 0, 0, 0), blurRadius.get().floatValue(), 1.0f);
         }
 
         // 2. 绘制 NanoVG 内容
         NanoVGRenderer.INSTANCE.draw(vg -> {
             NanoVGHelper.save();
 
+            // 整个模块的外发光 (Bloom)
+            if (bloom.get()) {
+                NanoVGHelper.drawShadow(bgX, bgY, bgW, bgH, bgR, bloomColor.get(), bloomRadius.get().floatValue(), 0, 0);
+            }
+
             // 整个模块的背景
-            NanoVGHelper.drawRoundRect(x - pad, y - 5 - pad, width + pad * 2, height + 4 + pad * 2, r + pad, BACKGROUND_COLOR);
+            NanoVGHelper.drawRoundRect(bgX, bgY, bgW, bgH, bgR, BACKGROUND_COLOR);
 
             // 标题 "Timer"
             int font = FontLoader.medium(12);
@@ -133,7 +137,7 @@ public class TimeChargeHud extends HudModule {
                     // 使用正弦波在 ChargeColor1 和 ChargeColor2 之间进行插值，产生平滑的呼吸/流动效果
                     float factor = (float) (Math.sin(System.currentTimeMillis() / 500.0) * 0.5 + 0.5);
                     c1 = ColorUtil.interpolateColor(chargeColor1.get(), chargeColor2.get(), factor);
-                    
+
                     // c2 使用稍有偏移的相位，形成从左到右的微弱渐变
                     float factor2 = (float) (Math.sin(System.currentTimeMillis() / 500.0 + 1.0) * 0.5 + 0.5);
                     c2 = ColorUtil.interpolateColor(chargeColor1.get(), chargeColor2.get(), factor2);
@@ -163,7 +167,7 @@ public class TimeChargeHud extends HudModule {
             // 百分比文本
             String percentText = String.format("%.0f%%", progress * 100);
             int smallFont = FontLoader.medium(10);
-            
+
             if (mode.is(Mode.Old)) {
                 // Old: 居中显示
                 NanoVGHelper.drawCenteredString(percentText, x + width / 2f, barY + barH / 2f + 1, smallFont, 10, Color.WHITE);
