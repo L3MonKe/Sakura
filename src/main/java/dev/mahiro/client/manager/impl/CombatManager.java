@@ -15,6 +15,7 @@ import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -75,7 +76,7 @@ public class CombatManager extends Managers {
 
     public boolean isInvalid(LivingEntity entity, double range) {
         Targets targetSetting = Mahiro.MODULES.getModule(Targets.class);
-        if (mc.player.getPos().distanceTo(entity.getPos()) > range) {
+        if (Vec3d.of(mc.player.getBlockPos()).distanceTo(Vec3d.of(entity.getBlockPos())) > range) {
             return true;
         }
         if (entity.isInvisible() && targetSetting.check.isEnabled("Invisible")) {

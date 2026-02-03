@@ -121,7 +121,7 @@ public class MixinSplashOverlay {
             if (!this.reloading) {
                 if (sakura$handoffScreenReady && this.client.currentScreen != null) {
                     if (this.client.currentScreen.width != width || this.client.currentScreen.height != height) {
-                        this.client.currentScreen.init(this.client, width, height);
+                        this.client.currentScreen.init(width, height);
                     }
                     if (this.client.currentScreen instanceof MainMenuScreen menu) {
                         menu.setEntranceProgress(ease);
@@ -166,11 +166,11 @@ public class MixinSplashOverlay {
             if (!this.reloading) {
                 Mahiro.redirectToMainMenu();
                 if (this.client.currentScreen != null) {
-                    this.client.currentScreen.init(this.client, width, height);
+                    this.client.currentScreen.init(width, height);
                 }
                 sakura$handoffScreenReady = true;
             } else if (this.client.currentScreen != null) {
-                this.client.currentScreen.init(this.client, width, height);
+                this.client.currentScreen.init(width, height);
             }
         }
 

@@ -6,6 +6,7 @@ import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.BlockView;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -42,7 +43,7 @@ public abstract class MixinCamera {
     }
 
     @Inject(method = "update", at = @At("HEAD"))
-    private void onUpdateHead(BlockView area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo info) {
+    private void onUpdateHead(World area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickProgress, CallbackInfo ci) {
         this.focusedEntity = focusedEntity;
     }
 
@@ -51,7 +52,7 @@ public abstract class MixinCamera {
         CameraClip actionCamera = Mahiro.MODULES.getModule(CameraClip.class);
 
         if (actionCamera != null && actionCamera.shouldModifyCamera() && focusedEntity != null) {
-            Vec3d playerPos = focusedEntity.getPos();
+            Vec3d playerPos = Vec3d.of(focusedEntity.getBlockPos());
             actionCamera.update(playerPos);
             Vec3d cameraPos = actionCamera.getCameraPos();
             if (cameraPos != null) {
