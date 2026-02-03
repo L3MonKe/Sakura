@@ -109,6 +109,7 @@ tasks.processResources {
 tasks.withType<JavaCompile>().configureEach {
     options.release.set(21)
     options.encoding = "UTF-8"
+    options.compilerArgs.addAll(listOf("-Xmaxerrs", "9178"))
     dependsOn("generateBuildConfig")
 }
 
