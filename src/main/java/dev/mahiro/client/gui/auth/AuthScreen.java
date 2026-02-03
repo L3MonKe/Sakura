@@ -11,6 +11,7 @@ import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.DecelerateAnimation;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -545,19 +546,19 @@ public class AuthScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (button != 0) return super.mouseClicked(mouseX, mouseY, button);
-            if (!this.active || !this.visible) return super.mouseClicked(mouseX, mouseY, button);
+        public boolean mouseClicked(Click click, boolean doubled) {
+            if (click.button() != 0) return super.mouseClicked(click, doubled);
+            if (!this.active || !this.visible) return super.mouseClicked(click, doubled);
 
-            boolean hovered = mouseX >= getX() && mouseX <= getX() + getWidth() && mouseY >= getY() && mouseY <= getY() + getHeight();
-            if (!hovered) return super.mouseClicked(mouseX, mouseY, button);
+            boolean hovered = click.x() >= getX() && click.x() <= getX() + getWidth() && click.y() >= getY() && click.y() <= getY() + getHeight();
+            if (!hovered) return super.mouseClicked(click, doubled);
 
             setFocused(true);
             setSelectionStart(getCursor());
 
             int fontSize = getFontSize();
             VisibleText visible = computeVisibleText(getInnerAvailableWidth(), fontSize);
-            double localX = mouseX - (getX() + 12);
+            double localX = click.x() - (getX() + 12);
             if (localX <= 0) {
                 int idx = MathHelper.clamp(visible.start, 0, visible.display.length());
                 setCursor(idx, false);
@@ -732,7 +733,7 @@ public class AuthScreen extends Screen {
         }
     }
 
-    private static final class AuthButton extends ButtonWidget {
+    private abstract class AuthButton extends ButtonWidget {
         enum Variant {
             Primary,
             Ghost,
@@ -750,7 +751,7 @@ public class AuthScreen extends Screen {
         private float designRadius;
 
         public AuthButton(int x, int y, int width, int height, String message, PressAction onPress) {
-            super(x, y, width, height, Text.of(message), onPress, DEFAULT_NARRATION_SUPPLIER);
+            super(x, y, width, height, net.minecraft.text.Text.of(message), onPress, DEFAULT_NARRATION_SUPPLIER);
             this.designHeight = Math.max(1f, height);
             this.designRadius = height >= 30 ? 12f : 10f;
         }
@@ -773,22 +774,20 @@ public class AuthScreen extends Screen {
         }
 
         @Override
-        public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            boolean hovered = mouseX >= getX() && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height;
-            if (button == 0 && hovered && this.active && this.visible) {
+        public void onClick(Click click, boolean doubled) {
+            boolean hovered = click.x() >= getX() && click.x() <= getX() + width && click.y() >= getY() && click.y() <= getY() + height;
+            if (click.button() == 0 && hovered && this.active && this.visible) {
                 pressed = true;
                 pressAnim.setDirection(Direction.FORWARDS);
             }
-            return super.mouseClicked(mouseX, mouseY, button);
         }
 
         @Override
-        public boolean mouseReleased(double mouseX, double mouseY, int button) {
-            if (button == 0) {
+        public void onRelease(Click click) {
+            if (click.button() == 0) {
                 pressed = false;
                 pressAnim.setDirection(Direction.BACKWARDS);
             }
-            return super.mouseReleased(mouseX, mouseY, button);
         }
 
         @Override
@@ -875,6 +874,11 @@ public class AuthScreen extends Screen {
                 NanoVG.nvgResetScissor(vg);
                 NanoVG.nvgRestore(vg);
             });
+        }
+
+        @Override
+        protected void drawIcon(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+
         }
     }
 

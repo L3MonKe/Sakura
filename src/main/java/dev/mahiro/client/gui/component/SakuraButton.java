@@ -7,9 +7,9 @@ import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.DecelerateAnimation;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.nanovg.NanoVG;
@@ -27,12 +27,12 @@ public class SakuraButton extends ButtonWidget {
     private boolean danger;
     private boolean selected;
 
-    public SakuraButton(int x, int y, int width, int height, Text message, PressAction onPress) {
+    public SakuraButton(int x, int y, int width, int height, net.minecraft.text.Text message, PressAction onPress) {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION_SUPPLIER);
     }
 
     public SakuraButton(int x, int y, int width, int height, String message, PressAction onPress) {
-        super(x, y, width, height, Text.literal(message), onPress, DEFAULT_NARRATION_SUPPLIER);
+        super(x, y, width, height, net.minecraft.text.Text.of(message), onPress, DEFAULT_NARRATION_SUPPLIER);
     }
 
     public void setLoading(boolean loading) {
@@ -58,26 +58,26 @@ public class SakuraButton extends ButtonWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        boolean hovered = mouseX >= getX() && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height;
-        if (button == 0 && hovered && this.active && this.visible) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        boolean hovered = click.x() >= getX() && click.x() <= getX() + width && click.y() >= getY() && click.y() <= getY() + height;
+        if (click.button() == 0 && hovered && this.active && this.visible) {
             pressed = true;
             pressAnim.setDirection(Direction.FORWARDS);
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+    public boolean mouseReleased(Click click) {
+        if (click.button() == 0) {
             pressed = false;
             pressAnim.setDirection(Direction.BACKWARDS);
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void renderWidget(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
         boolean hovered = mouseX >= getX() && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height;
         hoverAnim.setDirection(hovered ? Direction.FORWARDS : Direction.BACKWARDS);
         if (!hovered && pressed) {
@@ -177,6 +177,10 @@ public class SakuraButton extends ButtonWidget {
 
             NanoVG.nvgRestore(vg);
         });
+    }
+
+    @Override
+    protected void drawIcon(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
     }
 
     private static Color mixColors(Color a, Color b, float t) {
