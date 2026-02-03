@@ -3,6 +3,15 @@ package dev.mahiro.client.utils.color;
 import java.awt.*;
 
 public class ColorUtil {
+    public static int[] hexToRGBA(final int hex) {
+        final int red = (hex >> 16) & 0xFF;
+        final int green = (hex >> 8) & 0xFF;
+        final int blue = hex & 0xFF;
+        final int alpha = (hex >> 24) & 0xFF;
+
+        return new int[]{red, green, blue, alpha};
+    }
+
     public static Color applyOpacity(Color color, float opacity) {
         opacity = Math.min(1, Math.max(0, opacity));
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (color.getAlpha() * opacity));

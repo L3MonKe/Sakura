@@ -5,12 +5,10 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.module.impl.render.NoRender;
-import dev.mahiro.client.utils.render.MSAAFramebuffer;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.RotationAxis;
-import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -27,7 +25,7 @@ public class MixinWorldRenderer {
         matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
         matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0f));
 
-        MSAAFramebuffer.use(() -> Mahiro.EVENT_BUS.post(new Render3DEvent(matrixStack, tickCounter.getTickProgress(true))));
+        Mahiro.EVENT_BUS.post(new Render3DEvent(matrixStack, tickCounter.getTickProgress(true)));
 
         RenderSystem.getModelViewStack().popMatrix();
     }

@@ -12,6 +12,7 @@ import net.minecraft.block.*;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -42,7 +43,7 @@ public class AutoTool extends Module {
         if (mc.interactionManager.isBreakingBlock()) {
             if (checkSword.get()) {
                 ItemStack itemStack = mc.player.getMainHandStack();
-                if (itemStack.getItem() instanceof SwordItem) {
+                if (itemStack.isIn(ItemTags.SWORDS)) {
                     return;
                 }
             }
@@ -79,7 +80,7 @@ public class AutoTool extends Module {
             if (!InvHelper.isGodItem(itemStack)
                     && !itemStack.isEmpty()
                     && !blockState.isAir()
-                    && (!(itemStack.getItem() instanceof SwordItem) || block instanceof CobwebBlock)) {
+                    && (!itemStack.isIn(ItemTags.SWORDS) || block instanceof CobwebBlock)) {
                 float strVsBlock = itemStack.getItem().getMiningSpeed(itemStack, blockState);
                 if (strVsBlock > 1.0F && !(block instanceof ExperienceDroppingBlock) && !(block instanceof RedstoneOreBlock)) {
                     int i = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.EFFICIENCY);
