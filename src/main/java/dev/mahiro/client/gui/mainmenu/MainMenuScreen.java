@@ -2,7 +2,6 @@ package dev.mahiro.client.gui.mainmenu;
 
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.auth.AuthGate;
-import dev.mahiro.client.gui.account.AccountSelectorScreen;
 import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
