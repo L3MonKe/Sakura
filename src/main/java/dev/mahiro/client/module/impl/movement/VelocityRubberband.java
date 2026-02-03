@@ -98,9 +98,9 @@ public class VelocityRubberband extends Module {
             if (groundOnly.get() && !mc.player.isOnGround()) return;
             if (onlyHurt.get() && !wasHurt) return;
 
-            double vx = packet.getVelocityX();
-            double vy = packet.getVelocityY();
-            double vz = packet.getVelocityZ();
+            double vx = packet.getVelocity().getX();
+            double vy = packet.getVelocity().getY();
+            double vz = packet.getVelocity().getZ();
 
             if (Math.abs(vx) < 0.005 && Math.abs(vz) < 0.005) return;
 
@@ -166,7 +166,7 @@ public class VelocityRubberband extends Module {
         if (freezing) return;
 
         velocityReceived = velocity;
-        savedPosition = mc.player.getPos();
+        savedPosition = Vec3d.of(mc.player.getBlockPos());
         tickCounter = 0;
         freezing = true;
         frozenPackets.clear();
@@ -182,7 +182,7 @@ public class VelocityRubberband extends Module {
             return;
         }
 
-        Vec3d current = mc.player.getPos();
+        Vec3d current = Vec3d.of(mc.player.getBlockPos());
         double dx = savedPosition.x - current.x;
         double dz = savedPosition.z - current.z;
         double distance = Math.sqrt(dx * dx + dz * dz);

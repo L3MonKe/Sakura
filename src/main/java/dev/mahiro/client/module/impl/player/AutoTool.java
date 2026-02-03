@@ -50,9 +50,9 @@ public class AutoTool extends Module {
             if (mc.crosshairTarget.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult hitResult = (BlockHitResult) mc.crosshairTarget;
                 int bestTool = getBestTool(hitResult.getBlockPos());
-                if (bestTool != -1 && bestTool != mc.player.getInventory().selectedSlot) {
-                    this.originSlot = mc.player.getInventory().selectedSlot;
-                    mc.player.getInventory().selectedSlot = bestTool;
+                if (bestTool != -1 && bestTool != mc.player.getInventory().getSelectedSlot()) {
+                    this.originSlot = mc.player.getInventory().getSelectedSlot();
+                    mc.player.getInventory().setSelectedSlot(bestTool);
                 }
             }
         }
@@ -63,7 +63,7 @@ public class AutoTool extends Module {
         if (nullCheck()) return;
 
         if (!mc.interactionManager.isBreakingBlock() && this.switchBack.get() && this.originSlot != -1) {
-            mc.player.getInventory().selectedSlot = this.originSlot;
+            mc.player.getInventory().setSelectedSlot(this.originSlot);
             this.originSlot = -1;
         }
     }

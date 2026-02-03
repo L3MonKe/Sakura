@@ -21,6 +21,7 @@ import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class PotionHud extends HudModule {
     private final NumberValue<Double> scale = new NumberValue<>("Scale", "缩放", 1.0, 0.5, 2.0, 0.05);

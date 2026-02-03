@@ -20,6 +20,7 @@ import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
 
 import java.awt.*;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class NotifyHud extends HudModule {
