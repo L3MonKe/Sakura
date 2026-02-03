@@ -9,7 +9,6 @@ import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.DecelerateAnimation;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.nanovg.NanoVG;
 

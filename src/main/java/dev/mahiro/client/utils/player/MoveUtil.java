@@ -40,8 +40,8 @@ public class MoveUtil {
 
     public static double getDistance2D() {
         if (mc.player == null) return 0;
-        double dx = mc.player.getX() - mc.player.prevX;
-        double dz = mc.player.getZ() - mc.player.prevZ;
+        double dx = mc.player.getX() - mc.player.lastX;
+        double dz = mc.player.getZ() - mc.player.lastZ;
         return Math.sqrt(dx * dx + dz * dz);
     }
 
@@ -55,9 +55,9 @@ public class MoveUtil {
 
     public static Vec3d getMotionVec(Entity entity, float ticks, boolean collision) {
         if (mc.world == null) return Vec3d.ZERO;
-        double dX = entity.getX() - entity.prevX;
-        double dY = entity.getY() - entity.prevY;
-        double dZ = entity.getZ() - entity.prevZ;
+        double dX = entity.getX() - entity.lastX;
+        double dY = entity.getY() - entity.lastY;
+        double dZ = entity.getZ() - entity.lastZ;
         double entityMotionPosX = 0;
         double entityMotionPosY = 0;
         double entityMotionPosZ = 0;
@@ -214,7 +214,7 @@ public class MoveUtil {
     }
 
     public static float getTickDelta() {
-        return mc.getRenderTickCounter().getTickDelta(true);
+        return mc.getRenderTickCounter().getTickProgress(true);
     }
 
     public static double[] directionSpeedKey(double speed) {
@@ -222,7 +222,7 @@ public class MoveUtil {
 
         float forward = (mc.options.forwardKey.isPressed() ? 1 : 0) + (mc.options.backKey.isPressed() ? -1 : 0);
         float side = (mc.options.leftKey.isPressed() ? 1 : 0) + (mc.options.rightKey.isPressed() ? -1 : 0);
-        float yaw = mc.player.prevYaw + (mc.player.getYaw() - mc.player.prevYaw) * getTickDelta();
+        float yaw = mc.player.lastYaw + (mc.player.getYaw() - mc.player.lastYaw) * getTickDelta();
 
         if (forward != 0.0f) {
             if (side > 0.0f) {
@@ -251,7 +251,7 @@ public class MoveUtil {
 
         float forward = mc.player.input.movementForward;
         float side = mc.player.input.movementSideways;
-        float yaw = mc.player.prevYaw + (mc.player.getYaw() - mc.player.prevYaw) * getTickDelta();
+        float yaw = mc.player.lastYaw + (mc.player.getYaw() - mc.player.lastYaw) * getTickDelta();
 
         if (forward != 0.0f) {
             if (side > 0.0f) {

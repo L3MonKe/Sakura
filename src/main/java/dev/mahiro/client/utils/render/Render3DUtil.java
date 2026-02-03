@@ -6,7 +6,9 @@ import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.BufferAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
@@ -63,7 +65,7 @@ public class Render3DUtil {
         }
         BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
 
-        BufferBuilder lineBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        BufferBuilder lineBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL);
         RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
         RenderSystem.lineWidth(thickness);
         MatrixStack.Entry entry = stack.peek();
@@ -205,7 +207,7 @@ public class Render3DUtil {
 
     public static void drawBoxOutline(MatrixStack stack, Box box, int color, float thickness) {
         setup3D();
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL);
         RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
         RenderSystem.lineWidth(thickness);
 
@@ -241,7 +243,7 @@ public class Render3DUtil {
 
     public static void drawBoxOutlineAdditive(MatrixStack stack, Box box, int color, float thickness) {
         setup3DAdditive();
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL);
         RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
         RenderSystem.lineWidth(thickness);
 
@@ -277,7 +279,7 @@ public class Render3DUtil {
 
     public static void drawBottomOutline(MatrixStack stack, Box box, int color) {
         setup3D();
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL);
         RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
 
         Vec3d camPos = mc.getEntityRenderDispatcher().camera.getPos();
@@ -305,7 +307,7 @@ public class Render3DUtil {
 
     public static void drawLine(MatrixStack stack, Vec3d start, Vec3d end, int color, float thickness) {
         setup3D();
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.LINES);
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL);
         RenderSystem.setShader(ShaderProgramKeys.RENDERTYPE_LINES);
         RenderSystem.lineWidth(thickness);
 

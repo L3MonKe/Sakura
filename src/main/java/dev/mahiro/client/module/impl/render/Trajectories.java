@@ -134,9 +134,9 @@ public class Trajectories extends Module {
 
         double tickDelta = event.getTickDelta();
 
-        double x = MathHelper.lerp(tickDelta, mc.player.prevX, mc.player.getX());
-        double y = MathHelper.lerp(tickDelta, mc.player.prevY, mc.player.getY());
-        double z = MathHelper.lerp(tickDelta, mc.player.prevZ, mc.player.getZ());
+        double x = MathHelper.lerp(tickDelta, mc.player.lastX, mc.player.getX());
+        double y = MathHelper.lerp(tickDelta, mc.player.lastY, mc.player.getY());
+        double z = MathHelper.lerp(tickDelta, mc.player.lastZ, mc.player.getZ());
 
         y += mc.player.getEyeHeight(mc.player.getPose()) - 0.1;
 

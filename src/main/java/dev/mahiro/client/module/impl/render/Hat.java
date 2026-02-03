@@ -12,7 +12,9 @@ import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
@@ -101,10 +103,10 @@ public class Hat extends Module {
             matrices.translate(0, -0.2, 0);
         }
 
-        float yaw = MathUtil.interpolateFloat(player.prevHeadYaw, player.headYaw, tickDelta);
+        float yaw = MathUtil.interpolateFloat(player.lastHeadYaw, player.headYaw, tickDelta);
         matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees(yaw));
 
-        float pitch = MathUtil.interpolateFloat(player.prevPitch, player.getPitch(), tickDelta);
+        float pitch = MathUtil.interpolateFloat(player.lastPitch, player.getPitch(), tickDelta);
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(pitch / 3.0f));
         matrices.translate(0, 0, pitch / 270.0);
 

@@ -21,4 +21,6 @@ pluginManagement {
     }
 }
 
-include("launch")
+if (file("launch").isDirectory) {
+    include("launch")
+}

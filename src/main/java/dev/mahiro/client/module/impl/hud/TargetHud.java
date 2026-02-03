@@ -24,7 +24,10 @@ import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.*;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -250,7 +253,7 @@ public class TargetHud extends HudModule {
         // DrawContext doesn't have getTickDelta() directly in some mappings/versions
         // Usually we can get it from RenderTickCounter or just use a fixed step for smoothing
         // Since we are in onRender(DrawContext), let's check if we can get partial ticks from MC
-        float tickDelta = mc.getRenderTickCounter().getTickDelta(false);
+        float tickDelta = mc.getRenderTickCounter().getTickProgress(false);
         displayHealth = MathHelper.lerp(tickDelta * 0.2f, displayHealth, health);
 
         // Delay Health Logic
@@ -655,9 +658,9 @@ public class TargetHud extends HudModule {
         MatrixStack matrices = event.getMatrices();
         Vec3d cam = mc.getEntityRenderDispatcher().camera.getPos();
 
-        double ex = MathHelper.lerp(event.getTickDelta(), target.prevX, target.getX()) - cam.x;
-        double ey = MathHelper.lerp(event.getTickDelta(), target.prevY, target.getY()) - cam.y;
-        double ez = MathHelper.lerp(event.getTickDelta(), target.prevZ, target.getZ()) - cam.z;
+        double ex = MathHelper.lerp(event.getTickDelta(), target.lastX, target.getX()) - cam.x;
+        double ey = MathHelper.lerp(event.getTickDelta(), target.lastY, target.getY()) - cam.y;
+        double ez = MathHelper.lerp(event.getTickDelta(), target.lastZ, target.getZ()) - cam.z;
 
         float entityHeight = target.getHeight();
         float size = espSize.get().floatValue() * 0.5f;
@@ -718,7 +721,7 @@ public class TargetHud extends HudModule {
     // ====================================================================================
 
     private void drawPlayerAvatar(PlayerEntity player, float x, float y, float size, float radius, float scale, float damageFactor) {
-        Identifier skinTexture = mc.getSkinProvider().getSkinTextures(player.getGameProfile()).texture();
+        Identifier skinTexture = mc.getSkinProvider().getSkinTextures(player.getGameProfile()).body();
         int imageId = getSkinImageId(skinTexture);
         if (imageId != -1) {
             long vg = NanoVGRenderer.INSTANCE.getContext();

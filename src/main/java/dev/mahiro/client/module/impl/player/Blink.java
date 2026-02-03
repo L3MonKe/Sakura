@@ -62,9 +62,9 @@ public class Blink extends Module {
         float pitch = packet.getPitch(mc.player.getPitch());
 
         fakePlayer.updatePositionAndAngles(x, y, z, yaw, pitch);
-        fakePlayer.prevX = x;
-        fakePlayer.prevY = y;
-        fakePlayer.prevZ = z;
+        fakePlayer.lastX = x;
+        fakePlayer.lastY = y;
+        fakePlayer.lastZ = z;
         fakePlayer.setHeadYaw(yaw);
         fakePlayer.setBodyYaw(yaw);
     }

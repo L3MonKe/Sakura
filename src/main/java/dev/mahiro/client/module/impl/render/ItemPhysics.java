@@ -9,8 +9,8 @@ import dev.mahiro.client.values.impl.BoolValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.item.ItemRenderState;
-import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.render.model.BlockStateModel;
 import net.minecraft.client.render.model.json.Transformation;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.ItemEntity;
@@ -124,7 +124,7 @@ public class ItemPhysics extends Module {
         }
     }
 
-    private ModelInfo getInfo(BakedModel model) {
+    private ModelInfo getInfo(BlockStateModel model) {
         float minX = Float.MAX_VALUE, maxX = Float.MIN_VALUE;
         float minY = Float.MAX_VALUE, maxY = Float.MIN_VALUE;
         float minZ = Float.MAX_VALUE, maxZ = Float.MIN_VALUE;

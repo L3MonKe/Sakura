@@ -4,7 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.client.Capes;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.util.SkinTextures;
+import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -21,15 +21,15 @@ public abstract class MixinAbstractClientPlayerEntity {
         Identifier newCape = capes.getCape(player, false);
         Identifier newElytra = capes.getCape(player, true);
 
-        if (newCape == null) newCape = original.capeTexture();
-        if (newElytra == null) newElytra = original.elytraTexture();
+        if (newCape == null) newCape = original.cape();
+        if (newElytra == null) newElytra = original.elytra();
 
-        if (newCape == original.capeTexture() && newElytra == original.elytraTexture()) {
+        if (newCape == original.cape() && newElytra == original.elytra()) {
             return original;
         }
 
         return new SkinTextures(
-                original.texture(),
+                original.body(),
                 original.textureUrl(),
                 newCape,
                 newElytra,

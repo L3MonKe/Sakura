@@ -616,14 +616,14 @@ public class DynamicIslandHud extends HudModule {
 
             RenderSystem.enableBlend();
             context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().texture(),
+                    entry.getSkinTextures().body(),
                     headX, headY,
                     8, 8,
                     headSize, headSize,
                     8, 8,
                     64, 64);
             context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().texture(),
+                    entry.getSkinTextures().body(),
                     headX, headY,
                     40, 8,
                     headSize, headSize,

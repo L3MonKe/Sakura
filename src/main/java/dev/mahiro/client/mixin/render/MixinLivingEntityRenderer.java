@@ -10,7 +10,6 @@ import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.impl.render.Chams;
 import dev.mahiro.client.module.impl.render.NameTags;
 import dev.mahiro.client.utils.vector.Rotation;
-import dev.mahiro.client.values.impl.BoolValue;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;

@@ -45,7 +45,7 @@ public class Capes extends Module {
                 return getTexture(ClientSession.get().getCapeName(player));
             }
 
-            return elytra ? Objects.requireNonNull(mc.getNetworkHandler().getPlayerListEntry(player.getUuid())).getSkinTextures().elytraTexture() : Objects.requireNonNull(mc.getNetworkHandler().getPlayerListEntry(player.getUuid())).getSkinTextures().capeTexture();
+            return elytra ? Objects.requireNonNull(mc.getNetworkHandler().getPlayerListEntry(player.getUuid())).getSkinTextures().elytra() : Objects.requireNonNull(mc.getNetworkHandler().getPlayerListEntry(player.getUuid())).getSkinTextures().cape();
         } catch (Exception e) {
             return null;
         }

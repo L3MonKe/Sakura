@@ -5,7 +5,7 @@ import java.text.SimpleDateFormat
 import java.util.*
 
 plugins {
-    id("fabric-loom") version "1.9-SNAPSHOT"
+    id("fabric-loom") version "1.14-SNAPSHOT"
     id("com.github.gmazzo.buildconfig") version "5.3.5"
     id("com.gradleup.shadow") version "9.0.0-beta4"
     java

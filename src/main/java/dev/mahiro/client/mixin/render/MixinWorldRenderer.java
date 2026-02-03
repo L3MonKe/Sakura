@@ -25,7 +25,7 @@ public class MixinWorldRenderer {
         matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
         matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0f));
 
-        MSAAFramebuffer.use(() -> Mahiro.EVENT_BUS.post(new Render3DEvent(matrixStack, tickCounter.getTickDelta(true))));
+        MSAAFramebuffer.use(() -> Mahiro.EVENT_BUS.post(new Render3DEvent(matrixStack, tickCounter.getTickProgress(true))));
 
         RenderSystem.getModelViewStack().popMatrix();
     }

@@ -61,12 +61,12 @@ public class KillEffect extends Module {
     }
 
     private void triggerEffect(Entity entity) {
-        Vec3d pos = entity.getPos();
+        Vec3d pos = entity.getEntityPos();
         switch (mode.get()) {
             case Blood -> {
                 // Redstone block break particles
                 for (int i = 0; i < 200; i++) {
-                    mc.world.addParticle(
+                    mc.world.addParticleClient(
                             new BlockStateParticleEffect(ParticleTypes.BLOCK, Blocks.REDSTONE_BLOCK.getDefaultState()),
                             pos.x + (Math.random() - 0.5),
                             pos.y + Math.random() * 2,
@@ -77,7 +77,7 @@ public class KillEffect extends Module {
                     );
                 }
                 // Stone place sound
-                mc.world.playSound(pos.x, pos.y, pos.z, SoundEvents.BLOCK_STONE_PLACE, SoundCategory.PLAYERS, 10.0f, 1.0f, false);
+                mc.world.playSoundClient(pos.x, pos.y, pos.z, SoundEvents.BLOCK_STONE_PLACE, SoundCategory.PLAYERS, 10.0f, 1.0f, false);
             }
             case Lightning -> {
                 // Lightning visual
@@ -86,7 +86,7 @@ public class KillEffect extends Module {
                 mc.world.addEntity(lightning);
 
                 // Lightning sound
-                mc.world.playSound(pos.x, pos.y, pos.z, SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.WEATHER, 1.0f, 1.0f, false);
+                mc.world.playSoundClient(pos.x, pos.y, pos.z, SoundEvents.ENTITY_LIGHTNING_BOLT_THUNDER, SoundCategory.WEATHER, 1.0f, 1.0f, false);
             }
         }
     }

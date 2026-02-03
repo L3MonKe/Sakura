@@ -30,8 +30,10 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.math.Vec3d;
 
 import java.awt.*;
-import java.util.*;
-import java.util.List;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
 import java.util.function.Consumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -90,9 +92,9 @@ public class NameTags extends Module {
             if (!player.isAlive()) continue;
             if (AntiBot.isBot(player)) continue;
 
-            double x = player.prevX + (player.getX() - player.prevX) * mc.getRenderTickCounter().getTickDelta(true);
-            double y = player.prevY + (player.getY() - player.prevY) * mc.getRenderTickCounter().getTickDelta(true);
-            double z = player.prevZ + (player.getZ() - player.prevZ) * mc.getRenderTickCounter().getTickDelta(true);
+            double x = player.lastX + (player.getX() - player.lastX) * mc.getRenderTickCounter().getTickProgress(true);
+            double y = player.lastY + (player.getY() - player.lastY) * mc.getRenderTickCounter().getTickProgress(true);
+            double z = player.lastZ + (player.getZ() - player.lastZ) * mc.getRenderTickCounter().getTickProgress(true);
 
             Vec3d pos = new Vec3d(x, y + player.getBoundingBox().getLengthY() + 0.5, z);
             Vec3d screenPos = Render3DUtil.worldToScreen(pos);
@@ -276,14 +278,14 @@ public class NameTags extends Module {
             RenderSystem.defaultBlendFunc();
 
             context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().texture(),
+                    entry.getSkinTextures().body(),
                     (int) headX, (int) headY,
                     8, 8,
                     (int) headSize, (int) headSize,
                     8, 8,
                     64, 64);
             context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().texture(),
+                    entry.getSkinTextures().body(),
                     (int) headX, (int) headY,
                     40, 8,
                     (int) headSize, (int) headSize,
