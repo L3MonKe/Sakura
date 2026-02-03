@@ -1,6 +1,7 @@
 package dev.mahiro.client.utils.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.shaders.BlurProgram;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.Tessellator;

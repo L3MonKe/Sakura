@@ -115,7 +115,7 @@ public class MainMenuScreen extends Screen {
         entries.clear();
         entries.add(new MainMenuEntry("Single Player", "A", () -> mc.setScreen(new SelectWorldScreen(this))));
         entries.add(new MainMenuEntry("Multi Player", "P", () -> mc.setScreen(new MultiplayerScreen(this))));
-        entries.add(new MainMenuEntry("Alt Manager", "C", () -> mc.setScreen(new AccountSelectorScreen(this))));
+        entries.add(new MainMenuEntry("Alt Manager", "C", null /*TODO: Rewrite altmanager*/));
         entries.add(new MainMenuEntry("Options", "D", () -> mc.setScreen(new OptionsScreen(this, mc.options))));
         entries.add(new MainMenuEntry("Shut down", "E", mc::scheduleStop));
     }
