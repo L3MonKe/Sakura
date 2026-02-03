@@ -41,7 +41,7 @@ public abstract class MixinClientPlayNetworkHandler extends ClientCommonNetworkH
 
     @Inject(method = "onEntityVelocityUpdate", at = @At("HEAD"), cancellable = true)
     public void onEntityVelocityUpdate(EntityVelocityUpdateS2CPacket packet, CallbackInfo ci) {
-        NetworkThreadUtils.forceMainThread(packet, (ClientPlayNetworkHandler)(Object)this, this.client.getPacketApplyBatcher());
+        NetworkThreadUtils.forceMainThread(packet, (ClientPlayNetworkHandler) (Object) this, this.client.getPacketApplyBatcher());
         Entity entity = this.world.getEntityById(packet.getEntityId());
         if (entity != null) {
             if (entity == MinecraftClient.getInstance().player) {

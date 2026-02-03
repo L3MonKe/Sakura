@@ -4,14 +4,11 @@ import com.google.gson.*;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.gui.clickgui.panel.CategoryPanel;
 import dev.mahiro.client.gui.hud.HudPanel;
-import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.Value;
 import dev.mahiro.client.values.impl.*;
 
-import javax.crypto.Cipher;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
@@ -20,10 +17,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.MessageDigest;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Base64;
 import java.util.List;
 
 public class ConfigManager {

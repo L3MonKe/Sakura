@@ -10,13 +10,12 @@ import dev.mahiro.client.utils.animations.impl.DecelerateAnimation;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 
-public class SakuraButton extends ButtonWidget {
+public class MButton extends ButtonWidget {
     private final Animation hoverAnim = new DecelerateAnimation(200, 1.0);
     private final Animation pressAnim = new DecelerateAnimation(120, 1.0, Direction.BACKWARDS);
     private final Animation loadingAnim = new DecelerateAnimation(160, 1.0, Direction.BACKWARDS);
@@ -27,11 +26,11 @@ public class SakuraButton extends ButtonWidget {
     private boolean danger;
     private boolean selected;
 
-    public SakuraButton(int x, int y, int width, int height, net.minecraft.text.Text message, PressAction onPress) {
+    public MButton(int x, int y, int width, int height, net.minecraft.text.Text message, PressAction onPress) {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION_SUPPLIER);
     }
 
-    public SakuraButton(int x, int y, int width, int height, String message, PressAction onPress) {
+    public MButton(int x, int y, int width, int height, String message, PressAction onPress) {
         super(x, y, width, height, net.minecraft.text.Text.of(message), onPress, DEFAULT_NARRATION_SUPPLIER);
     }
 
