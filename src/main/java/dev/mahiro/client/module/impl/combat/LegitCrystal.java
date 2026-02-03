@@ -98,8 +98,8 @@ public class LegitCrystal extends Module {
             if (!crystalPlaced) {
                 int crystalSlot = findSlot(Items.END_CRYSTAL);
                 if (crystalSlot != -1) {
-                    if (mc.player.getInventory().selectedSlot != crystalSlot) {
-                        mc.player.getInventory().selectedSlot = crystalSlot;
+                    if (mc.player.getInventory().getSelectedSlot() != crystalSlot) {
+                        mc.player.getInventory().setSelectedSlot(crystalSlot);
                         return;
                     }
                     placeBlock();
@@ -110,8 +110,8 @@ public class LegitCrystal extends Module {
         } else if (isBlockInCrosshair()) {
             int obsidianSlot = findSlot(Items.OBSIDIAN);
             if (obsidianSlot != -1) {
-                if (mc.player.getInventory().selectedSlot != obsidianSlot) {
-                    mc.player.getInventory().selectedSlot = obsidianSlot;
+                if (mc.player.getInventory().getSelectedSlot() != obsidianSlot) {
+                    mc.player.getInventory().setSelectedSlot(obsidianSlot);
                     timerUtil.reset();
                     return;
                 }
@@ -119,7 +119,7 @@ public class LegitCrystal extends Module {
 
                 int crystalSlot = findSlot(Items.END_CRYSTAL);
                 if (crystalSlot != -1) {
-                    mc.player.getInventory().selectedSlot = crystalSlot;
+                    mc.player.getInventory().setSelectedSlot(crystalSlot);
                 }
                 timerUtil.reset();
             }

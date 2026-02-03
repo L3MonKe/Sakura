@@ -92,7 +92,7 @@ public class AttributeSwap extends Module {
         }
 
         if (slotIndex < 0 || slotIndex > 8) return;
-        if (slotIndex == mc.player.getInventory().selectedSlot) return;
+        if (slotIndex == mc.player.getInventory().getSelectedSlot()) return;
 
         if (!InvUtil.swap(slotIndex, swapBack.get())) return;
 
@@ -147,7 +147,7 @@ public class AttributeSwap extends Module {
         double bestScore = getItemScore(currentStack, isFalling, durability, isLiving, isPlayer, isOnFire, hasFireResistance, isUndead, isArthropod, isAquatic, armor, health);
 
         for (int i = 0; i < 9; i++) {
-            if (i == mc.player.getInventory().selectedSlot) continue;
+            if (i == mc.player.getInventory().getSelectedSlot()) continue;
 
             ItemStack stack = mc.player.getInventory().getStack(i);
             if (stack.isEmpty() && !durability) continue;

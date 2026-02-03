@@ -47,7 +47,7 @@ public class HotbarHud extends HudModule {
     @Override
     protected void onEnable() {
         if (mc.player != null) {
-            animatedSlot = mc.player.getInventory().selectedSlot;
+            animatedSlot = mc.player.getInventory().getSelectedSlot();
             velocity = 0f;
             stretchFactor = 1f;
         }
@@ -81,7 +81,7 @@ public class HotbarHud extends HudModule {
     private void updateAnimation() {
         if (mc.player == null) return;
 
-        int targetSlot = mc.player.getInventory().selectedSlot;
+        int targetSlot = mc.player.getInventory().getSelectedSlot();
         float t = tension.get().floatValue();
         float f = friction.get().floatValue();
 

@@ -215,7 +215,7 @@ public class Scaffold extends Module {
                 if (!item.found()) return;
 
                 boolean remember = swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get());
-                InvUtil.swap(item.isOffhand() ? mc.player.getInventory().selectedSlot : item.slot(), remember);
+                InvUtil.swap(item.isOffhand() ? mc.player.getInventory().getSelectedSlot() : item.slot(), remember);
                 hand = item.getHand();
             }
         }

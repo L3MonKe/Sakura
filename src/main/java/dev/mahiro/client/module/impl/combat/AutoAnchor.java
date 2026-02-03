@@ -307,7 +307,7 @@ public class AutoAnchor extends Module {
                 return;
             }
         } else {
-            slot = mc.player.getInventory().selectedSlot;
+            slot = mc.player.getInventory().getSelectedSlot();
         }
 
         if (interactBlock(currentAnchorPos)) {
@@ -378,9 +378,9 @@ public class AutoAnchor extends Module {
 
     // Helper to execute action with safe switching
     private boolean executeAction(Runnable action, int slot, boolean autoSwitch) {
-        int oldSlot = mc.player.getInventory().selectedSlot;
+        int oldSlot = mc.player.getInventory().getSelectedSlot();
         if (autoSwitch) InvUtil.swap(slot, false);
-        else if (mc.player.getInventory().selectedSlot != slot) return false;
+        else if (mc.player.getInventory().getSelectedSlot() != slot) return false;
 
         action.run();
 

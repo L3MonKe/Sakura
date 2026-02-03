@@ -62,8 +62,8 @@ public class SafeHotbar extends Module {
 
         for (int i = 0; i < 9; i++) {
             if (mc.player.getInventory().getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {
-                if (mc.player.getInventory().selectedSlot != i) {
-                    mc.player.getInventory().selectedSlot = i;
+                if (mc.player.getInventory().getSelectedSlot() != i) {
+                    mc.player.getInventory().setSelectedSlot(i);
                     timerUtil.reset();
                 }
                 return;
@@ -130,7 +130,7 @@ public class SafeHotbar extends Module {
         if (mc.player.isOnGround()) return;
 
         if (mc.player.fallDistance > 3.0f) {
-            float damage = mc.player.fallDistance - 3.0f;
+            float damage = (float) (mc.player.fallDistance - 3.0f);
             if (damage >= mc.player.getHealth() + mc.player.getAbsorptionAmount()) {
                 switchToTotem();
             }

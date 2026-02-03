@@ -105,7 +105,7 @@ public class AutoCrystal extends Module {
     }
 
     private Entity raycastEndCrystal(double range) {
-        Vec3d cameraPos = mc.gameRenderer.getCamera().getPos();
+        Vec3d cameraPos = Vec3d.of(mc.gameRenderer.getCamera().getBlockPos());
         Vec3d viewVector = mc.player.getRotationVecClient();
         Vec3d extendedPoint = cameraPos.add(viewVector.x * range, viewVector.y * range, viewVector.z * range);
 
@@ -121,12 +121,12 @@ public class AutoCrystal extends Module {
 
     private boolean itemNearby(Entity entity, double range) {
         Box boundingBox = new Box(
-                entity.getPos().x - lootProtectRadiusX.get(),
-                entity.getPos().y - lootProtectRadiusY.get(),
-                entity.getPos().z - lootProtectRadiusZ.get(),
-                entity.getPos().x + lootProtectRadiusX.get(),
-                entity.getPos().y + lootProtectRadiusY.get(),
-                entity.getPos().z + lootProtectRadiusZ.get()
+                entity.getBlockPos().getX() - lootProtectRadiusX.get(),
+                entity.getBlockPos().getY() - lootProtectRadiusY.get(),
+                entity.getBlockPos().getZ() - lootProtectRadiusZ.get(),
+                entity.getBlockPos().getX() + lootProtectRadiusX.get(),
+                entity.getBlockPos().getY() + lootProtectRadiusY.get(),
+                entity.getBlockPos().getZ() + lootProtectRadiusZ.get()
         );
 
         for (Entity nearbyEntity : mc.world.getOtherEntities(null, boundingBox)) {
@@ -165,10 +165,10 @@ public class AutoCrystal extends Module {
     }
 
     private void placeCrystal() {
-        if (placementMode.is(PlacementMode.RClick) && mc.options.useKey.isPressed() && mc.player.getInventory().selectedSlot == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
+        if (placementMode.is(PlacementMode.RClick) && mc.options.useKey.isPressed() && mc.player.getInventory().getSelectedSlot() == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
             placeBlock();
             timerUtil.reset();
-        } else if (placementMode.is(PlacementMode.Look) && isObsidianOrBedrockInCrosshair() && mc.player.getInventory().selectedSlot == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
+        } else if (placementMode.is(PlacementMode.Look) && isObsidianOrBedrockInCrosshair() && mc.player.getInventory().getSelectedSlot() == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
             placeBlock();
             timerUtil.reset();
         }

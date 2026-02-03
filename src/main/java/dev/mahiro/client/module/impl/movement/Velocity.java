@@ -156,7 +156,7 @@ public class Velocity extends Module {
                             stage = VelocityStage.DELAY;
                             velocityTime = System.currentTimeMillis();
                             event.setCancelled(true);
-                            velocity = new Vec3d(packet.getVelocityX(), packet.getVelocityY(), packet.getVelocityZ());
+                            velocity = new Vec3d(packet.getVelocity().getX(), packet.getVelocity().getY(), packet.getVelocity().getZ());
                             debug("进入 DELAY，velocity=" + formatVec(velocity));
 
                         } else {
@@ -165,7 +165,7 @@ public class Velocity extends Module {
                         }
                         return;
                     } else {
-                        velocity = new Vec3d(packet.getVelocityX(), packet.getVelocityY(), packet.getVelocityZ());
+                        velocity = new Vec3d(packet.getVelocity().getX(), packet.getVelocity().getY(), packet.getVelocity().getZ());
                         stage = VelocityStage.LAG;
                         event.setCancelled(true);
                         debug("进入 LAG，velocity=" + formatVec(velocity));
