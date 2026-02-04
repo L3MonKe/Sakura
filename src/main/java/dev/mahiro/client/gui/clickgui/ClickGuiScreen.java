@@ -78,7 +78,7 @@ public class ClickGuiScreen extends Screen {
         }
 
         NanoVGRenderer.INSTANCE.draw(canvas -> NanoVGHelper.drawRect(0, 0, mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), new Color(18, 18, 18, 50)));
-        panels.forEach(panel -> panel.render(guiGraphics, mouseX, mouseY, partialTicks));
+        panels.forEach(panel -> panel.render(context, mouseX, mouseY, deltaTicks));
     }
 
     @Override
@@ -86,7 +86,7 @@ public class ClickGuiScreen extends Screen {
         if (currentContext != null) {
             boolean handled = false;
             for (CategoryPanel panel : panels) {
-                if (panel.mouseClicked(click.x(), click.y(), click.button())) {
+                if (panel.mouseClicked(click, doubled)) {
                     handled = true;
                 }
             }
@@ -118,7 +118,7 @@ public class ClickGuiScreen extends Screen {
     public boolean keyPressed(KeyInput input) {
         boolean handled = false;
         for (CategoryPanel panel : panels) {
-            if (panel.keyPressed(input.getKeycode(), input.scancode(), input.modifiers())) {
+            if (panel.keyPressed(input)) {
                 handled = true;
             }
         }

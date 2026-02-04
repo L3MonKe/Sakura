@@ -1,6 +1,5 @@
 package dev.mahiro.client.module.impl.hud;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TickEvent;
@@ -23,22 +22,20 @@ import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.Camera;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Matrix3x2fStack;
 import org.joml.Matrix4f;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.system.MemoryStack;
@@ -46,6 +43,8 @@ import org.lwjgl.system.MemoryStack;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -277,7 +276,7 @@ public class TargetHud extends HudModule {
         final float finalHealth = displayHealth; // Use smooth health
         final float finalMaxHealth = maxHealth;
         final float damageFactor = damageAnim.getOutput().floatValue();
-        
+
         /*
         renderKawaseBloom(context, animValue);
         */
@@ -362,7 +361,7 @@ public class TargetHud extends HudModule {
 
         if (blur > 0) {
             // Use drawShadow to simulate a blurred/feathered background rect
-            // We draw it multiple times or mix with rect to ensure core opacity if needed, 
+            // We draw it multiple times or mix with rect to ensure core opacity if needed,
             // but simple shadow usually works for fuzzy rect.
             NanoVGHelper.drawShadow(x, y, width, height, blur, bgColor, 8, 0, 0);
         } else {
@@ -404,7 +403,7 @@ public class TargetHud extends HudModule {
 
             // Use sine wave for smooth transition 0 -> 1 -> 0
             float t1 = (float) ((Math.sin(time) + 1.0) / 2.0);
-            // Phase shift for gradient end color. 
+            // Phase shift for gradient end color.
             // The phase difference determines how "fast" the color changes across the bar length visually.
             // If we want to adjust the "length" of one color segment, we are essentially adjusting the wavelength.
             // Here we are interpolating two points in time/space.
@@ -668,19 +667,7 @@ public class TargetHud extends HudModule {
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
         matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotation));
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableCull();
-        RenderSystem.disableDepthTest();
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_TEX_COLOR);
-
-        RenderSystem.setShaderTexture(0, TARGET_TEX);
-
         drawTextureQuad(matrices, size);
-
-        RenderSystem.enableCull();
-        RenderSystem.enableDepthTest();
-        RenderSystem.disableBlend();
 
         matrices.pop();
     }
@@ -699,7 +686,7 @@ public class TargetHud extends HudModule {
         buffer.vertex(matrix, size, size, 0).texture(1, 1).color(c3.getRGB());
         buffer.vertex(matrix, size, -size, 0).texture(1, 0).color(c4.getRGB());
 
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        RenderLayers.entityTranslucent(TARGET_TEX).draw(buffer.end());
     }
 
     private Color getColorForProgress(float progress) {
@@ -716,53 +703,55 @@ public class TargetHud extends HudModule {
     // ====================================================================================
 
     private void drawPlayerAvatar(PlayerEntity player, float x, float y, float size, float radius, float scale, float damageFactor) {
-        Identifier skinTexture = mc.getSkinProvider().getSkinTextures(player.getGameProfile()).body();
-        int imageId = getSkinImageId(skinTexture);
-        if (imageId != -1) {
-            long vg = NanoVGRenderer.INSTANCE.getContext();
-            NanoVGHelper.save();
+        CompletableFuture<Optional<SkinTextures>> skinFuture = mc.getSkinProvider().fetchSkinTextures(player.getGameProfile());
+        skinFuture.thenAccept(skinTextures -> {
+            if (skinTextures.isEmpty()) return;
+            Identifier skinTexture = skinTextures.get().body().texturePath();
+            int imageId = getSkinImageId(skinTexture);
+            if (imageId != -1) {
+                long vg = NanoVGRenderer.INSTANCE.getContext();
+                NanoVGHelper.save();
 
-            // Apply scale centered on avatar
-            float cx = x + size / 2f;
-            float cy = y + size / 2f;
-            NanoVGHelper.translate(vg, cx, cy);
-            NanoVGHelper.scale(vg, scale, scale);
-            NanoVGHelper.translate(vg, -cx, -cy);
+                float cx = x + size / 2f;
+                float cy = y + size / 2f;
+                NanoVGHelper.translate(vg, cx, cy);
+                NanoVGHelper.scale(vg, scale, scale);
+                NanoVGHelper.translate(vg, -cx, -cy);
 
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
 
-                // Calculate pattern to focus on the face (8, 8) with size (8, 8) in a 64x64 texture
-                float faceScale = 8.0f;
-                float ox = x - size;
-                float oy = y - size;
-                float ex = size * faceScale;
-                float ey = size * faceScale;
+                    float faceScale = 8.0f;
+                    float ox = x - size;
+                    float oy = y - size;
+                    float ex = size * faceScale;
+                    float ey = size * faceScale;
 
-                NanoVG.nvgImagePattern(vg, ox, oy, ex, ey, 0, imageId, 1f, paint);
-                NanoVG.nvgBeginPath(vg);
-                NanoVG.nvgRoundedRect(vg, x, y, size, size, radius);
-                NanoVG.nvgFillPaint(vg, paint);
-                NanoVG.nvgFill(vg);
-
-                // Red Damage Overlay
-                if (damageFactor > 0.01f) {
+                    NanoVG.nvgImagePattern(vg, ox, oy, ex, ey, 0, imageId, 1f, paint);
                     NanoVG.nvgBeginPath(vg);
                     NanoVG.nvgRoundedRect(vg, x, y, size, size, radius);
-                    // Use damageFactor for alpha (max 0.6 to not fully obscure)
-                    int alpha = (int) (damageFactor * 150);
-                    NanoVG.nvgFillColor(vg, NanoVGHelper.nvgColor(new Color(255, 0, 0, alpha)));
+                    NanoVG.nvgFillPaint(vg, paint);
                     NanoVG.nvgFill(vg);
+
+                    // Red Damage Overlay
+                    if (damageFactor > 0.01f) {
+                        NanoVG.nvgBeginPath(vg);
+                        NanoVG.nvgRoundedRect(vg, x, y, size, size, radius);
+                        // Use damageFactor for alpha (max 0.6 to not fully obscure)
+                        int alpha = (int) (damageFactor * 150);
+                        NanoVG.nvgFillColor(vg, NanoVGHelper.nvgColor(new Color(255, 0, 0, alpha)));
+                        NanoVG.nvgFill(vg);
+                    }
                 }
+                NanoVGHelper.restore();
+            } else {
+                NanoVGHelper.drawRoundRect(x, y, size, size, radius, new Color(80, 80, 80, 200));
             }
-            NanoVGHelper.restore();
-        } else {
-            NanoVGHelper.drawRoundRect(x, y, size, size, radius, new Color(80, 80, 80, 200));
-        }
+        });
     }
 
     private int getSkinImageId(Identifier skinTexture) {
-        int glId = mc.getTextureManager().getTexture(skinTexture).getGlId();
+        int glId = 0;// TODO: mc.getTextureManager().getTexture(skinTexture).getGlId();
         Integer cached = skinImageCache.get(glId);
         if (cached != null) {
             return cached;
@@ -805,7 +794,7 @@ public class TargetHud extends HudModule {
         float blur = MahiroBlurRadius.get().floatValue() * globalScale;
 
         Shader2DUtil.drawRoundedBlur(
-                new MatrixStack(),
+                new Matrix3x2fStack(),
                 rx, ry, w, h,
                 r,
                 new Color(0, 0, 0, 0),

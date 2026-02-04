@@ -4,8 +4,11 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.HudEditor;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 
 public class HudEditorScreen extends Screen {
@@ -34,47 +37,47 @@ public class HudEditorScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (hudPanel.mouseClicked(mouseX, mouseY, button)) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (hudPanel.mouseClicked(click, doubled)) {
             return true;
         }
 
         for (Module module : Mahiro.MODULES.getAllModules()) {
             if (module instanceof HudModule hud && hud.isEnabled()) {
-                if (hud.mouseClicked((float) mouseX, (float) mouseY, button)) {
+                if (hud.mouseClicked((float) click.x(), (float) click.y(), click.button())) {
                     return true;
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        hudPanel.mouseReleased(mouseX, mouseY, button);
+    public boolean mouseReleased(Click click) {
+        hudPanel.mouseReleased(click);
 
         for (Module module : Mahiro.MODULES.getAllModules()) {
             if (module instanceof HudModule hud && hud.isEnabled()) {
-                hud.mouseReleased(button);
+                hud.mouseReleased(click.button());
             }
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-        if (hudPanel.keyPressed(keyCode, scanCode, modifiers)) {
+    public boolean keyPressed(KeyInput input) {
+        if (hudPanel.keyPressed(input)) {
             return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
-        if (hudPanel.charTyped(chr, modifiers)) {
+    public boolean charTyped(CharInput input) {
+        if (hudPanel.charTyped(input)) {
             return true;
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(input);
     }
 
     @Override

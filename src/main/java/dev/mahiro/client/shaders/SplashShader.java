@@ -1,17 +1,12 @@
 package dev.mahiro.client.shaders;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gl.GlUsage;
 import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BuiltBuffer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.util.math.MatrixStack;
-import org.joml.Matrix4f;
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL20;
 
 import java.io.IOException;
+import java.nio.FloatBuffer;
 
 import static dev.mahiro.client.Mahiro.mc;
 
@@ -26,7 +21,7 @@ public class SplashShader {
     private int zoomUniform;
     private float accumulatedTime;
     private float currentProgress = 0f;
-    private VertexBuffer vertexBuffer;
+    //private VertexBuffer vertexBuffer; no vertex buffer in 1.21.11
     private boolean initialized = false;
 
     private boolean transitionStarted = false;
@@ -34,6 +29,8 @@ public class SplashShader {
     private static final float TRANSITION_DURATION = 2.0f; // 2秒过渡
 
     private long lastFrameTime = System.nanoTime();
+
+    private int vboId = -1;
 
     public static SplashShader getInstance() {
         if (INSTANCE == null) {
@@ -58,21 +55,26 @@ public class SplashShader {
     }
 
     private void setupVertexBuffer() {
-        this.vertexBuffer = new VertexBuffer(GlUsage.STATIC_WRITE);
+        if (vboId != -1) {
+            GL20.glDeleteBuffers(vboId);
+        }
 
-        MatrixStack identityStack = new MatrixStack();
-        Matrix4f matrix = identityStack.peek().getPositionMatrix();
+        this.vboId = GL20.glGenBuffers();
+        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, vboId);
 
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-        bufferBuilder.vertex(matrix, -1.0f, -1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, -1.0f, 1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, 1.0f, 1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, 1.0f, -1.0f, 0.0f);
+        float[] vertices = {
+                -1.0f, -1.0f, 0.0f,
+                -1.0f, 1.0f, 0.0f,
+                1.0f, 1.0f, 0.0f,
+                1.0f, -1.0f, 0.0f
+        };
 
-        BuiltBuffer builtBuffer = bufferBuilder.end();
-        this.vertexBuffer.bind();
-        this.vertexBuffer.upload(builtBuffer);
-        VertexBuffer.unbind();
+        FloatBuffer buffer = BufferUtils.createFloatBuffer(vertices.length);
+        buffer.put(vertices);
+        buffer.flip();
+
+        GL20.glBufferData(GL20.GL_ARRAY_BUFFER, buffer, GL20.GL_STATIC_DRAW);
+        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, 0);
     }
 
 
@@ -131,7 +133,7 @@ public class SplashShader {
         if (!initialized) {
             init();
         }
-        if (this.programId == 0 || this.vertexBuffer == null) return;
+        if (this.programId == 0 || this.vboId == -1) return;
 
         long currentTime = System.nanoTime();
         float deltaTime = (currentTime - lastFrameTime) / 1_000_000_000f;

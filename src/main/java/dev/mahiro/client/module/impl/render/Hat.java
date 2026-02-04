@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
@@ -11,10 +11,7 @@ import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.gl.ShaderProgramKeys;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.render.*;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
@@ -83,17 +80,17 @@ public class Hat extends Module {
             colors[i] = this.fadeBetween(colorMode, this.offsetValue.get(), (double) i * ((double) this.offsetValue.get() / this.points.get()));
         }
 
-        Vec3d camera = mc.gameRenderer.getCamera().getPos();
+        Vec3d camera = mc.gameRenderer.getCamera().getCameraPos();
         double x = MathHelper.lerp(tickDelta, player.lastRenderX, player.getX()) - camera.x;
         double y = MathHelper.lerp(tickDelta, player.lastRenderY, player.getY()) - camera.y;
         double z = MathHelper.lerp(tickDelta, player.lastRenderZ, player.getZ()) - camera.z;
 
-        RenderSystem.enableBlend();
+        /*RenderSystem.enableBlend();
         RenderSystem.defaultBlendFunc();
         RenderSystem.disableDepthTest();
         RenderSystem.depthMask(false);
         RenderSystem.disableCull();
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
+        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);*/
 
         matrices.push();
 
@@ -113,40 +110,40 @@ public class Hat extends Module {
         Matrix4f matrix = matrices.peek().getPositionMatrix();
         Tessellator tessellator = Tessellator.getInstance();
 
-        RenderSystem.lineWidth(2.0f);
-        BufferBuilder outlineBuffer = tessellator.begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        float lineWidth = 2.0f;
+        BufferBuilder outlineBuffer = tessellator.begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH);
         for (int i = 0; i < pointCount; i++) {
-            double[] pos = this.positions[i];
-            Color clr = colors[i];
-            outlineBuffer.vertex(matrix, (float) pos[0], 0, (float) pos[1])
-                    .color(clr.getRed(), clr.getGreen(), clr.getBlue(), 255);
+            int next = (i + 1) % pointCount;
+
+            double[] p1 = this.positions[i];
+            double[] p2 = this.positions[next];
+
+            float dx = (float) (p2[0] - p1[0]);
+            float dz = (float) (p2[1] - p1[1]);
+            float len = MathHelper.sqrt(dx * dx + dz * dz);
+            float nx = len == 0.0f ? 1.0f : dx / len;
+            float nz = len == 0.0f ? 0.0f : dz / len;
+
+            Color c1 = colors[i];
+            Color c2 = colors[next];
+
+            outlineBuffer.vertex(matrix, (float) p1[0], 0.0f, (float) p1[1]).color(c1.getRed(), c1.getGreen(), c1.getBlue(), 255).normal(nx, 0.0f, nz).lineWidth(lineWidth);
+            outlineBuffer.vertex(matrix, (float) p2[0], 0.0f, (float) p2[1]).color(c2.getRed(), c2.getGreen(), c2.getBlue(), 255).normal(nx, 0.0f, nz).lineWidth(lineWidth);
         }
-        double[] firstPos = this.positions[0];
-        Color firstClr = colors[0];
-        outlineBuffer.vertex(matrix, (float) firstPos[0], 0, (float) firstPos[1])
-                .color(firstClr.getRed(), firstClr.getGreen(), firstClr.getBlue(), 255);
-        BufferRenderer.drawWithGlobalProgram(outlineBuffer.end());
+        RenderLayers.lines().draw(outlineBuffer.end());
 
         BufferBuilder coneBuffer = tessellator.begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
 
-        coneBuffer.vertex(matrix, 0, (float) (radius / 2), 0)
-                .color(255, 255, 255, 128);
+        coneBuffer.vertex(matrix, 0, (float) (radius / 2), 0).color(255, 255, 255, 128);
 
         for (int i = 0; i <= pointCount; i++) {
             double[] pos = this.positions[i % pointCount];
             Color clr = colors[i % colors.length];
-            coneBuffer.vertex(matrix, (float) pos[0], 0, (float) pos[1])
-                    .color(clr.getRed(), clr.getGreen(), clr.getBlue(), 128);
+            coneBuffer.vertex(matrix, (float) pos[0], 0, (float) pos[1]).color(clr.getRed(), clr.getGreen(), clr.getBlue(), 128);
         }
-        BufferRenderer.drawWithGlobalProgram(coneBuffer.end());
+        RenderLayers.debugTriangleFan().draw(coneBuffer.end());
 
         matrices.pop();
-
-        RenderSystem.setShaderColor(1, 1, 1, 1);
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
     }
 
     private Color[] getColorMode() {

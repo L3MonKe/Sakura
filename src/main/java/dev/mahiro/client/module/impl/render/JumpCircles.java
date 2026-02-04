@@ -1,6 +1,7 @@
 package dev.mahiro.client.module.impl.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.events.render.WorldLoadEvent;
@@ -76,7 +77,7 @@ public class JumpCircles extends Module {
         boolean onGround = mc.player.isOnGround();
 
         if (onGround && !wasOnGround) {
-            Vec3d pos = mc.player.getPos();
+            Vec3d pos = mc.player.getEntityPos();
             double y = pos.y + 0.01;
 
             BlockPos blockPos = mc.player.getBlockPos();
@@ -140,7 +141,7 @@ public class JumpCircles extends Module {
         int g = baseColor.getGreen();
         int b = baseColor.getBlue();
 
-        Vec3d camPos = mc.gameRenderer.getCamera().getPos();
+        Vec3d camPos = mc.gameRenderer.getCamera().getCameraPos();
         Vec3d pos = circle.getPos();
 
         matrices.push();

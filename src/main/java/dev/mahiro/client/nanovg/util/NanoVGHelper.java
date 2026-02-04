@@ -9,7 +9,6 @@ import org.lwjgl.system.MemoryStack;
 
 import java.awt.*;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 
@@ -504,20 +503,7 @@ public class NanoVGHelper {
     }
 
     public static int createImageFromHandle(int textureId, int width, int height) {
-        try {
-            Method method;
-            try {
-                method = NanoVGGL3.class.getMethod("nvgCreateImageFromHandle", long.class, int.class, int.class, int.class, int.class);
-            } catch (NoSuchMethodException e) {
-                method = NanoVGGL3.class.getMethod("nvglCreateImageFromHandle", long.class, int.class, int.class, int.class, int.class);
-            }
-            Object result = method.invoke(null, getContext(), textureId, width, height, NVG_IMAGE_NEAREST);
-            if (result instanceof Integer id) {
-                return id;
-            }
-        } catch (Exception ignored) {
-        }
-        return -1;
+        return NanoVGGL3.nvglCreateImageFromHandle(getContext(), textureId, width, height, NVG_IMAGE_NEAREST);
     }
 
     public static void drawCircleOutline(float x, float y, float radius, float strokeWidth, Color color) {

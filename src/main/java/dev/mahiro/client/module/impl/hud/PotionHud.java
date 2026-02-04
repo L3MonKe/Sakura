@@ -12,6 +12,7 @@ import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
@@ -285,13 +286,12 @@ public class PotionHud extends HudModule {
     }
 
     private void drawEffectIcon(DrawContext context, StatusEffectInstance instance, float x, float y, float size) {
-        if (mc == null || mc.getStatusEffectSpriteManager() == null) return;
         int ix = Math.round(x);
         int iy = Math.round(y);
         int is = Math.round(size);
         Sprite sprite = mc.getStatusEffectSpriteManager().getSprite(instance.getEffectType());
         if (sprite == null) return;
-        context.drawSpriteStretched(RenderLayer::getGuiTextured, sprite, ix, iy, is, is);
+        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, sprite, ix, iy, is, is);
     }
 
     private void drawIconGlow(StatusEffectInstance instance, float cx, float cy, float radius, int order, float s) {

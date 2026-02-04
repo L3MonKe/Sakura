@@ -16,6 +16,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 
 import java.awt.*;
 
@@ -100,14 +101,14 @@ public class CategoryPanel implements IComponent {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {
-            if (component.keyPressed(keyCode, scanCode, modifiers)) {
+            if (component.keyPressed(input)) {
                 handled = true;
             }
         }
-        return handled || IComponent.super.keyPressed(keyCode, scanCode, modifiers);
+        return handled || IComponent.super.keyPressed(input);
     }
 
     @Override
