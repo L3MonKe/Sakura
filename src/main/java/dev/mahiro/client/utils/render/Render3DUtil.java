@@ -1,6 +1,5 @@
 package dev.mahiro.client.utils.render;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
@@ -18,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.List;
@@ -317,20 +315,20 @@ public class Render3DUtil {
     }
 
     public static void setup3D() {
-        GlStateManager._enableBlend();
-        GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-        GlStateManager._disableCull();
+//        GlStateManager._enableBlend();
+//        GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+//        GlStateManager._disableCull();
     }
 
     public static void setup3DAdditive() {
-        GlStateManager._enableBlend();
-        GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
-        GlStateManager._disableCull();
+//        GlStateManager._enableBlend();
+//        GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
+//        GlStateManager._disableCull();
     }
 
     public static void cleanup3D() {
-        GlStateManager._enableCull();
-        GlStateManager._disableBlend();
+//        GlStateManager._enableCull();
+//        GlStateManager._disableBlend();
     }
 
     private static void vertex(BufferBuilder buffer, Matrix4f matrix, float x, float y, float z, int color) {

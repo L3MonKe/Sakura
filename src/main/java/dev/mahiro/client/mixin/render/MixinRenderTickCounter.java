@@ -14,18 +14,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(RenderTickCounter.Dynamic.class)
 public class MixinRenderTickCounter {
     @Shadow
-    private float lastFrameDuration;
+    private float dynamicDeltaTicks;
 
-    @Inject(at = {@At(value = "FIELD", target = "Lnet/minecraft/client/render/RenderTickCounter$Dynamic;prevTimeMillis:J", opcode = Opcodes.PUTFIELD, ordinal = 0)}, method = {"beginRenderTick(J)I"})
+    @Inject(method = "beginRenderTick(J)I", at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/RenderTickCounter$Dynamic;dynamicDeltaTicks:F", opcode = Opcodes.PUTFIELD, ordinal = 0, shift = At.Shift.AFTER))
     public void onBeginRenderTick(long long_1, CallbackInfoReturnable<Integer> cir) {
         TimerEvent event = new TimerEvent();
         Mahiro.EVENT_BUS.post(event);
         TimerModule timer = Mahiro.MODULES.getModule(TimerModule.class);
         if (!event.isCancelled()) {
             if (event.isModified()) {
-                lastFrameDuration *= event.get();
+                dynamicDeltaTicks *= event.get();
             } else {
-                lastFrameDuration *= timer.getTimerSpeed();
+                dynamicDeltaTicks *= timer.getTimerSpeed();
             }
         }
     }

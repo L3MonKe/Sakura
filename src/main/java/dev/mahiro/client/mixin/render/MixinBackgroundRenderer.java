@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class MixinBackgroundRenderer {
     @ModifyExpressionValue(method = "getFogBuffer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/render/fog/FogRenderer;fogEnabled:Z"))
     private boolean modifyFogEnabled(boolean original) {
+        if (Mahiro.MODULES == null) return original;
         return original && !Mahiro.MODULES.getModule(NoRender.class).noFog();
     }
 }

@@ -3,7 +3,6 @@ package dev.mahiro.client.mixin.entity;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.movement.KeepSprint;
 import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import org.spongepowered.asm.mixin.Mixin;

@@ -17,7 +17,6 @@ public class NoRender extends Module {
     public final BoolValue noInWallOverlay = new BoolValue("No In Wall Overlay", "无窒息效果", false);
     public final BoolValue noVignette = new BoolValue("No Vignette", "无晕影效果", false);
     public final BoolValue noTotemAnimation = new BoolValue("No Totem Animation", "无图腾动画", false);
-    public final BoolValue noSwing = new BoolValue("No Swing", "无挥手", false);
 
     // HUD
     public final BoolValue noBossBar = new BoolValue("No Boss Bar", "无Boss条", false);

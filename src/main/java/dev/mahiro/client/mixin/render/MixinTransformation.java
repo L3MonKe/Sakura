@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(Transformation.class)
 public class MixinTransformation {
     @Inject(method = "apply", at = @At("HEAD"), cancellable = true)
-    private void onApply(boolean leftHanded, MatrixStack matrices, CallbackInfo info) {
-        ApplyTransformationEvent event = Mahiro.EVENT_BUS.post(ApplyTransformationEvent.get((Transformation) (Object) this, leftHanded, matrices));
-        if (event.isCancelled()) info.cancel();
+    private void onApply(boolean leftHanded, MatrixStack.Entry entry, CallbackInfo ci) {
+        ApplyTransformationEvent event = Mahiro.EVENT_BUS.post(new ApplyTransformationEvent((Transformation) (Object) this, leftHanded));
+        if (event.isCancelled()) ci.cancel();
     }
 }

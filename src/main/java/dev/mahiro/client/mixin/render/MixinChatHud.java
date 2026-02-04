@@ -5,6 +5,7 @@ import dev.mahiro.client.module.impl.client.HudEditor;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
@@ -57,13 +58,14 @@ public class MixinChatHud {
         return 0;
     }
 
-    @Inject(method = "render", at = @At("HEAD"))
-    private void onRenderStart(DrawContext context, int currentTick, int mouseX, int mouseY, boolean focused, CallbackInfo ci) {
+    @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/font/TextRenderer;IIIZZ)V", at = @At("HEAD"))
+    private void onRenderStart(DrawContext context, TextRenderer textRenderer, int currentTick, int mouseX, int mouseY, boolean interactable, boolean bl, CallbackInfo ci) {
         if (isChatHidden()) return;
         int i = getVisibleLineCount();
         int j = visibleMessages.size();
         if (j <= 0) return;
 
+        boolean focused = interactable;
         float f = (float) getChatScale();
         int k = MathHelper.ceil((float) getWidth() / f);
         int l = context.getScaledWindowHeight();
@@ -123,13 +125,12 @@ public class MixinChatHud {
         });
     }
 
-    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"))
-    private void redirectChatBackground(DrawContext context, int x1, int y1, int x2, int y2, int color) {
-        int lineHeight = getLineHeight();
-        if (x1 == -4 && x2 > 0 && (y2 - y1) == lineHeight) {
+    @Redirect(method = "render(Lnet/minecraft/client/gui/hud/ChatHud$Backend;IIZ)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHud$Backend;fill(IIIII)V"))
+    private void redirectChatBackground(ChatHud.Backend drawer, int x1, int y1, int x2, int y2, int color) {
+        if (x1 == -4 && x2 > 0) {
             return;
         }
-        //context.fill(x1, y1, x2, y2, color);
+        drawer.fill(x1, y1, x2, y2, color);
     }
 
     @Unique

@@ -1,13 +1,8 @@
 package dev.mahiro.client.utils.render;
 
-import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.shaders.BlurProgram;
-import org.lwjgl.nanovg.NVGPaint;
 
 import java.awt.*;
-
-import static dev.mahiro.client.Mahiro.mc;
-import static org.lwjgl.nanovg.NanoVG.*;
 
 public class Shader2DUtil {
     public static BlurProgram BLUR_PROGRAM;
@@ -17,7 +12,7 @@ public class Shader2DUtil {
     }
 
     public static void drawQuadBlur(float x, float y, float width, float height, float blurStrength, float blurOpacity) {
-        if (BLUR_PROGRAM == null) {
+        /*if (BLUR_PROGRAM == null) {
             BLUR_PROGRAM = new BlurProgram();
         }
 
@@ -41,11 +36,11 @@ public class Shader2DUtil {
             nvgRect(vg, x, y, width, height);
             nvgFillPaint(vg, paint);
             nvgFill(vg);
-        });
+        });*/
     }
 
     public static void drawRoundedBlur(float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
-        if (BLUR_PROGRAM == null) {
+        /*if (BLUR_PROGRAM == null) {
             BLUR_PROGRAM = new BlurProgram();
         }
 
@@ -73,6 +68,6 @@ public class Shader2DUtil {
             }
             nvgFillPaint(vg, paint);
             nvgFill(vg);
-        });
+        });*/
     }
 }

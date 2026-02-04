@@ -1,5 +1,6 @@
 package dev.mahiro.client.mixin.render;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.impl.render.AspectRatio;
 import dev.mahiro.client.module.impl.render.NoRender;
@@ -13,18 +14,11 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(GameRenderer.class)
-public class MixinGameRenderer {
+public abstract class MixinGameRenderer {
     @Shadow
-    private float zoom;
-    @Shadow
-    private float zoomX;
-    @Shadow
-    private float viewDistance;
-    @Shadow
-    private float zoomY;
+    public abstract float getFarPlaneDistance();
 
     @Inject(method = "render", at = @At("TAIL"))
     private void postHudRenderHook(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
@@ -38,18 +32,12 @@ public class MixinGameRenderer {
         }
     }
 
-    @Inject(method = "getBasicProjectionMatrix", at = @At("TAIL"), cancellable = true)
-    public void getBasicProjectionMatrix(float fovDegrees, CallbackInfoReturnable<Matrix4f> info) {
-        if (Mahiro.MODULES.getModule(AspectRatio.class).isEnabled()) {
-            MatrixStack matrixStack = new MatrixStack();
-            matrixStack.peek().getPositionMatrix().identity();
-            if (zoom != 1.0f) {
-                matrixStack.translate(zoomX, -zoomY, 0.0f);
-                matrixStack.scale(zoom, zoom, 1.0f);
-            }
-
-            matrixStack.peek().getPositionMatrix().mul(new Matrix4f().setPerspective((float) (fovDegrees * 0.01745329238474369), Mahiro.MODULES.getModule(AspectRatio.class).ratio.get().floatValue(), 0.05f, viewDistance * 4.0f));
-            info.setReturnValue(matrixStack.peek().getPositionMatrix());
+    @ModifyReturnValue(method = "getBasicProjectionMatrix", at = @At("RETURN"))
+    private Matrix4f getBasicProjectionMatrix(Matrix4f original, float fovDegrees) {
+        AspectRatio aspectRatio = Mahiro.MODULES.getModule(AspectRatio.class);
+        if (!aspectRatio.isEnabled()) {
+            return original;
         }
+        return new Matrix4f().setPerspective((float) (fovDegrees * 0.01745329238474369), aspectRatio.ratio.get().floatValue(), 0.05f, getFarPlaneDistance());
     }
 }

@@ -1,12 +1,19 @@
 package dev.mahiro.client.shaders;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import dev.mahiro.client.utils.render.EasyVertexBuffer;
+import net.minecraft.client.gl.GlUsage;
+import net.minecraft.client.gl.VertexBuffer;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BuiltBuffer;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.util.math.MatrixStack;
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL20;
 
 import java.io.IOException;
-import java.nio.FloatBuffer;
 
 import static dev.mahiro.client.Mahiro.mc;
 
@@ -21,6 +28,7 @@ public class SplashShader {
     private int zoomUniform;
     private float accumulatedTime;
     private float currentProgress = 0f;
+    private EasyVertexBuffer vertexBuffer;
     private boolean initialized = false;
 
     private boolean transitionStarted = false;
@@ -28,8 +36,6 @@ public class SplashShader {
     private static final float TRANSITION_DURATION = 2.0f; // 2秒过渡
 
     private long lastFrameTime = System.nanoTime();
-
-    private int vboId = -1;
 
     public static SplashShader getInstance() {
         if (INSTANCE == null) {
@@ -54,26 +60,21 @@ public class SplashShader {
     }
 
     private void setupVertexBuffer() {
-        if (vboId != -1) {
-            GL20.glDeleteBuffers(vboId);
-        }
+        this.vertexBuffer = new VertexBuffer(GlUsage.STATIC_WRITE);
 
-        this.vboId = GL20.glGenBuffers();
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, vboId);
+        MatrixStack identityStack = new MatrixStack();
+        Matrix4f matrix = identityStack.peek().getPositionMatrix();
 
-        float[] vertices = {
-                -1.0f, -1.0f, 0.0f,
-                -1.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 0.0f,
-                1.0f, -1.0f, 0.0f
-        };
+        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+        bufferBuilder.vertex(matrix, -1.0f, -1.0f, 0.0f);
+        bufferBuilder.vertex(matrix, -1.0f, 1.0f, 0.0f);
+        bufferBuilder.vertex(matrix, 1.0f, 1.0f, 0.0f);
+        bufferBuilder.vertex(matrix, 1.0f, -1.0f, 0.0f);
 
-        FloatBuffer buffer = BufferUtils.createFloatBuffer(vertices.length);
-        buffer.put(vertices);
-        buffer.flip();
-
-        GL20.glBufferData(GL20.GL_ARRAY_BUFFER, buffer, GL20.GL_STATIC_DRAW);
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, 0);
+        BuiltBuffer builtBuffer = bufferBuilder.end();
+        this.vertexBuffer.bind();
+        this.vertexBuffer.upload(builtBuffer);
+        VertexBuffer.unbind();
     }
 
 
@@ -132,7 +133,7 @@ public class SplashShader {
         if (!initialized) {
             init();
         }
-        if (this.programId == 0 || this.vboId == -1) return;
+        if (this.programId == 0 || this.vertexBuffer == null) return;
 
         long currentTime = System.nanoTime();
         float deltaTime = (currentTime - lastFrameTime) / 1_000_000_000f;
@@ -147,14 +148,14 @@ public class SplashShader {
 
         this.currentProgress = progress;
 
-        GlStateManager._disableCull();
-        GlStateManager._disableDepthTest();
+        RenderSystem.disableCull();
+        RenderSystem.disableDepthTest();
 
         if (zoom > 1.0f) {
-            GlStateManager._enableBlend();
-            GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
+            RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();
         } else {
-            GlStateManager._disableBlend();
+            RenderSystem.disableBlend();
         }
 
         GL20.glUseProgram(this.programId);
@@ -168,17 +169,14 @@ public class SplashShader {
         GL20.glUniform1f(this.fadeOutUniform, fadeOut);
         GL20.glUniform1f(this.zoomUniform, zoom);
 
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, this.vboId);
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 0, 0);
-        GL11.glDrawArrays(GL11.GL_QUADS, 0, 4);
-        GL20.glDisableVertexAttribArray(0);
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, 0);
+        this.vertexBuffer.bind();
+        this.vertexBuffer.draw();
+        VertexBuffer.unbind();
 
         GL20.glUseProgram(0);
-        GlStateManager._enableDepthTest();
-        GlStateManager._enableCull();
-        GlStateManager._disableBlend();
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableCull();
+        RenderSystem.disableBlend();
     }
 
     public void startTransition() {
@@ -214,9 +212,9 @@ public class SplashShader {
             GL20.glDeleteProgram(this.programId);
             this.programId = 0;
         }
-        if (this.vboId != -1) {
-            GL20.glDeleteBuffers(this.vboId);
-            this.vboId = -1;
+        if (this.vertexBuffer != null) {
+            this.vertexBuffer.close();
+            this.vertexBuffer = null;
         }
         this.initialized = false;
         INSTANCE = null;

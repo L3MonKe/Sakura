@@ -12,15 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 public class MixinKeyboardInput {
     @ModifyExpressionValue(method = "tick", at = @At(value = "NEW", target = "(ZZZZZZZ)Lnet/minecraft/util/PlayerInput;"))
     private PlayerInput modifyInput(PlayerInput original) {
-        MoveInputEvent event = new MoveInputEvent(
-                original.forward(),
-                original.backward(),
-                original.left(),
-                original.right(),
-                original.jump(),
-                original.sneak(),
-                original.sprint()
-        );
+        MoveInputEvent event = new MoveInputEvent(original.forward(), original.backward(), original.left(), original.right(), original.jump(), original.sneak(), original.sprint());
         Mahiro.EVENT_BUS.post(event);
         return event.toPlayerInput();
     }

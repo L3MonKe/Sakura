@@ -1,7 +1,7 @@
 package dev.mahiro.client.mixin.render;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.mixin.accessor.IParticle;
+import dev.mahiro.client.mixin.accessor.IBillboardParticle;
 import dev.mahiro.client.module.impl.render.NoRender;
 import dev.mahiro.client.module.impl.render.TotemParticles;
 import net.minecraft.client.particle.Particle;
@@ -49,7 +49,7 @@ public abstract class MixinParticleManager {
         if (totemParticles != null && totemParticles.isEnabled() && !totemParticles.isNoRender()) {
             if (parameters.getType() == ParticleTypes.TOTEM_OF_UNDYING) {
                 Color color = totemParticles.getNextColor();
-                IParticle accessor = (IParticle) particle;
+                IBillboardParticle accessor = (IBillboardParticle) particle;
                 accessor.setRed(color.getRed() / 255f);
                 accessor.setGreen(color.getGreen() / 255f);
                 accessor.setBlue(color.getBlue() / 255f);

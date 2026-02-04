@@ -24,7 +24,6 @@ public class MixinMain {
 
     @Redirect(method = "<clinit>", at = @At(value = "INVOKE", target = "Ljava/lang/System;setProperty(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;"))
     private static String hookStaticInit(String key, String value) {
-        // 你不加这个AltManager的跳转浏览器就爆炸了。
         return System.setProperty("java.awt.headless", "false");
     }
 }

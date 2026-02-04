@@ -6,7 +6,6 @@ import dev.mahiro.client.events.render.item.UpdateHeldItemEvent;
 import dev.mahiro.client.interfaces.IHeldItemRenderer;
 import dev.mahiro.client.module.impl.render.Animations;
 import dev.mahiro.client.module.impl.render.Chams;
-import dev.mahiro.client.module.impl.render.NoRender;
 import dev.mahiro.client.module.impl.render.ViewModel;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
@@ -27,10 +26,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import static dev.mahiro.client.Mahiro.mc;
 
@@ -52,16 +49,6 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
 
     @Shadow
     private float equipProgressOffHand;
-
-    @Shadow
-    private float prevEquipProgressMainHand;
-
-    @Shadow
-    private float prevEquipProgressOffHand;
-
-    @Shadow
-    private void applyEatOrDrinkTransformation(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player) {
-    }
 
     @Override
     public float getEquippedProgressMainHand() {
@@ -164,13 +151,4 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
             ci.cancel();
         }
     }
-
-    @ModifyArgs(method = "renderItem(FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider$Immediate;Lnet/minecraft/client/network/ClientPlayerEntity;I)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;renderFirstPersonItem(Lnet/minecraft/client/network/AbstractClientPlayerEntity;FFLnet/minecraft/util/Hand;FLnet/minecraft/item/ItemStack;FLnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V"))
-    private void renderItem(Args args) {
-        NoRender noRender = Mahiro.MODULES.getModule(NoRender.class);
-        if (noRender.isEnabled() && noRender.noSwing.get()) {
-            args.set(4, 0.0F);
-        }
-    }
-
 }

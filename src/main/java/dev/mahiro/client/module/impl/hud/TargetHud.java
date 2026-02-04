@@ -2,7 +2,6 @@ package dev.mahiro.client.module.impl.hud;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.gui.hud.HudEditorScreen;
 import dev.mahiro.client.manager.Managers;
@@ -185,11 +184,6 @@ public class TargetHud extends HudModule {
             return mc.player;
         }
         return null;
-    }
-
-    @EventHandler
-    public void onTick(TickEvent.Pre event) {
-        // Animation updates if needed independently
     }
 
     @Override

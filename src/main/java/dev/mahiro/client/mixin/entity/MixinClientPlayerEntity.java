@@ -76,10 +76,10 @@ public class MixinClientPlayerEntity {
         if (Mahiro.EVENT_BUS.post(new PlayerTickEvent()).isCancelled()) ci.cancel();
     }
 
-    @Redirect(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z"))
+    @Redirect(method = "tickMovement", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isBlockedFromSprinting()Z"))
     private boolean onSlowDown(ClientPlayerEntity instance) {
         SlowdownEvent event = new SlowdownEvent(instance.isUsingItem());
         Mahiro.EVENT_BUS.post(event);
-        return event.isSlowdown();
+        return event.isSlowdown() && instance.isBlockedFromSprinting();
     }
 }

@@ -6,9 +6,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(Entity.class)
 public interface IEntity {
-    @Accessor("prevYaw")
-    float getPrevYaw();
+    @Accessor("lastYaw")
+    float getLastYaw();
 
-    @Accessor("prevPitch")
-    float getPrevPitch();
+    @Accessor("lastPitch")
+    float getLastPitch();
 }

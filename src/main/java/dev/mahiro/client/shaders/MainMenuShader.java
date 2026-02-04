@@ -1,8 +1,15 @@
 package dev.mahiro.client.shaders;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.utils.animations.AnimationUtil;
-import org.lwjgl.opengl.GL11;
+import net.minecraft.client.gl.GlUsage;
+import net.minecraft.client.gl.VertexBuffer;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.BuiltBuffer;
+import net.minecraft.client.render.Tessellator;
+import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.util.math.MatrixStack;
+import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL20;
 
 import java.io.IOException;
@@ -37,7 +44,7 @@ public class MainMenuShader {
     private float accumulatedTime;
     private float transitionValue = 1.0f; // 1.0 = 正常显示
     private float mouseOffsetX = 0f;
-    private int vboId = -1;
+    private VertexBuffer vertexBuffer;
     private MainMenuShaderType currentShaderType;
 
     public MainMenuShader(MainMenuShaderType shaderType) {
@@ -53,26 +60,21 @@ public class MainMenuShader {
     }
 
     private void setupVertexBuffer() {
-        if (vboId != -1) {
-            GL20.glDeleteBuffers(vboId);
-        }
+        this.vertexBuffer = new VertexBuffer(GlUsage.STATIC_WRITE);
 
-        this.vboId = GL20.glGenBuffers();
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, vboId);
+        MatrixStack identityStack = new MatrixStack();
+        Matrix4f matrix = identityStack.peek().getPositionMatrix();
 
-        float[] vertices = {
-                -1.0f, -1.0f, 0.0f,
-                -1.0f, 1.0f, 0.0f,
-                1.0f, 1.0f, 0.0f,
-                1.0f, -1.0f, 0.0f
-        };
+        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+        bufferBuilder.vertex(matrix, -1.0f, -1.0f, 0.0f);
+        bufferBuilder.vertex(matrix, -1.0f, 1.0f, 0.0f);
+        bufferBuilder.vertex(matrix, 1.0f, 1.0f, 0.0f);
+        bufferBuilder.vertex(matrix, 1.0f, -1.0f, 0.0f);
 
-        java.nio.FloatBuffer buffer = org.lwjgl.BufferUtils.createFloatBuffer(vertices.length);
-        buffer.put(vertices);
-        buffer.flip();
-
-        GL20.glBufferData(GL20.GL_ARRAY_BUFFER, buffer, GL20.GL_STATIC_DRAW);
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, 0);
+        BuiltBuffer builtBuffer = bufferBuilder.end();
+        this.vertexBuffer.bind();
+        this.vertexBuffer.upload(builtBuffer);
+        VertexBuffer.unbind();
     }
 
 
@@ -126,11 +128,11 @@ public class MainMenuShader {
     }
 
     public void render(int width, int height, float transition) {
-        if (this.programId == 0 || this.vboId == -1) return;
+        if (this.programId == 0 || this.vertexBuffer == null) return;
 
-        GlStateManager._disableCull();
-        GlStateManager._disableBlend();
-        GlStateManager._disableDepthTest();
+        RenderSystem.disableCull();
+        RenderSystem.disableBlend();
+        RenderSystem.disableDepthTest();
 
         GL20.glUseProgram(this.programId);
 
@@ -157,16 +159,13 @@ public class MainMenuShader {
             GL20.glUniform2f(this.mouseUniform, mouseOffsetX, 0.5f);
         }
 
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, this.vboId);
-        GL20.glEnableVertexAttribArray(0);
-        GL20.glVertexAttribPointer(0, 3, GL20.GL_FLOAT, false, 0, 0);
-        GL11.glDrawArrays(GL11.GL_QUADS, 0, 4);
-        GL20.glDisableVertexAttribArray(0);
-        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, 0);
+        this.vertexBuffer.bind();
+        this.vertexBuffer.draw();
+        VertexBuffer.unbind();
 
         GL20.glUseProgram(0);
-        GlStateManager._enableDepthTest();
-        GlStateManager._enableCull();
+        RenderSystem.enableDepthTest();
+        RenderSystem.enableCull();
     }
 
     public void setTransition(float transition) {
@@ -197,7 +196,7 @@ public class MainMenuShader {
         try {
             this.accumulatedTime = 0f;
             this.programId = createShaderProgram(newType);
-            if (this.vboId == -1) {
+            if (this.vertexBuffer == null) {
                 this.setupVertexBuffer();
             }
         } catch (IOException e) {
@@ -224,9 +223,9 @@ public class MainMenuShader {
             GL20.glDeleteProgram(this.programId);
             this.programId = 0;
         }
-        if (this.vboId != -1) {
-            GL20.glDeleteBuffers(this.vboId);
-            this.vboId = -1;
+        if (this.vertexBuffer != null) {
+            this.vertexBuffer.close();
+            this.vertexBuffer = null;
         }
     }
 

@@ -114,7 +114,7 @@ public class RotationUtil {
     }
 
     public static Rotation applySensitivityPatch(final Rotation rotation) {
-        final Rotation previousRotation = new Rotation(((IEntity) mc.player).getPrevYaw(), ((IEntity) mc.player).getPrevPitch());
+        final Rotation previousRotation = new Rotation(((IEntity) mc.player).getLastYaw(), ((IEntity) mc.player).getLastPitch());
         final float mouseSensitivity = (float) (mc.options.getMouseSensitivity().getValue() * 0.6F + 0.2F);
         final double multiplier = mouseSensitivity * mouseSensitivity * mouseSensitivity * 8.0F * 0.15D;
         final float yaw = previousRotation.yaw + (float) (Math.round((rotation.yaw - previousRotation.yaw) / multiplier) * multiplier);
@@ -131,7 +131,7 @@ public class RotationUtil {
     }
 
     public static Rotation relateToPlayerRotation(final Rotation rotation) {
-        final Rotation previousRotation = new Rotation(((IEntity) mc.player).getPrevYaw(), ((IEntity) mc.player).getPrevPitch());
+        final Rotation previousRotation = new Rotation(((IEntity) mc.player).getLastYaw(), ((IEntity) mc.player).getLastPitch());
         final float yaw = previousRotation.yaw + MathHelper.wrapDegrees(rotation.yaw - previousRotation.yaw);
         final float pitch = MathHelper.clamp(rotation.pitch, -90, 90);
         return new Rotation(yaw, pitch);

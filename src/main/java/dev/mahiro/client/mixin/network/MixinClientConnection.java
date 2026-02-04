@@ -5,11 +5,9 @@ import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.type.EventType;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.OffThreadException;
-import net.minecraft.network.PacketCallbacks;
 import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BundleS2CPacket;
-import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -49,10 +47,5 @@ public class MixinClientConnection {
         if (event.isCancelled()) {
             ci.cancel();
         }
-    }
-
-    @Inject(method = "send(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/PacketCallbacks;)V", at = @At("TAIL"))
-    private void onSendPacketTail(Packet<?> packet, @Nullable PacketCallbacks callbacks, CallbackInfo ci) {
-        Mahiro.EVENT_BUS.post(new PacketEvent(EventType.SENT, packet));
     }
 }

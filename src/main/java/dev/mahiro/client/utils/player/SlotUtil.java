@@ -1,10 +1,14 @@
 package dev.mahiro.client.utils.player;
 
-import dev.mahiro.client.mixin.accessor.IHorseScreenHandler;
+import dev.mahiro.client.mixin.accessor.IMountScreenHandler;
 import net.minecraft.client.gui.screen.ingame.CreativeInventoryScreen;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.SkeletonHorseEntity;
 import net.minecraft.entity.mob.ZombieHorseEntity;
-import net.minecraft.entity.passive.*;
+import net.minecraft.entity.passive.AbstractDonkeyEntity;
+import net.minecraft.entity.passive.CamelEntity;
+import net.minecraft.entity.passive.HorseEntity;
+import net.minecraft.entity.passive.LlamaEntity;
 import net.minecraft.item.ItemGroups;
 import net.minecraft.registry.Registries;
 import net.minecraft.screen.*;
@@ -127,7 +131,7 @@ public class SlotUtil {
     }
 
     private static int horse(ScreenHandler handler, int i) {
-        AbstractHorseEntity entity = ((IHorseScreenHandler) handler).getEntity();
+        LivingEntity entity = ((IMountScreenHandler) handler).getMount();
 
         if (entity instanceof LlamaEntity llamaEntity) {
             int strength = llamaEntity.getStrength();

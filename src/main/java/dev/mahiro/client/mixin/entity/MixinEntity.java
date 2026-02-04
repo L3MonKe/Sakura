@@ -83,7 +83,7 @@ public abstract class MixinEntity {
 
     @Inject(method = "move", at = @At("HEAD"), cancellable = true)
     private void onMove(MovementType type, Vec3d movement, CallbackInfo ci) {
-        if ((Object) this == mc.player && type == MovementType.SELF) {
+        if ((Entity) (Object) this == mc.player && type == MovementType.SELF) {
             MoveEvent event = new MoveEvent(movement);
             Mahiro.EVENT_BUS.post(event);
 
