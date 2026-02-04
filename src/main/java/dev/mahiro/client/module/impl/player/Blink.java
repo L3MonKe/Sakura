@@ -92,7 +92,7 @@ public class Blink extends Module {
             return;
         }
         if (!render.get()) return;
-        fakePlayer = new OtherClientPlayerEntity(mc.world, new GameProfile(UUID.fromString("11451466-6666-6666-6666-666666666601"), mc.player.getGameProfile().getName()));
+        fakePlayer = new OtherClientPlayerEntity(mc.world, new GameProfile(UUID.fromString("11451466-6666-6666-6666-666666666601"), mc.player.getGameProfile().name()));
         fakePlayer.copyPositionAndRotation(mc.player);
         fakePlayer.bodyYaw = mc.player.bodyYaw;
         fakePlayer.headYaw = mc.player.headYaw;

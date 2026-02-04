@@ -84,21 +84,20 @@ public class NoSlow extends Module {
         if (nullCheck()) return;
 
         if (inventoryMove.get() && checkScreen()) {
-            final long handle = mc.getWindow().getHandle();
             KeyBinding[] keys = new KeyBinding[]{mc.options.jumpKey, mc.options.forwardKey, mc.options.backKey, mc.options.rightKey, mc.options.leftKey};
             for (KeyBinding binding : keys) {
-                binding.setPressed(InputUtil.isKeyPressed(handle, InputUtil.fromTranslationKey(binding.getBoundKeyTranslationKey()).getCode()));
+                binding.setPressed(InputUtil.isKeyPressed(mc.getWindow(), InputUtil.fromTranslationKey(binding.getBoundKeyTranslationKey()).getCode()));
             }
             if (arrowMove.get()) {
                 float yaw = mc.player.getYaw();
                 float pitch = mc.player.getPitch();
-                if (InputUtil.isKeyPressed(handle, GLFW.GLFW_KEY_UP)) {
+                if (InputUtil.isKeyPressed(mc.getWindow(), GLFW.GLFW_KEY_UP)) {
                     pitch -= 3.0f;
-                } else if (InputUtil.isKeyPressed(handle, GLFW.GLFW_KEY_DOWN)) {
+                } else if (InputUtil.isKeyPressed(mc.getWindow(), GLFW.GLFW_KEY_DOWN)) {
                     pitch += 3.0f;
-                } else if (InputUtil.isKeyPressed(handle, GLFW.GLFW_KEY_LEFT)) {
+                } else if (InputUtil.isKeyPressed(mc.getWindow(), GLFW.GLFW_KEY_LEFT)) {
                     yaw -= 3.0f;
-                } else if (InputUtil.isKeyPressed(handle, GLFW.GLFW_KEY_RIGHT)) {
+                } else if (InputUtil.isKeyPressed(mc.getWindow(), GLFW.GLFW_KEY_RIGHT)) {
                     yaw += 3.0f;
                 }
                 mc.player.setYaw(yaw);

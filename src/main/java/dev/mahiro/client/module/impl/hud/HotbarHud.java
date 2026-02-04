@@ -184,12 +184,12 @@ public class HotbarHud extends HudModule {
                 float itemX = hotbarX + padding + i * (slotSize + gap) + (slotSize - 16 * s) / 2f;
                 float itemY = hotbarY + padding + (slotSize - 16 * s) / 2f;
 
-                context.getMatrices().push();
-                context.getMatrices().translate(itemX, itemY, 200);
-                context.getMatrices().scale(s, s, 1f);
+                context.getMatrices().pushMatrix();
+                context.getMatrices().translate(itemX, itemY);
+                context.getMatrices().scale(s, s);
                 context.drawItem(stack, 0, 0);
                 context.drawStackOverlay(mc.textRenderer, stack, 0, 0);
-                context.getMatrices().pop();
+                context.getMatrices().popMatrix();
             }
         }
 
@@ -199,12 +199,12 @@ public class HotbarHud extends HudModule {
                 float itemX = leftHandX + padding + (slotSize - 16 * s) / 2f;
                 float itemY = handSlotY + padding + (slotSize - 16 * s) / 2f;
 
-                context.getMatrices().push();
-                context.getMatrices().translate(itemX, itemY, 200);
-                context.getMatrices().scale(s, s, 1f);
+                context.getMatrices().pushMatrix();
+                context.getMatrices().translate(itemX, itemY);
+                context.getMatrices().scale(s, s);
                 context.drawItem(offhandStack, 0, 0);
                 context.drawStackOverlay(mc.textRenderer, offhandStack, 0, 0);
-                context.getMatrices().pop();
+                context.getMatrices().popMatrix();
             }
 
             ItemStack mainhandStack = mc.player.getMainHandStack();
@@ -212,12 +212,12 @@ public class HotbarHud extends HudModule {
                 float itemX = rightHandX + padding + (slotSize - 16 * s) / 2f;
                 float itemY = handSlotY + padding + (slotSize - 16 * s) / 2f;
 
-                context.getMatrices().push();
-                context.getMatrices().translate(itemX, itemY, 200);
-                context.getMatrices().scale(s, s, 1f);
+                context.getMatrices().pushMatrix();
+                context.getMatrices().translate(itemX, itemY);
+                context.getMatrices().scale(s, s);
                 context.drawItem(mainhandStack, 0, 0);
                 context.drawStackOverlay(mc.textRenderer, mainhandStack, 0, 0);
-                context.getMatrices().pop();
+                context.getMatrices().popMatrix();
             }
         }
     }

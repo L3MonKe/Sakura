@@ -123,8 +123,10 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
     @Inject(method = "renderFirstPersonItem", at = @At(value = "RETURN"))
     private void onRenderItemPost(AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light, CallbackInfo ci) {
         Chams chams = Mahiro.MODULES.getModule(Chams.class);
-        if (chams.isEnabled() && chams.handItems.get())
-            RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        if (chams.isEnabled() && chams.handItems.get()) {
+            // TODO: idk how to do it in 2k26
+            //RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+        }
     }
 
     @Inject(method = "renderFirstPersonItem", at = @At(value = "HEAD"), cancellable = true)
@@ -132,7 +134,7 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
         Animations animations = Mahiro.MODULES.getModule(Animations.class);
         if (animations != null && animations.shouldAnimate() && !(item.isEmpty()) && !(item.getItem() instanceof FilledMapItem)) {
             ci.cancel();
-            animations.renderFirstPersonItemCustom(player, tickDelta, pitch, hand, swingProgress, item, equipProgress, matrices, vertexConsumers, light);
+            animations.renderFirstPersonItemCustom(player, tickProgress, pitch, hand, swingProgress, item, equipProgress, matrices, orderedRenderCommandQueue, light);
         }
     }
 

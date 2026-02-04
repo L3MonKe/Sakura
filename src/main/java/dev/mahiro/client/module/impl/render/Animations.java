@@ -22,6 +22,9 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;
+import net.minecraft.client.render.command.OrderedRenderCommandQueue;
+import net.minecraft.client.render.item.ItemRenderState;
+import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.CrossbowItem;
@@ -314,7 +317,7 @@ public class Animations extends Module {
     }
 
 
-    public void renderFirstPersonItemCustom(AbstractClientPlayerEntity player, float tickDelta, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
+    public void renderFirstPersonItemCustom(AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
         if (noOffhand.get() && hand == Hand.OFF_HAND && shouldAnimate()) return;
         if (!player.isUsingSpyglass()) {
             boolean bl = hand == Hand.MAIN_HAND;
@@ -336,7 +339,7 @@ public class Animations extends Module {
                     matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-11.935F));
                     matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * 65.3F));
                     matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * -9.785F));
-                    f = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickDelta + 1.0F);
+                    f = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickProgress + 1.0F);
                     g = f / (float) CrossbowItem.getPullTime(item, mc.player);
                     if (g > 1.0F) {
                         g = 1.0F;
@@ -367,7 +370,7 @@ public class Animations extends Module {
 
                 HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
                 Mahiro.EVENT_BUS.post(event);
-                renderItem(player, item, bl3 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, !bl3, matrices, vertexConsumers, light);
+                renderItem(player, item, bl3 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, matrices, orderedRenderCommandQueue, light);
             } else {
                 bl2 = arm == Arm.RIGHT;
                 int l;
@@ -377,7 +380,7 @@ public class Animations extends Module {
                     switch (item.getUseAction()) {
                         case NONE, BLOCK -> applyEquipOffset(matrices, arm, equipProgress);
                         case EAT, DRINK -> {
-                            applyEatOrDrinkTransformationCustom(matrices, tickDelta, arm, item);
+                            applyEatOrDrinkTransformationCustom(matrices, tickProgress, arm, item);
                             applyEquipOffset(matrices, arm, equipProgress);
                         }
                         case BOW -> {
@@ -386,7 +389,7 @@ public class Animations extends Module {
                             matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-13.935F));
                             matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) l * 35.3F));
                             matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) l * -9.785F));
-                            m = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickDelta + 1.0F);
+                            m = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickProgress + 1.0F);
                             f = m / 20.0F;
                             f = (f * f + f * 2.0F) / 3.0F;
                             if (f > 1.0F) {
@@ -408,7 +411,7 @@ public class Animations extends Module {
                             matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-55.0F));
                             matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) l * 35.3F));
                             matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) l * -9.785F));
-                            m = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickDelta + 1.0F);
+                            m = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickProgress + 1.0F);
                             f = m / 10.0F;
                             if (f > 1.0F) {
                                 f = 1.0F;
@@ -423,7 +426,7 @@ public class Animations extends Module {
                             matrices.scale(1.0F, 1.0F, 1.0F + f * 0.2F);
                             matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees((float) l * 45.0F));
                         }
-                        case BRUSH -> applyBrushTransformation(matrices, tickDelta, arm, item, equipProgress);
+                        case BRUSH -> applyBrushTransformation(matrices, tickProgress, arm, item, equipProgress);
                     }
                 } else if (player.isUsingRiptide()) {
                     applyEquipOffset(matrices, arm, equipProgress);
@@ -437,7 +440,7 @@ public class Animations extends Module {
 
                 HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
                 Mahiro.EVENT_BUS.post(event);
-                renderItem(player, item, bl2 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, !bl2, matrices, vertexConsumers, light);
+                renderItem(player, item, bl2 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, matrices, orderedRenderCommandQueue, light);
             }
             matrices.pop();
         }
@@ -479,8 +482,12 @@ public class Animations extends Module {
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * -45.0F));
     }
 
-    public void renderItem(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, boolean leftHanded, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
-        mc.getItemRenderer().renderItem(entity, stack, renderMode, leftHanded, matrices, vertexConsumers, entity.getWorld(), light, OverlayTexture.DEFAULT_UV, entity.getId());
+    public void renderItem(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
+        if (!stack.isEmpty()) {
+            ItemRenderState itemRenderState = new ItemRenderState();
+            mc.getItemModelManager().clearAndUpdate(itemRenderState, stack, renderMode, entity.getEntityWorld(), entity, entity.getId() + renderMode.ordinal());
+            itemRenderState.render(matrices, orderedRenderCommandQueue, light, OverlayTexture.DEFAULT_UV, 0);
+        }
     }
 
     private void applyEatOrDrinkTransformationCustom(MatrixStack matrices, float tickDelta, Arm arm, @NotNull ItemStack stack) {

@@ -31,8 +31,8 @@ public class FallingPlayer {
 
     public FallingPlayer(PlayerEntity player) {
         this(player.getX(), player.getY(), player.getZ(), player.getVelocity().x, player.getVelocity().y, player.getVelocity().z, player.getHeadYaw(), player.sidewaysSpeed, player.forwardSpeed);
-        float f = player.getWorld().getBlockState(player.getBlockPos()).getBlock().getJumpVelocityMultiplier();
-        float f1 = player.getWorld().getBlockState(player.getLandingPos()).getBlock().getJumpVelocityMultiplier();
+        float f = player.getEntityWorld().getBlockState(player.getBlockPos()).getBlock().getJumpVelocityMultiplier();
+        float f1 = player.getEntityWorld().getBlockState(player.getLandingPos()).getBlock().getJumpVelocityMultiplier();
         float jumpingVelocity = 0.42F * ((double) f == 1.0 ? f1 : f) + player.getJumpBoostVelocityModifier();
         this.jumpMovementFactor = jumpingVelocity;
     }

@@ -1,17 +1,13 @@
-accessWidener v1 named
+accessWidener v2 named
 
-accessible field net/minecraft/network/packet/s2c/play/EntityS2CPacket id I
-accessible field net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen selectedTab Lnet/minecraft/item/ItemGroup;
-accessible method net/minecraft/client/network/ClientPlayerInteractionManager syncSelectedSlot ()V
+accessible method net/minecraft/client/render/BufferBuilder build ()Lnet/minecraft/client/render/BuiltBuffer;
+
+
 accessible method net/minecraft/client/world/ClientWorld getEntityLookup ()Lnet/minecraft/world/entity/EntityLookup;
 accessible field net/minecraft/world/entity/SimpleEntityLookup cache Lnet/minecraft/world/entity/SectionedEntityCache;
 accessible field net/minecraft/world/entity/SectionedEntityCache trackedPositions Lit/unimi/dsi/fastutil/longs/LongSortedSet;
 accessible field net/minecraft/world/entity/SectionedEntityCache trackingSections Lit/unimi/dsi/fastutil/longs/Long2ObjectMap;
-accessible field net/minecraft/client/render/item/ItemRenderState$LayerRenderState model Lnet/minecraft/client/render/model/BakedModel;
-accessible field net/minecraft/client/render/item/ItemRenderer itemRenderState Lnet/minecraft/client/render/item/ItemRenderState;
-accessible field net/minecraft/client/render/item/ItemRenderState layers [Lnet/minecraft/client/render/item/ItemRenderState$LayerRenderState;
-accessible field net/minecraft/client/render/item/ItemRenderState layerCount I
-accessible method net/minecraft/client/render/item/ItemRenderState$LayerRenderState getTransformation ()Lnet/minecraft/client/render/model/json/Transformation;
-accessible class net/minecraft/client/render/BackgroundRenderer$StatusEffectFogModifier
+
 accessible method net/minecraft/client/world/ClientWorld getPendingUpdateManager ()Lnet/minecraft/client/network/PendingUpdateManager;
-accessible method net/minecraft/client/render/BufferBuilder build ()Lnet/minecraft/client/render/BuiltBuffer;
+
+accessible field net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen selectedTab Lnet/minecraft/item/ItemGroup;

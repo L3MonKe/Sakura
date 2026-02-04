@@ -60,7 +60,8 @@ public class AntiBot extends Module {
                 if (packet.getActions().contains(PlayerListS2CPacket.Action.ADD_PLAYER)) {
                     for (PlayerListS2CPacket.Entry entry : packet.getEntries()) {
                         GameProfile profile = entry.profile();
-                        UUID id = profile.getId();
+                        if (profile == null) return;
+                        UUID id = profile.id();
                         respawnTime.put(id, System.currentTimeMillis());
                     }
                 }
@@ -98,8 +99,8 @@ public class AntiBot extends Module {
             if (event.getPacket() instanceof PlayerListS2CPacket packet) {
                 if (packet.getActions().contains(PlayerListS2CPacket.Action.ADD_PLAYER)) {
                     for (PlayerListS2CPacket.Entry entry : packet.getEntries()) {
-                        if (entry.displayName() != null && entry.displayName().getSiblings().isEmpty() && entry.gameMode() == GameMode.SURVIVAL) {
-                            UUID uuid = entry.profile().getId();
+                        if (entry.profile() != null && entry.displayName() != null && entry.displayName().getSiblings().isEmpty() && entry.gameMode() == GameMode.SURVIVAL) {
+                            UUID uuid = entry.profile().id();
                             uuids.put(uuid, System.currentTimeMillis());
                             uuidDisplayNames.put(uuid, entry.displayName().getString());
                         }

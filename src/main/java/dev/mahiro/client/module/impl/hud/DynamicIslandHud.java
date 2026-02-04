@@ -14,6 +14,7 @@ import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.block.Block;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.render.RenderLayer;
@@ -164,7 +165,7 @@ public class DynamicIslandHud extends HudModule {
         if (mc.getNetworkHandler() != null) {
             List<PlayerListEntry> source = capturedTabEntries.isEmpty() ? List.copyOf(mc.getNetworkHandler().getPlayerList()) : capturedTabEntries;
             playerList = source.stream()
-                    .sorted(Comparator.comparingInt((PlayerListEntry e) -> e.getGameMode() == GameMode.SPECTATOR ? 1 : 0).thenComparing(e -> e.getProfile().getName()))
+                    .sorted(Comparator.comparingInt((PlayerListEntry e) -> e.getGameMode() == GameMode.SPECTATOR ? 1 : 0).thenComparing(e -> e.getProfile().name()))
                     .limit(80) // 可有可无吧。。。
                     .collect(Collectors.toList());
 
@@ -504,11 +505,11 @@ public class DynamicIslandHud extends HudModule {
 
     private void renderScaffoldItem(DrawContext context) {
         if (!shouldRenderScaffold() || !scaffoldItemVisible || scaffoldItem.isEmpty()) return;
-        context.getMatrices().push();
-        context.getMatrices().translate(scaffoldItemX, scaffoldItemY, 200);
-        context.getMatrices().scale(scaffoldItemScale, scaffoldItemScale, 1f);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(scaffoldItemX, scaffoldItemY);
+        context.getMatrices().scale(scaffoldItemScale, scaffoldItemScale);
         context.drawItem(scaffoldItem, 0, 0);
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
     }
 
     private void drawBackground(Color color) {
@@ -614,22 +615,9 @@ public class DynamicIslandHud extends HudModule {
             int headX = innerX1;
             int headY = rowY + headYOffset;
 
-            RenderSystem.enableBlend();
-            context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().body(),
-                    headX, headY,
-                    8, 8,
-                    headSize, headSize,
-                    8, 8,
-                    64, 64);
-            context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().body(),
-                    headX, headY,
-                    40, 8,
-                    headSize, headSize,
-                    8, 8,
-                    64, 64);
-            RenderSystem.disableBlend();
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, entry.getSkinTextures().body().texturePath(), headX, headY, 8, 8, headSize, headSize, 8, 8, 64, 64);
+
+            context.drawTexture(RenderPipelines.GUI_TEXTURED, entry.getSkinTextures().body().texturePath(), headX, headY, 40, 8, headSize, headSize, 8, 8, 64, 64);
 
             String ping = entry.getLatency() + "ms";
             int pingW = mc.textRenderer.getWidth(ping);

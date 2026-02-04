@@ -11,7 +11,10 @@ import dev.mahiro.client.utils.animations.impl.DecelerateAnimation;
 import dev.mahiro.client.utils.math.MathUtil;
 import dev.mahiro.client.utils.render.RenderUtil;
 import dev.mahiro.client.values.impl.NumberValue;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 
@@ -128,13 +131,13 @@ public class NumberValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         float w = getWidth();
 
-        if (RenderUtil.isHovering(getX(), getY() + 7 * scale, w, 4 * scale, (float) mouseX, (float) mouseY)) {
-            if (mouseButton == 0 && !editing) {
+        if (RenderUtil.isHovering(getX(), getY() + 7 * scale, w, 4 * scale, (float) click.x(), (float) click.y())) {
+            if (click.button() == 0 && !editing) {
                 dragging = true;
-            } else if (mouseButton == 1 && !editing) {
+            } else if (click.button() == 1 && !editing) {
                 if (currentEditing != null && currentEditing != this) {
                     currentEditing.finishEditing();
                 }
@@ -150,26 +153,26 @@ public class NumberValueComponent extends Component {
                 cursorVisible = true;
                 return true;
             }
-        } else if (editing && mouseButton == 0) {
+        } else if (editing && click.button() == 0) {
             finishEditing();
         }
 
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int state) {
-        if (state == 0) {
+    public boolean mouseReleased(Click click) {
+        //if (state == 0) {
             dragging = false;
-        }
-        return super.mouseReleased(mouseX, mouseY, state);
+        //}
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (!editing) return false;
 
-        switch (keyCode) {
+        switch (input.getKeycode()) {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
                 finishEditing();
                 return true;
@@ -223,9 +226,10 @@ public class NumberValueComponent extends Component {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         if (!editing) return false;
 
+        int chr = input.codepoint();
         if (!Character.isDigit(chr) && chr != '.' && chr != '-') {
             return false;
         }

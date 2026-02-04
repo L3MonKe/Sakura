@@ -144,7 +144,7 @@ public class InvUtil {
         else if (!swapBack) previousSlot = -1;
 
         mc.player.getInventory().setSelectedSlot(slot);
-        mc.interactionManager.syncSelectedSlot();
+        //mc.interactionManager.syncSelectedSlot(); 或许这个不需要。。？
         return true;
     }
 

@@ -9,11 +9,13 @@ import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseInOutQuad;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
+import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -755,8 +757,8 @@ public class ModuleListHud extends HudModule {
             float alpha = 1.0f;
             Color blurColor = new Color(0, 0, 0, 0);
 
-            dev.mahiro.client.utils.render.Shader2DUtil.drawRoundedBlur(
-                    new net.minecraft.client.util.math.MatrixStack(),
+            Shader2DUtil.drawRoundedBlur(
+                    new Matrix3x2fStack(),
                     itemBgX - (4 * scale),
                     bgY,
                     bgWidth,
@@ -1216,18 +1218,18 @@ public class ModuleListHud extends HudModule {
                     (int) (textColor.getAlpha() * animationValue)
             );
 
-            net.minecraft.client.util.math.MatrixStack matrices = context.getMatrices();
-            matrices.push();
+            Matrix3x2fStack matrices = context.getMatrices();
+            matrices.pushMatrix();
 
             float fontScale = (fontSize * scale) / 9.0f;
 
-            matrices.translate(animatedTextX, textY_Center, 0);
-            matrices.scale(fontScale, fontScale, 1f);
+            matrices.translate(animatedTextX, textY_Center);
+            matrices.scale(fontScale, fontScale);
 
             // Draw centered vertically (approx) - 9px height, so -4.5
             context.drawTextWithShadow(mc.textRenderer, moduleName, 0, (int) -4.5f, animatedTextColor.getRGB());
 
-            matrices.pop();
+            matrices.popMatrix();
 
             if (!suffix.isEmpty()) {
                 float suffixX = animatedTextX + moduleNameWidth + (2 * scale);
@@ -1238,13 +1240,13 @@ public class ModuleListHud extends HudModule {
                         (int) (SUFFIX_COLOR.getAlpha() * animationValue)
                 );
 
-                matrices.push();
-                matrices.translate(suffixX, textY_Center, 0);
-                matrices.scale(fontScale, fontScale, 1f);
+                matrices.pushMatrix();
+                matrices.translate(suffixX, textY_Center);
+                matrices.scale(fontScale, fontScale);
 
                 context.drawTextWithShadow(mc.textRenderer, formattedSuffix, 0, (int) -4.5f, animatedSuffixColor.getRGB());
 
-                matrices.pop();
+                matrices.popMatrix();
             }
         }
     }

@@ -43,7 +43,7 @@ public class Stealer extends Module {
             return false;
         } else if (InvHelper.isGodItem(stack) || InvHelper.isSharpnessAxe(stack)) {
             return true;
-        } else if (stack.getItem() instanceof ArmorItem) {
+        } else if (InvHelper.isArmor(stack)) {
             float protection = InvHelper.getProtection(stack);
             var equippable = stack.get(DataComponentTypes.EQUIPPABLE);
             if (equippable == null) return false;
@@ -142,7 +142,7 @@ public class Stealer extends Module {
         if (!InvHelper.isGodItem(stack) && !InvHelper.isSharpnessAxe(stack)) {
             for (int i = 0; i < menu.getRows() * 9; i++) {
                 ItemStack checkStack = menu.getSlot(i).getStack();
-                if (stack.getItem() instanceof ArmorItem && checkStack.getItem() instanceof ArmorItem) {
+                if (InvHelper.isArmor(stack) && InvHelper.isArmor(checkStack)) {
                     var stackEquippable = stack.get(DataComponentTypes.EQUIPPABLE);
                     var checkEquippable = checkStack.get(DataComponentTypes.EQUIPPABLE);
                     if (stackEquippable != null && checkEquippable != null

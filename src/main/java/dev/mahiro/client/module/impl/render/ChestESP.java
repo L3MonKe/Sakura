@@ -62,7 +62,7 @@ public class ChestESP extends Module {
             RenderSystem.depthMask(false);
         }
 
-        Vec3d playerPos = mc.player.getPos();
+        Vec3d playerPos = mc.player.getEntityPos();
         double maxSq = range.get() * range.get();
 
         for (BlockEntity blockEntity : getLoadedBlockEntities(range.get())) {
