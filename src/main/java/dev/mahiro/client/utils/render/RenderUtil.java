@@ -1,15 +1,8 @@
 package dev.mahiro.client.utils.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.utils.color.ColorUtil;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
-import org.joml.Matrix4f;
 
 import java.awt.*;
 
@@ -46,34 +39,6 @@ public class RenderUtil {
 
     public static int colorSwitch(Color firstColor, Color secondColor, float time, int index, long timePerIndex, double speed) {
         return colorSwitch(firstColor, secondColor, time, index, timePerIndex, speed, 255);
-    }
-
-    public static void drawTracer(DrawContext guiGraphics, float x, float y, float size, float widthDiv, float heightDiv, int color) {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(false);
-
-        MatrixStack poseStack = guiGraphics.getMatrices();
-        Matrix4f matrix = poseStack.peek().getPositionMatrix();
-
-        float a = (color >> 24 & 0xFF) / 255.0F;
-        float r = (color >> 16 & 0xFF) / 255.0F;
-        float g = (color >> 8 & 0xFF) / 255.0F;
-        float b = (color & 0xFF) / 255.0F;
-
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        bufferBuilder.vertex(matrix, x, y, 0.0F).color(r, g, b, a);
-        bufferBuilder.vertex(matrix, x - size / widthDiv, y + size, 0.0F).color(r, g, b, a);
-        bufferBuilder.vertex(matrix, x, y + size / heightDiv, 0.0F).color(r, g, b, a);
-        bufferBuilder.vertex(matrix, x + size / widthDiv, y + size, 0.0F).color(r, g, b, a);
-
-        BufferRenderer.drawWithGlobalProgram(bufferBuilder.end());
-
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.disableBlend();
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
     }
 
     public static int getRainbow(long currentMillis, int speed, int offset, float alpha) {

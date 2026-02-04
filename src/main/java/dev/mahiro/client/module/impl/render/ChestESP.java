@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
@@ -58,8 +58,8 @@ public class ChestESP extends Module {
 
         boolean disableDepth = throughWalls.get();
         if (disableDepth) {
-            RenderSystem.disableDepthTest();
-            RenderSystem.depthMask(false);
+            GlStateManager._disableDepthTest();
+            GlStateManager._depthMask(false);
         }
 
         Vec3d playerPos = mc.player.getEntityPos();
@@ -83,8 +83,8 @@ public class ChestESP extends Module {
         }
 
         if (disableDepth) {
-            RenderSystem.enableDepthTest();
-            RenderSystem.depthMask(true);
+            GlStateManager._enableDepthTest();
+            GlStateManager._depthMask(true);
         }
     }
 

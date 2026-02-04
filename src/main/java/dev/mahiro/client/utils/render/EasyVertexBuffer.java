@@ -76,8 +76,7 @@ public final class EasyVertexBuffer implements AutoCloseable {
     /*
      * Similar to {@link RenderLayer#draw(BuiltBuffer)}.
      */
-    public void draw(MatrixStack matrixStack, RenderLayer layer, float red,
-                     float green, float blue, float alpha) {
+    public void draw(MatrixStack matrixStack, RenderLayer layer, float red, float green, float blue, float alpha) {
         if (vertexBuffer == null)
             return;
 

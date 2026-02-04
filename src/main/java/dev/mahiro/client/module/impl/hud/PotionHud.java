@@ -14,7 +14,6 @@ import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.texture.Sprite;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
@@ -110,9 +109,7 @@ public class PotionHud extends HudModule {
                 int headerFont = FontLoader.bold(12);
                 float headerFontSize = 12 * s;
                 float headerTextY = y + layout.paddingY + headerFontSize;
-                float headerTextX = layout.alignRight
-                        ? x + animWidth - layout.paddingX - NanoVGHelper.getTextWidth("Potions", headerFont, headerFontSize)
-                        : x + layout.paddingX;
+                float headerTextX = layout.alignRight ? x + animWidth - layout.paddingX - NanoVGHelper.getTextWidth("Potions", headerFont, headerFontSize) : x + layout.paddingX;
                 NanoVGHelper.drawString("Potions", headerTextX, headerTextY, headerFont, headerFontSize, textColor.get());
                 float lineY = y + layout.paddingY + layout.headerHeight - 2 * s;
                 NanoVGHelper.drawGradientRRect2(x + layout.paddingX, lineY, animWidth - layout.paddingX * 2, 1.2f * s, 0, ClickGui.color(0), ClickGui.color2(0));
@@ -289,7 +286,7 @@ public class PotionHud extends HudModule {
         int ix = Math.round(x);
         int iy = Math.round(y);
         int is = Math.round(size);
-        Sprite sprite = mc.getStatusEffectSpriteManager().getSprite(instance.getEffectType());
+        Sprite sprite = null;// todo: mc.getAtlasManager().getSprite(); how to draw sprite in yarn 1.21.11??
         if (sprite == null) return;
         context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, sprite, ix, iy, is, is);
     }

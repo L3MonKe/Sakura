@@ -1,6 +1,6 @@
 package dev.mahiro.client.module.impl.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
@@ -15,15 +15,17 @@ import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.gl.ShaderProgramKeys;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormats;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
+import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -99,24 +101,22 @@ public class JumpCircles extends Module {
 
         if (circles.isEmpty()) return;
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+        GlStateManager._enableBlend();
+        GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
         if (!depthTest.get()) {
-            RenderSystem.disableDepthTest();
-            RenderSystem.depthMask(false);
+            GlStateManager._disableDepthTest();
+            GlStateManager._depthMask(false);
         }
-        RenderSystem.disableCull();
-        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);
+        GlStateManager._disableCull();
 
         for (JumpCircle circle : circles) {
             renderCircle(event.getMatrices(), circle, event.getTickDelta());
         }
 
-        RenderSystem.setShaderColor(1, 1, 1, 1);
-        RenderSystem.enableDepthTest();
-        RenderSystem.depthMask(true);
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
+        GlStateManager._enableDepthTest();
+        GlStateManager._depthMask(true);
+        GlStateManager._enableCull();
+        GlStateManager._disableBlend();
     }
 
     private void renderCircle(MatrixStack matrices, JumpCircle circle, float tickDelta) {
@@ -193,12 +193,11 @@ public class JumpCircles extends Module {
             buffer.vertex(matrix, x, 0, z).color(r, g, b, 0f);
         }
 
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
+        RenderLayers.debugTriangleFan().draw(buffer.end());
     }
 
     private void drawCircleOutline(Matrix4f matrix, float radius, Color color, float width) {
-        RenderSystem.lineWidth(width);
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.DEBUG_LINE_STRIP, VertexFormats.POSITION_COLOR);
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH);
 
         float r = color.getRed() / 255f;
         float g = color.getGreen() / 255f;
@@ -206,15 +205,26 @@ public class JumpCircles extends Module {
         float a = color.getAlpha() / 255f;
 
         int segs = segments.get();
-        for (int i = 0; i <= segs; i++) {
-            double angle = Math.PI * 2 * i / segs;
-            float x = (float) (Math.cos(angle) * radius);
-            float z = (float) (Math.sin(angle) * radius);
-            buffer.vertex(matrix, x, 0, z).color(r, g, b, a);
+        for (int i = 0; i < segs; i++) {
+            double angle1 = Math.PI * 2 * i / segs;
+            double angle2 = Math.PI * 2 * (i + 1) / segs;
+
+            float x1 = (float) (Math.cos(angle1) * radius);
+            float z1 = (float) (Math.sin(angle1) * radius);
+            float x2 = (float) (Math.cos(angle2) * radius);
+            float z2 = (float) (Math.sin(angle2) * radius);
+
+            float dx = x2 - x1;
+            float dz = z2 - z1;
+            float len = MathHelper.sqrt(dx * dx + dz * dz);
+            float nx = len == 0.0f ? 1.0f : dx / len;
+            float nz = len == 0.0f ? 0.0f : dz / len;
+
+            buffer.vertex(matrix, x1, 0, z1).color(r, g, b, a).normal(nx, 0.0f, nz).lineWidth(width);
+            buffer.vertex(matrix, x2, 0, z2).color(r, g, b, a).normal(nx, 0.0f, nz).lineWidth(width);
         }
 
-        BufferRenderer.drawWithGlobalProgram(buffer.end());
-        RenderSystem.lineWidth(1.0f);
+        RenderLayers.lines().draw(buffer.end());
     }
 
     private Color getCircleColor() {
