@@ -88,23 +88,23 @@ public class KeyStrokesHud extends HudModule {
 
         float blurValue = blurStrength.get().floatValue();
 
-        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
+        Shader2DUtil.drawRoundedBlur(
                 x + width / 2f - size / 2f, y, size, size, radius,
                 new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
+        Shader2DUtil.drawRoundedBlur(
                 x, y + increment, size, size, radius,
                 new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
+        Shader2DUtil.drawRoundedBlur(
                 x + increment, y + increment, size, size, radius,
                 new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
+        Shader2DUtil.drawRoundedBlur(
                 x + increment * 2, y + increment, size, size, radius,
                 new Color(0, 0, 0, 0), blurValue, 1.0f);
 
-        Shader2DUtil.drawRoundedBlur(context.getMatrices(),
+        Shader2DUtil.drawRoundedBlur(
                 x, y + increment * 2, width, size, radius,
                 new Color(0, 0, 0, 0), blurValue, 1.0f);
     }

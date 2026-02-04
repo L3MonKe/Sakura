@@ -115,17 +115,17 @@ public class BlurProgram {
 
         Framebuffer mainBuffer = mc.getFramebuffer();
         RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(
-            mainBuffer.getColorAttachment(),
-            blurFramebuffer.getColorAttachment(),
-            0, 0, 0,
-            0, 0,
-            blurFramebuffer.textureWidth, blurFramebuffer.textureHeight
+                mainBuffer.getColorAttachment(),
+                blurFramebuffer.getColorAttachment(),
+                0, 0, 0,
+                0, 0,
+                blurFramebuffer.textureWidth, blurFramebuffer.textureHeight
         );
 
         FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
         PostEffectProcessor.FramebufferSet framebufferSet = PostEffectProcessor.FramebufferSet.singleton(
-            Identifier.ofVanilla("main"),
-            frameGraphBuilder.createObjectNode("main", blurFramebuffer)
+                Identifier.ofVanilla("main"),
+                frameGraphBuilder.createObjectNode("main", blurFramebuffer)
         );
 
         CUSTOM_UNIFORM.use(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight(), radius, () -> {

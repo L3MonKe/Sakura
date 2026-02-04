@@ -255,7 +255,6 @@ public class NotifyHud extends HudModule {
                     float notifyX = screenWidth - PADDING - slideOffset;
                     if (alpha > 0.1f) {
                         Shader2DUtil.drawRoundedBlur(
-                                context.getMatrices(),
                                 notifyX, currentY,
                                 NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT,
                                 RADIUS,

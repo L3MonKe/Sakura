@@ -93,7 +93,7 @@ public class PotionHud extends HudModule {
         animHeight = smooth(animHeight == 0 ? targetHeight : animHeight, targetHeight, 0.2f);
 
         if (showBackground.get() && backgroundBlur.get()) {
-            Shader2DUtil.drawRoundedBlur(context.getMatrices(), x, y, animWidth, animHeight, layout.panelRadius, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 0.9f);
+            Shader2DUtil.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 0.9f);
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {

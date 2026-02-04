@@ -265,7 +265,7 @@ public class WelcomeScreen extends Screen {
         MainMenuShader.getSharedInstance().render(width, height, 1.0f);
 
         if (blurStrength > 0.1f) {
-            Shader2DUtil.drawQuadBlur(context.getMatrices(), 0, 0, width, height, blurStrength, 1.0f);
+            Shader2DUtil.drawQuadBlur(0, 0, width, height, blurStrength, 1.0f);
         }
 
         final float finalScale = scale;

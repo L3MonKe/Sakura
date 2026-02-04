@@ -758,7 +758,6 @@ public class ModuleListHud extends HudModule {
             Color blurColor = new Color(0, 0, 0, 0);
 
             Shader2DUtil.drawRoundedBlur(
-                    new Matrix3x2fStack(),
                     itemBgX - (4 * scale),
                     bgY,
                     bgWidth,

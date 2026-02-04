@@ -193,7 +193,6 @@ public class MainMenuScreen extends Screen {
 
     private void drawPanelBlur(DrawContext context, Layout layout, float opacity) {
         Shader2DUtil.drawRoundedBlur(
-                context.getMatrices(),
                 layout.panelX,
                 layout.panelY,
                 layout.panelW,

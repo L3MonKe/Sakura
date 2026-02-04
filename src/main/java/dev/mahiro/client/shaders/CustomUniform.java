@@ -18,11 +18,11 @@ public final class CustomUniform {
         used = true;
         try (MemoryStack memoryStack = MemoryStack.stackPush()) {
             ByteBuffer byteBuffer = Std140Builder.onStack(memoryStack, SIZE)
-                .putVec2(width, height)
-                .putFloat(0.0F)
-                .putFloat(0L)
-                .putInt(blurRadius)
-                .get();
+                    .putVec2(width, height)
+                    .putFloat(0.0F)
+                    .putFloat(0L)
+                    .putInt(blurRadius)
+                    .get();
             RenderSystem.getDevice().createCommandEncoder().writeToBuffer(buffer.slice(), byteBuffer);
         }
         runnable.run();

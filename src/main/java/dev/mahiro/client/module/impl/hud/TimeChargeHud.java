@@ -86,7 +86,7 @@ public class TimeChargeHud extends HudModule {
 
         // 1. 绘制模糊背景 (如果启用)
         if (blur.get()) {
-            Shader2DUtil.drawRoundedBlur(context.getMatrices(), bgX, bgY, bgW, bgH, bgR, new Color(0, 0, 0, 0), blurRadius.get().floatValue(), 1.0f);
+            Shader2DUtil.drawRoundedBlur(bgX, bgY, bgW, bgH, bgR, new Color(0, 0, 0, 0), blurRadius.get().floatValue(), 1.0f);
         }
 
         // 2. 绘制 NanoVG 内容

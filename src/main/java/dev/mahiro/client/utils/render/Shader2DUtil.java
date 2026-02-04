@@ -1,8 +1,7 @@
 package dev.mahiro.client.utils.render;
 
-import dev.mahiro.client.shaders.BlurProgram;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
-import net.minecraft.client.util.math.MatrixStack;
+import dev.mahiro.client.shaders.BlurProgram;
 import org.lwjgl.nanovg.NVGPaint;
 
 import java.awt.*;
@@ -17,7 +16,7 @@ public class Shader2DUtil {
         BLUR_PROGRAM = new BlurProgram();
     }
 
-    public static void drawQuadBlur(MatrixStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
+    public static void drawQuadBlur(float x, float y, float width, float height, float blurStrength, float blurOpacity) {
         if (BLUR_PROGRAM == null) {
             BLUR_PROGRAM = new BlurProgram();
         }
@@ -45,7 +44,7 @@ public class Shader2DUtil {
         });
     }
 
-    public static void drawRoundedBlur(MatrixStack matrices, float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
+    public static void drawRoundedBlur(float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
         if (BLUR_PROGRAM == null) {
             BLUR_PROGRAM = new BlurProgram();
         }

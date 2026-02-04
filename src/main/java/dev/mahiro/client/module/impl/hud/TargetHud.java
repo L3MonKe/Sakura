@@ -35,7 +35,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
-import org.joml.Matrix3x2fStack;
 import org.joml.Matrix4f;
 import org.lwjgl.nanovg.NanoVG;
 import org.lwjgl.system.MemoryStack;
@@ -794,7 +793,6 @@ public class TargetHud extends HudModule {
         float blur = MahiroBlurRadius.get().floatValue() * globalScale;
 
         Shader2DUtil.drawRoundedBlur(
-                new Matrix3x2fStack(),
                 rx, ry, w, h,
                 r,
                 new Color(0, 0, 0, 0),
