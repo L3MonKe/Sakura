@@ -1,8 +1,8 @@
 package dev.mahiro.client.shaders;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gl.VertexBuffer;
+import com.mojang.blaze3d.opengl.GlStateManager;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import java.io.IOException;
@@ -21,7 +21,6 @@ public class SplashShader {
     private int zoomUniform;
     private float accumulatedTime;
     private float currentProgress = 0f;
-    //private VertexBuffer vertexBuffer; no vertex buffer in 1.21.11
     private boolean initialized = false;
 
     private boolean transitionStarted = false;
@@ -148,14 +147,14 @@ public class SplashShader {
 
         this.currentProgress = progress;
 
-        RenderSystem.disableCull();
-        RenderSystem.disableDepthTest();
+        GlStateManager._disableCull();
+        GlStateManager._disableDepthTest();
 
         if (zoom > 1.0f) {
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
+            GlStateManager._enableBlend();
+            GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
         } else {
-            RenderSystem.disableBlend();
+            GlStateManager._disableBlend();
         }
 
         GL20.glUseProgram(this.programId);
@@ -169,14 +168,17 @@ public class SplashShader {
         GL20.glUniform1f(this.fadeOutUniform, fadeOut);
         GL20.glUniform1f(this.zoomUniform, zoom);
 
-        this.vertexBuffer.bind();
-        this.vertexBuffer.draw();
-        VertexBuffer.unbind();
+        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, this.vboId);
+        GL20.glEnableVertexAttribArray(0);
+        GL20.glVertexAttribPointer(0, 3, GL11.GL_FLOAT, false, 0, 0);
+        GL11.glDrawArrays(GL11.GL_QUADS, 0, 4);
+        GL20.glDisableVertexAttribArray(0);
+        GL20.glBindBuffer(GL20.GL_ARRAY_BUFFER, 0);
 
         GL20.glUseProgram(0);
-        RenderSystem.enableDepthTest();
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
+        GlStateManager._enableDepthTest();
+        GlStateManager._enableCull();
+        GlStateManager._disableBlend();
     }
 
     public void startTransition() {
@@ -212,9 +214,9 @@ public class SplashShader {
             GL20.glDeleteProgram(this.programId);
             this.programId = 0;
         }
-        if (this.vertexBuffer != null) {
-            this.vertexBuffer.close();
-            this.vertexBuffer = null;
+        if (this.vboId != -1) {
+            GL20.glDeleteBuffers(this.vboId);
+            this.vboId = -1;
         }
         this.initialized = false;
         INSTANCE = null;

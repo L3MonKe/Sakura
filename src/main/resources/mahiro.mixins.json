@@ -55,6 +55,7 @@
     "render.MixinItemEntityRenderer",
     "render.MixinLightmapTextureManager",
     "render.MixinLivingEntityRenderer",
+    "render.MixinPostEffectPass",
     "render.MixinParticleManager",
     "render.MixinRenderTickCounter",
     "render.MixinScreen",

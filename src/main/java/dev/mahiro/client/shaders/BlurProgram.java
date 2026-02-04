@@ -1,98 +1,160 @@
 package dev.mahiro.client.shaders;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gl.Defines;
+import dev.mahiro.client.mixin.accessor.IGameRenderer;
+import dev.mahiro.client.nanovg.NanoVGRenderer;
+import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import net.minecraft.client.gl.Framebuffer;
-import net.minecraft.client.gl.GlUniform;
-import net.minecraft.client.gl.SimpleFramebuffer;
-import net.minecraft.client.render.VertexFormats;
+import net.minecraft.client.gl.PostEffectProcessor;
+import net.minecraft.client.gl.WindowFramebuffer;
+import net.minecraft.client.gui.screen.SplashOverlay;
+import net.minecraft.client.render.DefaultFramebufferSet;
+import net.minecraft.client.render.FrameGraphBuilder;
 import net.minecraft.util.Identifier;
-import org.lwjgl.opengl.GL30;
-
-import java.awt.*;
 
 import static dev.mahiro.client.Mahiro.mc;
+import static org.lwjgl.nanovg.NanoVG.nvgDeleteImage;
 
 public class BlurProgram {
-    private static final ShaderProgramKey PROGRAM_KEY = new ShaderProgramKey(Identifier.of("mahiro", "core/blur"), VertexFormats.POSITION, Defines.EMPTY);
+    private static final Identifier BLUR_IDENTIFIER = Identifier.ofVanilla("blur");
 
-    private ShaderProgram program;
-    private GlUniform uSize;
-    private GlUniform uLocation;
-    private GlUniform radius;
-    private GlUniform inputResolution;
-    private GlUniform brightness;
-    private GlUniform quality;
-    private GlUniform color1;
+    public static final CustomUniform CUSTOM_UNIFORM = new CustomUniform();
 
-    private Framebuffer input;
+    private Framebuffer blurFramebuffer;
+    private PostEffectProcessor postEffectProcessor;
+    private int blurTextureHandle;
+    private int blurTextureWidth;
+    private int blurTextureHeight;
+    private int nvgImageId = -1;
 
     public BlurProgram() {
         WindowResizeCallback.EVENT.register((client, window) -> {
-            if (input != null) {
-                input.resize(window.getFramebufferWidth(), window.getFramebufferHeight());
-            }
+            onResized(window.getFramebufferWidth(), window.getFramebufferHeight());
         });
     }
 
-    private boolean ensureProgram() {
-        ShaderProgram loaded = mc.getShaderLoader().getOrCreateProgram(PROGRAM_KEY);
-        if (loaded == null) {
+    private void onResized(int width, int height) {
+        if (blurFramebuffer != null) {
+            blurFramebuffer.delete();
+        }
+        blurFramebuffer = new WindowFramebuffer(width, height);
+        blurTextureWidth = width;
+        blurTextureHeight = height;
+        blurTextureHandle = 0;
+        if (nvgImageId != -1) {
+            nvgDeleteImage(NanoVGRenderer.INSTANCE.getContext(), nvgImageId);
+            nvgImageId = -1;
+        }
+    }
+
+    private void ensureFramebuffer() {
+        int width = mc.getWindow().getFramebufferWidth();
+        int height = mc.getWindow().getFramebufferHeight();
+
+        if (blurFramebuffer == null) {
+            onResized(width, height);
+            return;
+        }
+
+        if (blurFramebuffer.textureWidth != width || blurFramebuffer.textureHeight != height) {
+            blurFramebuffer.resize(width, height);
+            blurTextureWidth = width;
+            blurTextureHeight = height;
+            blurTextureHandle = 0;
+            if (nvgImageId != -1) {
+                nvgDeleteImage(NanoVGRenderer.INSTANCE.getContext(), nvgImageId);
+                nvgImageId = -1;
+            }
+        }
+    }
+
+    private boolean ensureProcessor() {
+        if (postEffectProcessor != null) {
+            return true;
+        }
+
+        if (mc.getOverlay() instanceof SplashOverlay) {
             return false;
         }
-        if (loaded != this.program) {
-            this.program = loaded;
-            this.inputResolution = loaded.getUniform("InputResolution");
-            this.brightness = loaded.getUniform("Brightness");
-            this.quality = loaded.getUniform("Quality");
-            this.color1 = loaded.getUniform("color1");
-            this.uSize = loaded.getUniform("uSize");
-            this.uLocation = loaded.getUniform("uLocation");
-            this.radius = loaded.getUniform("radius");
-        }
-        return true;
+
+        postEffectProcessor = mc.getShaderLoader().loadPostEffect(BLUR_IDENTIFIER, DefaultFramebufferSet.MAIN_ONLY);
+        return postEffectProcessor != null;
     }
 
-    public void setParameters(float x, float y, float width, float height, float r, Color c1, float blurStrenth, float blurOpacity) {
-        if (input == null) {
-            input = new SimpleFramebuffer(mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), false);
+    private void ensureTextureHandle() {
+        if (blurFramebuffer == null || blurTextureHandle != 0) {
+            return;
         }
+        String label = blurFramebuffer.getColorAttachment().getLabel();
+        if (label == null || label.isEmpty()) {
+            return;
+        }
+        try {
+            blurTextureHandle = Integer.parseInt(label);
+        } catch (NumberFormatException ignored) {
+            blurTextureHandle = 0;
+        }
+        if (blurTextureHandle != 0 && nvgImageId == -1) {
+            int created = NanoVGHelper.createImageFromHandle(blurTextureHandle, blurTextureWidth, blurTextureHeight);
+            nvgImageId = created == 0 ? -1 : created;
+        }
+    }
 
-        if (!ensureProgram()) {
+    public void applyBlur(int radius) {
+        if (radius <= 0) {
             return;
         }
 
-        float factor = (float) mc.getWindow().getScaleFactor();
-        radius.set(r * factor);
-        uLocation.set(x * factor, -y * factor + mc.getWindow().getScaledHeight() * factor - height * factor);
-        uSize.set(width * factor, height * factor);
-        brightness.set(blurOpacity);
-        quality.set(blurStrenth);
-        color1.set(c1.getRed() / 255f, c1.getGreen() / 255f, c1.getBlue() / 255f, 1f);
-        program.addSamplerTexture("InputSampler", input.getColorAttachment());
-    }
-
-    public void use() {
-        if (!ensureProgram()) {
+        ensureFramebuffer();
+        if (blurFramebuffer == null) {
+            return;
+        }
+        if (!ensureProcessor()) {
             return;
         }
 
-        var buffer = mc.getFramebuffer();
+        Framebuffer mainBuffer = mc.getFramebuffer();
+        RenderSystem.getDevice().createCommandEncoder().copyTextureToTexture(
+            mainBuffer.getColorAttachment(),
+            blurFramebuffer.getColorAttachment(),
+            0, 0, 0,
+            0, 0,
+            blurFramebuffer.textureWidth, blurFramebuffer.textureHeight
+        );
 
-        input.beginWrite(false);
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, buffer.fbo);
-        GL30.glBlitFramebuffer(0, 0, buffer.textureWidth, buffer.textureHeight, 0, 0, buffer.textureWidth, buffer.textureHeight, GL30.GL_COLOR_BUFFER_BIT, GL30.GL_LINEAR);
-        buffer.beginWrite(false);
+        FrameGraphBuilder frameGraphBuilder = new FrameGraphBuilder();
+        PostEffectProcessor.FramebufferSet framebufferSet = PostEffectProcessor.FramebufferSet.singleton(
+            Identifier.ofVanilla("main"),
+            frameGraphBuilder.createObjectNode("main", blurFramebuffer)
+        );
 
-        if (input != null && (input.textureWidth != mc.getWindow().getFramebufferWidth() || input.textureHeight != mc.getWindow().getFramebufferHeight())) {
-            input.resize(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight());
-        }
+        CUSTOM_UNIFORM.use(mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight(), radius, () -> {
+            postEffectProcessor.render(frameGraphBuilder, blurFramebuffer.textureWidth, blurFramebuffer.textureHeight, framebufferSet);
+            frameGraphBuilder.run(((IGameRenderer) mc.gameRenderer).getPool());
+        });
 
-        if (inputResolution != null) {
-            inputResolution.set((float) buffer.textureWidth, (float) buffer.textureHeight);
-        }
-        program.addSamplerTexture("InputSampler", input.getColorAttachment());
+        ensureTextureHandle();
+    }
 
-        RenderSystem.setShader(program);
+    public int getBlurTextureHandle() {
+        ensureFramebuffer();
+        ensureTextureHandle();
+        return blurTextureHandle;
+    }
+
+    public int getNvgImageId() {
+        ensureFramebuffer();
+        ensureTextureHandle();
+        return nvgImageId;
+    }
+
+    public int getBlurTextureWidth() {
+        ensureFramebuffer();
+        return blurTextureWidth;
+    }
+
+    public int getBlurTextureHeight() {
+        ensureFramebuffer();
+        return blurTextureHeight;
     }
 }

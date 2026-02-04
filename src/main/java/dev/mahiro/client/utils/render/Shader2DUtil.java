@@ -1,15 +1,14 @@
 package dev.mahiro.client.utils.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.shaders.BlurProgram;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
-import org.joml.Matrix3x2fStack;
-import org.joml.Matrix4f;
+import dev.mahiro.client.nanovg.NanoVGRenderer;
+import net.minecraft.client.util.math.MatrixStack;
+import org.lwjgl.nanovg.NVGPaint;
 
 import java.awt.*;
+
+import static dev.mahiro.client.Mahiro.mc;
+import static org.lwjgl.nanovg.NanoVG.*;
 
 public class Shader2DUtil {
     public static BlurProgram BLUR_PROGRAM;
@@ -18,51 +17,63 @@ public class Shader2DUtil {
         BLUR_PROGRAM = new BlurProgram();
     }
 
-    public static void drawQuadBlur(Matrix3x2fStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
-        BufferBuilder bb = preShaderDraw(matrices, x - 10, y - 10, width + 20, height + 20);
+    public static void drawQuadBlur(MatrixStack matrices, float x, float y, float width, float height, float blurStrength, float blurOpacity) {
+        if (BLUR_PROGRAM == null) {
+            BLUR_PROGRAM = new BlurProgram();
+        }
 
-        BLUR_PROGRAM.setParameters(x, y, width, height, 0f, new Color(0, 0, 0, 0), blurStrength, blurOpacity);
-        BLUR_PROGRAM.use();
+        int radius = Math.max(0, Math.round(blurStrength));
+        BLUR_PROGRAM.applyBlur(radius);
+        int image = BLUR_PROGRAM.getNvgImageId();
 
-        BufferRenderer.drawWithGlobalProgram(bb.end());
-        endRender();
+        float opacity = Math.max(0f, Math.min(1f, blurOpacity));
+        if (image == -1) {
+            return;
+        }
+
+        float screenWidth = mc.getWindow().getScaledWidth();
+        float screenHeight = mc.getWindow().getScaledHeight();
+
+        NanoVGRenderer.INSTANCE.draw(vg -> {
+            NVGPaint paint = NVGPaint.create();
+            nvgImagePattern(vg, 0, 0, screenWidth, screenHeight, 0.0f, image, opacity, paint);
+
+            nvgBeginPath(vg);
+            nvgRect(vg, x, y, width, height);
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
+        });
     }
 
-    public static void drawRoundedBlur(Matrix3x2fStack matrices, float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
-        blurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
+    public static void drawRoundedBlur(MatrixStack matrices, float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
+        if (BLUR_PROGRAM == null) {
+            BLUR_PROGRAM = new BlurProgram();
+        }
 
-        BufferBuilder bb = preShaderDraw(matrices, x - 10, y - 10, width + 20, height + 20);
-        BLUR_PROGRAM.setParameters(x, y, width, height, radius, c1, blurStrenth, blurOpacity);
-        BLUR_PROGRAM.use();
+        int blurRadius = Math.max(0, Math.round(blurStrenth));
+        BLUR_PROGRAM.applyBlur(blurRadius);
+        int image = BLUR_PROGRAM.getNvgImageId();
 
-        BufferRenderer.drawWithGlobalProgram(bb.end());
-        endRender();
-    }
+        float opacity = Math.max(0f, Math.min(1f, blurOpacity));
+        if (image == -1) {
+            return;
+        }
 
-    public static void setRectanglePoints(BufferBuilder buffer, Matrix4f matrix, float x, float y, float x1, float y1) {
-        buffer.vertex(matrix, x, y, 0).color(1f, 1f, 1f, 1f);
-        buffer.vertex(matrix, x, y1, 0).color(1f, 1f, 1f, 1f);
-        buffer.vertex(matrix, x1, y1, 0).color(1f, 1f, 1f, 1f);
-        buffer.vertex(matrix, x1, y, 0).color(1f, 1f, 1f, 1f);
-    }
+        float screenWidth = mc.getWindow().getScaledWidth();
+        float screenHeight = mc.getWindow().getScaledHeight();
 
-    public static BufferBuilder preShaderDraw(Matrix3x2fStack matrices, float x, float y, float width, float height) {
-        beginRender();
-        Matrix4f matrix = matrices.peek().getPositionMatrix();
-        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        setRectanglePoints(buffer, matrix, x, y, x + width, y + height);
-        return buffer;
-    }
+        NanoVGRenderer.INSTANCE.draw(vg -> {
+            NVGPaint paint = NVGPaint.create();
+            nvgImagePattern(vg, 0, 0, screenWidth, screenHeight, 0.0f, image, opacity, paint);
 
-    public static void beginRender() {
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
-    }
-
-    public static void endRender() {
-        RenderSystem.defaultBlendFunc();
-        RenderSystem.disableBlend();
-        RenderSystem.setShaderColor(1f, 1f, 1f, 1f);
+            nvgBeginPath(vg);
+            if (radius > 0.0f) {
+                nvgRoundedRect(vg, x, y, width, height, radius);
+            } else {
+                nvgRect(vg, x, y, width, height);
+            }
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
+        });
     }
 }
