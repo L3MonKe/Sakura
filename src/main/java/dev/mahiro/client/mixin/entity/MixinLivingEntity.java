@@ -2,7 +2,6 @@ package dev.mahiro.client.mixin.entity;
 
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
-import dev.mahiro.client.events.entity.UpdateServerPositionEvent;
 import dev.mahiro.client.events.player.JumpEvent;
 import dev.mahiro.client.events.player.JumpRotationEvent;
 import dev.mahiro.client.events.player.SprintEvent;
@@ -142,11 +141,5 @@ public abstract class MixinLivingEntity extends Entity {
             cir.cancel();
             cir.setReturnValue(swingSpeedEvent.getSwingSpeed());
         }
-    }
-
-    @Inject(method = "updateTrackedPositionAndAngles", at = @At(value = "HEAD"))
-    private void hookUpdateTrackedPositionAndAngles(double x, double y, double z, float yaw, float pitch, int interpolationSteps, CallbackInfo ci) {
-        UpdateServerPositionEvent updateServerPositionEvent = new UpdateServerPositionEvent((LivingEntity) (Object) this, x, y, z, yaw, pitch);
-        Mahiro.EVENT_BUS.post(updateServerPositionEvent);
     }
 }

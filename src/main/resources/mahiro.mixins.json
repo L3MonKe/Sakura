@@ -29,7 +29,6 @@
     "client.MixinPlayerListHud",
     "entity.MixinClientPlayerEntity",
     "entity.MixinEntity",
-    "entity.MixinLimbAnimator",
     "entity.MixinLivingEntity",
     "entity.MixinPlayerEntity",
     "input.MixinKeyboard",

@@ -1,9 +1,7 @@
 package dev.mahiro.client.module.impl.render;
 
 import dev.mahiro.client.Mahiro;
-import dev.mahiro.client.events.entity.LimbAnimationEvent;
 import dev.mahiro.client.events.entity.SwingSpeedEvent;
-import dev.mahiro.client.events.entity.UpdateServerPositionEvent;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.player.PlayerTickEvent;
 import dev.mahiro.client.events.render.item.EatTransformationEvent;
@@ -60,8 +58,6 @@ public class Animations extends Module {
     private final BoolValue selfOnlyConfig = new BoolValue("Self Only", "仅自己", true, () -> false);
     private final BoolValue eatTransformConfig = new BoolValue("Eat Transform", "食用变换", false);
     private final NumberValue<Double> eatTransformFactorConfig = new NumberValue<>("Eat Factor", "食物变换因子", 1.0, 0.0, 1.0, 0.1, eatTransformConfig::get);
-    private final BoolValue limbSwing = new BoolValue("No Limb Swing", "无肢体摆动", false);
-    private final BoolValue interpolationConfig = new BoolValue("No Interpolation", "无插值", false, limbSwing::get);
 
     public boolean flip;
 
@@ -117,23 +113,6 @@ public class Animations extends Module {
         if (eatTransformConfig.get()) {
             event.setCancelled(true);
             event.setFactor(eatTransformFactorConfig.get().floatValue());
-        }
-    }
-
-    @EventHandler
-    public void onLimbAnimation(LimbAnimationEvent event) {
-        if (limbSwing.get()) {
-            event.setCancelled(true);
-            event.setSpeed(0.0f);
-        }
-    }
-
-    @EventHandler
-    public void onUpdateServerPosition(UpdateServerPositionEvent event) {
-        if (limbSwing.get() && interpolationConfig.get()) {
-            event.getLivingEntity().setPos(event.getX(), event.getY(), event.getZ());
-            event.getLivingEntity().setYaw(event.getYaw());
-            event.getLivingEntity().setPitch(event.getPitch());
         }
     }
 
