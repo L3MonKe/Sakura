@@ -5,7 +5,7 @@ import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.utils.animations.Easing;
 import dev.mahiro.client.utils.render.Shader2DUtil;
-import net.minecraft.client.util.math.MatrixStack;
+import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class NotificationManager {
         }
     }
 
-    public static float[] renderPreview(MatrixStack matrices, float x, float y, boolean leftAligned, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength) {
+    public static float[] renderPreview(Matrix3x2fStack matrices, float x, float y, boolean leftAligned, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength) {
         String previewMessage = "Preview Notification";
         float padding = 4.0f;
         int font = FontLoader.medium(12);
@@ -95,7 +95,7 @@ public class NotificationManager {
         return new float[]{width, height};
     }
 
-    public static void render(MatrixStack matrices, float x, float y, boolean leftAligned, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength) {
+    public static void render(Matrix3x2fStack matrices, float x, float y, boolean leftAligned, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength) {
         if (blur) {
             float offsetY = 0;
             for (int i = notifications.size() - 1; i >= 0; i--) {

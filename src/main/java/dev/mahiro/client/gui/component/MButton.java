@@ -76,7 +76,7 @@ public class MButton extends ButtonWidget {
     }
 
     @Override
-    public void renderWidget(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    protected void drawIcon(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
         boolean hovered = mouseX >= getX() && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height;
         hoverAnim.setDirection(hovered ? Direction.FORWARDS : Direction.BACKWARDS);
         if (!hovered && pressed) {
@@ -176,10 +176,6 @@ public class MButton extends ButtonWidget {
 
             NanoVG.nvgRestore(vg);
         });
-    }
-
-    @Override
-    protected void drawIcon(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
     }
 
     private static Color mixColors(Color a, Color b, float t) {

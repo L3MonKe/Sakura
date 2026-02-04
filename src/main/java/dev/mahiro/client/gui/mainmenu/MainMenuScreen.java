@@ -12,6 +12,7 @@ import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.SmoothStepAnimation;
 import dev.mahiro.client.utils.color.ColorUtil;
 import dev.mahiro.client.utils.render.Shader2DUtil;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
@@ -554,23 +555,23 @@ public class MainMenuScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (click.button() == 0) {
             for (SocialLink link : socialLinks) {
-                if (link.isHovered((float) mouseX, (float) mouseY)) {
+                if (link.isHovered((float) click.x(), (float) click.y())) {
                     openLink(link.url);
                     return true;
                 }
             }
 
             for (MainMenuEntry entry : entries) {
-                if (entry.isHovered((float) mouseX, (float) mouseY)) {
+                if (entry.isHovered((float) click.x(), (float) click.y())) {
                     entry.action.run();
                     return true;
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override

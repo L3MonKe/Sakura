@@ -319,9 +319,9 @@ public class TargetHud extends HudModule {
             // Scale from center
             float centerX = x + width / 2f;
             float centerY = y + height / 2f;
-            context.getMatrices().translate(centerX, centerY, 0);
-            context.getMatrices().scale(animValue, animValue, 1f);
-            context.getMatrices().translate(-centerX, -centerY, 0);
+            context.getMatrices().translate(centerX, centerY);
+            context.getMatrices().scale(animValue, animValue);
+            context.getMatrices().translate(-centerX, -centerY);
 
             renderThunderHackItems(context, player);
 

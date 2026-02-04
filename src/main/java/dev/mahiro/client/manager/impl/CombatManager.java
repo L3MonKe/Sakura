@@ -6,8 +6,10 @@ import dev.mahiro.client.module.impl.client.Targets;
 import dev.mahiro.client.module.impl.client.Teams;
 import dev.mahiro.client.module.impl.combat.AntiBot;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.component.type.DyedColorComponent;
 import net.minecraft.entity.Entity;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.mob.MobEntity;
 import net.minecraft.entity.passive.AnimalEntity;
@@ -89,8 +91,10 @@ public class CombatManager extends Managers {
     }
 
     private int getLeatherArmorColor(PlayerEntity player) {
-        for (ItemStack stack : player.getArmorItems()) {
+        for (EquipmentSlot slot : AttributeModifierSlot.ARMOR) {
+            ItemStack stack = player.getEquippedStack(slot);
             if (stack.isEmpty()) continue;
+
             DyedColorComponent dyed = stack.get(DataComponentTypes.DYED_COLOR);
             if (dyed != null) {
                 return dyed.rgb();

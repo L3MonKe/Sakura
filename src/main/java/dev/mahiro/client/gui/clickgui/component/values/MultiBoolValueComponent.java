@@ -64,7 +64,7 @@ public class MultiBoolValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseClicked(Click click, double doubled) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         float baseFontSize = (float) ClickGui.getFontSize();
         float titleFontSize = baseFontSize * 0.75f;
         float offset = 4 * scale;

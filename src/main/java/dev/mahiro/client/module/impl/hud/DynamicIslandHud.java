@@ -1,6 +1,5 @@
 package dev.mahiro.client.module.impl.hud;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.module.Module;
@@ -17,7 +16,6 @@ import net.minecraft.block.Block;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.OrderedText;

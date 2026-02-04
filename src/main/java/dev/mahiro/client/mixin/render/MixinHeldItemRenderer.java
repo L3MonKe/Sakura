@@ -1,6 +1,5 @@
 package dev.mahiro.client.mixin.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.item.HeldItemRendererEvent;
 import dev.mahiro.client.events.render.item.UpdateHeldItemEvent;

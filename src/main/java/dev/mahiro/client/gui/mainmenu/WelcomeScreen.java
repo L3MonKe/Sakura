@@ -12,9 +12,11 @@ import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.shaders.MainMenuShader;
 import dev.mahiro.client.utils.TranslationManager;
 import dev.mahiro.client.utils.render.Shader2DUtil;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGPaint;
@@ -223,19 +225,19 @@ public class WelcomeScreen extends Screen {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (currentStep == 1 && mainColorPicker != null) {
-            if (mainColorPicker.keyPressed(keyCode)) return true;
+            if (mainColorPicker.keyPressed(input.getKeycode())) return true;
         }
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(input);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         if (currentStep == 1 && mainColorPicker != null) {
-            if (mainColorPicker.charTyped(chr)) return true;
+            if (mainColorPicker.charTyped((char) input.codepoint())) return true;
         }
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(input);
     }
 
     @Override
@@ -565,32 +567,27 @@ public class WelcomeScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (currentStep == 1 && mainColorPicker != null) {
-            double localMouseX = (mouseX - width / 2.0) / contentScale;
-            double localMouseY = (mouseY - height / 2.0) / contentScale;
+            double localMouseX = (click.x() - width / 2.0) / contentScale;
+            double localMouseY = (click.y() - height / 2.0) / contentScale;
 
-            if (mainColorPicker.mouseClicked(localMouseX, localMouseY, button)) {
+            if (mainColorPicker.mouseClicked(localMouseX, localMouseY, click.button())) {
                 return true;
             }
         }
 
         for (MenuButton btn : buttons) {
-            if (btn.mouseClicked(mouseX, mouseY, button)) return true;
+            if (btn.mouseClicked(click, doubled)) return true;
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int button) {
+    public boolean mouseReleased(Click click) {
         if (currentStep == 1 && mainColorPicker != null) {
             mainColorPicker.mouseReleased();
         }
-        return super.mouseReleased(mouseX, mouseY, button);
-    }
-
-    @Override
-    public void resize(MinecraftClient client, int width, int height) {
-        super.resize(client, width, height);
+        return super.mouseReleased(click);
     }
 }

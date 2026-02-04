@@ -2,6 +2,7 @@ package dev.mahiro.client.gui.mainmenu;
 
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import net.minecraft.client.gui.Click;
 
 import java.awt.*;
 
@@ -31,8 +32,8 @@ public class MenuButton {
         return mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
     }
 
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (enabled && isHovered((int) mouseX, (int) mouseY) && button == 0) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        if (enabled && isHovered((int) click.x(), (int) click.y()) && click.button() == 0) {
             onClick();
             return true;
         }

@@ -11,6 +11,7 @@ import dev.mahiro.client.module.impl.render.Chams;
 import dev.mahiro.client.module.impl.render.NameTags;
 import dev.mahiro.client.utils.vector.Rotation;
 import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
@@ -53,7 +54,7 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
             return original;
         }
 
-        return RenderLayer.getItemEntityTranslucentCull(Identifier.of("mahiro", "textures/blank.png"));
+        return RenderLayers.itemEntityTranslucentCull(Identifier.of("mahiro", "textures/blank.png"));
     }
 
     @Inject(method = "render(Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/VertexConsumerProvider;I)V", at = @At("HEAD"))

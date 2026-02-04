@@ -23,7 +23,7 @@ public class Chat extends Module {
     public Text getPlayerName(PlayerListEntry playerListEntry) {
         Text name;
         name = playerListEntry.getDisplayName();
-        if (name == null) name = Text.literal(playerListEntry.getProfile().getName());
+        if (name == null) name = Text.literal(playerListEntry.getProfile().name());
         return name;
     }
 }

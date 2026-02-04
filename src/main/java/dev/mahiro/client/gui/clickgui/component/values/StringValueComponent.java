@@ -7,7 +7,10 @@ import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.utils.render.RenderUtil;
 import dev.mahiro.client.values.impl.StringValue;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import org.lwjgl.glfw.GLFW;
 
 import java.awt.*;
@@ -90,13 +93,13 @@ public class StringValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         float inputWidth = getWidth() - 8 * scale;
         float inputX = getX() + 1 * scale;
         float inputY = getY() + 5 * scale;
         float inputHeight = 12 * scale;
 
-        if (RenderUtil.isHovering(inputX, inputY, inputWidth, inputHeight, (float) mouseX, (float) mouseY) && mouseButton == 0) {
+        if (RenderUtil.isHovering(inputX, inputY, inputWidth, inputHeight, (float) click.x(), (float) click.y()) && click.button() == 0) {
             if (!editing) {
                 editing = true;
                 tempText = setting.get();
@@ -105,18 +108,18 @@ public class StringValueComponent extends Component {
                 cursorVisible = true;
             }
             return true;
-        } else if (editing && mouseButton == 0) {
+        } else if (editing && click.button() == 0) {
             finishEditing();
         }
 
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (!editing) return false;
 
-        switch (keyCode) {
+        switch (input.getKeycode()) {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
                 finishEditing();
                 return true;
@@ -170,8 +173,10 @@ public class StringValueComponent extends Component {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         if (!editing) return false;
+
+        char chr = (char) input.codepoint();
 
         if (setting.isOnlyNumber() && !Character.isDigit(chr) && chr != '.' && chr != '-') {
             return false;
