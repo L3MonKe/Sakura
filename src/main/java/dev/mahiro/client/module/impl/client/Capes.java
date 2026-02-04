@@ -3,12 +3,9 @@ package dev.mahiro.client.module.impl.client;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.impl.EnumValue;
-import dev.mahiro.lemonchat.client.ClientSession;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
-
-import java.util.Objects;
 
 public class Capes extends Module {
     public Capes() {
@@ -42,9 +39,10 @@ public class Capes extends Module {
                 return getTexture(getName());
             }
 
-            if (ClientSession.get() != null && ClientSession.get().hasCape(player)) {
+            // TODO: IRC的披风
+            /*if (ClientSession.get() != null && ClientSession.get().hasCape(player)) {
                 return getTexture(ClientSession.get().getCapeName(player));
-            }
+            }*/
 
             return elytra ? mc.getNetworkHandler().getPlayerListEntry(player.getUuid()).getSkinTextures().elytra() : mc.getNetworkHandler().getPlayerListEntry(player.getUuid()).getSkinTextures().cape();
         } catch (Exception e) {

@@ -17,6 +17,8 @@ import dev.mahiro.client.values.Value;
 import dev.mahiro.client.values.impl.*;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 
 import java.awt.*;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -120,38 +122,38 @@ public class HudModuleComponent implements IComponent {
                 case 1 -> opened = !opened;
             }
         }
-        if (opened && !isHovered((int) mouseX, (int) mouseY)) {
-            settings.forEach(setting -> setting.mouseClicked(mouseX, mouseY, mouseButton));
+        if (opened && !isHovered((int) click.x(), (int) click.y())) {
+            settings.forEach(setting -> setting.mouseClicked(click, doubled));
         }
-        return IComponent.super.mouseClicked(mouseX, mouseY, mouseButton);
+        return IComponent.super.mouseClicked(click, doubled);
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int state) {
-        if (opened && !isHovered((int) mouseX, (int) mouseY)) {
-            settings.forEach(setting -> setting.mouseReleased(mouseX, mouseY, state));
+    public boolean mouseReleased(Click click) {
+        if (opened && !isHovered((int) click.x(), (int) click.y())) {
+            settings.forEach(setting -> setting.mouseReleased(click));
         }
-        return IComponent.super.mouseReleased(mouseX, mouseY, state);
+        return IComponent.super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (opened) {
-            settings.forEach(setting -> setting.keyPressed(keyCode, scanCode, modifiers));
+            settings.forEach(setting -> setting.keyPressed(input));
         }
-        return IComponent.super.keyPressed(keyCode, scanCode, modifiers);
+        return IComponent.super.keyPressed(input);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         if (opened) {
             for (Component setting : settings) {
-                if (setting.charTyped(chr, modifiers)) {
+                if (setting.charTyped(input)) {
                     return true;
                 }
             }
         }
-        return IComponent.super.charTyped(chr, modifiers);
+        return IComponent.super.charTyped(input);
     }
 
     public boolean isHovered(int mouseX, int mouseY) {

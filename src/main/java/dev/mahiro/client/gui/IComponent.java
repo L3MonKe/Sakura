@@ -3,9 +3,10 @@ package dev.mahiro.client.gui;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 
 public interface IComponent {
-    default void render(DrawContext guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    default void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
     }
 
     default boolean mouseClicked(Click click, boolean doubled) {
@@ -16,7 +17,7 @@ public interface IComponent {
         return false;
     }
 
-    default boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    default boolean keyPressed(KeyInput input) {
         return false;
     }
 

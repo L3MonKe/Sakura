@@ -19,6 +19,7 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
 import net.minecraft.network.packet.c2s.play.*;
 import net.minecraft.registry.tag.ItemTags;
@@ -120,7 +121,7 @@ public class InvManager extends Module {
             return true;
         } else if (stack.getName().getString().contains("点击使用")) {
             return true;
-        } else if (stack.getItem() instanceof ArmorItem) {
+        } else if (InvHelper.isArmor(stack)) {
             float protection = InvHelper.getProtection(stack);
             var equippable = stack.get(DataComponentTypes.EQUIPPABLE);
             if (equippable == null) return false;
@@ -260,9 +261,10 @@ public class InvManager extends Module {
         }
 
         if (this.autoArmor.get()) {
-            for (int i = 0; i < mc.player.getInventory().armor.size(); i++) {
-                ItemStack stack = mc.player.getInventory().armor.get(i);
-                if (stack.getItem() instanceof ArmorItem item) {
+            EquipmentSlot[] armorSlots = {EquipmentSlot.FEET, EquipmentSlot.LEGS, EquipmentSlot.CHEST, EquipmentSlot.HEAD};
+            for (int i = 0; i < 4; i++) {
+                ItemStack stack = mc.player.getEquippedStack(armorSlots[i]);
+                if (InvHelper.isArmor(stack)) {
                     var equipment = stack.get(DataComponentTypes.EQUIPPABLE);
                     if (equipment == null) return;
 
@@ -276,7 +278,7 @@ public class InvManager extends Module {
 
             for (int ix = 0; ix < mc.player.getInventory().getMainStacks().size(); ix++) {
                 ItemStack stack = mc.player.getInventory().getMainStacks().get(ix);
-                if (!stack.isEmpty() && stack.getItem() instanceof ArmorItem) {
+                if (!stack.isEmpty() && InvHelper.isArmor(stack)) {
                     float currentItemScore = InvHelper.getProtection(stack);
                     var equipment = stack.get(DataComponentTypes.EQUIPPABLE);
                     if (equipment == null) return;
@@ -305,7 +307,7 @@ public class InvManager extends Module {
         }
 
         if (this.offhandItems.is(OffhandItemMode.GoldenApple)) {
-            ItemStack offHand = mc.player.getInventory().offHand.get(0);
+            ItemStack offHand = mc.player.getEquippedStack(EquipmentSlot.OFFHAND);
             int slot = InvHelper.getItemSlot(Items.GOLDEN_APPLE);
             if (slot != -1 && timer.passedMS(MathUtil.getRandom(minDelay.get(), maxDelay.get()))) {
                 if (offHand.getItem() == Items.GOLDEN_APPLE) {
@@ -326,7 +328,7 @@ public class InvManager extends Module {
                 }
             }
         } else if (this.offhandItems.is(OffhandItemMode.Projectile)) {
-            ItemStack offHand = mc.player.getInventory().offHand.get(0);
+            ItemStack offHand = mc.player.getEquippedStack(EquipmentSlot.OFFHAND);
             ItemStack bestProjectile = InvHelper.getBestProjectile();
             if (bestProjectile != null) {
                 int slot = InvHelper.getItemStackSlot(bestProjectile);
@@ -342,13 +344,13 @@ public class InvManager extends Module {
                 }
             }
         } else if (this.offhandItems.is(OffhandItemMode.FishingRod)) {
-            ItemStack offHand = mc.player.getInventory().offHand.get(0);
+            ItemStack offHand = mc.player.getEquippedStack(EquipmentSlot.OFFHAND);
             int slotx = InvHelper.getItemSlot(Items.FISHING_ROD);
             if (slotx != -1 && timer.passedMS(MathUtil.getRandom(minDelay.get(), maxDelay.get())) && offHand.getItem() != Items.FISHING_ROD) {
                 this.swapOffHand(slotx);
             }
         } else if (this.offhandItems.is(OffhandItemMode.Block)) {
-            ItemStack offHand = mc.player.getInventory().offHand.get(0);
+            ItemStack offHand = mc.player.getEquippedStack(EquipmentSlot.OFFHAND);
             ItemStack bestBlock = InvHelper.getBestBlock();
             if (bestBlock != null) {
                 int slotx = InvHelper.getItemStackSlot(bestBlock);
@@ -579,7 +581,7 @@ public class InvManager extends Module {
         if (InvHelper.isItemValid(currentSlot) && timer.passedMS(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
             int bestItemSlot = InvHelper.getItemSlot(item);
             if (bestItemSlot != -1) {
-                ItemStack bestItemStack = mc.player.getInventory().main.get(bestItemSlot);
+                ItemStack bestItemStack = mc.player.getInventory().getMainStacks().get(bestItemSlot);
                 if (currentSlot.getItem() != item || currentSlot.getCount() < bestItemStack.getCount()) {
                     if (bestItemSlot < 9) {
                         mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot + 36, targetSlot, SlotActionType.SWAP, mc.player);

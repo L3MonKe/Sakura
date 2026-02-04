@@ -18,6 +18,7 @@ import dev.mahiro.client.values.impl.*;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.util.InputUtil;
 import org.lwjgl.glfw.GLFW;
 
@@ -188,20 +189,20 @@ public class ModuleComponent implements IComponent {
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput input) {
         if (listening) {
-            if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
+            if (input.getKeycode() == GLFW.GLFW_KEY_ESCAPE) {
                 module.setKey(0);
-            } else if (keyCode != GLFW.GLFW_KEY_UNKNOWN) {
-                module.setKey(keyCode);
+            } else if (input.getKeycode() != GLFW.GLFW_KEY_UNKNOWN) {
+                module.setKey(input.getKeycode());
             }
             listening = false;
             return true;
         }
         if (opened) {
-            settings.forEach(setting -> setting.keyPressed(keyCode, scanCode, modifiers));
+            settings.forEach(setting -> setting.keyPressed(input));
         }
-        return IComponent.super.keyPressed(keyCode, scanCode, modifiers);
+        return IComponent.super.keyPressed(input);
     }
 
     @Override

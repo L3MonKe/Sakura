@@ -1,6 +1,5 @@
 package dev.mahiro.client.module.impl.render;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.events.packet.PacketEvent;
 import dev.mahiro.client.events.render.Render2DEvent;
 import dev.mahiro.client.events.type.EventType;
@@ -17,12 +16,12 @@ import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.render.DiffuseLighting;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.enchantment.Enchantment;
+import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
@@ -30,10 +29,8 @@ import net.minecraft.registry.entry.RegistryEntry;
 import net.minecraft.util.math.Vec3d;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
+import java.util.List;
 import java.util.function.Consumer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
@@ -190,10 +187,10 @@ public class NameTags extends Module {
     private List<ItemStack> getPlayerEquipment(PlayerEntity player) {
         List<ItemStack> stacks = new ArrayList<>();
         stacks.add(player.getMainHandStack());
-        stacks.add(player.getInventory().armor.get(3));
-        stacks.add(player.getInventory().armor.get(2));
-        stacks.add(player.getInventory().armor.get(1));
-        stacks.add(player.getInventory().armor.get(0));
+        stacks.add(player.getEquippedStack(EquipmentSlot.HEAD));
+        stacks.add(player.getEquippedStack(EquipmentSlot.CHEST));
+        stacks.add(player.getEquippedStack(EquipmentSlot.LEGS));
+        stacks.add(player.getEquippedStack(EquipmentSlot.FEET));
         stacks.add(player.getOffHandStack());
         return stacks;
     }
@@ -269,31 +266,31 @@ public class NameTags extends Module {
         if (entry != null && entry.getSkinTextures() != null) {
             drawNvg(posX, posY, scale, vg -> NanoVGHelper.drawRoundRect(headX - 1, headY - 1, headSize + 2, headSize + 2, 4, new Color(172, 172, 174, 47)));
 
-            context.getMatrices().push();
-            context.getMatrices().translate(posX, posY, 0);
-            context.getMatrices().scale(scale, scale, 1f);
-            context.getMatrices().translate(-posX, -posY, 0);
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(posX, posY);
+            context.getMatrices().scale(scale, scale);
+            context.getMatrices().translate(-posX, -posY);
 
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
+            /*RenderSystem.enableBlend();
+            RenderSystem.defaultBlendFunc();*/
 
-            context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().body(),
+            context.drawTexture(RenderPipelines.GUI_TEXTURED,
+                    entry.getSkinTextures().body().texturePath(),
                     (int) headX, (int) headY,
                     8, 8,
                     (int) headSize, (int) headSize,
                     8, 8,
                     64, 64);
-            context.drawTexture(RenderLayer::getGuiTextured,
-                    entry.getSkinTextures().body(),
+            context.drawTexture(RenderPipelines.GUI_TEXTURED,
+                    entry.getSkinTextures().body().texturePath(),
                     (int) headX, (int) headY,
                     40, 8,
                     (int) headSize, (int) headSize,
                     8, 8,
                     64, 64);
 
-            RenderSystem.disableBlend();
-            context.getMatrices().pop();
+            //GlStateManager._disableBlend();
+            context.getMatrices().popMatrix();
         } else {
             drawNvg(posX, posY, scale, vg -> NanoVGHelper.drawRoundRect(headX, headY, headSize, headSize, 4, new Color(168, 168, 170, 52)));
         }
@@ -304,16 +301,15 @@ public class NameTags extends Module {
         float itemY = headY + enchantHeight;
         float currentItemX = itemAreaX;
 
-        context.getMatrices().push();
-        context.getMatrices().translate(posX, posY, 0);
-        context.getMatrices().scale(scale, scale, 1f);
-        context.getMatrices().translate(-posX, -posY, 0);
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(posX, posY);
+        context.getMatrices().scale(scale, scale);
+        context.getMatrices().translate(-posX, -posY);
 
         for (ItemStack stack : stacks) {
             final float itemX = currentItemX;
 
             if (!stack.isEmpty()) {
-                DiffuseLighting.disableGuiDepthLighting();
                 context.drawItem(stack, (int) itemX, (int) itemY);
 
                 // Draw Count
@@ -337,7 +333,7 @@ public class NameTags extends Module {
             currentItemX += itemSize + itemSpacing;
         }
 
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
 
         if (itemName.get() && !mainHandName.isEmpty()) {
             float nameY = itemY + itemSize + durHeight + 6;

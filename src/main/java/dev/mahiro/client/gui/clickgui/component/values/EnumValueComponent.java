@@ -9,6 +9,7 @@ import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseInOutQuad;
 import dev.mahiro.client.utils.render.RenderUtil;
 import dev.mahiro.client.values.impl.EnumValue;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.nanovg.NanoVG;
 
@@ -127,7 +128,7 @@ public class EnumValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         if (!isVisible()) return false;
 
         float x = getX();
@@ -135,8 +136,8 @@ public class EnumValueComponent extends Component {
         float width = getWidth();
         float boxY = y + 5 * scale;
 
-        if (RenderUtil.isHovering(x, boxY, width, BOX_HEIGHT * scale, mouseX, mouseY)) {
-            if (mouseButton == 0 || mouseButton == 1) {
+        if (RenderUtil.isHovering(x, boxY, width, BOX_HEIGHT * scale, click.x(), click.y())) {
+            if (click.button() == 0 || click.button() == 1) {
                 expanded = !expanded;
                 return true;
             }
@@ -148,8 +149,8 @@ public class EnumValueComponent extends Component {
 
             for (int i = 0; i < modes.length; i++) {
                 float modeY = startY + (i * OPTION_HEIGHT * scale);
-                if (RenderUtil.isHovering(x, modeY, width, OPTION_HEIGHT * scale, mouseX, mouseY)) {
-                    if (mouseButton == 0) {
+                if (RenderUtil.isHovering(x, modeY, width, OPTION_HEIGHT * scale, click.x(), click.y())) {
+                    if (click.button() == 0) {
                         setting.setMode(modes[i]);
                         expanded = false;
                         return true;
@@ -158,7 +159,7 @@ public class EnumValueComponent extends Component {
             }
         }
 
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override

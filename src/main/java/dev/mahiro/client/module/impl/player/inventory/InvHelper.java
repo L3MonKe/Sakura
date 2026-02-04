@@ -135,9 +135,12 @@ public class InvHelper {
     }
 
     public static List<ItemStack> getAllItems() {
-        ArrayList<ItemStack> list = new ArrayList<>(40);
+        List<ItemStack> list = new ArrayList<>(40);
         list.addAll(mc.player.getInventory().getMainStacks());
-        list.addAll(mc.player.getInventory().armor);
+        list.add(mc.player.getEquippedStack(EquipmentSlot.HEAD));
+        list.add(mc.player.getEquippedStack(EquipmentSlot.CHEST));
+        list.add(mc.player.getEquippedStack(EquipmentSlot.LEGS));
+        list.add(mc.player.getEquippedStack(EquipmentSlot.FEET));
         return list;
     }
 
@@ -179,7 +182,7 @@ public class InvHelper {
             return 0.0F;
         } else if (itemStack.isEmpty()) {
             return 0.0F;
-        } else if (!(itemStack.getItem() instanceof ArmorItem)) {
+        } else if (!isArmor(itemStack)) {
             return 0.0F;
         } else {
             float armor = 0.0F;
@@ -226,7 +229,7 @@ public class InvHelper {
         return getAllItems()
                 .stream()
                 .filter(item -> {
-                    if (item.isEmpty() || !(item.getItem() instanceof ArmorItem)) return false;
+                    if (item.isEmpty() || !isArmor(item)) return false;
                     var equippable = item.get(DataComponentTypes.EQUIPPABLE);
                     return equippable != null && equippable.slot() == slot;
                 })
@@ -530,13 +533,13 @@ public class InvHelper {
 
     public static float getCurrentArmorScore(EquipmentSlot slot) {
         if (slot == EquipmentSlot.HEAD) {
-            return getProtection(mc.player.getInventory().armor.get(3));
+            return getProtection(mc.player.getEquippedStack(EquipmentSlot.HEAD));
         } else if (slot == EquipmentSlot.CHEST) {
-            return getProtection(mc.player.getInventory().armor.get(2));
+            return getProtection(mc.player.getEquippedStack(EquipmentSlot.CHEST));
         } else if (slot == EquipmentSlot.LEGS) {
-            return getProtection(mc.player.getInventory().armor.get(1));
+            return getProtection(mc.player.getEquippedStack(EquipmentSlot.LEGS));
         } else {
-            return slot == EquipmentSlot.FEET ? getProtection(mc.player.getInventory().armor.get(0)) : 0.0F;
+            return slot == EquipmentSlot.FEET ? getProtection(mc.player.getEquippedStack(EquipmentSlot.FEET)) : 0.0F;
         }
     }
 
@@ -594,6 +597,10 @@ public class InvHelper {
                 .filter(item -> !item.isEmpty() && item.isIn(ItemTags.SWORDS))
                 .max(Comparator.comparingInt(s -> (int) (getSwordDamage(s) * 100.0F)))
                 .orElse(null);
+    }
+
+    public static boolean isArmor(ItemStack itemStack) {
+        return itemStack.isIn(ItemTags.FOOT_ARMOR) || itemStack.isIn(ItemTags.LEG_ARMOR) || itemStack.isIn(ItemTags.CHEST_ARMOR) || itemStack.isIn(ItemTags.HEAD_ARMOR);
     }
 
     public static final List<Block> blacklistedBlocks = Arrays.asList(

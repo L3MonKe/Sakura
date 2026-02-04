@@ -9,7 +9,10 @@ import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseOutSine;
 import dev.mahiro.client.values.impl.ColorValue;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.input.CharInput;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGColor;
@@ -484,7 +487,11 @@ public class ColorValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
+        double mouseX = click.x();
+        double mouseY = click.y();
+        int mouseButton = click.button();
+
         if (isHovering(getX() + getWidth() - 9 * scale, getY() - 7 * scale, 8 * scale, 8 * scale, mouseX, mouseY)) {
             opened = !opened;
             if (!opened) {
@@ -596,7 +603,7 @@ public class ColorValueComponent extends Component {
                 }
             }
         }
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(click, doubled);
     }
 
     private void startEditing(EditField field, int value) {
@@ -640,23 +647,23 @@ public class ColorValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseReleased(double mouseX, double mouseY, int state) {
-        if (state == 0) {
-            pickingHue = false;
-            pickingOthers = false;
-            pickingR = false;
-            pickingG = false;
-            pickingB = false;
-            pickingA = false;
-        }
-        return super.mouseReleased(mouseX, mouseY, state);
+    public boolean mouseReleased(Click click) {
+        //if (state == 0) {
+        pickingHue = false;
+        pickingOthers = false;
+        pickingR = false;
+        pickingG = false;
+        pickingB = false;
+        pickingA = false;
+        //}
+        return super.mouseReleased(click);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyInput key) {
         if (editField == EditField.NONE) return false;
 
-        switch (keyCode) {
+        switch (key.getKeycode()) {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
                 finishEditing();
                 return true;
@@ -700,9 +707,10 @@ public class ColorValueComponent extends Component {
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharInput input) {
         if (editField == EditField.NONE) return false;
 
+        int chr = input.codepoint();
         if (chr >= '0' && chr <= '9' && tempText.length() < 3) {
             tempText = tempText.substring(0, cursorPos) + chr + tempText.substring(cursorPos);
             cursorPos++;

@@ -11,6 +11,7 @@ import dev.mahiro.client.utils.color.ColorUtil;
 import dev.mahiro.client.utils.render.RenderUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.MultiBoolValue;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 
 import java.awt.*;
@@ -63,7 +64,7 @@ public class MultiBoolValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(Click click, double doubled) {
         float baseFontSize = (float) ClickGui.getFontSize();
         float titleFontSize = baseFontSize * 0.75f;
         float offset = 4 * scale;
@@ -78,12 +79,12 @@ public class MultiBoolValueComponent extends Component {
                 offset = 4 * scale;
                 heightoff += 10 * scale;
             }
-            if (RenderUtil.isHovering(getX() + offset, getY() + 1 * scale + heightoff, textWidth, fontHeight, (float) mouseX, (float) mouseY) && mouseButton == 0) {
+            if (RenderUtil.isHovering(getX() + offset, getY() + 1 * scale + heightoff, textWidth, fontHeight, (float) click.x(), (float) click.y()) && click.button() == 0) {
                 boolValue.set(!boolValue.get());
             }
             offset += off;
         }
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override

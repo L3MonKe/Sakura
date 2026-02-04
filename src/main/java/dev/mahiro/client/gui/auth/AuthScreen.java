@@ -733,7 +733,7 @@ public class AuthScreen extends Screen {
         }
     }
 
-    private abstract class AuthButton extends ButtonWidget {
+    private static class AuthButton extends ButtonWidget {
         enum Variant {
             Primary,
             Ghost,
@@ -791,7 +791,7 @@ public class AuthScreen extends Screen {
         }
 
         @Override
-        public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+        protected void drawIcon(DrawContext context, int mouseX, int mouseY, float delta) {
             boolean hovered = mouseX >= getX() && mouseX <= getX() + width && mouseY >= getY() && mouseY <= getY() + height;
             hoverAnim.setDirection(hovered ? Direction.FORWARDS : Direction.BACKWARDS);
             if (!hovered && pressed) {
@@ -875,11 +875,5 @@ public class AuthScreen extends Screen {
                 NanoVG.nvgRestore(vg);
             });
         }
-
-        @Override
-        protected void drawIcon(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
-
-        }
     }
-
 }

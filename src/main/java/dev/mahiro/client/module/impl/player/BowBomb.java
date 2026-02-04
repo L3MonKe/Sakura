@@ -88,7 +88,7 @@ public class BowBomb extends Module {
     }
 
     private boolean isValid(Entity entity, double range) {
-        return entity == null || !entity.isAlive() || entity.equals(mc.player) || mc.player.getPos().distanceTo(entity.getPos()) > range;
+        return entity == null || !entity.isAlive() || entity.equals(mc.player) || mc.player.getEntityPos().distanceTo(entity.getEntityPos()) > range;
     }
 
     @EventHandler

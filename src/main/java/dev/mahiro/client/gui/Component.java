@@ -1,7 +1,6 @@
 package dev.mahiro.client.gui;
 
 public class Component implements IComponent {
-
     private float x, y, width, height;
     protected float scale = 1.0f;
 

@@ -9,6 +9,7 @@ import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.SmoothStepAnimation;
 import dev.mahiro.client.utils.render.RenderUtil;
 import dev.mahiro.client.values.impl.BoolValue;
+import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.nanovg.NanoVG;
 
@@ -79,13 +80,13 @@ public class BoolValueComponent extends Component {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(Click click, boolean doubled) {
         float toggleWidth = 15 * scale;
         float toggleHeight = 8 * scale;
-        if (RenderUtil.isHovering(getX() + getWidth() - toggleWidth, getY() - 7 * scale, toggleWidth, toggleHeight, (float) mouseX, (float) mouseY) && mouseButton == 0) {
+        if (RenderUtil.isHovering(getX() + getWidth() - toggleWidth, getY() - 7 * scale, toggleWidth, toggleHeight, (float) click.x(), (float) click.y()) && click.button() == 0) {
             this.setting.set(!this.setting.get());
         }
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(click, doubled);
     }
 
     @Override
