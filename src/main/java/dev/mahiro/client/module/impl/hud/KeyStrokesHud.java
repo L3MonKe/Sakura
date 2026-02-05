@@ -6,11 +6,11 @@ import dev.mahiro.client.module.impl.client.HudEditor;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.DecelerateAnimation;
 import dev.mahiro.client.utils.color.ColorUtil;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
@@ -88,25 +88,25 @@ public class KeyStrokesHud extends HudModule {
 
         float blurValue = blurStrength.get().floatValue();
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 x + width / 2f - size / 2f, y, size, size, radius,
-                new Color(0, 0, 0, 0), blurValue, 1.0f);
+                blurValue);
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 x, y + increment, size, size, radius,
-                new Color(0, 0, 0, 0), blurValue, 1.0f);
+                blurValue);
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 x + increment, y + increment, size, size, radius,
-                new Color(0, 0, 0, 0), blurValue, 1.0f);
+                blurValue);
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 x + increment * 2, y + increment, size, size, radius,
-                new Color(0, 0, 0, 0), blurValue, 1.0f);
+                blurValue);
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 x, y + increment * 2, width, size, radius,
-                new Color(0, 0, 0, 0), blurValue, 1.0f);
+                blurValue);
     }
 
     private void renderContent() {

@@ -6,8 +6,8 @@ import dev.mahiro.client.module.impl.player.TimerModule;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.color.ColorUtil;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
@@ -86,7 +86,7 @@ public class TimeChargeHud extends HudModule {
 
         // 1. 绘制模糊背景 (如果启用)
         if (blur.get()) {
-            Shader2DUtil.drawRoundedBlur(bgX, bgY, bgW, bgH, bgR, new Color(0, 0, 0, 0), blurRadius.get().floatValue(), 1.0f);
+            BlurShader.drawRoundedBlur(bgX, bgY, bgW, bgH, bgR, blurRadius.get().floatValue());
         }
 
         // 2. 绘制 NanoVG 内容

@@ -10,11 +10,11 @@ import dev.mahiro.client.module.impl.combat.KillAura;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseOutSine;
 import dev.mahiro.client.utils.color.ColorUtil;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
@@ -786,12 +786,10 @@ public class TargetHud extends HudModule {
         float r = MahiroRadius.get().floatValue() * globalScale * animValue;
         float blur = MahiroBlurRadius.get().floatValue() * globalScale;
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 rx, ry, w, h,
                 r,
-                new Color(0, 0, 0, 0),
-                blur,
-                1.0f
+                blur
         );
     }
 

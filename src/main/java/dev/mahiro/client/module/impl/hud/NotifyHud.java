@@ -7,8 +7,8 @@ import dev.mahiro.client.module.HudModule;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Easing;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
@@ -254,13 +254,11 @@ public class NotifyHud extends HudModule {
                 if (alpha > 0.01f) {
                     float notifyX = screenWidth - PADDING - slideOffset;
                     if (alpha > 0.1f) {
-                        Shader2DUtil.drawRoundedBlur(
+                        BlurShader.drawRoundedBlur(
                                 notifyX, currentY,
                                 NOTIFICATION_WIDTH, NOTIFICATION_HEIGHT,
                                 RADIUS,
-                                new Color(0, 0, 0, 0),
-                                blurStrength.get().floatValue() * alpha,
-                                alpha
+                                blurStrength.get().floatValue() * alpha
                         );
                     }
                     currentY -= (NOTIFICATION_HEIGHT + PADDING) * alpha;

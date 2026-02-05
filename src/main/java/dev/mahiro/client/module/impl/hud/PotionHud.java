@@ -6,8 +6,8 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.color.ColorUtil;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
@@ -93,7 +93,7 @@ public class PotionHud extends HudModule {
         animHeight = smooth(animHeight == 0 ? targetHeight : animHeight, targetHeight, 0.2f);
 
         if (showBackground.get() && backgroundBlur.get()) {
-            Shader2DUtil.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 0.9f);
+            BlurShader.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, blurStrength.get().floatValue());
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {

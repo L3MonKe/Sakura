@@ -6,12 +6,12 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.shaders.MainMenuShader;
 import dev.mahiro.client.utils.animations.AnimationUtil;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.SmoothStepAnimation;
 import dev.mahiro.client.utils.color.ColorUtil;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -196,15 +196,13 @@ public class MainMenuScreen extends Screen {
     }
 
     private void drawPanelBlur(DrawContext context, Layout layout, float opacity) {
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 layout.panelX,
                 layout.panelY,
                 layout.panelW,
                 layout.panelH,
                 layout.panelR,
-                PANEL_BLUR_COLOR,
-                10f * layout.scale,
-                0.8f * opacity
+                10f * layout.scale
         );
     }
 

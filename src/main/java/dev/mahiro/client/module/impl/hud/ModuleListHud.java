@@ -7,9 +7,9 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseInOutQuad;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
@@ -706,7 +706,7 @@ public class ModuleListHud extends HudModule {
     }
 
     private void renderBlurBackgrounds() {
-        // This method renders blur backgrounds using Shader2DUtil directly (outside NanoVG context)
+        // This method renders blur backgrounds using BlurShader directly (outside NanoVG context)
         // We need to manually calculate screen coordinates since we don't have NanoVG's transform stack
 
         float scale = hudScale.get().floatValue();
@@ -757,15 +757,14 @@ public class ModuleListHud extends HudModule {
             float alpha = 1.0f;
             Color blurColor = new Color(0, 0, 0, 0);
 
-            Shader2DUtil.drawRoundedBlur(
+            BlurShader.drawRoundedBlur(
                     itemBgX - (4 * scale),
                     bgY,
                     bgWidth,
                     bgH,
                     backgroundRadius.get().floatValue() * scale,
-                    blurColor,
-                    10, // Blur radius
-                    alpha // Use user-defined alpha for blur opacity
+                    10 // Blur radius
+                    // Use user-defined alpha for blur opacity
             );
 
             currentBgY += itemFullHeight * animationValue;
