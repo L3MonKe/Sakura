@@ -1,39 +1,39 @@
 package dev.mahiro.client.nanovg.font;
 
 public class FontLoader {
-    public static int regular(float size) {
-        return FontManager.fontWithCJK("regular.otf", size);
+    public static int regular() {
+        return FontManager.fontWithCJK("regular.otf");
     }
 
-    public static int bold(float size) {
-        return FontManager.fontWithCJK("regular_bold.otf", size);
+    public static int bold() {
+        return FontManager.fontWithCJK("regular_bold.otf");
     }
 
-    public static int medium(float size) {
-        return FontManager.fontWithCJK("regular_medium.otf", size);
+    public static int medium() {
+        return FontManager.fontWithCJK("regular_medium.otf");
     }
 
-    public static int greycliffSemi(float size) {
-        return FontManager.fontWithCJK("regular_semi.otf", size);
+    public static int greycliffSemi() {
+        return FontManager.fontWithCJK("regular_semi.otf");
     }
 
-    public static int solid(float size) {
-        return FontManager.font("solid.ttf", size);
+    public static int solid() {
+        return FontManager.font("solid.ttf");
     }
 
-    public static int icons(float size) {
-        return FontManager.font("woqubuzaoshuo.ttf", size);
+    public static int icons() {
+        return FontManager.font("woqubuzaoshuo.ttf");
     }
 
-    public static int newIc(float size) {
-        return FontManager.font("icon.ttf", size);
+    public static int newIc() {
+        return FontManager.font("icon.ttf");
     }
 
-    public static int cjk(float size) {
-        return FontManager.font("kuriyama.ttf", size);
+    public static int cjk() {
+        return FontManager.font("kuriyama.ttf");
     }
 
-    public static int comfortaa(float size) {
-        return FontManager.fontWithCJK("Comfortaa.ttf", size);
+    public static int comfortaa() {
+        return FontManager.fontWithCJK("Comfortaa.ttf");
     }
 }

@@ -101,7 +101,7 @@ public class TimeChargeHud extends HudModule {
             }
 
             // 标题 "Timer"
-            int font = FontLoader.medium(12);
+            int font = FontLoader.medium();
             NanoVGHelper.drawCenteredString("Timer", x + width / 2f, y + 2, font, 12, Color.WHITE);
 
             // 进度条区域 Y 偏移
@@ -165,7 +165,7 @@ public class TimeChargeHud extends HudModule {
 
             // 百分比文本
             String percentText = String.format("%.0f%%", progress * 100);
-            int smallFont = FontLoader.medium(10);
+            int smallFont = FontLoader.medium();
 
             if (mode.is(Mode.Old)) {
                 // Old: 居中显示

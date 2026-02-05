@@ -279,7 +279,7 @@ public class MainMenuScreen extends Screen {
                 "Minecraft 1.21.4",
                 layout.centerX,
                 layout.titleY,
-                FontLoader.bold(titleSize),
+                FontLoader.bold(),
                 titleSize,
                 NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
                 applyAlpha(TITLE_COLOR, opacity)
@@ -290,7 +290,7 @@ public class MainMenuScreen extends Screen {
                 "dev.mahiro",
                 layout.centerX,
                 layout.urlY,
-                FontLoader.bold(urlSize),
+                FontLoader.bold(),
                 urlSize,
                 NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
                 applyAlpha(URL_COLOR, opacity)
@@ -303,7 +303,7 @@ public class MainMenuScreen extends Screen {
                 "Love By Mahiro#1337",
                 layout.centerX,
                 layout.loveY,
-                FontLoader.bold(loveSize),
+                FontLoader.bold(),
                 loveSize,
                 NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
                 applyAlpha(LOVE_COLOR, opacity)
@@ -314,14 +314,14 @@ public class MainMenuScreen extends Screen {
 
     private void drawVersion(Layout layout, Color color, float opacity) {
         float logoSize = refFont(80f, layout.scale);
-        float versionX = width / 2f + NanoVGHelper.getTextWidth(Mahiro.MOD_NAME, FontLoader.bold(logoSize), logoSize) / 2f - 5f * layout.scale;
+        float versionX = width / 2f + NanoVGHelper.getTextWidth(Mahiro.MOD_NAME, FontLoader.bold(), logoSize) / 2f - 5f * layout.scale;
         float versionY = 7f * layout.scale + height / 2f - 50f * layout.scale - 100f * layout.scale;
         float versionSize = refFont(15f, layout.scale);
         NanoVGHelper.drawString(
                 Mahiro.MOD_VER,
                 versionX,
                 versionY,
-                FontLoader.greycliffSemi(versionSize),
+                FontLoader.greycliffSemi(),
                 versionSize,
                 NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP,
                 applyAlpha(color, opacity)
@@ -335,10 +335,10 @@ public class MainMenuScreen extends Screen {
 
     private void drawLogo(Layout layout, float liftY, float opacity) {
         float logoSize = refFont(80f, layout.scale);
-        float aWidth = NanoVGHelper.getTextWidth("M", FontLoader.bold(logoSize), logoSize);
+        float aWidth = NanoVGHelper.getTextWidth("M", FontLoader.bold(), logoSize);
         float baseY = 7f * layout.scale + height / 2f - 50f * layout.scale - liftY;
 
-        float etaWidth = NanoVGHelper.getTextWidth("4h1r0", FontLoader.bold(logoSize), logoSize);
+        float etaWidth = NanoVGHelper.getTextWidth("4h1r0", FontLoader.bold(), logoSize);
         float zX = width / 2f - aWidth / 2f - etaWidth / 2f;
         float etaX = width / 2f - etaWidth / 2f + aWidth / 2f;
 
@@ -346,7 +346,7 @@ public class MainMenuScreen extends Screen {
                 "M",
                 zX,
                 baseY,
-                FontLoader.bold(logoSize),
+                FontLoader.bold(),
                 logoSize,
                 NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP,
                 applyAlpha(WHITE, opacity)
@@ -356,7 +356,7 @@ public class MainMenuScreen extends Screen {
                 "4h1r0",
                 etaX,
                 baseY,
-                FontLoader.bold(logoSize),
+                FontLoader.bold(),
                 logoSize,
                 NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP,
                 applyAlpha(WHITE, opacity)
@@ -449,26 +449,26 @@ public class MainMenuScreen extends Screen {
         float wDrawX = centerX + 53f * scale;
         float wHitY = centerY + 16f * scale;
         socialLinks.getFirst().setBounds(wDrawX, wHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.getFirst().glyph, wDrawX, wHitY + drawYOffset, FontLoader.newIc(iconSize), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
+        NanoVGHelper.drawString(socialLinks.getFirst().glyph, wDrawX, wHitY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
 
         float vDrawX = centerX + (55f + 40f) * scale;
         float vDrawY = centerY + 15f * scale;
         float vHitX = centerX + (55f + 43f) * scale;
         float vHitY = vDrawY;
         socialLinks.get(1).setBounds(vHitX, vHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.get(1).glyph, vDrawX, vDrawY + drawYOffset, FontLoader.newIc(iconSize), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
+        NanoVGHelper.drawString(socialLinks.get(1).glyph, vDrawX, vDrawY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
 
         float yDrawX = centerX + 50f * scale;
         float yHitY = centerY + 50f * scale;
         socialLinks.get(2).setBounds(yDrawX, yHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.get(2).glyph, yDrawX, yHitY + drawYOffset, FontLoader.newIc(iconSize), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
+        NanoVGHelper.drawString(socialLinks.get(2).glyph, yDrawX, yHitY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
 
         float zDrawX = centerX + (55f + 43f) * scale;
         float zDrawY = yHitY;
         float zHitX = centerX + (55f + 40f) * scale;
         float zHitY = zDrawY;
         socialLinks.get(3).setBounds(zHitX, zHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.get(3).glyph, zDrawX, zDrawY + drawYOffset, FontLoader.newIc(iconSize), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
+        NanoVGHelper.drawString(socialLinks.get(3).glyph, zDrawX, zDrawY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
     }
 
     private void renderDevelopmentInfo(float centerX, float centerY, float scale, float opacity) {
@@ -503,7 +503,7 @@ public class MainMenuScreen extends Screen {
                     text,
                     rightEdge,
                     y,
-                    FontLoader.bold(fontSize),
+                    FontLoader.bold(),
                     fontSize,
                     NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_TOP,
                     c
@@ -538,7 +538,7 @@ public class MainMenuScreen extends Screen {
             entry.setBounds(drawX - 80f * scale, y - 15f * scale, entryW, entryH);
 
             float fontSize = refFont(20f, scale);
-            float textWidth = NanoVGHelper.getTextWidth(entry.label, FontLoader.bold(fontSize), fontSize);
+            float textWidth = NanoVGHelper.getTextWidth(entry.label, FontLoader.bold(), fontSize);
             boolean hovered = mouseX >= (drawX - 10f * scale) && mouseX <= (drawX - 10f * scale + textWidth + 30f * scale)
                     && mouseY >= (y - 10f * scale) && mouseY <= (y - 10f * scale + 28f * scale);
 
@@ -548,11 +548,11 @@ public class MainMenuScreen extends Screen {
 
             float rowCenterY = y + 4f * scale;
             NanoVGHelper.drawRect(drawX - 5f * scale, rowCenterY - 4f * scale, scale, 8f * scale, applyAlpha(WHITE, itemAlpha));
-            NanoVGHelper.drawString(entry.label, drawX + 15f * scale, rowCenterY + scale, FontLoader.bold(fontSize), fontSize,
+            NanoVGHelper.drawString(entry.label, drawX + 15f * scale, rowCenterY + scale, FontLoader.bold(), fontSize,
                     NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(entryColor, itemAlpha));
 
             float iconSize = refFont(30f, scale);
-            NanoVGHelper.drawString(entry.iconGlyph, drawX, rowCenterY, FontLoader.newIc(iconSize), iconSize,
+            NanoVGHelper.drawString(entry.iconGlyph, drawX, rowCenterY, FontLoader.newIc(), iconSize,
                     NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(entryColor, itemAlpha));
         }
     }

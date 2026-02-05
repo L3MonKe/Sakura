@@ -134,7 +134,7 @@ public class WatermarkHud extends HudModule {
         float s = hudScale.get().floatValue();
         String text = Mahiro.MOD_NAME + " " + Mahiro.MOD_VER;
         float fontSize = 30 * s;
-        int font = FontLoader.bold((int) fontSize);
+        int font = FontLoader.bold();
         float fontW = NanoVGHelper.getTextWidth(text, font, fontSize);
         float fontH = NanoVGHelper.getFontHeight(font, fontSize);
 

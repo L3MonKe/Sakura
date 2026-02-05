@@ -302,15 +302,15 @@ public class NotifyHud extends HudModule {
         NanoVGHelper.drawRect(x + RADIUS, y, iconAreaWidth - RADIUS, NOTIFICATION_HEIGHT, iconBgColor);
         NanoVGHelper.drawRoundRect(x, y, RADIUS * 2, NOTIFICATION_HEIGHT, RADIUS, iconBgColor);
 
-        int iconFont = FontLoader.solid(18);
+        int iconFont = FontLoader.solid();
         String icon = getIcon(entry.type);
         float iconWidth = NanoVGHelper.getTextWidth(icon, iconFont, 18);
         float iconX = x + (iconAreaWidth - iconWidth) / 2f;
         float iconY = y + NOTIFICATION_HEIGHT / 2f + 6f;
         NanoVGHelper.drawString(icon, iconX, iconY, iconFont, 18, iconColor);
 
-        int titleFont = FontLoader.medium(12);
-        int subtitleFont = FontLoader.regular(10);
+        int titleFont = FontLoader.medium();
+        int subtitleFont = FontLoader.regular();
 
         float textX = x + iconAreaWidth + PADDING;
         float titleY = y + 18f;

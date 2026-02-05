@@ -245,9 +245,9 @@ public class ModuleListHud extends HudModule {
 
     private int getFontId(float fontSize) {
         if (mode.is(ListMode.Gradient) && fontMode.is(FontMode.Comfortaa)) {
-            return FontLoader.comfortaa(fontSize);
+            return FontLoader.comfortaa();
         }
-        return FontLoader.medium(fontSize);
+        return FontLoader.medium();
     }
 
     private float getModuleTextWidth(String text) {
@@ -363,7 +363,7 @@ public class ModuleListHud extends HudModule {
 
         if (showIconValue) {
             float iconRenderSize = 13.0f * scale;
-            int sakuraFont = FontLoader.bold(13);
+            int sakuraFont = FontLoader.bold();
             float sakuraTextWidth = NanoVGHelper.getTextWidth("ModuleList", sakuraFont, 11 * scale);
             float totalRequiredWidth = iconRenderSize + sakuraTextWidth + 4 * scale;
             maxTextWidth = Math.max(maxTextWidth, totalRequiredWidth);
@@ -493,7 +493,7 @@ public class ModuleListHud extends HudModule {
             float iconWidth = 0;
             float iconHeight = 0;
             if (normalShowCategory.get()) {
-                int iconFont = FontLoader.icons(10);
+                int iconFont = FontLoader.icons();
                 categoryIcon = getRandomCategoryIcon(entry.module);
                 iconWidth = NanoVGHelper.getTextWidth(categoryIcon, iconFont, 10 * scale);
                 iconHeight = NanoVGHelper.getFontHeight(iconFont, 10 * scale);
@@ -603,7 +603,7 @@ public class ModuleListHud extends HudModule {
                 }
                 float iconY = drawY + ((ICON_BACKGROUND_HEIGHT * scale) - iconHeight) / 2;
                 iconX = animatedIconBgX + ((ICON_BACKGROUND_WIDTH * scale) - iconWidth) / 2;
-                int iconFont = FontLoader.icons(10);
+                int iconFont = FontLoader.icons();
                 NanoVGHelper.drawGlowingString(categoryIcon, iconX + (0.5f * scale), iconY + (5 * scale), iconFont, 10 * scale, Color.WHITE, 2.0f * scale);
             }
 

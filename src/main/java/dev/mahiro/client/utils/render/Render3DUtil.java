@@ -367,7 +367,7 @@ public class Render3DUtil {
                 nvgTranslate(vg, (float) screenPos.x, (float) screenPos.y);
                 nvgScale(vg, s, s);
                 nvgTranslate(vg, -(float) screenPos.x, -(float) screenPos.y);
-                NanoVGHelper.drawCenteredString(text, (float) screenPos.x + (float) textOffset, (float) screenPos.y, FontLoader.medium(12), 12, color);
+                NanoVGHelper.drawCenteredString(text, (float) screenPos.x + (float) textOffset, (float) screenPos.y, FontLoader.medium(), 12, color);
                 nvgRestore(vg);
             });
         }

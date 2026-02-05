@@ -38,8 +38,8 @@ public class EnumValueComponent extends Component {
         float baseFontSize = (float) ClickGui.getFontSize();
         float titleFontSize = baseFontSize * 0.75f;
         float textFontSize = baseFontSize * 0.7f;
-        int fontTitle = FontLoader.bold(titleFontSize);
-        int fontText = FontLoader.regular(textFontSize);
+        int fontTitle = FontLoader.bold();
+        int fontText = FontLoader.regular();
 
         float x = getX();
         float y = getY();

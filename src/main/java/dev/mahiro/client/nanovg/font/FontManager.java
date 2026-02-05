@@ -1,5 +1,6 @@
 package dev.mahiro.client.nanovg.font;
 
+import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 
 import java.io.IOException;
@@ -18,12 +19,12 @@ public class FontManager {
     private static final Map<String, FontData> fontDataCache = new HashMap<>();
     private static final Set<String> fallbackRegistered = new HashSet<>();
 
-    public static int font(String fontName, float size) {
+    public static int font(String fontName) {
         return fontCache.computeIfAbsent(fontName, FontManager::loadFont);
     }
 
-    public static int fontWithCJK(String fontName, float size) {
-        int primaryFont = font(fontName, size);
+    public static int fontWithCJK(String fontName) {
+        int primaryFont = font(fontName);
         registerCJKFallback(fontName);
         return primaryFont;
     }
@@ -33,8 +34,8 @@ public class FontManager {
         if (fallbackRegistered.contains(key)) return;
 
         long vg = NanoVGRenderer.INSTANCE.getContext();
-        int cjkFont = FontLoader.cjk(0.0f);
-        int primaryFont = font(fontName, 0.0f);
+        int cjkFont = FontLoader.cjk();
+        int primaryFont = font(fontName);
 
         nvgAddFallbackFontId(vg, primaryFont, cjkFont);
         fallbackRegistered.add(key);
@@ -63,7 +64,7 @@ public class FontManager {
             InputStream is = FontManager.class.getResourceAsStream(path);
 
             if (is == null) {
-                System.err.println("无法找到字体文件: " + path);
+                Mahiro.LOGGER.error("无法找到字体文件: {}", path);
                 return null;
             }
 
@@ -79,14 +80,6 @@ public class FontManager {
         }
     }
 
-    /**
-     * 字体数据包装类
-     */
-    private static class FontData {
-        final ByteBuffer buffer;
-
-        FontData(ByteBuffer buffer) {
-            this.buffer = buffer;
-        }
+    private record FontData(ByteBuffer buffer) {
     }
 }

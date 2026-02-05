@@ -63,7 +63,7 @@ public class NumberValueComponent extends Component {
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
-            NanoVGHelper.drawString(setting.getDisplayName(), getX(), getY(), FontLoader.regular(titleFontSize), titleFontSize, Color.WHITE);
+            NanoVGHelper.drawString(setting.getDisplayName(), getX(), getY(), FontLoader.regular(), titleFontSize, Color.WHITE);
 
             if (editing) {
                 float inputWidth = w;
@@ -76,11 +76,11 @@ public class NumberValueComponent extends Component {
 
                 float textFontSize = baseFontSize * 0.6f;
                 String displayText = tempText;
-                NanoVGHelper.drawString(displayText, inputX + 3 * scale, inputY + 9 * scale, FontLoader.regular(textFontSize), textFontSize, new Color(255, 255, 255));
+                NanoVGHelper.drawString(displayText, inputX + 3 * scale, inputY + 9 * scale, FontLoader.regular(), textFontSize, new Color(255, 255, 255));
 
                 if (cursorVisible) {
                     String beforeCursor = tempText.substring(0, Math.min(cursorPos, tempText.length()));
-                    float cursorX = inputX + 3 * scale + NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(textFontSize), textFontSize);
+                    float cursorX = inputX + 3 * scale + NanoVGHelper.getTextWidth(beforeCursor, FontLoader.regular(), textFontSize);
                     if (cursorX < inputX + inputWidth - 3 * scale) {
                         NanoVGHelper.drawRect(cursorX, inputY + 2 * scale, 0.5f * scale, inputHeight - 4 * scale, new Color(255, 255, 255));
                     }
@@ -88,8 +88,8 @@ public class NumberValueComponent extends Component {
 
                 String hint = "Enter";
                 float hintFontSize = baseFontSize * 0.5f;
-                float hintWidth = NanoVGHelper.getTextWidth(hint, FontLoader.regular(hintFontSize), hintFontSize);
-                NanoVGHelper.drawString(hint, inputX + inputWidth - hintWidth - 2 * scale, inputY + inputHeight / 2 + 2 * scale, FontLoader.regular(hintFontSize), hintFontSize, new Color(150, 150, 150));
+                float hintWidth = NanoVGHelper.getTextWidth(hint, FontLoader.regular(), hintFontSize);
+                NanoVGHelper.drawString(hint, inputX + inputWidth - hintWidth - 2 * scale, inputY + inputHeight / 2 + 2 * scale, FontLoader.regular(), hintFontSize, new Color(150, 150, 150));
             } else {
                 String minStr = isInteger ? String.valueOf(setting.getMin().intValue()) : String.valueOf(setting.getMin());
                 String maxStr = isInteger ? String.valueOf(setting.getMax().intValue()) : String.valueOf(setting.getMax());
@@ -102,10 +102,10 @@ public class NumberValueComponent extends Component {
                 }
 
                 float labelFontSize = baseFontSize * 0.5f;
-                NanoVGHelper.drawString(minStr, getX(), getY() + 18 * scale, FontLoader.regular(labelFontSize), labelFontSize, new Color(255, 255, 255, 255));
-                float currentTextWidth = NanoVGHelper.getTextWidth(currentStr, FontLoader.regular(labelFontSize), labelFontSize);
-                NanoVGHelper.drawString(currentStr, getX() + (getWidth() - currentTextWidth) / 2f, getY() + 18 * scale, FontLoader.regular(labelFontSize), labelFontSize, new Color(255, 255, 255, 255));
-                NanoVGHelper.drawString(maxStr, getX() + getWidth() - NanoVGHelper.getTextWidth(maxStr, FontLoader.regular(labelFontSize), labelFontSize), getY() + 18 * scale, FontLoader.regular(labelFontSize), labelFontSize, new Color(255, 255, 255, 255));
+                NanoVGHelper.drawString(minStr, getX(), getY() + 18 * scale, FontLoader.regular(), labelFontSize, new Color(255, 255, 255, 255));
+                float currentTextWidth = NanoVGHelper.getTextWidth(currentStr, FontLoader.regular(), labelFontSize);
+                NanoVGHelper.drawString(currentStr, getX() + (getWidth() - currentTextWidth) / 2f, getY() + 18 * scale, FontLoader.regular(), labelFontSize, new Color(255, 255, 255, 255));
+                NanoVGHelper.drawString(maxStr, getX() + getWidth() - NanoVGHelper.getTextWidth(maxStr, FontLoader.regular(), labelFontSize), getY() + 18 * scale, FontLoader.regular(), labelFontSize, new Color(255, 255, 255, 255));
 
                 NanoVGHelper.drawRoundRect(getX(), getY() + 7 * scale, w, 4 * scale, 2 * scale, new Color(200, 200, 200, 255));
                 NanoVGHelper.drawGradientRRect2(getX(), getY() + 7 * scale, sliderWidth, 4 * scale, 2 * scale, ClickGui.color(0), ClickGui.color2(0));

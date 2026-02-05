@@ -106,7 +106,7 @@ public class PotionHud extends HudModule {
             }
 
             if (layout.showHeader) {
-                int headerFont = FontLoader.bold(12);
+                int headerFont = FontLoader.bold();
                 float headerFontSize = 12 * s;
                 float headerTextY = y + layout.paddingY + headerFontSize;
                 float headerTextX = layout.alignRight ? x + animWidth - layout.paddingX - NanoVGHelper.getTextWidth("Potions", headerFont, headerFontSize) : x + layout.paddingX;
@@ -179,8 +179,8 @@ public class PotionHud extends HudModule {
         float infoPadding = 6f * s;
         float nameFontSize = 11f * s;
         float timeFontSize = 9f * s;
-        int nameFont = FontLoader.medium(11);
-        int timeFont = FontLoader.medium(9);
+        int nameFont = FontLoader.medium();
+        int timeFont = FontLoader.medium();
 
         float maxTimeWidth = 0f;
         for (EffectEntry entry : renderEntries) {
@@ -250,8 +250,8 @@ public class PotionHud extends HudModule {
         Color accent2 = ClickGui.color2(0);
         NanoVGHelper.drawGradientRRect2(infoX, itemY, 2f * s, itemHeight, 0, accent1, accent2);
 
-        int nameFont = FontLoader.medium(11);
-        int timeFont = FontLoader.medium(9);
+        int nameFont = FontLoader.medium();
+        int timeFont = FontLoader.medium();
         float nameFontSize = 11f * s;
         float timeFontSize = 9f * s;
         float nameX = infoX + layout.infoPadding;

@@ -50,9 +50,9 @@ public class HudPanel implements IComponent {
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color bgColor = ClickGui.backgroundColor.get();
             NanoVGHelper.drawRoundRectBloom(x, y - 1, width, headerHeight + ((height - headerHeight)), 7 * guiScale, new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 100));
-            NanoVGHelper.drawString("HUD", x + 4 * guiScale, y + 12f * guiScale, FontLoader.bold((int) fontSize), fontSize, new Color(255, 255, 255, 255));
+            NanoVGHelper.drawString("HUD", x + 4 * guiScale, y + 12f * guiScale, FontLoader.bold(), fontSize, new Color(255, 255, 255, 255));
             float iconSize = 15 * guiScale;
-            NanoVGHelper.drawString("H", x + width - NanoVGHelper.getTextWidth("H", FontLoader.icons((int) iconSize), iconSize) - 3 * guiScale, y + 13f * guiScale, FontLoader.icons((int) iconSize), iconSize, new Color(255, 255, 255, 255));
+            NanoVGHelper.drawString("H", x + width - NanoVGHelper.getTextWidth("H", FontLoader.icons(), iconSize) - 3 * guiScale, y + 13f * guiScale, FontLoader.icons(), iconSize, new Color(255, 255, 255, 255));
         });
 
         float componentOffsetY = headerHeight;

@@ -62,9 +62,9 @@ public class CategoryPanel implements IComponent {
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color bgColor = ClickGui.backgroundColor.get();
             NanoVGHelper.drawRoundRectBloom(x, y - 1, scaledWidth, height, 7, new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 100));
-            NanoVGHelper.drawString(category.getName(), x + 4 * guiScale, y + 12f * guiScale, FontLoader.bold(baseFontSize), baseFontSize, new Color(255, 255, 255, 255));
+            NanoVGHelper.drawString(category.getName(), x + 4 * guiScale, y + 12f * guiScale, FontLoader.bold(), baseFontSize, new Color(255, 255, 255, 255));
             float iconSize = baseFontSize * 1.5f;
-            NanoVGHelper.drawString(category.icon, x + 4 * guiScale + scaledWidth - NanoVGHelper.getTextWidth(category.icon, FontLoader.icons(iconSize), iconSize) - (category == Category.Render ? 7 : 3) * guiScale, y + 13f * guiScale, FontLoader.icons(iconSize), iconSize, new Color(255, 255, 255, 255));
+            NanoVGHelper.drawString(category.icon, x + 4 * guiScale + scaledWidth - NanoVGHelper.getTextWidth(category.icon, FontLoader.icons(), iconSize) - (category == Category.Render ? 7 : 3) * guiScale, y + 13f * guiScale, FontLoader.icons(), iconSize, new Color(255, 255, 255, 255));
         });
 
         for (ModuleComponent component : moduleComponents) {

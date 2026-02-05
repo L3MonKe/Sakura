@@ -445,14 +445,14 @@ public class TargetHud extends HudModule {
         // HP Text
         String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
         // Moved down from 26f to 29f
-        NanoVGHelper.drawCenteredString(hpText, x + 95, y + 29f + yOffset, FontLoader.bold(10), 10, Color.WHITE);
+        NanoVGHelper.drawCenteredString(hpText, x + 95, y + 29f + yOffset, FontLoader.bold(), 10, Color.WHITE);
 
         // Name
         if (glow.get()) {
             float strength = glowStrength.get().floatValue();
-            NanoVGHelper.drawGlowingString(target.getName().getString(), x + 50, y + 15 + yOffset, FontLoader.bold(14), 14, Color.WHITE, strength, 2);
+            NanoVGHelper.drawGlowingString(target.getName().getString(), x + 50, y + 15 + yOffset, FontLoader.bold(), 14, Color.WHITE, strength, 2);
         } else {
-            NanoVGHelper.drawString(target.getName().getString(), x + 50, y + 15 + yOffset, FontLoader.bold(14), 14, -1, Color.WHITE);
+            NanoVGHelper.drawString(target.getName().getString(), x + 50, y + 15 + yOffset, FontLoader.bold(), 14, -1, Color.WHITE);
         }
     }
 
@@ -565,14 +565,14 @@ public class TargetHud extends HudModule {
         String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
 
         // HP Text
-        NanoVGHelper.drawCenteredString(hpText, x + 102, y + 24f + 3 + yOffset, FontLoader.bold(10), 10, Color.WHITE);
+        NanoVGHelper.drawCenteredString(hpText, x + 102, y + 24f + 3 + yOffset, FontLoader.bold(), 10, Color.WHITE);
 
         // Name Glow
         if (glow.get()) {
             float strength = glowStrength.get().floatValue();
-            NanoVGHelper.drawGlowingString(target.getName().getString(), x + 55, y + 14 + yOffset, FontLoader.bold(12), 12, Color.WHITE, strength, 2);
+            NanoVGHelper.drawGlowingString(target.getName().getString(), x + 55, y + 14 + yOffset, FontLoader.bold(), 12, Color.WHITE, strength, 2);
         } else {
-            NanoVGHelper.drawString(target.getName().getString(), x + 55, y + 14 + yOffset, FontLoader.bold(12), 12, -1, Color.WHITE);
+            NanoVGHelper.drawString(target.getName().getString(), x + 55, y + 14 + yOffset, FontLoader.bold(), 12, -1, Color.WHITE);
         }
     }
 
@@ -851,15 +851,15 @@ public class TargetHud extends HudModule {
         }
 
         if (glow.get()) {
-            NanoVGHelper.drawGlowingString(target.getName().getString(), textX, nameY, FontLoader.bold((int) nameSize), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
+            NanoVGHelper.drawGlowingString(target.getName().getString(), textX, nameY, FontLoader.bold(), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
         } else {
-            NanoVGHelper.drawString(target.getName().getString(), textX, nameY, FontLoader.bold((int) nameSize), nameSize, Color.WHITE);
+            NanoVGHelper.drawString(target.getName().getString(), textX, nameY, FontLoader.bold(), nameSize, Color.WHITE);
         }
 
         // HP Text
         String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
-        float hpW = NanoVGHelper.getTextWidth(hpText, FontLoader.bold((int) nameSize), nameSize);
-        NanoVGHelper.drawString(hpText, x + baseW - padding - hpW, nameY, FontLoader.bold((int) nameSize), nameSize, Color.WHITE);
+        float hpW = NanoVGHelper.getTextWidth(hpText, FontLoader.bold(), nameSize);
+        NanoVGHelper.drawString(hpText, x + baseW - padding - hpW, nameY, FontLoader.bold(), nameSize, Color.WHITE);
 
         // Health Bar
         // barY calculation: start from bottom of total height

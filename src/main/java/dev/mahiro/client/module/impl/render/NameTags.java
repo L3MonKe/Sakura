@@ -228,35 +228,35 @@ public class NameTags extends Module {
         float headerY = y + headerHeight - 5;
 
         // Name
-        NanoVGHelper.drawString(name, x + padding, headerY, FontLoader.bold(11), fontSize, Color.WHITE);
+        NanoVGHelper.drawString(name, x + padding, headerY, FontLoader.bold(), fontSize, Color.WHITE);
 
         // Health
         if (health.get()) {
             String healthStr = String.format("%.1f", hp);
             Color healthColor = getHealthColor(hp);
-            float healthWidth = NanoVGHelper.getTextWidth(healthStr, FontLoader.regular(11), fontSize);
+            float healthWidth = NanoVGHelper.getTextWidth(healthStr, FontLoader.regular(), fontSize);
             float healthX = x + width / 2 - healthWidth / 2;
-            NanoVGHelper.drawString(healthStr, healthX, headerY, FontLoader.bold(11), fontSize, healthColor);
+            NanoVGHelper.drawString(healthStr, healthX, headerY, FontLoader.bold(), fontSize, healthColor);
         }
 
         // Ping
         if (ping.get()) {
             String pingStr = pingVal + "ms";
             Color pingColor = getPingColor(pingVal);
-            float pingWidth = NanoVGHelper.getTextWidth(pingStr, FontLoader.regular(10), fontSize - 1);
+            float pingWidth = NanoVGHelper.getTextWidth(pingStr, FontLoader.regular(), fontSize - 1);
             float pingX = x + width - padding - pingWidth;
             float signalX = pingX - 18;
 
             drawSignalIcon(signalX, y + headerHeight / 2 - 5, 12, pingVal, pingColor);
-            NanoVGHelper.drawString(pingStr, pingX, headerY, FontLoader.regular(10), fontSize - 1, pingColor);
+            NanoVGHelper.drawString(pingStr, pingX, headerY, FontLoader.regular(), fontSize - 1, pingColor);
         }
 
         // Pops
         if (pops.get() && popsVal > 0) {
             String popStr = "-" + popsVal;
-            float healthWidth = health.get() ? NanoVGHelper.getTextWidth(String.format("%.1f", hp), FontLoader.regular(11), fontSize) : 0;
+            float healthWidth = health.get() ? NanoVGHelper.getTextWidth(String.format("%.1f", hp), FontLoader.regular(), fontSize) : 0;
             float popX = x + width / 2 + healthWidth / 2 + 8;
-            NanoVGHelper.drawString(popStr, popX, headerY, FontLoader.bold(11), fontSize, new Color(255, 80, 80));
+            NanoVGHelper.drawString(popStr, popX, headerY, FontLoader.bold(), fontSize, new Color(255, 80, 80));
         }
     }
 
@@ -316,7 +316,7 @@ public class NameTags extends Module {
                 if (stack.getCount() > 1) {
                     drawNvg(posX, posY, scale, vg -> {
                         String countStr = String.valueOf(stack.getCount());
-                        NanoVGHelper.drawString(countStr, itemX + 9, itemY + 12, FontLoader.bold(7), 7, Color.WHITE);
+                        NanoVGHelper.drawString(countStr, itemX + 9, itemY + 12, FontLoader.bold(), 7, Color.WHITE);
                     });
                 }
 
@@ -338,9 +338,9 @@ public class NameTags extends Module {
         if (itemName.get() && !mainHandName.isEmpty()) {
             float nameY = itemY + itemSize + durHeight + 6;
             drawNvg(posX, posY, scale, vg -> {
-                float nameWidth = NanoVGHelper.getTextWidth(mainHandName, FontLoader.regular(10), 10);
+                float nameWidth = NanoVGHelper.getTextWidth(mainHandName, FontLoader.regular(), 10);
                 float nameX = itemAreaX + itemsWidth / 2 - nameWidth / 2;
-                NanoVGHelper.drawString(mainHandName, nameX, nameY + 8, FontLoader.regular(10), 10, new Color(184, 184, 186, 184));
+                NanoVGHelper.drawString(mainHandName, nameX, nameY + 8, FontLoader.regular(), 10, new Color(184, 184, 186, 184));
             });
         }
     }
@@ -352,8 +352,8 @@ public class NameTags extends Module {
 
         drawNvg(posX, posY, scale, vg -> {
             String percentStr = String.valueOf(percent);
-            float strWidth = NanoVGHelper.getTextWidth(percentStr, FontLoader.regular(8), durFontSize);
-            NanoVGHelper.drawString(percentStr, itemX + 8 - strWidth / 2, itemY + itemSize + durFontSize + 2, FontLoader.regular(8), durFontSize, durColor);
+            float strWidth = NanoVGHelper.getTextWidth(percentStr, FontLoader.regular(), durFontSize);
+            NanoVGHelper.drawString(percentStr, itemX + 8 - strWidth / 2, itemY + itemSize + durFontSize + 2, FontLoader.regular(), durFontSize, durColor);
         });
     }
 
@@ -368,10 +368,10 @@ public class NameTags extends Module {
                     if (shortName.isEmpty()) continue;
 
                     String levelStr = level > 1 ? String.valueOf(level) : "";
-                    float shortWidth = NanoVGHelper.getTextWidth(shortName, FontLoader.regular(7), enchantFontSize);
-                    NanoVGHelper.drawString(shortName, itemX + 8 - shortWidth / 2, enchantY, FontLoader.regular(7), enchantFontSize, new Color(187, 187, 191, 52));
+                    float shortWidth = NanoVGHelper.getTextWidth(shortName, FontLoader.regular(), enchantFontSize);
+                    NanoVGHelper.drawString(shortName, itemX + 8 - shortWidth / 2, enchantY, FontLoader.regular(), enchantFontSize, new Color(187, 187, 191, 52));
                     if (!levelStr.isEmpty()) {
-                        NanoVGHelper.drawString(levelStr, itemX + 8 + shortWidth / 2, enchantY, FontLoader.regular(7), enchantFontSize, new Color(255, 100, 100));
+                        NanoVGHelper.drawString(levelStr, itemX + 8 + shortWidth / 2, enchantY, FontLoader.regular(), enchantFontSize, new Color(255, 100, 100));
                     }
                     enchantY -= (enchantFontSize + 1);
                 }

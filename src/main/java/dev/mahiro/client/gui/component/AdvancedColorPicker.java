@@ -92,7 +92,7 @@ public class AdvancedColorPicker {
             drawToggle(x + width / 2 - 70, y + 8, 140, 24, mouseX, mouseY);
         } else {
             String labelText = TranslationManager.get(label);
-            int labelFont = FontLoader.bold(16);
+            int labelFont = FontLoader.bold();
             NanoVGHelper.drawCenteredString(labelText, x + width / 2f, y + HEADER_HEIGHT / 2f + 4, labelFont, 16, Color.WHITE);
         }
 
@@ -138,7 +138,7 @@ public class AdvancedColorPicker {
 
         NanoVGHelper.drawRoundRect(sliderX, y, sliderWidth, h, h / 2f, sliderColor);
 
-        int font = FontLoader.bold(12);
+        int font = FontLoader.bold();
 
         boolean isLight = (0.299 * sliderColor.getRed() + 0.587 * sliderColor.getGreen() + 0.114 * sliderColor.getBlue()) > 128;
         Color activeTextColor = isLight ? new Color(30, 30, 30) : Color.WHITE;
@@ -319,7 +319,7 @@ public class AdvancedColorPicker {
         int startX = x + 10;
 
         String hexLabel = "Hex:";
-        int labelFont = FontLoader.bold(14);
+        int labelFont = FontLoader.bold();
         float labelWidth = NanoVGHelper.getTextWidth(hexLabel, labelFont, 14);
 
         int hexInputWidth = 100;
@@ -349,7 +349,7 @@ public class AdvancedColorPicker {
         boolean active = activeField == field;
 
         if (label != null && !label.isEmpty()) {
-            int labelFont = FontLoader.bold(12);
+            int labelFont = FontLoader.bold();
             float labelWidth = NanoVGHelper.getTextWidth(label, labelFont, 12);
             NanoVGHelper.drawString(label, x + (w - labelWidth) / 2f, y - 5, labelFont, 12, new Color(200, 200, 200));
         }
@@ -372,7 +372,7 @@ public class AdvancedColorPicker {
             }
         }
 
-        int font = FontLoader.regular(14);
+        int font = FontLoader.regular();
 
         NanoVGHelper.drawCenteredString(text, x + w / 2f, y + h / 2f + 1, font, 14, Color.WHITE);
 
@@ -462,7 +462,7 @@ public class AdvancedColorPicker {
         int inputsY = alphaY + stripHeight + spacing + 5;
 
         String hexLabel = "Hex:";
-        int labelFont = FontLoader.bold(14);
+        int labelFont = FontLoader.bold();
         float labelWidth = NanoVGHelper.getTextWidth(hexLabel, labelFont, 14);
         int hexInputWidth = 100;
         int hexGap = 10;

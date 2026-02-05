@@ -154,7 +154,7 @@ public class MButton extends ButtonWidget {
             }
 
             NanoVG.nvgFontSize(vg, 14.0f);
-            NanoVG.nvgFontFaceId(vg, FontLoader.regular(14.0f));
+            NanoVG.nvgFontFaceId(vg, FontLoader.regular());
             NanoVG.nvgTextAlign(vg, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE);
             NanoVG.nvgFillColor(vg, SakuraTheme.color(textColor));
             NanoVG.nvgText(vg, textX, cy + 1, getMessage().getString());

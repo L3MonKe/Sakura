@@ -46,7 +46,7 @@ public class ColorValueComponent extends Component {
         open.setDirection(opened ? Direction.FORWARDS : Direction.BACKWARDS);
         float baseFontSize = (float) ClickGui.getFontSize();
         float titleFontSize = baseFontSize * 0.75f;
-        float fontHeight = NanoVGHelper.getFontHeight(FontLoader.regular(titleFontSize), titleFontSize);
+        float fontHeight = NanoVGHelper.getFontHeight(FontLoader.regular(), titleFontSize);
 
         float collapsedHeight = 14 * scale;
         float padding = 3 * scale;
@@ -75,7 +75,7 @@ public class ColorValueComponent extends Component {
         int b = currentColor.getBlue();
 
         NanoVGRenderer.INSTANCE.draw(canvas -> {
-            NanoVGHelper.drawString(setting.getDisplayName(), getX(), getY(), FontLoader.regular(titleFontSize), titleFontSize, new Color(255, 255, 255, 255));
+            NanoVGHelper.drawString(setting.getDisplayName(), getX(), getY(), FontLoader.regular(), titleFontSize, new Color(255, 255, 255, 255));
 
             NanoVGHelper.drawCircle(getX() + getWidth() - 5 * scale, getY() - 3 * scale, 4 * scale, setting.get());
 
@@ -295,7 +295,7 @@ public class ColorValueComponent extends Component {
         float radius = 2.5f * scale;
 
         float labelFontSize = (float) ClickGui.getFontSize() * 0.6f;
-        NanoVGHelper.drawString(label, rowX, rowY + rowHeight / 2f + 2 * scale, FontLoader.regular(labelFontSize), labelFontSize, new Color(210, 210, 210));
+        NanoVGHelper.drawString(label, rowX, rowY + rowHeight / 2f + 2 * scale, FontLoader.regular(), labelFontSize, new Color(210, 210, 210));
 
         NanoVGHelper.drawRoundRect(sliderX, barY, sliderWidth, barHeight, radius, new Color(20, 20, 20, 180));
         NanoVGHelper.drawGradientRRect2(sliderX, barY, sliderWidth, barHeight, radius, startColor, endColor);
@@ -318,10 +318,10 @@ public class ColorValueComponent extends Component {
             NanoVGHelper.drawRoundRectOutline(inputX, inputY, inputWidth, inputHeight, 2 * scale, 0.75f * scale, new Color(100, 100, 150));
 
             float textFontSize = (float) ClickGui.getFontSize() * 0.6f;
-            float textWidth = NanoVGHelper.getTextWidth(tempText, FontLoader.regular(textFontSize), textFontSize);
+            float textWidth = NanoVGHelper.getTextWidth(tempText, FontLoader.regular(), textFontSize);
             float textX = inputX + (inputWidth - textWidth) / 2f;
             float textY = inputY + inputHeight / 2f + 2 * scale;
-            NanoVGHelper.drawString(tempText, textX, textY, FontLoader.regular(textFontSize), textFontSize, Color.WHITE);
+            NanoVGHelper.drawString(tempText, textX, textY, FontLoader.regular(), textFontSize, Color.WHITE);
 
             if (cursorVisible) {
                 float underlineY = inputY + inputHeight - 2.25f * scale;
@@ -335,8 +335,8 @@ public class ColorValueComponent extends Component {
             NanoVGHelper.drawRoundRectOutline(inputX, inputY, inputWidth, inputHeight, 2 * scale, 0.75f * scale, new Color(0, 0, 0, 120));
             float textFontSize = (float) ClickGui.getFontSize() * 0.6f;
             String text = String.valueOf(value);
-            float textWidth = NanoVGHelper.getTextWidth(text, FontLoader.regular(textFontSize), textFontSize);
-            NanoVGHelper.drawString(text, inputX + (inputWidth - textWidth) / 2f, inputY + inputHeight / 2f + 2 * scale, FontLoader.regular(textFontSize), textFontSize, new Color(230, 230, 230));
+            float textWidth = NanoVGHelper.getTextWidth(text, FontLoader.regular(), textFontSize);
+            NanoVGHelper.drawString(text, inputX + (inputWidth - textWidth) / 2f, inputY + inputHeight / 2f + 2 * scale, FontLoader.regular(), textFontSize, new Color(230, 230, 230));
         }
     }
 
@@ -346,7 +346,7 @@ public class ColorValueComponent extends Component {
         float radius = 2.5f * scale;
 
         float labelFontSize = (float) ClickGui.getFontSize() * 0.6f;
-        NanoVGHelper.drawString("A", rowX, rowY + rowHeight / 2f + 2 * scale, FontLoader.regular(labelFontSize), labelFontSize, new Color(210, 210, 210));
+        NanoVGHelper.drawString("A", rowX, rowY + rowHeight / 2f + 2 * scale, FontLoader.regular(), labelFontSize, new Color(210, 210, 210));
 
         NanoVGHelper.drawRoundRect(sliderX, barY, sliderWidth, barHeight, radius, new Color(20, 20, 20, 180));
         float inset = scale;
@@ -373,10 +373,10 @@ public class ColorValueComponent extends Component {
             NanoVGHelper.drawRoundRectOutline(inputX, inputY, inputWidth, inputHeight, 2 * scale, 0.75f * scale, new Color(100, 100, 150));
 
             float textFontSize = (float) ClickGui.getFontSize() * 0.6f;
-            float textWidth = NanoVGHelper.getTextWidth(tempText, FontLoader.regular(textFontSize), textFontSize);
+            float textWidth = NanoVGHelper.getTextWidth(tempText, FontLoader.regular(), textFontSize);
             float textX = inputX + (inputWidth - textWidth) / 2f;
             float textY = inputY + inputHeight / 2f + 2 * scale;
-            NanoVGHelper.drawString(tempText, textX, textY, FontLoader.regular(textFontSize), textFontSize, Color.WHITE);
+            NanoVGHelper.drawString(tempText, textX, textY, FontLoader.regular(), textFontSize, Color.WHITE);
 
             if (cursorVisible) {
                 float underlineY = inputY + inputHeight - 2.25f * scale;
@@ -390,8 +390,8 @@ public class ColorValueComponent extends Component {
             NanoVGHelper.drawRoundRectOutline(inputX, inputY, inputWidth, inputHeight, 2 * scale, 0.75f * scale, new Color(0, 0, 0, 120));
             float textFontSize = (float) ClickGui.getFontSize() * 0.6f;
             String text = String.valueOf(value);
-            float textWidth = NanoVGHelper.getTextWidth(text, FontLoader.regular(textFontSize), textFontSize);
-            NanoVGHelper.drawString(text, inputX + (inputWidth - textWidth) / 2f, inputY + inputHeight / 2f + 2 * scale, FontLoader.regular(textFontSize), textFontSize, new Color(230, 230, 230));
+            float textWidth = NanoVGHelper.getTextWidth(text, FontLoader.regular(), textFontSize);
+            NanoVGHelper.drawString(text, inputX + (inputWidth - textWidth) / 2f, inputY + inputHeight / 2f + 2 * scale, FontLoader.regular(), textFontSize, new Color(230, 230, 230));
         }
     }
 
@@ -502,7 +502,7 @@ public class ColorValueComponent extends Component {
         if (opened && open.getOutput() > 0.5) {
             float baseFontSize = (float) ClickGui.getFontSize();
             float titleFontSize = baseFontSize * 0.75f;
-            float fontHeight = NanoVGHelper.getFontHeight(FontLoader.regular(titleFontSize), titleFontSize);
+            float fontHeight = NanoVGHelper.getFontHeight(FontLoader.regular(), titleFontSize);
 
             float padding = 3 * scale;
             float gap = 3 * scale;

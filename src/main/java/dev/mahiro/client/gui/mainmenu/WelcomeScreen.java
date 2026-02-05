@@ -378,7 +378,7 @@ public class WelcomeScreen extends Screen {
             case 0:
                 String title = TranslationManager.get("welcome.title");
                 float fontSize = 40f * contentScale;
-                int font = FontLoader.bold((int) fontSize);
+                int font = FontLoader.bold();
                 float textWidth = NanoVGHelper.getTextWidth(title, font, fontSize);
 
                 NanoVGHelper.drawString(title, (width - textWidth) / 2f + 2, centerY - 100 * contentScale + 2, font, fontSize, new Color(0, 0, 0, 100));
@@ -386,7 +386,7 @@ public class WelcomeScreen extends Screen {
 
                 String sub = TranslationManager.get("welcome.subtitle");
                 float subSize = 20f * contentScale;
-                int subFont = FontLoader.regular((int) subSize);
+                int subFont = FontLoader.regular();
                 float subWidth = NanoVGHelper.getTextWidth(sub, subFont, subSize);
                 NanoVGHelper.drawString(sub, (width - subWidth) / 2f, centerY - 60 * contentScale, subFont, subSize, new Color(220, 220, 220));
 
@@ -397,7 +397,7 @@ public class WelcomeScreen extends Screen {
             case 1:
                 String settingsText = TranslationManager.get("wizard.step.theme");
                 float sFontSize = 24f * contentScale;
-                int sFont = FontLoader.bold((int) sFontSize);
+                int sFont = FontLoader.bold();
                 float sTextWidth = NanoVGHelper.getTextWidth(settingsText, sFont, sFontSize);
                 NanoVGHelper.drawString(settingsText, (width - sTextWidth) / 2f, 50 * contentScale, sFont, sFontSize, Color.WHITE);
 
@@ -424,7 +424,7 @@ public class WelcomeScreen extends Screen {
                 loadPi8Image();
 
                 String readText = "请必须完整阅读";
-                int rFont = FontLoader.bold((int) (24 * contentScale));
+                int rFont = FontLoader.bold();
                 float rWidth = NanoVGHelper.getTextWidth(readText, rFont, 24 * contentScale);
                 NanoVGHelper.drawString(readText, (width - rWidth) / 2f, 30 * contentScale, rFont, 24 * contentScale, new Color(255, 100, 100));
 
@@ -450,7 +450,7 @@ public class WelcomeScreen extends Screen {
 
                 if (isImageLoading) {
                     String loading = "Loading...";
-                    NanoVGHelper.drawCenteredString(loading, width / 2f, height / 2f, FontLoader.regular(20), 20, Color.WHITE);
+                    NanoVGHelper.drawCenteredString(loading, width / 2f, height / 2f, FontLoader.regular(), 20, Color.WHITE);
                 } else if (pi8Texture != -1) {
                     float imgW = contentW;
                     float imgH = imgW * (7082f / 1440f);
@@ -513,13 +513,13 @@ public class WelcomeScreen extends Screen {
             case 3:
                 String finishText = TranslationManager.get("ready.title");
                 float fFontSize = 24f * contentScale;
-                int fFont = FontLoader.bold((int) fFontSize);
+                int fFont = FontLoader.bold();
                 float fTextWidth = NanoVGHelper.getTextWidth(finishText, fFont, fFontSize);
                 NanoVGHelper.drawString(finishText, (width - fTextWidth) / 2f, centerY - 20 * contentScale, fFont, fFontSize, Color.WHITE);
 
                 String infoText = TranslationManager.get("ready.info");
                 float iFontSize = 16f * contentScale;
-                int iFont = FontLoader.regular((int) iFontSize);
+                int iFont = FontLoader.regular();
                 float iTextWidth = NanoVGHelper.getTextWidth(infoText, iFont, iFontSize);
                 NanoVGHelper.drawString(infoText, (width - iTextWidth) / 2f, centerY + 10 * contentScale, iFont, iFontSize, new Color(200, 200, 200));
                 break;

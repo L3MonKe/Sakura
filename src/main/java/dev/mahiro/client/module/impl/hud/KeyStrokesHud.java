@@ -139,7 +139,7 @@ public class KeyStrokesHud extends HudModule {
             NanoVGHelper.drawRoundRect(x, y, w, h, radius, baseColor);
 
             String keyName = getKeyName(binding);
-            int font = FontLoader.bold(h * 0.55f);
+            int font = FontLoader.bold();
             float textWidth = NanoVGHelper.getTextWidth(keyName, font, h * 0.55f);
             float fontHeight = NanoVGHelper.getFontHeight(font, h * 0.55f);
 

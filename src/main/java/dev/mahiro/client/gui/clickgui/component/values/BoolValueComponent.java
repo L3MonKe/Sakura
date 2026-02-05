@@ -32,7 +32,7 @@ public class BoolValueComponent extends Component {
         this.toggleAnimation.setDirection(setting.get() ? Direction.FORWARDS : Direction.BACKWARDS);
         NanoVGRenderer.INSTANCE.draw(vg -> {
             float fontSize = baseFontSize * 0.75f;
-            int font = FontLoader.regular(fontSize);
+            int font = FontLoader.regular();
             String text = setting.getDisplayName();
 
             float toggleWidth = 15 * scale;
