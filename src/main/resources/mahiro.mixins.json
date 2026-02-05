@@ -45,6 +45,7 @@
     "render.MixinClientWorldProperties",
     "render.MixinEntityRenderDispatcher",
     "render.MixinEntityRenderState",
+    "render.MixinEquipmentRenderer",
     "render.MixinGameRenderer",
     "render.MixinHeldItemRenderer",
     "render.MixinInGameHud",

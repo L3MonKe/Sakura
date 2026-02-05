@@ -38,7 +38,7 @@
 欢迎加入我们的[Discord](https://discord.gg/5StpNWpRrW) 
 
 ## 客户端介绍
-- **支持版本**: 1.21.4
+- **支持版本**: 1.21.11
 - **重要提示**: 人要写端
 - **警告**: 您[不能](https://cn.bing.com/images/search?view=detailV2&ccid=XHPUPyEo&id=5C2AB5FC16BB66201ED3A7591A4C93374D97530C&thid=OIP.XHPUPyEoregs-pH_u5zafwHaHa&mediaurl=https%3A%2F%2Fbkimg.cdn.bcebos.com%2Fpic%2Ff703738da97739124dbc4d25f5198618377ae2d9%3Fx-bce-process%3Dimage%2Fresize%2Cm_lfit%2Cw_536%2Climit_1%2Fquality%2CQ_70&exph=536&expw=536&q=不能&simid=608003774981495359&FORM=IRPRST&ck=6D036584361D52EDFD960A6DF1CEA32C&selectedIndex=15&itb=0&cw=1658&ch=902&ajaxhist=0&ajaxserp=0)以任何形式发布此客户端的无混淆版本
 
@@ -48,7 +48,6 @@ Sakura是一个Minecraft Hacked客户端，允许开发者对游戏源代码进�
 - 黑客功能的编写和使用
 - 提供Gradle构建系统支持
 - 生成可运行的修改版客户端
-- 支持Optifine集成
 - 集成的游戏优化
 
 ## 布吉岛
@@ -166,7 +165,7 @@ Sakura是一个Minecraft Hacked客户端，允许开发者对游戏源代码进�
 - **HeypixelAntiCheat-Team  { [Lastest GrimAC Provider](https://github.com) }**
 
 ### 特别感谢
-**MinecraftFabric**团队 ❤ 是他们让这个客户端成为可能
+**LemonClient-Development**团队 ❤ 是他们让这个客户端成为可能
 
 ## 环境介绍
 ### 开发环境要求

@@ -339,10 +339,7 @@ public class DynamicIslandHud extends HudModule {
         float clampedBlurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
         if (clampedBlurOpacity <= 0.005f) return;
 
-        Shader2DUtil.drawRoundedBlur(
-                animX, animY, animW, animH, getRadius(),
-                new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity
-        );
+        Shader2DUtil.drawRoundedBlur(animX, animY, animW, animH, getRadius(), new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity);
     }
 
     private void renderSideBlurs(DrawContext context, float opacity) {
@@ -595,7 +592,7 @@ public class DynamicIslandHud extends HudModule {
         for (OrderedText line : headerLines) {
             int lineW = mc.textRenderer.getWidth(line);
             int x = (int) (animX + (animW - lineW) / 2f);
-            context.drawTextWithShadow(mc.textRenderer, line, x, y, 0xFFFFFF);
+            context.drawTextWithShadow(mc.textRenderer, line, x, y, 0xFFFFFFFF);
             y += fontH;
         }
         y += 8;
@@ -621,14 +618,14 @@ public class DynamicIslandHud extends HudModule {
             int pingW = mc.textRenderer.getWidth(ping);
             int pingX = innerX2 - pingW;
             int textY = rowY + Math.max(0, (rowH - fontH) / 2);
-            context.drawTextWithShadow(mc.textRenderer, ping, pingX, textY, 0xA0A0A0);
+            context.drawTextWithShadow(mc.textRenderer, ping, pingX, textY, 0xFFA0A0A0);
 
             Text nameText = mc.inGameHud.getPlayerListHud().getPlayerName(entry);
             int nameX = headX + headSize + 4;
             int nameClipX2 = pingX - 6;
             if (nameClipX2 > nameX) {
                 context.enableScissor(nameX, rowY, nameClipX2, rowY + rowH);
-                context.drawTextWithShadow(mc.textRenderer, nameText, nameX, textY, 0xFFFFFF);
+                context.drawTextWithShadow(mc.textRenderer, nameText, nameX, textY, 0xFFFFFFFF);
                 context.disableScissor();
             }
 
@@ -642,7 +639,7 @@ public class DynamicIslandHud extends HudModule {
             for (OrderedText line : footerLines) {
                 int lineW = mc.textRenderer.getWidth(line);
                 int x = (int) (animX + (animW - lineW) / 2f);
-                context.drawTextWithShadow(mc.textRenderer, line, x, footerY, 0xFFFFFF);
+                context.drawTextWithShadow(mc.textRenderer, line, x, footerY, 0xFFFFFFFF);
                 footerY += fontH;
             }
         }
