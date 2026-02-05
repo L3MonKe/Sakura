@@ -22,8 +22,7 @@ public class HudEditorScreen extends Screen {
     }
 
     @Override
-    protected void init() {
-        super.init();
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
     }
 
     @Override

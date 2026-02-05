@@ -3,14 +3,10 @@ package dev.mahiro.client.shaders;
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
-import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import java.util.EnumMap;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
 import dev.mahiro.client.utils.animations.AnimationUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
@@ -19,10 +15,13 @@ import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gl.UniformType;
 import net.minecraft.util.Identifier;
 
+import java.util.EnumMap;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+
 public class MainMenuShader {
     private static MainMenuShader sharedInstance;
 
-    private static final Identifier VERTEX_SHADER = Identifier.of("mahiro", "core/screen_triangle");
     private static final int UNIFORMS_SIZE = new Std140SizeCalculator().putVec4().putVec4().get();
 
     public static MainMenuShader getSharedInstance() {
@@ -62,7 +61,7 @@ public class MainMenuShader {
 
         MinecraftClient client = MinecraftClient.getInstance();
         Framebuffer framebuffer = client.getFramebuffer();
-        float scaleFactor = (float)client.getWindow().getScaleFactor();
+        float scaleFactor = (float) client.getWindow().getScaleFactor();
         float pxWidth = width * scaleFactor;
         float pxHeight = height * scaleFactor;
 
@@ -79,11 +78,11 @@ public class MainMenuShader {
         }
 
         try (RenderPass renderPass = encoder.createRenderPass(
-            () -> "Mahiro MainMenu",
-            framebuffer.getColorAttachmentView(),
-            OptionalInt.empty(),
-            framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null,
-            OptionalDouble.empty()
+                () -> "Mahiro MainMenu",
+                framebuffer.getColorAttachmentView(),
+                OptionalInt.empty(),
+                framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null,
+                OptionalDouble.empty()
         )) {
             renderPass.setPipeline(pipeline);
             RenderSystem.bindDefaultUniforms(renderPass);
@@ -139,12 +138,12 @@ public class MainMenuShader {
             this.uniforms = new MappableRingBuffer(() -> "Mahiro MenuUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
         }
         return this.pipelines.computeIfAbsent(type, t -> RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
-            .withLocation(Identifier.of("mahiro", "pipeline/menu/" + t.name().toLowerCase()))
-            .withVertexShader(VERTEX_SHADER)
-            .withFragmentShader(t.fragmentShader)
-            .withUniform("MenuUniforms", UniformType.UNIFORM_BUFFER)
-            .withCull(false)
-            .build());
+                .withLocation(Identifier.of("mahiro", "pipeline/menu/" + t.name().toLowerCase()))
+                .withVertexShader(Identifier.of("mahiro", "core/screen_triangle"))
+                .withFragmentShader(t.fragmentShader)
+                .withUniform("MenuUniforms", UniformType.UNIFORM_BUFFER)
+                .withCull(false)
+                .build());
     }
 
     public enum MainMenuShaderType {

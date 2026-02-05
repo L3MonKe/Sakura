@@ -8,19 +8,20 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import java.util.OptionalDouble;
-import java.util.OptionalInt;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.MappableRingBuffer;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gl.UniformType;
 import net.minecraft.util.Identifier;
 
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+
+import static dev.mahiro.client.Mahiro.mc;
+
 public class SplashShader {
     private static SplashShader INSTANCE;
 
-    private static final Identifier VERTEX_SHADER = Identifier.of("mahiro", "core/screen_triangle");
     private static final Identifier FRAGMENT_SHADER = Identifier.of("mahiro", "core/splash");
     private static final int UNIFORMS_SIZE = new Std140SizeCalculator().putVec4().putVec4().get();
     private static final float TRANSITION_DURATION = 2.0f; // 2s 过渡
@@ -51,23 +52,23 @@ public class SplashShader {
         }
         if (this.pipelineOpaque == null) {
             this.pipelineOpaque = RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
-                .withLocation(Identifier.of("mahiro", "pipeline/splash_opaque"))
-                .withVertexShader(VERTEX_SHADER)
-                .withFragmentShader(FRAGMENT_SHADER)
-                .withUniform("SplashUniforms", UniformType.UNIFORM_BUFFER)
-                .withoutBlend()
-                .withCull(false)
-                .build();
+                    .withLocation(Identifier.of("mahiro", "pipeline/splash_opaque"))
+                    .withVertexShader(Identifier.of("mahiro", "core/screen_triangle"))
+                    .withFragmentShader(FRAGMENT_SHADER)
+                    .withUniform("SplashUniforms", UniformType.UNIFORM_BUFFER)
+                    .withoutBlend()
+                    .withCull(false)
+                    .build();
         }
         if (this.pipelineBlend == null) {
             this.pipelineBlend = RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
-                .withLocation(Identifier.of("mahiro", "pipeline/splash_blend"))
-                .withVertexShader(VERTEX_SHADER)
-                .withFragmentShader(FRAGMENT_SHADER)
-                .withUniform("SplashUniforms", UniformType.UNIFORM_BUFFER)
-                .withBlend(BlendFunction.TRANSLUCENT)
-                .withCull(false)
-                .build();
+                    .withLocation(Identifier.of("mahiro", "pipeline/splash_blend"))
+                    .withVertexShader(Identifier.of("mahiro", "core/screen_triangle"))
+                    .withFragmentShader(FRAGMENT_SHADER)
+                    .withUniform("SplashUniforms", UniformType.UNIFORM_BUFFER)
+                    .withBlend(BlendFunction.TRANSLUCENT)
+                    .withCull(false)
+                    .build();
         }
     }
 
@@ -94,9 +95,8 @@ public class SplashShader {
         }
         this.currentProgress = progress;
 
-        MinecraftClient client = MinecraftClient.getInstance();
-        Framebuffer framebuffer = client.getFramebuffer();
-        float scaleFactor = (float)client.getWindow().getScaleFactor();
+        Framebuffer framebuffer = mc.getFramebuffer();
+        float scaleFactor = (float) mc.getWindow().getScaleFactor();
         float pxWidth = width * scaleFactor;
         float pxHeight = height * scaleFactor;
 
@@ -114,11 +114,11 @@ public class SplashShader {
 
         RenderPipeline pipeline = zoom > 1.0f ? this.pipelineBlend : this.pipelineOpaque;
         try (RenderPass renderPass = encoder.createRenderPass(
-            () -> "Mahiro Splash",
-            framebuffer.getColorAttachmentView(),
-            OptionalInt.empty(),
-            framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null,
-            OptionalDouble.empty()
+                () -> "Mahiro Splash",
+                framebuffer.getColorAttachmentView(),
+                OptionalInt.empty(),
+                framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null,
+                OptionalDouble.empty()
         )) {
             renderPass.setPipeline(pipeline);
             RenderSystem.bindDefaultUniforms(renderPass);

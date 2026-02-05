@@ -60,6 +60,10 @@ public class WelcomeScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    }
+
+    @Override
     protected void init() {
         if (initTime == 0) {
             initTime = System.currentTimeMillis();

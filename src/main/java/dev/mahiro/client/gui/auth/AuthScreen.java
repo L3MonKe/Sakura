@@ -68,6 +68,10 @@ public class AuthScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    }
+
+    @Override
     protected void init() {
         Mode prevMode = lastInitMode != null ? lastInitMode : mode;
         saveInputs(prevMode);

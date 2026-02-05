@@ -43,6 +43,10 @@ public class ClickGuiScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    }
+
+    @Override
     public void init() {
         openingAnimation.setDirection(Direction.FORWARDS);
         openingAnimation.reset();

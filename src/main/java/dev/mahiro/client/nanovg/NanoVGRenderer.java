@@ -1,11 +1,21 @@
 package dev.mahiro.client.nanovg;
 
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import dev.mahiro.client.nanovg.util.state.States;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.RenderPipelines;
 import org.lwjgl.nanovg.NanoVGGL3;
+import org.lwjgl.opengl.GL33C;
 
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
 import java.util.function.Consumer;
 
-import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVG.nvgBeginFrame;
+import static org.lwjgl.nanovg.NanoVG.nvgEndFrame;
 
 /**
  * Sakura NanoVG渲染器
@@ -21,12 +31,10 @@ public class NanoVGRenderer {
     private long vg = 0L;
     private boolean initialized = false;
     private boolean inFrame = false;
-    private boolean scaled = false;
 
     public void initNanoVG() {
         if (!initialized) {
             vg = NanoVGGL3.nvgCreate(NanoVGGL3.NVG_ANTIALIAS | NanoVGGL3.NVG_STENCIL_STROKES);
-
             if (vg == 0L) {
                 throw new RuntimeException("无法初始化NanoVG");
             }
@@ -43,45 +51,35 @@ public class NanoVGRenderer {
 
     public void draw(Consumer<Long> drawingLogic) {
         if (!initialized) initNanoVG();
-        if (inFrame) {
+
+        if (inFrame) { // 防止叠帧
             drawingLogic.accept(vg);
             return;
         }
 
-        //States.INSTANCE.push();
-
         MinecraftClient mc = MinecraftClient.getInstance();
-        int width = mc.getWindow().getWidth();
-        int height = mc.getWindow().getHeight();
-
-        nvgBeginFrame(vg, width, height, 1.0f);
+        States.INSTANCE.push();
 
         inFrame = true;
 
-        float scale = (float) MinecraftClient.getInstance().getWindow().getScaleFactor();
+        float scaleFactor = (float) mc.getWindow().getScaleFactor();
+        nvgBeginFrame(vg, mc.getWindow().getFramebufferWidth() / scaleFactor, mc.getWindow().getFramebufferHeight() / scaleFactor, scaleFactor);
 
-        nvgSave(vg);
-        nvgScale(vg, scale, scale);
-        scaled = true;
+        drawingLogic.accept(vg);
 
-        try {
-            drawingLogic.accept(vg);
-        } finally {
-            nvgRestore(vg);
-            scaled = false;
-
+        Framebuffer framebuffer = mc.getFramebuffer();
+        CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+        try (RenderPass renderPass = encoder.createRenderPass(() -> "NanoVG", framebuffer.getColorAttachmentView(), OptionalInt.empty(), framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null, OptionalDouble.empty())) {
+            renderPass.setPipeline(RenderPipelines.GUI);
             nvgEndFrame(vg);
-            inFrame = false;
-            //States.INSTANCE.pop();
         }
+        States.INSTANCE.pop();
+        GL33C.glViewport(0, 0, mc.getWindow().getFramebufferWidth(), mc.getWindow().getFramebufferHeight());
+        inFrame = false;
     }
 
     public boolean isInFrame() {
         return inFrame;
-    }
-
-    public boolean isScaled() {
-        return scaled;
     }
 
     public void cleanup() {

@@ -77,6 +77,10 @@ public class MainMenuScreen extends Screen {
     }
 
     @Override
+    public void renderBackground(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
+    }
+
+    @Override
     protected void init() {
         ClickGui clickGui = Mahiro.MODULES.getModule(ClickGui.class);
         if (clickGui != null && clickGui.getKey() == -1) {
