@@ -486,8 +486,8 @@ public class DynamicIslandHud extends HudModule {
         float countSize = 10f;
         float textSize = 9f;
         float subSize = 7f;
-        int countFont = FontLoader.bold((int) countSize);
-        int textFont = FontLoader.medium((int) textSize);
+        int countFont = FontLoader.bold();
+        int textFont = FontLoader.medium();
 
         float countY = animY + animH / 2f + 1f;
         NanoVGHelper.drawString(scaffoldCountText, rightX, countY, countFont, countSize, new Color(255, 255, 255, 230));
@@ -520,7 +520,7 @@ public class DynamicIslandHud extends HudModule {
 
     private void drawCenteredTitle(float alpha) {
         if (alpha <= 0.05f) return;
-        int font = FontLoader.bold((int) Size.LOGO_FONT_SIZE);
+        int font = FontLoader.bold();
         String title = "Mahiro";
         float textW = NanoVGHelper.getTextWidth(title, font, Size.LOGO_FONT_SIZE);
         NanoVGHelper.drawGlowingString(title, animX + (animW - textW) / 2f, animY + animH / 2f + 4, font, Size.LOGO_FONT_SIZE, withAlpha(ClickGui.color(0), (int) (255 * alpha)), Size.GLOW_RADIUS);
@@ -529,7 +529,7 @@ public class DynamicIslandHud extends HudModule {
     private void drawSideInfo(float expandProgress, float alpha) {
         if (alpha <= 0.05f) return;
 
-        int font = FontLoader.medium(9);
+        int font = FontLoader.medium();
         Color color = withAlpha(Color.WHITE, (int) (255 * alpha));
         float centerY = animY + animH / 2f + 3;
         Color bgColor = withAlpha(Size.INVENTORY_BG_COLOR, (int) (70 * alpha));
@@ -654,12 +654,12 @@ public class DynamicIslandHud extends HudModule {
         if (currentToggle == null) return;
         float padding = 6, iconSize = 16;
         float centerY = animY + (animH - 3) / 2f;
-        int iconFont = FontLoader.icons(iconSize);
+        int iconFont = FontLoader.icons();
         String icon = currentToggle.enabled ? "U" : "T";
         Color iconColor = currentToggle.enabled ? ClickGui.color(0) : ClickGui.color2(0);
         float iconW = NanoVGHelper.getTextWidth(icon, iconFont, iconSize);
         NanoVGHelper.drawString(icon, animX + padding + 6, centerY + iconSize * 0.35f, iconFont, iconSize, withAlpha(iconColor, alpha));
-        int textFont = FontLoader.medium((int) Size.LOGO_FONT_SIZE);
+        int textFont = FontLoader.medium();
         String status = currentToggle.name + (currentToggle.enabled ? " 已开启" : " 已关闭");
         NanoVGHelper.drawString(status, animX + padding + iconW + 14, centerY + Size.LOGO_FONT_SIZE * 0.35f, textFont, Size.LOGO_FONT_SIZE - 2f, withAlpha(Color.WHITE, alpha));
 
@@ -683,8 +683,8 @@ public class DynamicIslandHud extends HudModule {
         if (currentToggle == null) return Size.EXPANDED_W;
 
         float padding = 6, iconSize = 16, textSize = Size.LOGO_FONT_SIZE;
-        int iconFont = FontLoader.icons(iconSize);
-        int textFont = FontLoader.medium(textSize);
+        int iconFont = FontLoader.icons();
+        int textFont = FontLoader.medium();
 
         String icon = currentToggle.enabled ? "U" : "T";
         String status = currentToggle.name + (currentToggle.enabled ? " 已开启" : " 已关闭");
@@ -764,8 +764,8 @@ public class DynamicIslandHud extends HudModule {
         float countSize = 10f;
         float textSize = 9f;
         float subSize = 7f;
-        int countFont = FontLoader.bold((int) countSize);
-        int textFont = FontLoader.medium((int) textSize);
+        int countFont = FontLoader.bold();
+        int textFont = FontLoader.medium();
 
         float countW = NanoVGHelper.getTextWidth(scaffoldCountText, countFont, countSize);
         float suffixW = NanoVGHelper.getTextWidth(scaffoldSuffixText, textFont, textSize);
