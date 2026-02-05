@@ -13,6 +13,7 @@ import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import dev.mahiro.client.utils.render.Render3DUtil;
 import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
+import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
@@ -36,6 +37,11 @@ import java.util.function.Consumer;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class NameTags extends Module {
+    public enum Mode {
+        Normal,
+        Simple
+    }
+    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Normal);
     private final NumberValue<Double> scaling = new NumberValue<>("Size", "大小", 4.0, 0.1, 10.0, 0.1);
     private final NumberValue<Double> minScale = new NumberValue<>("MinSize", "最小大小", 0.5, 0.1, 5.0, 0.1);
     private final BoolValue self = new BoolValue("Self", "自身", false);
@@ -114,6 +120,10 @@ public class NameTags extends Module {
     }
 
     private void render(DrawContext context, PlayerEntity player, float posX, float posY, float posZ) {
+        if (mode.get() == Mode.Simple) {
+            renderSimple(context, player, posX, posY, posZ);
+            return;
+        }
         final String name = player.getName().getString();
         final float hp = Managers.HEALTH.getHealth(player);
         final int playerPops = popCounts.getOrDefault(player.getUuid(), 0);
@@ -149,7 +159,7 @@ public class NameTags extends Module {
 
         // Calculate scale
         float calculatedScale = posZ * scaling.get().floatValue();
-        final float finalScale = Math.max(calculatedScale, minScale.get().floatValue());
+        final float finalScale = calculatedScale;
 
         // Draw Blur
         if (blur.get()) {
@@ -182,6 +192,63 @@ public class NameTags extends Module {
         if (armor.get()) {
             drawEquipment(context, stacks, mainHandName, posX, posY, finalScale, headX, headY, headSize, padding, enchantHeight, itemSize, itemSpacing, durHeight, durFontSize, enchantFontSize, itemsWidth);
         }
+    }
+
+    private void renderSimple(DrawContext context, PlayerEntity player, float posX, float posY, float posZ) {
+        final String name = player.getName().getString();
+        final float hp = Managers.HEALTH.getHealth(player);
+
+        final float fontSize = 11;
+        final float padding = 4;
+        final float spacing = 4;
+
+        String healthStr = String.format("%.1f", hp);
+        float nameWidth = NanoVGHelper.getTextWidth(name, FontLoader.bold(), fontSize);
+        float healthWidth = NanoVGHelper.getTextWidth(healthStr, FontLoader.bold(), fontSize);
+
+        float contentWidth = nameWidth + (health.get() ? (spacing + healthWidth) : 0);
+        float totalWidth = contentWidth + padding * 2;
+        float totalHeight = fontSize + padding * 2;
+
+        float boxX = posX - totalWidth / 2;
+        float boxY = posY - totalHeight;
+
+        // Calculate scale
+        float calculatedScale = posZ * scaling.get().floatValue();
+        final float finalScale = calculatedScale;
+
+        // Draw Blur
+        if (blur.get()) {
+            float scaledWidth = totalWidth * finalScale;
+            float scaledHeight = totalHeight * finalScale;
+            float scaledRadius = 4 * finalScale;
+            float scaledBoxX = posX - (totalWidth / 2 * finalScale);
+            float scaledBoxY = posY - (totalHeight * finalScale);
+
+            Shader2DUtil.drawRoundedBlur(
+                    scaledBoxX, scaledBoxY, scaledWidth, scaledHeight, scaledRadius,
+                    new Color(0, 0, 0, 0),
+                    blurStrength.get().floatValue(), 1.0f
+            );
+        }
+
+        drawNvg(posX, posY, finalScale, vg -> {
+            // Background (White theme similar to Normal mode)
+            NanoVGHelper.drawRoundRect(boxX, boxY, totalWidth, totalHeight, 4, new Color(158, 158, 158, 48));
+            NanoVGHelper.drawRoundRect(boxX + 1, boxY + 1, totalWidth - 2, totalHeight - 2, 3, new Color(171, 171, 172, 48));
+
+            // Text vertical alignment adjustment (down slightly + centered)
+            float textY = boxY + totalHeight / 2.0f + 0.5f;
+
+            // Name
+            NanoVGHelper.drawString(name, boxX + padding, textY, FontLoader.bold(), fontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, Color.WHITE);
+
+            // Health
+            if (health.get()) {
+                Color healthColor = getHealthColor(hp);
+                NanoVGHelper.drawString(healthStr, boxX + padding + nameWidth + spacing, textY, FontLoader.bold(), fontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, healthColor);
+            }
+        });
     }
 
     private List<ItemStack> getPlayerEquipment(PlayerEntity player) {

@@ -5,6 +5,7 @@ import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.RenderLayers;
 import net.minecraft.client.render.Tessellator;
 import net.minecraft.client.render.VertexFormats;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
+import org.joml.Vector4f;
 
 import java.awt.*;
 import java.util.List;
@@ -25,6 +27,15 @@ import static dev.mahiro.client.Mahiro.mc;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class Render3DUtil {
+    private static final Matrix4f lastProjMat = new Matrix4f();
+    private static final Matrix4f lastModMat = new Matrix4f();
+    private static final Matrix4f lastWorldSpaceMatrix = new Matrix4f();
+
+    public static void updateMatrices(Matrix4f proj, Matrix4f mod) {
+        lastProjMat.set(proj);
+        lastModMat.set(mod);
+        lastWorldSpaceMatrix.set(proj).mul(mod);
+    }
 
 
     // TODO: 应该使用自己的pipeline覆盖（例如RenderLayers.linesTranslucent()很可能会把blend设回translucent），想要稳定的additive，应该做自定义 RenderPipeline/RenderLayer来保证blend固化，，
@@ -373,37 +384,25 @@ public class Render3DUtil {
         }
     }
 
-    public static Vec3d worldToScreen(Vec3d vec) {
-        var camera = mc.gameRenderer.getCamera();
-        int width = mc.getWindow().getScaledWidth();
-        int height = mc.getWindow().getScaledHeight();
-
+    public static Vec3d worldToScreen(Vec3d worldPos) {
+        Camera camera = mc.gameRenderer.getCamera();
         Vec3d camPos = camera.getCameraPos();
-        Vector3fc camLook = camera.getHorizontalPlane();
-        Vector3fc camUp = camera.getVerticalPlane();
-        Vector3f camLeft = new Vector3f();
-        camLook.cross(camUp, camLeft);
-        camLeft.normalize();
+        Vec3d relPos = worldPos.subtract(camPos);
 
-        float dx = (float) (vec.x - camPos.x);
-        float dy = (float) (vec.y - camPos.y);
-        float dz = (float) (vec.z - camPos.z);
+        Vector4f vec = new Vector4f((float) relPos.x, (float) relPos.y, (float) relPos.z, 1.0f);
+        vec.mul(lastWorldSpaceMatrix);
 
-        Vector3f toPos = new Vector3f(dx, dy, dz);
+        if (vec.w <= 0.0f) {
+            return null;
+        }
 
-        float dotLook = toPos.dot(camLook);
-        if (dotLook <= 0.01f) return null;
+        float w = vec.w;
+        vec.div(w);
 
-        float dotUp = toPos.dot(camUp);
-        float dotLeft = toPos.dot(camLeft);
+        float x = (vec.x + 1.0f) * 0.5f * mc.getWindow().getScaledWidth();
+        float y = (1.0f - vec.y) * 0.5f * mc.getWindow().getScaledHeight();
 
-        float fov = mc.options.getFov().getValue().floatValue();
-        float aspectRatio = (float) width / height;
-        float tanHalfFov = (float) Math.tan(Math.toRadians(fov / 2.0));
-
-        float screenX = width / 2f + (dotLeft / dotLook) / (tanHalfFov * aspectRatio) * (width / 2f);
-        float screenY = height / 2f - (dotUp / dotLook) / tanHalfFov * (height / 2f);
-
-        return new Vec3d(screenX, screenY, 1.0 / dotLook);
+        float scale = (1.0f / w) * lastProjMat.m11();
+        return new Vec3d(x, y, scale);
     }
 }
