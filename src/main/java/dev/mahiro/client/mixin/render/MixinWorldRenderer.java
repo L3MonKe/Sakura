@@ -12,6 +12,7 @@ import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.util.math.RotationAxis;
 import org.joml.Matrix4f;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
@@ -42,7 +43,6 @@ public class MixinWorldRenderer {
 
     @Inject(method = "render", at = @At(value = "HEAD"))
     private void onRender(ObjectAllocator allocator, RenderTickCounter tickCounter, boolean renderBlockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f basicProjectionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fogBuffer, Vector4f fogColor, boolean renderSky, CallbackInfo ci) {
-<<<<<<< HEAD
         Render3DUtil.updateMatrices(projectionMatrix, positionMatrix);
     }
 
@@ -55,10 +55,6 @@ public class MixinWorldRenderer {
 
         Mahiro.EVENT_BUS.post(new Render3DEvent(matrixStack, tickCounter.getTickProgress(true)));
 
-=======
-        RenderSystem.getModelViewStack().pushMatrix().mul(positionMatrix);
-        Mahiro.EVENT_BUS.post(new Render3DEvent(new MatrixStack(), tickCounter.getTickProgress(true)));
->>>>>>> 29a39dbff8f1e9022164526e67187b83ac1ff09a
         RenderSystem.getModelViewStack().popMatrix();
     }
 
