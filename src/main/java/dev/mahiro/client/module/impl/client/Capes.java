@@ -31,7 +31,7 @@ public class Capes extends Module {
     }
 
     private AssetInfo.TextureAsset getTexture(String capeName) {
-        return new AssetInfo.TextureAssetInfo(Identifier.of("mahiro", "capes/" + capeName), Identifier.of("mahiro", "textures/capes/" + capeName + ".png");
+        return new AssetInfo.TextureAssetInfo(Identifier.of("mahiro", "capes/" + capeName), Identifier.of("mahiro", "textures/capes/" + capeName + ".png"));
     }
 
     public AssetInfo.TextureAsset getCape(AbstractClientPlayerEntity player, boolean elytra) {
