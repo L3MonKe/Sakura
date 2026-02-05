@@ -21,7 +21,7 @@ public class MixinChestBlockEntityRenderer {
     @Redirect(method = "render(Lnet/minecraft/client/render/block/entity/state/ChestBlockEntityRenderState;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;Lnet/minecraft/client/render/state/CameraRenderState;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/util/SpriteIdentifier;getRenderLayer(Ljava/util/function/Function;)Lnet/minecraft/client/render/RenderLayer;"))
     private RenderLayer hookGetRenderLayer(SpriteIdentifier spriteIdentifier, Function<net.minecraft.util.Identifier, RenderLayer> layerFactory) {
         ChestESP chestESP = Mahiro.MODULES.getModule(ChestESP.class);
-        if (chestESP != null && chestESP.isEnabled() && chestESP.isChamsEnabled() && chestESP.isThroughWalls()) {
+        if (chestESP.isEnabled() && chestESP.isChamsEnabled() && chestESP.isThroughWalls()) {
             return ChestESP.chestChams(spriteIdentifier.getAtlasId());
         }
         return layerFactory.apply(spriteIdentifier.getAtlasId());
@@ -31,7 +31,7 @@ public class MixinChestBlockEntityRenderer {
     private void hookSubmitModel(OrderedRenderCommandQueue queue, Model<?> model, Object state, MatrixStack matrices, RenderLayer layer, int light, int overlay, int tintedColor, Sprite sprite, int outlineColor, ModelCommandRenderer.CrumblingOverlayCommand crumblingOverlay) {
         ChestESP chestESP = Mahiro.MODULES.getModule(ChestESP.class);
         int finalTint = tintedColor;
-        if (chestESP != null && chestESP.isEnabled() && chestESP.isChamsEnabled()) {
+        if (chestESP.isEnabled() && chestESP.isChamsEnabled()) {
             int tint = chestESP.getChamsTintColor();
             if (tint != -1) {
                 finalTint = tint;

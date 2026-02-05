@@ -4,6 +4,7 @@ import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.impl.EnumValue;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
@@ -39,12 +40,11 @@ public class Capes extends Module {
             return getTexture(getName());
         }
 
-        // TODO: IRC的披风
-            /*if (ClientSession.get() != null && ClientSession.get().hasCape(player)) {
-                return getTexture(ClientSession.get().getCapeName(player));
-            }*/
+        // IRC的披风
 
-        SkinTextures skin = mc.getNetworkHandler().getPlayerListEntry(player.getUuid()).getSkinTextures();
+        PlayerListEntry entry = mc.getNetworkHandler().getPlayerListEntry(player.getUuid());
+        if (entry == null) return null;
+        SkinTextures skin = entry.getSkinTextures();
         return elytra ? skin.elytra() : skin.cape();
     }
 }

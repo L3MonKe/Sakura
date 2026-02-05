@@ -94,7 +94,7 @@ public class ModuleManager {
         // Client
         add(new AutoHeypixel());
         add(new Capes());
-        add(new Chat());
+//        add(new Chat());
         add(new ClickGui());
         add(new HudEditor());
         add(new Targets());
