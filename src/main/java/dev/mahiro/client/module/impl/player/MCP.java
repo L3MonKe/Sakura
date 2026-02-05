@@ -33,7 +33,7 @@ public class MCP extends Module {
                 InvUtil.swap(pearl, shouldSwapBack);
                 mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(Hand.MAIN_HAND, mc.world.getPendingUpdateManager().incrementSequence().getSequence(), mc.player.getYaw(), mc.player.getPitch()));
                 if (shouldSwapBack) {
-                    if (swapTimer.passedMS(delay.get())) {
+                    if (swapTimer.passedMillise(delay.get())) {
                         InvUtil.swapBack();
                         swapTimer.reset();
                     }

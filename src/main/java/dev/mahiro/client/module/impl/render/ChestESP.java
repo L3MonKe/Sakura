@@ -1,6 +1,8 @@
 package dev.mahiro.client.module.impl.render;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.platform.DepthTestFunction;
 import dev.mahiro.client.events.render.Render3DEvent;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
@@ -15,6 +17,11 @@ import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.ChestBlockEntity;
 import net.minecraft.block.entity.EnderChestBlockEntity;
 import net.minecraft.block.entity.ShulkerBoxBlockEntity;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.render.RenderLayer;
+import net.minecraft.client.render.RenderSetup;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.Util;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
@@ -25,37 +32,63 @@ import net.minecraft.world.chunk.WorldChunk;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.function.Function;
 
 public class ChestESP extends Module {
-    private final BoolValue chest = new BoolValue("Chest", "箱子", true);
-    private final BoolValue enderChest = new BoolValue("EnderChest", "末影箱", true);
-    private final BoolValue shulkerBox = new BoolValue("ShulkerBox", "潜影盒", false);
+    public ChestESP() {
+        super("ChestESP", "箱子透视", Category.Render);
+    }
 
-    private final BoolValue throughWalls = new BoolValue("ThroughWalls", "穿墙", true);
+    private final BoolValue chest = new BoolValue("Chest", "箱子", true);
+    private final BoolValue enderChest = new BoolValue("Ender Chest", "末影箱", true);
+    private final BoolValue shulkerBox = new BoolValue("Shulker Box", "潜影盒", false);
+
+    private final BoolValue throughWalls = new BoolValue("Through Walls", "穿墙", true);
+
+    private final BoolValue chams = new BoolValue("Chams", "模型透视", true);
+    private final BoolValue chamsColorOverlay = new BoolValue("Chams Color", "模型颜色覆盖", false, chams::get);
 
     private final BoolValue fill = new BoolValue("Fill", "填充", true);
-    private final NumberValue<Double> fillOpacity = new NumberValue<>("FillOpacity", "填充透明度", 0.12, 0.0, 1.0, 0.01, fill::get);
+    private final NumberValue<Double> fillOpacity = new NumberValue<>("Fill Opacity", "填充透明度", 0.12, 0.0, 1.0, 0.01, fill::get);
 
     private final BoolValue outline = new BoolValue("Outline", "描边", true);
-    private final NumberValue<Double> outlineWidth = new NumberValue<>("OutlineWidth", "描边粗细", 1.8, 0.5, 6.0, 0.1, outline::get);
+    private final NumberValue<Double> outlineWidth = new NumberValue<>("Outline Width", "描边粗细", 1.8, 0.5, 6.0, 0.1, outline::get);
 
     private final NumberValue<Double> range = new NumberValue<>("Range", "范围", 64.0, 8.0, 256.0, 1.0);
 
     private final ColorValue color = new ColorValue("Color", "颜色", new Color(160, 210, 255, 230));
 
-    public ChestESP() {
-        super("ChestESP", "箱子透视", Category.Render);
+    public static final RenderPipeline CHEST_CHAMS_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.ENTITY_SNIPPET)
+            .withLocation("pipeline/mahiro_chest_chams")
+            .withShaderDefine("ALPHA_CUTOUT", 0.1f)
+            .withShaderDefine("PER_FACE_LIGHTING")
+            .withSampler("Sampler1")
+            .withBlend(BlendFunction.TRANSLUCENT)
+            .withCull(false)
+            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
+            .withDepthWrite(false)
+            .build()
+    );
+
+    private static final Function<Identifier, RenderLayer> CHEST_CHAMS_LAYER = Util.memoize(atlas -> RenderLayer.of(
+            "mahiro_chest_chams",
+            RenderSetup.builder(CHEST_CHAMS_PIPELINE)
+                    .texture("Sampler0", atlas)
+                    .useLightmap()
+                    .useOverlay()
+                    .crumbling()
+                    .translucent()
+                    .outlineMode(RenderSetup.OutlineMode.AFFECTS_OUTLINE)
+                    .build()
+    ));
+
+    public static RenderLayer chestChams(Identifier chestAtlas) {
+        return CHEST_CHAMS_LAYER.apply(chestAtlas);
     }
 
     @EventHandler
     public void onRender3D(Render3DEvent event) {
         if (nullCheck()) return;
-
-        boolean disableDepth = throughWalls.get();
-        if (disableDepth) {
-            GlStateManager._disableDepthTest();
-            GlStateManager._depthMask(false);
-        }
 
         Vec3d playerPos = mc.player.getEntityPos();
         double maxSq = range.get() * range.get();
@@ -75,11 +108,6 @@ public class ChestESP extends Module {
             box = box.expand(0.002);
 
             renderBox(event, box);
-        }
-
-        if (disableDepth) {
-            GlStateManager._enableDepthTest();
-            GlStateManager._depthMask(true);
         }
     }
 
@@ -122,5 +150,20 @@ public class ChestESP extends Module {
         VoxelShape shape = state.getOutlineShape(mc.world, pos);
         if (shape.isEmpty()) return null;
         return shape.getBoundingBox().offset(pos);
+    }
+
+    public boolean isThroughWalls() {
+        return throughWalls.get();
+    }
+
+    public boolean isChamsEnabled() {
+        return chams.get();
+    }
+
+    public int getChamsTintColor() {
+        if (!chamsColorOverlay.get()) {
+            return -1;
+        }
+        return color.get().getRGB();
     }
 }

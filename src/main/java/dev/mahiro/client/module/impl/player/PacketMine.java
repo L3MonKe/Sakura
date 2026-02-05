@@ -123,7 +123,7 @@ public class PacketMine extends Module {
             performSwap(slot, true);
 
             if (remineConfig.get() == RemineMode.Normal) {
-                if (resetTime.passedMS(calcBreakTime(blockData.currentPos(), swapConfig.get() == Swap.SilentAlt) + 5000L) && reTry.get()) {
+                if (resetTime.passedMillise(calcBreakTime(blockData.currentPos(), swapConfig.get() == Swap.SilentAlt) + 5000L) && reTry.get()) {
                     hookPos(blockData.currentPos(), true);
                 }
             }

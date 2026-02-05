@@ -19,6 +19,6 @@ public class MahiroPipelines {
 
     // Triangle fan
     private static final RenderPipeline TRIANGLE_FAN_PIPELINE = RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET).withLocation(Identifier.of("mahiro", "pipeline/triangle_fan_no_depth")).withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false).withCull(false).withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.TRIANGLE_FAN).build();
-    public static final RenderLayer TRIANGLE_FAN = RenderLayer.of("mahiro_triangle_fan_no_depth", RenderSetup.builder(TRIANGLE_FAN_PIPELINE).translucent().layeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING).build()
-    );
+    public static final RenderLayer TRIANGLE_FAN = RenderLayer.of("mahiro_triangle_fan_no_depth", RenderSetup.builder(TRIANGLE_FAN_PIPELINE).translucent().layeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING).build());
+
 }

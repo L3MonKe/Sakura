@@ -252,7 +252,7 @@ public class TargetHud extends HudModule {
         if (MahiroDelay.get()) {
             if (health < delayHealth) {
                 // If WaitMode is ON, check timer. If OFF, bypass timer.
-                if (!MahiroDelayWait.get() || damageTimer.passedMS(MahiroDelayTime.get())) {
+                if (!MahiroDelayWait.get() || damageTimer.passedMillise(MahiroDelayTime.get())) {
                     // Slowly decrease delayHealth
                     delayHealth = MathHelper.lerp(tickDelta * MahiroDelaySpeed.get().floatValue() * 0.05f, delayHealth, health);
                 }
@@ -597,7 +597,7 @@ public class TargetHud extends HudModule {
     }
 
     private void updateParticles(long vg) {
-        if (timer.passedMS(1000D / 60D)) {
+        if (timer.passedMillise(1000D / 60D)) {
             ticks += 0.1f;
             for (int i = 0; i < particles.size(); i++) {
                 Particles p = particles.get(i);

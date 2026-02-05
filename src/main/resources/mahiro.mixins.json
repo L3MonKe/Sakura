@@ -57,6 +57,7 @@
     "render.MixinRenderTickCounter",
     "render.MixinScreen",
     "render.MixinSplashOverlay",
+    "render.MixinChestBlockEntityRenderer",
     "render.MixinTitleScreen",
     "render.MixinTransformation",
     "render.MixinWindow",

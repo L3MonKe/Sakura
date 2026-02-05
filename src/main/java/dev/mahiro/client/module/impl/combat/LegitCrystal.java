@@ -79,7 +79,7 @@ public class LegitCrystal extends Module {
         if (!(hit instanceof EntityHitResult entityHit)) return;
         Entity target = entityHit.getEntity();
 
-        if (target instanceof EndCrystalEntity && timerUtil.passedMS(cooldown.get())) {
+        if (target instanceof EndCrystalEntity && timerUtil.passedMillise(cooldown.get())) {
             mc.interactionManager.attackEntity(mc.player, target);
             mc.player.swingHand(Hand.MAIN_HAND);
             timerUtil.reset();
@@ -92,7 +92,7 @@ public class LegitCrystal extends Module {
 
     private void handlePlacement() {
         if (!hasAttacked) return;
-        if (!timerUtil.passedMS(cooldown.get())) return;
+        if (!timerUtil.passedMillise(cooldown.get())) return;
 
         if (isObsidianInCrosshair()) {
             if (!crystalPlaced) {
