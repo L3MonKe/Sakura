@@ -195,15 +195,8 @@ public class MainMenuScreen extends Screen {
         return new Layout(centerX, centerY, scale);
     }
 
-    private void drawPanelBlur(DrawContext context, Layout layout, float opacity) {
-        BlurShader.drawRoundedBlur(
-                layout.panelX,
-                layout.panelY,
-                layout.panelW,
-                layout.panelH,
-                layout.panelR,
-                10f * layout.scale
-        );
+    private void drawPanelBlur(Layout layout, float opacity) {
+        BlurShader.drawRoundedBlur(layout.panelX, layout.panelY, layout.panelW, layout.panelH, layout.panelR, PANEL_BLUR_COLOR, 10f * layout.scale, 0.8f * opacity);
     }
 
     private void drawBackgroundTints(Layout layout, float opacity) {
@@ -386,7 +379,7 @@ public class MainMenuScreen extends Screen {
         Layout layout = resolveLayout(scale);
 
         float panelP = AnimationUtil.smoothstep(0.15f, 0.55f, p);
-        drawPanelBlur(context, layout, panelP);
+        drawPanelBlur(layout, panelP);
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color accent = ClickGui.color(0);
