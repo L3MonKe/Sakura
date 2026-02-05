@@ -1,23 +1,38 @@
 package dev.mahiro.client.shaders;
 
-public class SplashShader {
-    /*private static SplashShader INSTANCE;
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.MappableRingBuffer;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gl.UniformType;
+import net.minecraft.util.Identifier;
 
-    private int programId;
-    private int timeUniform;
-    private int resolutionUniform;
-    private int progressUniform;
-    private int fadeOutUniform;
-    private int zoomUniform;
-    private float accumulatedTime;
-    private float currentProgress = 0f;
-    private EasyVertexBuffer vertexBuffer;
-    private boolean initialized = false;
+public class SplashShader {
+    private static SplashShader INSTANCE;
+
+    private static final Identifier VERTEX_SHADER = Identifier.of("mahiro", "core/screen_triangle");
+    private static final Identifier FRAGMENT_SHADER = Identifier.of("mahiro", "core/splash");
+    private static final int UNIFORMS_SIZE = new Std140SizeCalculator().putVec4().putVec4().get();
+    private static final float TRANSITION_DURATION = 2.0f; // 2s 过渡
+
+    private RenderPipeline pipelineOpaque;
+    private RenderPipeline pipelineBlend;
+    private MappableRingBuffer uniforms;
+    private float timeSeconds;
+    private float currentProgress;
 
     private boolean transitionStarted = false;
     private float accumulatedTransitionTime = 0f;
-    private static final float TRANSITION_DURATION = 2.0f; // 2秒过渡
-
     private long lastFrameTime = System.nanoTime();
 
     public static SplashShader getInstance() {
@@ -28,80 +43,32 @@ public class SplashShader {
     }
 
     private SplashShader() {
-        this.accumulatedTime = 0f;
     }
 
     public void init() {
-        if (initialized) return;
-        try {
-            this.programId = createShaderProgram();
-            this.setupVertexBuffer();
-            this.initialized = true;
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (this.uniforms == null) {
+            this.uniforms = new MappableRingBuffer(() -> "Mahiro SplashUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
         }
-    }
-
-    private void setupVertexBuffer() {
-        this.vertexBuffer = new VertexBuffer(GlUsage.STATIC_WRITE);
-
-        MatrixStack identityStack = new MatrixStack();
-        Matrix4f matrix = identityStack.peek().getPositionMatrix();
-
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-        bufferBuilder.vertex(matrix, -1.0f, -1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, -1.0f, 1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, 1.0f, 1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, 1.0f, -1.0f, 0.0f);
-
-        BuiltBuffer builtBuffer = bufferBuilder.end();
-        this.vertexBuffer.bind();
-        this.vertexBuffer.upload(builtBuffer);
-        VertexBuffer.unbind();
-    }
-
-
-    private int createShaderProgram() throws IOException {
-        int program = GL20.glCreateProgram();
-
-        int vertexShader = createShader(ShaderProgram.PASSTHROUGH, GL20.GL_VERTEX_SHADER);
-        int fragmentShader = createShader(ShaderProgram.SPLASH, GL20.GL_FRAGMENT_SHADER);
-
-        GL20.glAttachShader(program, vertexShader);
-        GL20.glAttachShader(program, fragmentShader);
-        GL20.glLinkProgram(program);
-
-        int linked = GL20.glGetProgrami(program, GL20.GL_LINK_STATUS);
-        if (linked == 0) {
-            throw new IllegalStateException("Shader failed to link");
+        if (this.pipelineOpaque == null) {
+            this.pipelineOpaque = RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
+                .withLocation(Identifier.of("mahiro", "pipeline/splash_opaque"))
+                .withVertexShader(VERTEX_SHADER)
+                .withFragmentShader(FRAGMENT_SHADER)
+                .withUniform("SplashUniforms", UniformType.UNIFORM_BUFFER)
+                .withoutBlend()
+                .withCull(false)
+                .build();
         }
-
-        GL20.glDeleteShader(vertexShader);
-        GL20.glDeleteShader(fragmentShader);
-
-        GL20.glUseProgram(program);
-        this.timeUniform = GL20.glGetUniformLocation(program, "time");
-        this.resolutionUniform = GL20.glGetUniformLocation(program, "resolution");
-        this.progressUniform = GL20.glGetUniformLocation(program, "progress");
-        this.fadeOutUniform = GL20.glGetUniformLocation(program, "fadeOut");
-        this.zoomUniform = GL20.glGetUniformLocation(program, "zoom");
-        GL20.glUseProgram(0);
-
-        return program;
-    }
-
-    private int createShader(String source, int shaderType) {
-        int shader = GL20.glCreateShader(shaderType);
-        GL20.glShaderSource(shader, source);
-        GL20.glCompileShader(shader);
-
-        int compiled = GL20.glGetShaderi(shader, GL20.GL_COMPILE_STATUS);
-        if (compiled == 0) {
-            String log = GL20.glGetShaderInfoLog(shader);
-            throw new IllegalStateException("Failed to compile shader: " + log);
+        if (this.pipelineBlend == null) {
+            this.pipelineBlend = RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
+                .withLocation(Identifier.of("mahiro", "pipeline/splash_blend"))
+                .withVertexShader(VERTEX_SHADER)
+                .withFragmentShader(FRAGMENT_SHADER)
+                .withUniform("SplashUniforms", UniformType.UNIFORM_BUFFER)
+                .withBlend(BlendFunction.TRANSLUCENT)
+                .withCull(false)
+                .build();
         }
-
-        return shader;
     }
 
     public void render(int width, int height) {
@@ -113,53 +80,52 @@ public class SplashShader {
     }
 
     public void render(int width, int height, float progress, float fadeOut, float zoom) {
-        if (!initialized) {
-            init();
+        this.init();
+        if (this.uniforms == null || this.pipelineOpaque == null || this.pipelineBlend == null) {
+            return;
         }
-        if (this.programId == 0 || this.vertexBuffer == null) return;
 
         long currentTime = System.nanoTime();
-        float deltaTime = (currentTime - lastFrameTime) / 1_000_000_000f;
-        lastFrameTime = currentTime;
-
-        if (transitionStarted && accumulatedTransitionTime < TRANSITION_DURATION) {
-            accumulatedTransitionTime += deltaTime;
-            if (accumulatedTransitionTime > TRANSITION_DURATION) {
-                accumulatedTransitionTime = TRANSITION_DURATION;
-            }
+        float delta = (currentTime - this.lastFrameTime) / 1_000_000_000f;
+        this.lastFrameTime = currentTime;
+        this.timeSeconds += delta;
+        if (this.transitionStarted && this.accumulatedTransitionTime < TRANSITION_DURATION) {
+            this.accumulatedTransitionTime = Math.min(TRANSITION_DURATION, this.accumulatedTransitionTime + delta);
         }
-
         this.currentProgress = progress;
 
-        RenderSystem.disableCull();
-        RenderSystem.disableDepthTest();
+        MinecraftClient client = MinecraftClient.getInstance();
+        Framebuffer framebuffer = client.getFramebuffer();
+        float scaleFactor = (float)client.getWindow().getScaleFactor();
+        float pxWidth = width * scaleFactor;
+        float pxHeight = height * scaleFactor;
 
-        if (zoom > 1.0f) {
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-        } else {
-            RenderSystem.disableBlend();
+        CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+        try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms.getBlocking(), false, true)) {
+            Std140Builder builder = Std140Builder.intoBuffer(view.data());
+            builder.putVec2(pxWidth, pxHeight);
+            builder.putFloat(this.timeSeconds);
+            builder.putFloat(progress);
+            builder.putFloat(fadeOut);
+            builder.putFloat(zoom);
+            builder.putFloat(0.0f);
+            builder.putFloat(0.0f);
         }
 
-        GL20.glUseProgram(this.programId);
-
-        float scaleFactor = (float) mc.getWindow().getScaleFactor();
-        GL20.glUniform2f(this.resolutionUniform, width * scaleFactor, height * scaleFactor);
-
-        accumulatedTime += deltaTime;
-        GL20.glUniform1f(this.timeUniform, accumulatedTime);
-        GL20.glUniform1f(this.progressUniform, progress);
-        GL20.glUniform1f(this.fadeOutUniform, fadeOut);
-        GL20.glUniform1f(this.zoomUniform, zoom);
-
-        this.vertexBuffer.bind();
-        this.vertexBuffer.draw();
-        VertexBuffer.unbind();
-
-        GL20.glUseProgram(0);
-        RenderSystem.enableDepthTest();
-        RenderSystem.enableCull();
-        RenderSystem.disableBlend();
+        RenderPipeline pipeline = zoom > 1.0f ? this.pipelineBlend : this.pipelineOpaque;
+        try (RenderPass renderPass = encoder.createRenderPass(
+            () -> "Mahiro Splash",
+            framebuffer.getColorAttachmentView(),
+            OptionalInt.empty(),
+            framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null,
+            OptionalDouble.empty()
+        )) {
+            renderPass.setPipeline(pipeline);
+            RenderSystem.bindDefaultUniforms(renderPass);
+            renderPass.setUniform("SplashUniforms", this.uniforms.getBlocking());
+            renderPass.draw(0, 3);
+        }
+        this.uniforms.rotate();
     }
 
     public void startTransition() {
@@ -181,25 +147,22 @@ public class SplashShader {
     }
 
     public float getAccumulatedTime() {
-        return accumulatedTime;
+        return timeSeconds;
     }
 
     public void reset() {
         this.transitionStarted = false;
-        this.accumulatedTime = 0f;
+        this.timeSeconds = 0f;
         this.accumulatedTransitionTime = 0f;
+        this.lastFrameTime = System.nanoTime();
     }
 
     public void cleanup() {
-        if (this.programId != 0) {
-            GL20.glDeleteProgram(this.programId);
-            this.programId = 0;
+        if (this.uniforms != null) {
+            this.uniforms.close();
+            this.uniforms = null;
         }
-        if (this.vertexBuffer != null) {
-            this.vertexBuffer.close();
-            this.vertexBuffer = null;
-        }
-        this.initialized = false;
         INSTANCE = null;
-    }*/
+    }
+
 }

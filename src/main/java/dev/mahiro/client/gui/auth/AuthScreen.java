@@ -87,7 +87,7 @@ public class AuthScreen extends Screen {
         clearChildren();
 
         Layout l = computeLayout(width, height);
-        addDrawable((context, mouseX, mouseY, delta) -> renderNanoBackground(context, mouseX, mouseY, delta));
+        addDrawable(this::renderNanoBackground);
 
         float s = l.scale;
         float rx = l.rightX() + ss(10, s);

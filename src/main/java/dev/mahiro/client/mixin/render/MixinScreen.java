@@ -10,6 +10,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static dev.mahiro.client.Mahiro.mc;
+
 @Mixin(Screen.class)
 public class MixinScreen {
     @Unique
@@ -23,8 +25,7 @@ public class MixinScreen {
 
     @Inject(method = "renderPanoramaBackground", at = @At("HEAD"), cancellable = true)
     public void renderPanoramaBackgroundHook(DrawContext context, float delta, CallbackInfo ci) {
-        //TODO:
-        /*if (mc.world == null) {
+        if (mc.world == null) {
             if (mainMenuShader == null) {
                 mainMenuShader = new MainMenuShader(MainMenuShader.MainMenuShaderType.CUTE);
             }
@@ -33,6 +34,6 @@ public class MixinScreen {
         } else if (mainMenuShader != null) {
             mainMenuShader.cleanup();
             mainMenuShader = null;
-        }*/
+        }
     }
 }

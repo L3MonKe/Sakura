@@ -1,8 +1,29 @@
 package dev.mahiro.client.shaders;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.pipeline.BlendFunction;
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.systems.CommandEncoder;
+import com.mojang.blaze3d.systems.RenderPass;
+import com.mojang.blaze3d.systems.RenderSystem;
+import java.util.EnumMap;
+import java.util.OptionalDouble;
+import java.util.OptionalInt;
+import dev.mahiro.client.utils.animations.AnimationUtil;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.MappableRingBuffer;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gl.UniformType;
+import net.minecraft.util.Identifier;
+
 public class MainMenuShader {
-    // 共享的SAKURA着色器实例（用于 SplashOverlay和TitleScreen之间的过渡）
-    /*private static MainMenuShader sharedInstance;
+    private static MainMenuShader sharedInstance;
+
+    private static final Identifier VERTEX_SHADER = Identifier.of("mahiro", "core/screen_triangle");
+    private static final int UNIFORMS_SIZE = new Std140SizeCalculator().putVec4().putVec4().get();
 
     public static MainMenuShader getSharedInstance() {
         if (sharedInstance == null) {
@@ -18,93 +39,15 @@ public class MainMenuShader {
         }
     }
 
-    private int programId;
-    private int timeUniform;
-    private int resolutionUniform;
-    private int transitionUniform;
-    private int mouseUniform;
-    private int uSizeUniform;
-    private int timeUniformAlt;
-    private float accumulatedTime;
-    private float transitionValue = 1.0f; // 1.0 = 正常显示
-    private float mouseOffsetX = 0f;
-    private VertexBuffer vertexBuffer;
+    private final EnumMap<MainMenuShaderType, RenderPipeline> pipelines = new EnumMap<>(MainMenuShaderType.class);
     private MainMenuShaderType currentShaderType;
+    private MappableRingBuffer uniforms;
+    private float timeSeconds;
+    private float transitionValue = 1.0f;
+    private float mouseOffsetX;
 
     public MainMenuShader(MainMenuShaderType shaderType) {
-        this.accumulatedTime = 0f;
         this.currentShaderType = shaderType;
-
-        try {
-            this.programId = createShaderProgram(shaderType);
-            this.setupVertexBuffer();
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to load main menu shader: " + shaderType.getDisplayName(), e);
-        }
-    }
-
-    private void setupVertexBuffer() {
-        this.vertexBuffer = new VertexBuffer(GlUsage.STATIC_WRITE);
-
-        MatrixStack identityStack = new MatrixStack();
-        Matrix4f matrix = identityStack.peek().getPositionMatrix();
-
-        BufferBuilder bufferBuilder = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
-        bufferBuilder.vertex(matrix, -1.0f, -1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, -1.0f, 1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, 1.0f, 1.0f, 0.0f);
-        bufferBuilder.vertex(matrix, 1.0f, -1.0f, 0.0f);
-
-        BuiltBuffer builtBuffer = bufferBuilder.end();
-        this.vertexBuffer.bind();
-        this.vertexBuffer.upload(builtBuffer);
-        VertexBuffer.unbind();
-    }
-
-
-    private int createShaderProgram(MainMenuShaderType shaderType) throws IOException {
-        int program = GL20.glCreateProgram();
-
-        int vertexShader = createShader(ShaderProgram.PASSTHROUGH, GL20.GL_VERTEX_SHADER);
-        int fragmentShader = createShader(shaderType.getSource(), GL20.GL_FRAGMENT_SHADER);
-
-        GL20.glAttachShader(program, vertexShader);
-        GL20.glAttachShader(program, fragmentShader);
-        GL20.glLinkProgram(program);
-
-        int linked = GL20.glGetProgrami(program, GL20.GL_LINK_STATUS);
-        if (linked == 0) {
-            throw new IllegalStateException("Shader failed to link");
-        }
-
-        GL20.glDeleteShader(vertexShader);
-        GL20.glDeleteShader(fragmentShader);
-
-        GL20.glUseProgram(program);
-
-        this.timeUniform = GL20.glGetUniformLocation(program, "time");
-        this.resolutionUniform = GL20.glGetUniformLocation(program, "resolution");
-        this.transitionUniform = GL20.glGetUniformLocation(program, "transition");
-        this.mouseUniform = GL20.glGetUniformLocation(program, "mouse");
-        this.uSizeUniform = GL20.glGetUniformLocation(program, "uSize");
-        this.timeUniformAlt = GL20.glGetUniformLocation(program, "Time");
-        GL20.glUseProgram(0);
-
-        return program;
-    }
-
-    private int createShader(String source, int shaderType) {
-        int shader = GL20.glCreateShader(shaderType);
-        GL20.glShaderSource(shader, source);
-        GL20.glCompileShader(shader);
-
-        int compiled = GL20.glGetShaderi(shader, GL20.GL_COMPILE_STATUS);
-        if (compiled == 0) {
-            String log = GL20.glGetShaderInfoLog(shader);
-            throw new IllegalStateException("Failed to compile shader: " + log);
-        }
-
-        return shader;
     }
 
     public void render(int width, int height) {
@@ -112,38 +55,42 @@ public class MainMenuShader {
     }
 
     public void render(int width, int height, float transition) {
-        if (this.programId == 0 || this.vertexBuffer == null) return;
-
-        GL20.glUseProgram(this.programId);
-
-        float scaleFactor = (float) mc.getWindow().getScaleFactor();
-        GL20.glUniform2f(this.resolutionUniform, width * scaleFactor, height * scaleFactor);
-
-        if (this.uSizeUniform >= 0) {
-            GL20.glUniform2f(this.uSizeUniform, width * scaleFactor, height * scaleFactor);
+        RenderPipeline pipeline = this.getPipeline(this.currentShaderType);
+        if (pipeline == null) {
+            return;
         }
 
-        accumulatedTime += (float) (1.0 * AnimationUtil.deltaTime());
-        GL20.glUniform1f(this.timeUniform, accumulatedTime);
+        MinecraftClient client = MinecraftClient.getInstance();
+        Framebuffer framebuffer = client.getFramebuffer();
+        float scaleFactor = (float)client.getWindow().getScaleFactor();
+        float pxWidth = width * scaleFactor;
+        float pxHeight = height * scaleFactor;
 
-        if (this.timeUniformAlt >= 0) {
-            GL20.glUniform1f(this.timeUniformAlt, accumulatedTime);
+        this.timeSeconds += AnimationUtil.deltaTime();
+
+        CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+        try (GpuBuffer.MappedView view = encoder.mapBuffer(this.uniforms.getBlocking(), false, true)) {
+            Std140Builder builder = Std140Builder.intoBuffer(view.data());
+            builder.putVec2(pxWidth, pxHeight);
+            builder.putFloat(this.timeSeconds);
+            builder.putFloat(transition);
+            builder.putVec2(this.mouseOffsetX, 0.5f);
+            builder.putVec2(pxWidth, pxHeight);
         }
 
-        // 设置过渡参数
-        if (this.transitionUniform >= 0) {
-            GL20.glUniform1f(this.transitionUniform, transition);
+        try (RenderPass renderPass = encoder.createRenderPass(
+            () -> "Mahiro MainMenu",
+            framebuffer.getColorAttachmentView(),
+            OptionalInt.empty(),
+            framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null,
+            OptionalDouble.empty()
+        )) {
+            renderPass.setPipeline(pipeline);
+            RenderSystem.bindDefaultUniforms(renderPass);
+            renderPass.setUniform("MenuUniforms", this.uniforms.getBlocking());
+            renderPass.draw(0, 3);
         }
-
-        if (this.mouseUniform >= 0) {
-            GL20.glUniform2f(this.mouseUniform, mouseOffsetX, 0.5f);
-        }
-
-        this.vertexBuffer.bind();
-        this.vertexBuffer.draw();
-        VertexBuffer.unbind();
-
-        GL20.glUseProgram(0);
+        this.uniforms.rotate();
     }
 
     public void setTransition(float transition) {
@@ -162,24 +109,8 @@ public class MainMenuShader {
         if (this.currentShaderType == newType) {
             return;
         }
-
-        // 清理旧的资源
-        if (this.programId != 0) {
-            GL20.glDeleteProgram(this.programId);
-            this.programId = 0;
-        }
-
         this.currentShaderType = newType;
-
-        try {
-            this.accumulatedTime = 0f;
-            this.programId = createShaderProgram(newType);
-            if (this.vertexBuffer == null) {
-                this.setupVertexBuffer();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.timeSeconds = 0.0f;
     }
 
     public MainMenuShaderType getCurrentShaderType() {
@@ -197,32 +128,35 @@ public class MainMenuShader {
     }
 
     public void cleanup() {
-        if (this.programId != 0) {
-            GL20.glDeleteProgram(this.programId);
-            this.programId = 0;
-        }
-        if (this.vertexBuffer != null) {
-            this.vertexBuffer.close();
-            this.vertexBuffer = null;
+        if (this.uniforms != null) {
+            this.uniforms.close();
+            this.uniforms = null;
         }
     }
 
-    public enum MainMenuShaderType {
-        SAKURA(ShaderProgram.SAKURA, "樱花效果"),
-        CUTE(ShaderProgram.CUTE, "可爱效果"),
-        SEA(ShaderProgram.SEA, "海洋效果"),
-        MOON(ShaderProgram.MOON, "月球飞行");
+    private RenderPipeline getPipeline(MainMenuShaderType type) {
+        if (this.uniforms == null) {
+            this.uniforms = new MappableRingBuffer(() -> "Mahiro MenuUniforms", GpuBuffer.USAGE_MAP_WRITE | GpuBuffer.USAGE_UNIFORM, UNIFORMS_SIZE);
+        }
+        return this.pipelines.computeIfAbsent(type, t -> RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
+            .withLocation(Identifier.of("mahiro", "pipeline/menu/" + t.name().toLowerCase()))
+            .withVertexShader(VERTEX_SHADER)
+            .withFragmentShader(t.fragmentShader)
+            .withUniform("MenuUniforms", UniformType.UNIFORM_BUFFER)
+            .withCull(false)
+            .build());
+    }
 
-        private final String source;
+    public enum MainMenuShaderType {
+        SAKURA(Identifier.of("mahiro", "core/menu_sakura"), "樱花效果"),
+        CUTE(Identifier.of("mahiro", "core/menu_cute"), "可爱效果");
+
+        private final Identifier fragmentShader;
         private final String displayName;
 
-        MainMenuShaderType(String source, String displayName) {
-            this.source = source;
+        MainMenuShaderType(Identifier fragmentShader, String displayName) {
+            this.fragmentShader = fragmentShader;
             this.displayName = displayName;
-        }
-
-        public String getSource() {
-            return source;
         }
 
         public String getDisplayName() {
@@ -247,5 +181,5 @@ public class MainMenuShader {
             }
             return null;
         }
-    }*/
+    }
 }

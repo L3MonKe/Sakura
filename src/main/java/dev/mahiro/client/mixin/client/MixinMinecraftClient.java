@@ -4,7 +4,6 @@ import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.entity.AttackEvent;
 import dev.mahiro.client.events.input.HandleInputEvent;
-import dev.mahiro.client.shaders.WindowResizeCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -46,11 +45,6 @@ public class MixinMinecraftClient {
     @Inject(method = "handleInputEvents", at = @At(value = "HEAD"))
     private void onHandleInputEvents(CallbackInfo info) {
         Mahiro.EVENT_BUS.post(new HandleInputEvent());
-    }
-
-    @Inject(method = "onResolutionChanged", at = @At("TAIL"))
-    private void onResolutionChanged(CallbackInfo ci) {
-        WindowResizeCallback.EVENT.invoker().onResized((MinecraftClient) (Object) this, this.window);
     }
 
     @Inject(method = "doAttack", at = @At("HEAD"))
