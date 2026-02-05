@@ -17,9 +17,6 @@ import static org.lwjgl.opengl.GL33.GL_SAMPLER_BINDING;
 import static org.lwjgl.opengl.GL33.glBindSampler;
 
 public final class State {
-
-    // 操你妈手要敲废了...
-
     private final int glVersion;
     private final Properties props;
 
@@ -35,6 +32,7 @@ public final class State {
         glGetIntegerv(GL_TEXTURE_BINDING_2D, props.getLastTexture());
         if (glVersion >= 330 || GL.getCapabilities().GL_ARB_sampler_objects) {
             glGetIntegerv(GL_SAMPLER_BINDING, props.getLastSampler());
+            glBindSampler(0, 0);
         }
         glGetIntegerv(GL_ARRAY_BUFFER_BINDING, props.getLastArrayBuffer());
         glGetIntegerv(GL_VERTEX_ARRAY_BINDING, props.getLastVertexArrayObject());

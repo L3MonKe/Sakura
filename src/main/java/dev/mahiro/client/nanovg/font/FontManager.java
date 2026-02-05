@@ -10,7 +10,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import static org.lwjgl.nanovg.NanoVG.*;
+import static org.lwjgl.nanovg.NanoVG.nvgAddFallbackFontId;
+import static org.lwjgl.nanovg.NanoVG.nvgCreateFontMem;
 
 public class FontManager {
     private static final Map<String, Integer> fontCache = new HashMap<>();
@@ -18,29 +19,28 @@ public class FontManager {
     private static final Set<String> fallbackRegistered = new HashSet<>();
 
     public static int font(String fontName, float size) {
-        String key = fontName + "-" + size;
-        return fontCache.computeIfAbsent(key, k -> loadFont(fontName, size));
+        return fontCache.computeIfAbsent(fontName, FontManager::loadFont);
     }
 
     public static int fontWithCJK(String fontName, float size) {
         int primaryFont = font(fontName, size);
-        registerCJKFallback(fontName, size);
+        registerCJKFallback(fontName);
         return primaryFont;
     }
 
-    private static void registerCJKFallback(String fontName, float size) {
-        String key = fontName + "-" + size + "-cjk";
+    private static void registerCJKFallback(String fontName) {
+        String key = fontName + "-cjk";
         if (fallbackRegistered.contains(key)) return;
 
         long vg = NanoVGRenderer.INSTANCE.getContext();
-        int cjkFont = FontLoader.cjk(size);
-        int primaryFont = font(fontName, size);
+        int cjkFont = FontLoader.cjk(0.0f);
+        int primaryFont = font(fontName, 0.0f);
 
         nvgAddFallbackFontId(vg, primaryFont, cjkFont);
         fallbackRegistered.add(key);
     }
 
-    private static int loadFont(String fontName, float size) {
+    private static int loadFont(String fontName) {
         FontData fontData = fontDataCache.computeIfAbsent(fontName, FontManager::loadFontData);
 
         if (fontData == null) {
@@ -53,8 +53,6 @@ public class FontManager {
         if (fontId == -1) {
             throw new RuntimeException("无法创建字体: " + fontName);
         }
-
-        nvgFontSize(vg, size);
 
         return fontId;
     }

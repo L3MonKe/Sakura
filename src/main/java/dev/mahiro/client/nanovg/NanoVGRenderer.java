@@ -17,14 +17,6 @@ import java.util.function.Consumer;
 import static org.lwjgl.nanovg.NanoVG.nvgBeginFrame;
 import static org.lwjgl.nanovg.NanoVG.nvgEndFrame;
 
-/**
- * Sakura NanoVG渲染器
- * <p>
- * 坐标系说明：
- * - draw(): 使用MC逻辑坐标（自动缩放），与鼠标坐标、Screen尺寸一致
- * - drawRaw(): 使用像素坐标，用于需要精确像素控制的场景
- */
-
 public class NanoVGRenderer {
     public static final NanoVGRenderer INSTANCE = new NanoVGRenderer();
 
@@ -69,7 +61,7 @@ public class NanoVGRenderer {
 
         Framebuffer framebuffer = mc.getFramebuffer();
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-        try (RenderPass renderPass = encoder.createRenderPass(() -> "NanoVG", framebuffer.getColorAttachmentView(), OptionalInt.empty(), framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null, OptionalDouble.empty())) {
+        try (RenderPass renderPass = encoder.createRenderPass(() -> "NanoVG", framebuffer.getColorAttachmentView(), OptionalInt.empty(), null, OptionalDouble.empty())) {
             renderPass.setPipeline(RenderPipelines.GUI);
             nvgEndFrame(vg);
         }
