@@ -124,7 +124,9 @@ public class CategoryPanel implements IComponent {
 
     @Override
     public boolean mouseReleased(Click click) {
-        //if (state == 0) dragging = false;
+        if (click.button() == 0) {
+            dragging = false;
+        }
 
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {

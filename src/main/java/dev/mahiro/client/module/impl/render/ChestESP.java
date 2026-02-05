@@ -39,11 +39,6 @@ public class ChestESP extends Module {
     private final BoolValue outline = new BoolValue("Outline", "描边", true);
     private final NumberValue<Double> outlineWidth = new NumberValue<>("OutlineWidth", "描边粗细", 1.8, 0.5, 6.0, 0.1, outline::get);
 
-    private final BoolValue glow = new BoolValue("Glow", "外发光", true);
-    private final NumberValue<Integer> glowLayers = new NumberValue<>("GlowLayers", "发光层数", 5, 1, 10, 1, glow::get);
-    private final NumberValue<Double> glowWidth = new NumberValue<>("GlowWidth", "发光宽度", 6.0, 0.0, 18.0, 0.1, glow::get);
-    private final NumberValue<Double> glowOpacity = new NumberValue<>("GlowOpacity", "发光强度", 0.55, 0.0, 1.0, 0.01, glow::get);
-
     private final NumberValue<Double> range = new NumberValue<>("Range", "范围", 64.0, 8.0, 256.0, 1.0);
 
     private final ColorValue color = new ColorValue("Color", "颜色", new Color(160, 210, 255, 230));
@@ -106,29 +101,13 @@ public class ChestESP extends Module {
     private void renderBox(Render3DEvent event, Box box) {
         Color base = color.get();
 
-        if (glow.get()) {
-            int layers = Math.max(1, glowLayers.get());
-            float baseWidth = outline.get() ? outlineWidth.get().floatValue() : 1.6f;
-            float width = Math.max(0f, glowWidth.get().floatValue());
-            float opacity = Math.max(0f, Math.min(1f, glowOpacity.get().floatValue()));
-
-            for (int layer = 1; layer <= layers; layer++) {
-                float progress = (float) layer / (float) layers;
-                float alpha = opacity * (progress * progress);
-                float layerWidth = baseWidth + (1.0f - progress) * width;
-                double expand = (1.0f - progress) * 0.03;
-                int c = ColorUtil.applyOpacity(base, alpha).getRGB();
-                Render3DUtil.drawBoxOutlineAdditive(event.getMatrices(), box.expand(expand), c, layerWidth);
-            }
-        }
-
         if (fill.get()) {
             int c = ColorUtil.applyOpacity(base, fillOpacity.get().floatValue()).getRGB();
             Render3DUtil.drawFilledBox(event.getMatrices(), box, c);
         }
 
         if (outline.get()) {
-            Render3DUtil.drawBoxOutline(event.getMatrices(), box, base.getRGB(), outlineWidth.get().floatValue());
+            Render3DUtil.drawOutlineBox(event.getMatrices(), box, base.getRGB(), outlineWidth.get().floatValue());
         }
     }
 
@@ -140,7 +119,6 @@ public class ChestESP extends Module {
     }
 
     private Box getOutlineBox(BlockState state, BlockPos pos) {
-        if (state == null || mc.world == null || mc.player == null) return null;
         VoxelShape shape = state.getOutlineShape(mc.world, pos);
         if (shape.isEmpty()) return null;
         return shape.getBoundingBox().offset(pos);
