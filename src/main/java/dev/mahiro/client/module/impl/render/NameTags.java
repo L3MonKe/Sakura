@@ -10,8 +10,8 @@ import dev.mahiro.client.module.impl.combat.AntiBot;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.render.Render3DUtil;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
@@ -169,10 +169,9 @@ public class NameTags extends Module {
             float scaledBoxX = posX - (totalWidth / 2 * finalScale);
             float scaledBoxY = posY - (totalHeight * finalScale);
 
-            Shader2DUtil.drawRoundedBlur(
+            BlurShader.drawRoundedBlur(
                     scaledBoxX, scaledBoxY, scaledWidth, scaledHeight, scaledRadius,
-                    new Color(0, 0, 0, 0),
-                    blurStrength.get().floatValue(), 1.0f
+                    blurStrength.get().floatValue()
             );
         }
 

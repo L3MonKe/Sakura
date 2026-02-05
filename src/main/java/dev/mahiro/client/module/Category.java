@@ -18,7 +18,7 @@ public enum Category {
     }
 
     public String getName() {
-        if (ClickGui.language.get() == ClickGui.Language.Chinese) {
+        if (ClickGui.language.get() == ClickGui.LanguageMode.Chinese) {
             return cnName;
         }
         return name();

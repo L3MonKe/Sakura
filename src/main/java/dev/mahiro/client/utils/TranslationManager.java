@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class TranslationManager {
-    private static final Map<String, Map<ClickGui.Language, String>> translations = new HashMap<>();
+    private static final Map<String, Map<ClickGui.LanguageMode, String>> translations = new HashMap<>();
 
     static {
         register("welcome.title", "Welcome to LemonClient", "欢迎使用 " + Mahiro.MOD_NAME);
@@ -18,7 +18,7 @@ public class TranslationManager {
         register("nav.finish", "Finish", "完成");
 
         register("wizard.step.welcome", "Welcome", "欢迎");
-        register("wizard.step.language", "Language", "语言设置");
+        register("wizard.step.language", "LanguageMode", "语言设置");
         register("wizard.step.theme", "Theme & Preview", "主题与预览");
         register("wizard.step.ready", "Ready", "准备就绪");
 
@@ -31,7 +31,7 @@ public class TranslationManager {
 
         register("settings.title", "Settings", "设置");
         register("settings.back", "Back", "返回");
-        register("settings.language", "Language: ", "语言: ");
+        register("settings.language", "LanguageMode: ", "语言: ");
 
         register("theme.main", "Main", "主色");
         register("theme.second", "Second", "副色");
@@ -52,14 +52,14 @@ public class TranslationManager {
     }
 
     public static void register(String key, String en, String zh) {
-        Map<ClickGui.Language, String> langMap = new HashMap<>();
-        langMap.put(ClickGui.Language.English, en);
-        langMap.put(ClickGui.Language.Chinese, zh);
+        Map<ClickGui.LanguageMode, String> langMap = new HashMap<>();
+        langMap.put(ClickGui.LanguageMode.English, en);
+        langMap.put(ClickGui.LanguageMode.Chinese, zh);
         translations.put(key, langMap);
     }
 
     public static String get(String key) {
-        Map<ClickGui.Language, String> langMap = translations.get(key);
+        Map<ClickGui.LanguageMode, String> langMap = translations.get(key);
         if (langMap == null) return key;
         return langMap.getOrDefault(ClickGui.language.get(), key);
     }

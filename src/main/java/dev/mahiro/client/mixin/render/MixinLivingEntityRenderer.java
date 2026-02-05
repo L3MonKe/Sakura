@@ -8,11 +8,10 @@ import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.impl.render.Chams;
 import dev.mahiro.client.module.impl.render.NameTags;
-import dev.mahiro.client.utils.vector.Rotation;
+import dev.mahiro.client.utils.rotation.Rotation;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.model.EntityModel;
 import net.minecraft.client.render.entity.state.LivingEntityRenderState;
 import net.minecraft.client.render.state.CameraRenderState;
 import net.minecraft.client.util.math.MatrixStack;
@@ -31,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 import static dev.mahiro.client.Mahiro.mc;
 
 @Mixin(LivingEntityRenderer.class)
-public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extends LivingEntityRenderState, M extends EntityModel<? super S>> {
+public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extends LivingEntityRenderState> {
     @Shadow
     public abstract Identifier getTexture(S state);
 

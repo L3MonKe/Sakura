@@ -17,8 +17,7 @@
   "icon": "assets/mahiro/icons/icon.png",
   "depends": {
     "java": ">=21",
-    "fabricloader": ">=0.15.0",
     "minecraft": "${minecraft_version}",
-    "fabric-api": "*"
+    "fabricloader": ">=${loader_version}"
   }
 }

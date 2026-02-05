@@ -8,8 +8,8 @@ import dev.mahiro.client.module.impl.movement.Scaffold;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
+import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Easing;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.block.Block;
@@ -339,7 +339,7 @@ public class DynamicIslandHud extends HudModule {
         float clampedBlurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
         if (clampedBlurOpacity <= 0.005f) return;
 
-        Shader2DUtil.drawRoundedBlur(animX, animY, animW, animH, getRadius(), new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity);
+        BlurShader.drawRoundedBlur(animX, animY, animW, animH, getRadius(), blurStrength.get().floatValue());
     }
 
     private void renderSideBlurs(DrawContext context, float opacity) {
@@ -353,9 +353,9 @@ public class DynamicIslandHud extends HudModule {
             timeBgX = MathHelper.lerp(tabMergeProgress, timeBgX, animX);
         }
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 timeBgX, animY, Size.ELEMENT_WIDTH, animH, getRadius(),
-                new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity
+                blurStrength.get().floatValue()
         );
         float nameBgX = animX + animW + Size.ELEMENT_SPACING;
         if (phase == Phase.TAB_EXPAND) {
@@ -364,9 +364,9 @@ public class DynamicIslandHud extends HudModule {
             nameBgX = MathHelper.lerp(tabMergeProgress, nameBgX, animX + animW - Size.ELEMENT_WIDTH);
         }
 
-        Shader2DUtil.drawRoundedBlur(
+        BlurShader.drawRoundedBlur(
                 nameBgX, animY, Size.ELEMENT_WIDTH, animH, getRadius(),
-                new Color(0, 0, 0, 0), blurStrength.get().floatValue(), clampedBlurOpacity
+                blurStrength.get().floatValue()
         );
     }
 
@@ -723,7 +723,7 @@ public class DynamicIslandHud extends HudModule {
         }
         scaffoldBarMaxCount = Math.max(0, maxCount);
         scaffoldCountText = String.valueOf(count);
-        scaffoldSuffixText = ClickGui.language.is(ClickGui.Language.Chinese) ? "块" : "s";
+        scaffoldSuffixText = ClickGui.language.is(ClickGui.LanguageMode.Chinese) ? "块" : "s";
 
         long now = System.currentTimeMillis();
         if (count <= 0) {
