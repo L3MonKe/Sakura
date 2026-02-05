@@ -6,7 +6,6 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.MainMenuShader;
 import dev.mahiro.client.utils.animations.AnimationUtil;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.SmoothStepAnimation;
@@ -366,13 +365,13 @@ public class MainMenuScreen extends Screen {
             if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
             float t = MathHelper.clamp((float) (now - postAuthIntroStartTime) / (float) POST_AUTH_INTRO_DURATION_MS, 0f, 1f);
             float shaderT = AnimationUtil.smoothstep(0.0f, 1.0f, t);
-            MainMenuShader.getSharedInstance().render(this.width, this.height, shaderT);
+            //todo:MainMenuShader.getSharedInstance().render(this.width, this.height, shaderT);
             if (t < 0.999f) return;
             postAuthIntroActive = false;
             postAuthIntroStartTime = -1L;
             localEntranceStartTime = now;
         } else {
-            MainMenuShader.getSharedInstance().render(this.width, this.height, 1.0f);
+            //todo:MainMenuShader.getSharedInstance().render(this.width, this.height, 1.0f);
         }
 
         float p = resolveEntranceProgress();

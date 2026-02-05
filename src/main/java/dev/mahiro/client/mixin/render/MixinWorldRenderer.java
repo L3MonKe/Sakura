@@ -1,17 +1,14 @@
 package dev.mahiro.client.mixin.render;
 
-import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.Render3DEvent;
-import dev.mahiro.client.module.impl.render.Atmosphere;
 import dev.mahiro.client.module.impl.render.NoRender;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.FrameGraphBuilder;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.state.SkyRenderState;
 import net.minecraft.client.util.ObjectAllocator;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.RotationAxis;
@@ -20,12 +17,11 @@ import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(WorldRenderer.class)
 public class MixinWorldRenderer {
-    @ModifyArg(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/FramePass;setRenderer(Ljava/lang/Runnable;)V"), index = 0)
+    /*TODO: @ModifyArg(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/FramePass;setRenderer(Ljava/lang/Runnable;)V"), index = 0)
     private Runnable renderSky$wrapRenderer(Runnable original, @Local SkyRenderState skyRenderState) {
         Atmosphere atmosphere = Mahiro.MODULES.getModule(Atmosphere.class);
         if (!atmosphere.isEnabled() || !atmosphere.modifyFog.get()) {
@@ -42,7 +38,7 @@ public class MixinWorldRenderer {
                 skyRenderState.skyColor = oldColor;
             }
         };
-    }
+    }*/
 
     @Inject(method = "render", at = @At(value = "RETURN"))
     private void hookRender(ObjectAllocator allocator, RenderTickCounter tickCounter, boolean renderBlockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f basicProjectionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fogBuffer, Vector4f fogColor, boolean renderSky, CallbackInfo ci) {

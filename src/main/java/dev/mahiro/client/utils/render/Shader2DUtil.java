@@ -1,16 +1,8 @@
 package dev.mahiro.client.utils.render;
 
-import dev.mahiro.client.shaders.BlurProgram;
-
 import java.awt.*;
 
 public class Shader2DUtil {
-    public static BlurProgram BLUR_PROGRAM;
-
-    public static void init() {
-        BLUR_PROGRAM = new BlurProgram();
-    }
-
     public static void drawQuadBlur(float x, float y, float width, float height, float blurStrength, float blurOpacity) {
         /*if (BLUR_PROGRAM == null) {
             BLUR_PROGRAM = new BlurProgram();

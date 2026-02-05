@@ -1,6 +1,5 @@
 package dev.mahiro.client.nanovg;
 
-import dev.mahiro.client.nanovg.util.state.States;
 import net.minecraft.client.MinecraftClient;
 import org.lwjgl.nanovg.NanoVGGL3;
 
@@ -49,7 +48,7 @@ public class NanoVGRenderer {
             return;
         }
 
-        States.INSTANCE.push();
+        //States.INSTANCE.push();
 
         MinecraftClient mc = MinecraftClient.getInstance();
         int width = mc.getWindow().getWidth();
@@ -73,7 +72,7 @@ public class NanoVGRenderer {
 
             nvgEndFrame(vg);
             inFrame = false;
-            States.INSTANCE.pop();
+            //States.INSTANCE.pop();
         }
     }
 

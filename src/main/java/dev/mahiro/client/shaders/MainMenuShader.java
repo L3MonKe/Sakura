@@ -1,24 +1,8 @@
 package dev.mahiro.client.shaders;
 
-import com.mojang.blaze3d.systems.RenderSystem;
-import dev.mahiro.client.utils.animations.AnimationUtil;
-import net.minecraft.client.gl.GlUsage;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.BuiltBuffer;
-import net.minecraft.client.render.Tessellator;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.client.util.math.MatrixStack;
-import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL20;
-
-import java.io.IOException;
-
-import static dev.mahiro.client.Mahiro.mc;
-
 public class MainMenuShader {
     // 共享的SAKURA着色器实例（用于 SplashOverlay和TitleScreen之间的过渡）
-    private static MainMenuShader sharedInstance;
+    /*private static MainMenuShader sharedInstance;
 
     public static MainMenuShader getSharedInstance() {
         if (sharedInstance == null) {
@@ -130,10 +114,6 @@ public class MainMenuShader {
     public void render(int width, int height, float transition) {
         if (this.programId == 0 || this.vertexBuffer == null) return;
 
-        RenderSystem.disableCull();
-        RenderSystem.disableBlend();
-        RenderSystem.disableDepthTest();
-
         GL20.glUseProgram(this.programId);
 
         float scaleFactor = (float) mc.getWindow().getScaleFactor();
@@ -164,8 +144,6 @@ public class MainMenuShader {
         VertexBuffer.unbind();
 
         GL20.glUseProgram(0);
-        RenderSystem.enableDepthTest();
-        RenderSystem.enableCull();
     }
 
     public void setTransition(float transition) {
@@ -269,5 +247,5 @@ public class MainMenuShader {
             }
             return null;
         }
-    }
+    }*/
 }

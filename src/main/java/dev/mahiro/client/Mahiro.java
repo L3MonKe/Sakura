@@ -10,7 +10,6 @@ import dev.mahiro.client.gui.hud.HudEditorScreen;
 import dev.mahiro.client.gui.mainmenu.MainMenuScreen;
 import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.ModuleManager;
-import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.niurendeobf.ZKMIndy;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.IEventBus;
@@ -133,8 +132,6 @@ public class Mahiro {
         CONFIG = new ConfigManager();
 
         COMMAND = new CommandManager();
-
-        Shader2DUtil.init();
 
         ClientTickEvents.END_CLIENT_TICK.register(AuthGate::onClientTick);
 

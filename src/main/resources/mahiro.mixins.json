@@ -52,12 +52,8 @@
     "render.MixinItemEntityRenderer",
     "render.MixinLightmapTextureManager",
     "render.MixinLivingEntityRenderer",
-    "render.MixinPostEffectPass",
     "render.MixinParticleManager",
     "render.MixinRenderTickCounter",
-    "render.MixinScreen",
-    "render.MixinSplashOverlay",
-    "render.MixinTitleScreen",
     "render.MixinTransformation",
     "render.MixinWindow",
     "render.MixinWorldRenderer"

@@ -9,7 +9,6 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.MainMenuShader;
 import dev.mahiro.client.utils.TranslationManager;
 import dev.mahiro.client.utils.render.Shader2DUtil;
 import net.minecraft.client.gui.Click;
@@ -262,7 +261,7 @@ public class WelcomeScreen extends Screen {
             }
         }
 
-        MainMenuShader.getSharedInstance().render(width, height, 1.0f);
+        //todo:MainMenuShader.getSharedInstance().render(width, height, 1.0f);
 
         if (blurStrength > 0.1f) {
             Shader2DUtil.drawQuadBlur(0, 0, width, height, blurStrength, 1.0f);
@@ -359,9 +358,9 @@ public class WelcomeScreen extends Screen {
 
             float prevOffset = (currentStep - direction) * 0.3f;
             float currentShaderOffset = prevOffset + (targetShaderOffset - prevOffset) * animProgress;
-            MainMenuShader.getSharedInstance().setMouseOffset(currentShaderOffset * width);
+            //todo:MainMenuShader.getSharedInstance().setMouseOffset(currentShaderOffset * width);
         } else {
-            MainMenuShader.getSharedInstance().setMouseOffset(targetShaderOffset * width);
+            //todo:MainMenuShader.getSharedInstance().setMouseOffset(targetShaderOffset * width);
         }
 
         int centerY = height / 2;

@@ -1,7 +1,6 @@
 package dev.mahiro.client.nanovg.util;
 
 import dev.mahiro.client.nanovg.NanoVGRenderer;
-import net.minecraft.client.MinecraftClient;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 import org.lwjgl.nanovg.NanoVGGL3;
@@ -15,8 +14,6 @@ import java.nio.IntBuffer;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public class NanoVGHelper {
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
-
     private static long getContext() {
         return NanoVGRenderer.INSTANCE.getContext();
     }
