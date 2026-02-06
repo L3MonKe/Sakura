@@ -42,29 +42,17 @@ public class MixinWorldRenderer {
     private Runnable renderSky$wrapRenderer(Runnable original) {
         if (Sakura.MODULES == null) return original;
         WorldTweaks worldTweaks = Sakura.MODULES.getModule(WorldTweaks.class);
-        if (worldTweaks == null || !worldTweaks.isEnabled()) return original;
+        if (!worldTweaks.isEnabled() || !worldTweaks.fogModify.get()) return original;
 
-        boolean modifySkyColor = worldTweaks.fogModify.get();
-        boolean applySkyShader = worldTweaks.shaderMode.is(WorldTweaks.Shader.Grid);
-        if (!modifySkyColor && !applySkyShader) return original;
-
-        int targetColor = modifySkyColor ? worldTweaks.fogColor.get().getRGB() : 0;
+        int targetColor = worldTweaks.fogColor.get().getRGB();
         SkyRenderState skyRenderState = this.worldRenderState.skyRenderState;
         return () -> {
             int oldColor = skyRenderState.skyColor;
-            if (modifySkyColor) {
-                skyRenderState.skyColor = targetColor;
-            }
+            skyRenderState.skyColor = targetColor;
             try {
                 original.run();
             } finally {
-                if (modifySkyColor) {
-                    skyRenderState.skyColor = oldColor;
-                }
-            }
-
-            if (applySkyShader && Managers.SHADER != null) {
-                Managers.SHADER.renderSkyGridShader(Sakura.mc.getRenderTickCounter().getTickProgress(true), worldTweaks.skyGridAlpha.get(), worldTweaks.facing.get().yawOffsetDegrees);
+                skyRenderState.skyColor = oldColor;
             }
         };
     }
