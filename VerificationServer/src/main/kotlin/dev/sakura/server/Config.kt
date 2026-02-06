@@ -21,7 +21,7 @@ internal fun loadConfig(): ServerConfig {
         System.getenv(name)?.takeIf { it.isNotBlank() } ?: System.getProperty(name)?.takeIf { it.isNotBlank() }
 
     val host = env("AUTH_HOST") ?: "0.0.0.0"
-    val port = (env("AUTH_PORT") ?: "25565").toInt()
+    val port = (env("AUTH_PORT") ?: "25566").toInt()
     val dataDir = env("AUTH_DATA_DIR") ?: "data"
     val requireTls = (env("AUTH_REQUIRE_TLS") ?: "false").lowercase(Locale.ROOT) == "true"
     val requireClientAuth = (env("AUTH_REQUIRE_CLIENT_AUTH") ?: "false").lowercase(Locale.ROOT) == "true"

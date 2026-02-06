@@ -72,7 +72,6 @@ public class ModuleManager {
         // Render
         add(new AspectRatio());
         add(new Animations());
-        add(new Atmosphere());
         add(new WorldTweaks());
         add(new CameraClip());
         add(new Chams());

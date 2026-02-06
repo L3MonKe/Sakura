@@ -37,6 +37,7 @@ public class ShaderManager {
     private static final Identifier SMOKE_FSH = Identifier.of("sakura", "post/smoke");
     private static final Identifier SNOW_FSH = Identifier.of("sakura", "post/snow");
     private static final Identifier FADE_FSH = Identifier.of("sakura", "post/fade");
+    private static final Identifier SKY_GRID_FSH = Identifier.of("sakura", "post/sky_grid");
 
     private static final int CLEAR_COLOR_TRANSPARENT = 0x00000000;
     private static final BlendFunction REPLACE_BLEND = new BlendFunction(SourceFactor.ONE, DestFactor.ZERO);
@@ -44,6 +45,7 @@ public class ShaderManager {
     private final List<RenderTask> tasks = new ArrayList<>();
 
     private float time;
+    private float skyTime;
 
     private SimpleFramebuffer handInput;
     private SimpleFramebuffer handOutput;
@@ -54,6 +56,7 @@ public class ShaderManager {
     private RenderPipeline pipelineSmoke;
     private RenderPipeline pipelineSnow;
     private RenderPipeline pipelineFade;
+    private RenderPipeline pipelineSkyGrid;
 
     private ShaderParamsBuffer shaderParamsBuffer;
 
@@ -104,6 +107,29 @@ public class ShaderManager {
         }
     }
 
+    public void renderSkyGridShader(float tickDelta, float alpha, float yawOffsetDegrees) {
+        ensurePipelines();
+
+        Framebuffer framebuffer = mc.getFramebuffer();
+        GpuTextureView outColorView = framebuffer.getColorAttachmentView();
+        if (outColorView == null) return;
+
+        CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
+
+        float yaw = mc.gameRenderer.getCamera().getYaw() + yawOffsetDegrees;
+        float pitch = mc.gameRenderer.getCamera().getPitch();
+        ShaderParams params = ShaderParams.sky(framebuffer.textureWidth, framebuffer.textureHeight, tickDelta, skyTime, alpha, yaw, pitch);
+        skyTime = params.nextTime;
+        GpuBuffer paramsBuffer = shaderParamsBuffer.write(encoder, params);
+
+        try (RenderPass pass = encoder.createRenderPass(() -> "Sakura Sky Grid", outColorView, java.util.OptionalInt.empty(), null, java.util.OptionalDouble.empty())) {
+            pass.setPipeline(pipelineSkyGrid);
+            RenderSystem.bindDefaultUniforms(pass);
+            pass.setUniform("ShaderParams", paramsBuffer);
+            pass.draw(0, 3);
+        }
+    }
+
     private void applyHandShader(Runnable runnable, Shader mode, float tickDelta) {
         GpuTexture handInColor = handInput.getColorAttachment();
         GpuTextureView handInColorView = handInput.getColorAttachmentView();
@@ -134,7 +160,6 @@ public class ShaderManager {
 
     private void renderPostPass(CommandEncoder encoder, GpuTextureView inColorView, GpuTextureView outColorView, Shader mode, float tickDelta, int inW, int inH, boolean isHands) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        if (shaders == null) return;
 
         RenderPipeline pipeline = getPipeline(mode);
         if (pipeline == null) return;
@@ -163,15 +188,23 @@ public class ShaderManager {
     }
 
     private void ensurePipelines() {
-        if (pipelineOutline != null) return;
+        if (pipelineOutline != null && pipelineSkyGrid != null && shaderParamsBuffer != null) return;
 
-        pipelineOutline = createPipeline("pipeline/sakura_shader_outline", OUTLINE_FSH);
-        pipelineGradient = createPipeline("pipeline/sakura_shader_gradient", GRADIENT_FSH);
-        pipelineSmoke = createPipeline("pipeline/sakura_shader_smoke", SMOKE_FSH);
-        pipelineSnow = createPipeline("pipeline/sakura_shader_snow", SNOW_FSH);
-        pipelineFade = createPipeline("pipeline/sakura_shader_fade", FADE_FSH);
+        if (pipelineOutline == null) {
+            pipelineOutline = createPipeline("pipeline/sakura_shader_outline", OUTLINE_FSH);
+            pipelineGradient = createPipeline("pipeline/sakura_shader_gradient", GRADIENT_FSH);
+            pipelineSmoke = createPipeline("pipeline/sakura_shader_smoke", SMOKE_FSH);
+            pipelineSnow = createPipeline("pipeline/sakura_shader_snow", SNOW_FSH);
+            pipelineFade = createPipeline("pipeline/sakura_shader_fade", FADE_FSH);
+        }
 
-        shaderParamsBuffer = new ShaderParamsBuffer();
+        if (pipelineSkyGrid == null) {
+            pipelineSkyGrid = createSkyPipeline("pipeline/sakura_sky_grid", SKY_GRID_FSH);
+        }
+
+        if (shaderParamsBuffer == null) {
+            shaderParamsBuffer = new ShaderParamsBuffer();
+        }
     }
 
     private RenderPipeline createPipeline(String location, Identifier fragmentShader) {
@@ -182,6 +215,19 @@ public class ShaderManager {
                 .withSampler("DiffuseSampler")
                 .withUniform("ShaderParams", net.minecraft.client.gl.UniformType.UNIFORM_BUFFER)
                 .withBlend(REPLACE_BLEND)
+                .build());
+    }
+
+    private RenderPipeline createSkyPipeline(String location, Identifier fragmentShader) {
+        return RenderPipelines.register(RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
+                .withLocation(location)
+                .withVertexShader(SHADER_SCREENQUAD)
+                .withFragmentShader(fragmentShader)
+                .withUniform("ShaderParams", net.minecraft.client.gl.UniformType.UNIFORM_BUFFER)
+                .withBlend(BlendFunction.TRANSLUCENT)
+                .withDepthTestFunction(com.mojang.blaze3d.platform.DepthTestFunction.NO_DEPTH_TEST)
+                .withDepthWrite(false)
+                .withCull(false)
                 .build());
     }
 
@@ -205,6 +251,7 @@ public class ShaderManager {
 
     public void resetTime() {
         time = 0.0f;
+        skyTime = 0.0f;
     }
 
     private record RenderTask(Runnable task, Shader shader) {
@@ -284,10 +331,8 @@ public class ShaderManager {
             float lineWidth = s.lineWidth.get();
             float oct = s.octaves.get();
 
-            Color primary = fill1;
-            Color secondary = fill2;
-            Vector4f primaryV = toVec4(primary);
-            Vector4f secondaryV = toVec4(secondary);
+            Vector4f primaryV = toVec4(fill1);
+            Vector4f secondaryV = toVec4(fill2);
 
             Vector4f params1 = new Vector4f(alpha0, alpha1, alpha2, fillAlpha);
             float shaderTime = shader == Shader.Fade ? (System.currentTimeMillis() % 100000L) / 1000.0f : time;
@@ -304,10 +349,28 @@ public class ShaderManager {
 
             return new ShaderParams(inSize, res, fill1V, outlineV, outline1V, outline2V, fill1V, fill2V, fill3V, primaryV, secondaryV, params1, params2, params3, nextTime);
         }
+
+        static ShaderParams sky(int inW, int inH, float tickDelta, float time, float alpha, float yawDegrees, float pitchDegrees) {
+            int scaledW = MinecraftClient.getInstance().getWindow().getScaledWidth();
+            int scaledH = MinecraftClient.getInstance().getWindow().getScaledHeight();
+
+            float a = Math.max(0.0f, Math.min(1.0f, alpha));
+            Vector4f inSize = new Vector4f(inW, inH, 0.0f, 0.0f);
+            Vector4f res = new Vector4f(scaledW, scaledH, 0.0f, 0.0f);
+
+            Vector4f color = new Vector4f(0.0f, 0.0f, 0.0f, 0.0f);
+            Vector4f params1 = new Vector4f(a, 0.0f, 0.0f, 0.0f);
+            Vector4f params2 = new Vector4f(time, 0.0f, 0.0f, 0.0f);
+            float yawRad = (float) (yawDegrees * (Math.PI / 180.0));
+            float pitchRad = (float) (pitchDegrees * (Math.PI / 180.0));
+            Vector4f params3 = new Vector4f(yawRad, pitchRad, 0.0f, 0.0f);
+
+            float nextTime = time + 0.008f;
+            return new ShaderParams(inSize, res, color, color, color, color, color, color, color, color, color, params1, params2, params3, nextTime);
+        }
     }
 
     private static Vector4f toVec4(Color color) {
-        if (color == null) return new Vector4f(0, 0, 0, 0);
         return new Vector4f(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
     }
 
@@ -332,12 +395,12 @@ public class ShaderManager {
         private final int byteSize = SIZE_CALCULATOR.get();
         private final GpuBuffer buffer;
 
-        ShaderParamsBuffer() {
+        private ShaderParamsBuffer() {
             RenderSystem.assertOnRenderThread();
             buffer = RenderSystem.getDevice().createBuffer(() -> "Sakura ShaderParams", UBO_USAGE, byteSize);
         }
 
-        GpuBuffer write(CommandEncoder encoder, ShaderParams params) {
+        private GpuBuffer write(CommandEncoder encoder, ShaderParams params) {
             RenderSystem.assertOnRenderThread();
             try (MemoryStack stack = MemoryStack.stackPush()) {
                 Std140Builder builder = Std140Builder.onStack(stack, byteSize);

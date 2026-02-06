@@ -95,8 +95,7 @@ public class ModuleComponent implements IComponent {
 
             if (finalHasVisibleSettings && openAnimation.getOutput() > 0) {
                 float expandedHeight = (float) ((finalYOffset - scaledHeight) * openAnimation.getOutput());
-                NanoVGHelper.drawRect(x, y + scaledHeight, width, expandedHeight,
-                        ColorUtil.applyOpacity(ClickGui.expandedBackgroundColor.get(), (float) (0.3f * openAnimation.getOutput())));
+                NanoVGHelper.drawRect(x, y + scaledHeight, width, expandedHeight, ColorUtil.applyOpacity(ClickGui.expandedBackgroundColor.get(), (float) (0.3f * openAnimation.getOutput())));
             }
 
             NanoVGHelper.drawString(module.getDisplayName(), x + 4 * scale, y + 11 * scale, FontLoader.regular(), baseFontSize * 0.75f, Color.WHITE);
