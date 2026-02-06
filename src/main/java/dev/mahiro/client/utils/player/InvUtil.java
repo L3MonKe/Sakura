@@ -8,33 +8,9 @@ import net.minecraft.screen.slot.SlotActionType;
 
 import java.util.function.Predicate;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.AttributeModifiersComponent;
-import net.minecraft.entity.attribute.EntityAttributes;
-
 import static dev.mahiro.client.Mahiro.mc;
 
 public class InvUtil {
-    public static double getDamage(ItemStack weapon) {
-        double sharpness = 0.5 * weapon.getEnchantments().getSize() + 0.5;
-        return getBaseDamage(weapon) + sharpness;
-    }
-
-    public static double getBaseDamage(ItemStack weapon) {
-        double baseDamage = 0.0;
-
-        AttributeModifiersComponent modifiers = weapon.get(DataComponentTypes.ATTRIBUTE_MODIFIERS);
-        if (modifiers != null) {
-            for (AttributeModifiersComponent.Entry entry : modifiers.modifiers()) {
-                if (entry.attribute().equals(EntityAttributes.ATTACK_DAMAGE)) {
-                    baseDamage += entry.modifier().value();
-                }
-            }
-        }
-
-        return baseDamage;
-    }
-
     public static int previousSlot = -1;
     public static int[] invSlots;
 
