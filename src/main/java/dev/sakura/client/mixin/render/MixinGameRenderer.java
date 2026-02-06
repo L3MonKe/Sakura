@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.impl.render.AspectRatio;
 import dev.sakura.client.module.impl.render.NoRender;
+import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.utils.math.FrameRateCounter;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
@@ -19,6 +20,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinGameRenderer {
     @Shadow
     public abstract float getFarPlaneDistance();
+
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;applyCursorTo(Lnet/minecraft/client/util/Window;)V"))
+    private void sakura$renderScreenNanoVgOnTop(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
+        NanoVGRenderer.INSTANCE.flushScreenQueue();
+    }
 
     @Inject(method = "render", at = @At("TAIL"))
     private void postHudRenderHook(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {

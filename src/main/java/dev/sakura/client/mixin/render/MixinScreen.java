@@ -1,6 +1,7 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.shaders.MainMenuShader;
+import dev.sakura.client.nanovg.NanoVGRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,6 +23,16 @@ public class MixinScreen {
 
     @Shadow
     public int height;
+
+    @Inject(method = "renderWithTooltip", at = @At("HEAD"))
+    private void sakura$beginNanoVgScreenBatch(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+        NanoVGRenderer.INSTANCE.beginBatch();
+    }
+
+    @Inject(method = "renderWithTooltip", at = @At("RETURN"))
+    private void sakura$endNanoVgScreenBatch(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+        NanoVGRenderer.INSTANCE.endBatch();
+    }
 
     @Inject(method = "renderPanoramaBackground", at = @At("HEAD"), cancellable = true)
     public void renderPanoramaBackgroundHook(DrawContext context, float delta, CallbackInfo ci) {

@@ -109,8 +109,8 @@ public class TargetHud extends HudModule {
 
     // 3D ESP Settings
     private final BoolValue espEnabled = new BoolValue("ESP", "3D透视", true);
-    private final ColorValue espColor1 = new ColorValue("ESPColor1", "透视颜色1", new Color(255, 0, 0, 255), espEnabled::get);
-    private final ColorValue espColor2 = new ColorValue("ESPColor2", "透视颜色2", new Color(0, 255, 255, 255), espEnabled::get);
+    private final ColorValue espColor1 = new ColorValue("ESPColor1", "透视颜色1", new Color(255, 183, 197), espEnabled::get);
+    private final ColorValue espColor2 = new ColorValue("ESPColor2", "透视颜色2", new Color(255, 133, 161), espEnabled::get);
     private final NumberValue<Double> espSize = new NumberValue<>("ESPSize", "透视大小", 1.2, 0.5, 3.0, 0.1, espEnabled::get);
     private final NumberValue<Double> rotationSpeed = new NumberValue<>("RotSpeed", "旋转速度", 2.0, 0.5, 10.0, 0.1, espEnabled::get);
     private final NumberValue<Double> waveSpeed = new NumberValue<>("WaveSpeed", "波动速度", 3.0, 0.5, 10.0, 0.1, espEnabled::get);

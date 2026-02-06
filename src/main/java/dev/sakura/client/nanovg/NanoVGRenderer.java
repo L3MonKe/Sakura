@@ -10,6 +10,8 @@ import net.minecraft.client.gl.RenderPipelines;
 import org.lwjgl.nanovg.NanoVGGL3;
 import org.lwjgl.opengl.GL33C;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Consumer;
@@ -23,6 +25,8 @@ public class NanoVGRenderer {
     private long vg = 0L;
     private boolean initialized = false;
     private boolean inFrame = false;
+    private final ThreadLocal<ScreenBatch> screenBatch = new ThreadLocal<>();
+    private final List<Consumer<Long>> queuedScreenDrawCalls = new ArrayList<>();
 
     public void initNanoVG() {
         if (!initialized) {
@@ -41,8 +45,52 @@ public class NanoVGRenderer {
         return vg;
     }
 
+    public void beginBatch() {
+        ScreenBatch batch = screenBatch.get();
+        if (batch != null) {
+            batch.depth++;
+            return;
+        }
+        screenBatch.set(new ScreenBatch());
+    }
+
+    public void endBatch() {
+        ScreenBatch batch = screenBatch.get();
+        if (batch == null) {
+            return;
+        }
+        batch.depth--;
+        if (batch.depth > 0) {
+            return;
+        }
+        screenBatch.remove();
+        if (batch.drawCalls.isEmpty()) {
+            return;
+        }
+        queuedScreenDrawCalls.addAll(batch.drawCalls);
+    }
+
+    public void flushScreenQueue() {
+        if (queuedScreenDrawCalls.isEmpty()) {
+            return;
+        }
+        List<Consumer<Long>> drawCalls = List.copyOf(queuedScreenDrawCalls);
+        queuedScreenDrawCalls.clear();
+        this.draw(vg -> {
+            for (Consumer<Long> draw : drawCalls) {
+                draw.accept(vg);
+            }
+        });
+    }
+
     public void draw(Consumer<Long> drawingLogic) {
         if (!initialized) initNanoVG();
+
+        ScreenBatch batch = screenBatch.get();
+        if (batch != null) {
+            batch.drawCalls.add(drawingLogic);
+            return;
+        }
 
         if (inFrame) { // 防止叠帧
             drawingLogic.accept(vg);
@@ -79,6 +127,14 @@ public class NanoVGRenderer {
             NanoVGGL3.nvgDelete(vg);
             vg = 0L;
             initialized = false;
+        }
+    }
+
+    private static final class ScreenBatch {
+        private final List<Consumer<Long>> drawCalls = new ArrayList<>();
+        private int depth = 1;
+
+        private ScreenBatch() {
         }
     }
 }
