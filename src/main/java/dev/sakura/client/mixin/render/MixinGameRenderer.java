@@ -6,6 +6,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.sakura.client.Sakura;
+import dev.sakura.client.interfaces.ISakuraSplashOverlay;
 import dev.sakura.client.events.render.Render3DEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IGameRenderer;
@@ -13,10 +14,12 @@ import dev.sakura.client.module.impl.render.AspectRatio;
 import dev.sakura.client.module.impl.render.NoRender;
 import dev.sakura.client.module.impl.render.Shaders;
 import dev.sakura.client.nanovg.NanoVGRenderer;
+import dev.sakura.client.shaders.SplashShader;
 import dev.sakura.client.utils.math.FrameRateCounter;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.gui.screen.SplashOverlay;
 import net.minecraft.entity.LivingEntity;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
@@ -49,6 +52,10 @@ public abstract class MixinGameRenderer {
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;applyCursorTo(Lnet/minecraft/client/util/Window;)V"))
     private void sakura$renderScreenNanoVgOnTop(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
         NanoVGRenderer.INSTANCE.flushScreenQueue();
+
+        if (mc.getOverlay() instanceof SplashOverlay && mc.getOverlay() instanceof ISakuraSplashOverlay sakuraSplashOverlay && sakuraSplashOverlay.sakura$shouldRenderSplash()) {
+            SplashShader.getInstance().render(mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), sakuraSplashOverlay.sakura$getSplashProgress(), sakuraSplashOverlay.sakura$getSplashFadeOut(), sakuraSplashOverlay.sakura$getSplashZoom());
+        }
     }
 
     @Inject(method = "render", at = @At("TAIL"))

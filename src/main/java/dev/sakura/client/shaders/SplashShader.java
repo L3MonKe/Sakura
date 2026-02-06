@@ -8,6 +8,7 @@ import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.textures.GpuTextureView;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.MappableRingBuffer;
 import net.minecraft.client.gl.RenderPipelines;
@@ -81,6 +82,15 @@ public class SplashShader {
     }
 
     public void render(int width, int height, float progress, float fadeOut, float zoom) {
+        Framebuffer framebuffer = mc.getFramebuffer();
+        this.renderTo(framebuffer.getColorAttachmentView(), framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null, width, height, progress, fadeOut, zoom);
+    }
+
+    public void renderTo(GpuTextureView colorAttachmentView, int width, int height, float progress, float fadeOut, float zoom) {
+        this.renderTo(colorAttachmentView, null, width, height, progress, fadeOut, zoom);
+    }
+
+    public void renderTo(GpuTextureView colorAttachmentView, GpuTextureView depthAttachmentView, int width, int height, float progress, float fadeOut, float zoom) {
         this.init();
         if (this.uniforms == null || this.pipelineOpaque == null || this.pipelineBlend == null) {
             return;
@@ -95,7 +105,6 @@ public class SplashShader {
         }
         this.currentProgress = progress;
 
-        Framebuffer framebuffer = mc.getFramebuffer();
         float scaleFactor = (float) mc.getWindow().getScaleFactor();
         float pxWidth = width * scaleFactor;
         float pxHeight = height * scaleFactor;
@@ -115,9 +124,9 @@ public class SplashShader {
         RenderPipeline pipeline = zoom > 1.0f ? this.pipelineBlend : this.pipelineOpaque;
         try (RenderPass renderPass = encoder.createRenderPass(
                 () -> "Sakura Splash",
-                framebuffer.getColorAttachmentView(),
+                colorAttachmentView,
                 OptionalInt.empty(),
-                framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null,
+                depthAttachmentView,
                 OptionalDouble.empty()
         )) {
             renderPass.setPipeline(pipeline);

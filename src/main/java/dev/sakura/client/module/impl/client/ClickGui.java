@@ -29,7 +29,7 @@ public class ClickGui extends Module {
     }
 
     private enum SoundMode {
-        Mahiro, Arcane, Jello
+        Sakura, Arcane, Jello
     }
 
     public enum BlurMode {
@@ -41,7 +41,7 @@ public class ClickGui extends Module {
     public static EnumValue<LanguageMode> language = new EnumValue<>("LanguageMode", "语言", LanguageMode.English);
 
     private static final BoolValue sound = new BoolValue("Play Sound", "播放声音", true);
-    private static final EnumValue<SoundMode> soundMode = new EnumValue<>("Sound Mode", "声音模式", SoundMode.Mahiro, sound::get);
+    private static final EnumValue<SoundMode> soundMode = new EnumValue<>("Sound Mode", "声音模式", SoundMode.Sakura, sound::get);
 
     public static Value<Color> backgroundColor = new ColorValue("Background Color", "背景颜色", new Color(28, 28, 28));
     public static Value<Color> expandedBackgroundColor = new ColorValue("Expanded Background", "展开背景颜色", new Color(20, 20, 20));
@@ -78,7 +78,7 @@ public class ClickGui extends Module {
     public static void playEnableSound() {
         if (!sound.get()) return;
         switch (soundMode.get()) {
-            case Mahiro -> playSound(Managers.SOUND.ON);
+            case Sakura -> playSound(Managers.SOUND.ON);
             case Arcane -> playSound(Managers.SOUND.ENABLE);
             case Jello -> playSound(Managers.SOUND.ACTIVATE);
         }
@@ -87,7 +87,7 @@ public class ClickGui extends Module {
     public static void playDisableSound() {
         if (!sound.get()) return;
         switch (soundMode.get()) {
-            case Mahiro -> playSound(Managers.SOUND.OFF);
+            case Sakura -> playSound(Managers.SOUND.OFF);
             case Arcane -> playSound(Managers.SOUND.DISABLE);
             case Jello -> playSound(Managers.SOUND.DEACTIVATE);
         }

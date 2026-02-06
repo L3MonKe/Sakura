@@ -18,11 +18,12 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Style;
 import net.minecraft.text.Text;
+import net.minecraft.text.TextColor;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.text.Style;
-import net.minecraft.text.MutableText;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -33,9 +34,6 @@ import java.util.Stack;
 import static dev.sakura.client.Sakura.mc;
 
 public class CombatManager extends Managers {
-
-    private record ColoredText(Color color, String text) {}
-
     private static List<ColoredText> toColoredTextList(Text text) {
         List<ColoredText> result = new ArrayList<>();
         Stack<Style> styleStack = new Stack<>();
@@ -71,7 +69,7 @@ public class CombatManager extends Managers {
         for (int i = styleStack.size() - 1; i >= 0; i--) {
             Style style = styleStack.get(i);
             if (style.getColor() != null) {
-                net.minecraft.text.TextColor textColor = style.getColor();
+                TextColor textColor = style.getColor();
                 int rgb = textColor.getRgb();
                 if (rgb != 0) {
                     return new Color(rgb);
@@ -80,6 +78,7 @@ public class CombatManager extends Managers {
         }
         return new Color(255, 255, 255);
     }
+
     public List<LivingEntity> getEntities(double range) {
         List<LivingEntity> list = new ArrayList<>();
         for (Entity entity : mc.world.getEntities()) {
@@ -218,5 +217,8 @@ public class CombatManager extends Managers {
         Distance,
         FOV,
         Health
+    }
+
+    private record ColoredText(Color color, String text) {
     }
 }

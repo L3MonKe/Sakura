@@ -327,6 +327,10 @@ public class ModuleComponent implements IComponent {
         this.previewEnabled = previewEnabled;
     }
 
+    public boolean isPreviewEnabled() {
+        return previewEnabled;
+    }
+
     private String getKeyName(int keyCode) {
         if (keyCode < 0) {
             return "M" + (-keyCode);

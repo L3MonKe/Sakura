@@ -45,7 +45,7 @@ public class MixinWorldRenderer {
         if (!worldTweaks.isEnabled() || !worldTweaks.fogModify.get()) return original;
 
         int targetColor = worldTweaks.fogColor.get().getRGB();
-        SkyRenderState skyRenderState = this.worldRenderState.skyRenderState;
+        SkyRenderState skyRenderState = worldRenderState.skyRenderState;
         return () -> {
             int oldColor = skyRenderState.skyColor;
             skyRenderState.skyColor = targetColor;

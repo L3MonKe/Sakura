@@ -1,6 +1,7 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
+import dev.sakura.client.interfaces.ISakuraSplashOverlay;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.shaders.SplashShader;
 import dev.sakura.client.utils.animations.AnimationUtil;
@@ -22,7 +23,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 @Mixin(SplashOverlay.class)
-public class MixinSplashOverlay {
+public class MixinSplashOverlay implements ISakuraSplashOverlay {
     @Shadow
     @Final
     private ResourceReload reload;
@@ -74,6 +75,15 @@ public class MixinSplashOverlay {
 
     @Unique
     private static final long MIN_DISPLAY_MS = 5000L;
+
+    @Unique
+    private boolean sakura$shouldRenderSplash;
+
+    @Unique
+    private float sakura$lastFadeOut;
+
+    @Unique
+    private float sakura$lastZoom;
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
     private void onTick(CallbackInfo ci) {
@@ -141,19 +151,20 @@ public class MixinSplashOverlay {
             }
         }
 
-        if (fadeOut < 0.99f) {
-            SplashShader.getInstance().render(width, height, sakura$displayProgress, fadeOut, zoom);
-        }
+        this.sakura$shouldRenderSplash = fadeOut < 0.99f;
+        this.sakura$lastFadeOut = fadeOut;
+        this.sakura$lastZoom = zoom;
 
         if (fadeOutProgress >= 0.6F || (sakura$handoffStartTime > 0L && currentTime - sakura$handoffStartTime >= HANDOFF_DURATION_MS)) {
             this.client.setOverlay(null);
             if (!this.reloading) {
-                if (this.client.currentScreen == null) {
+                if (this.client.world == null && this.client.currentScreen == null) {
                     Sakura.redirectToMainMenu();
                 }
             }
             sakura$handoffScreenReady = false;
             sakura$handoffIntroRequested = false;
+            this.sakura$shouldRenderSplash = false;
             SplashShader.getInstance().cleanup();
             shaderInitialized = false;
             sakura$handoffStartTime = -1L;
@@ -173,12 +184,14 @@ public class MixinSplashOverlay {
             sakura$handoffStartTime = this.reloadCompleteTime;
 
             if (!this.reloading) {
-                Sakura.redirectToMainMenu();
-                if (this.client.currentScreen != null) {
-                    this.client.currentScreen.init(width, height);
-                }
-                if (!sakura$handoffIntroRequested && Sakura.startIntro()) {
-                    sakura$handoffIntroRequested = true;
+                if (this.client.world == null) {
+                    Sakura.redirectToMainMenu();
+                    if (this.client.currentScreen != null) {
+                        this.client.currentScreen.init(width, height);
+                    }
+                    if (!sakura$handoffIntroRequested && Sakura.startIntro()) {
+                        sakura$handoffIntroRequested = true;
+                    }
                 }
                 sakura$handoffScreenReady = true;
             } else if (this.client.currentScreen != null) {
@@ -187,5 +200,25 @@ public class MixinSplashOverlay {
         }
 
         ci.cancel();
+    }
+
+    @Override
+    public boolean sakura$shouldRenderSplash() {
+        return this.sakura$shouldRenderSplash;
+    }
+
+    @Override
+    public float sakura$getSplashProgress() {
+        return this.sakura$displayProgress;
+    }
+
+    @Override
+    public float sakura$getSplashFadeOut() {
+        return this.sakura$lastFadeOut;
+    }
+
+    @Override
+    public float sakura$getSplashZoom() {
+        return this.sakura$lastZoom;
     }
 }
