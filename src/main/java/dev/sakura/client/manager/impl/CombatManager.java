@@ -112,9 +112,9 @@ public class CombatManager extends Managers {
             return false;
         }
         return switch (entity) {
-            case MobEntity mobEntity when targetSetting.targets.isEnabled("Mobs") -> true;
             case AnimalEntity animalEntity when targetSetting.targets.isEnabled("Animals") -> true;
             case PassiveEntity passiveEntity when targetSetting.targets.isEnabled("Passive") -> true;
+            case MobEntity mobEntity when targetSetting.targets.isEnabled("Mobs") -> true;
             case PlayerEntity player when targetSetting.targets.isEnabled("Player") -> {
                 Teams teams = Sakura.MODULES.getModule(Teams.class);
                 if (teams.isEnabled()) {
