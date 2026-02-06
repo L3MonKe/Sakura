@@ -12,9 +12,9 @@ import dev.mahiro.client.utils.player.InvUtil;
 import dev.mahiro.client.utils.render.Render3DUtil;
 import dev.mahiro.client.utils.rotation.MovementFix;
 import dev.mahiro.client.utils.rotation.RaytraceUtil;
-import dev.mahiro.client.utils.rotation.Rotation;
 import dev.mahiro.client.utils.rotation.RotationUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
+import dev.mahiro.client.utils.vector.Rotation;
 import dev.mahiro.client.utils.world.BlockUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
@@ -141,7 +141,7 @@ public class AutoDick extends Module {
             Rotation rotation = RotationUtil.calculate(vec);
             Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
 
-            if (timer.passedMillise(delay.get())) {
+            if (timer.passedMS(delay.get())) {
                 if (!RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), placeData.opposite, placeData.neighbor, sideCheck.get()))
                     return;
 

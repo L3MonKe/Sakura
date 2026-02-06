@@ -9,7 +9,6 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseInOutQuad;
 import dev.mahiro.client.utils.render.RenderUtil;
@@ -48,6 +47,7 @@ public class CategoryPanel implements IComponent {
         float baseFontSize = (float) ClickGui.getFontSize();
         float scaledWidth = width * guiScale;
         float headerHeight = 18 * guiScale;
+        boolean bjdOnlyEnabled = ClickGui.bjdOnly.get();
 
         float componentOffsetY = headerHeight;
         for (ModuleComponent component : moduleComponents) {
@@ -58,10 +58,6 @@ public class CategoryPanel implements IComponent {
             componentOffsetY += (float) (component.getHeight() * openAnimation.getOutput());
         }
         height = componentOffsetY + 9 * guiScale;
-
-        if (ClickGui.backgroundBlur.get() && ClickGui.blurMode.is(ClickGui.BlurMode.OnlyCategory)) {
-            BlurShader.drawRoundedBlur(x, y - 1, scaledWidth, height, 7.0f, ClickGui.blurStrength.get().floatValue());
-        }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color bgColor = ClickGui.backgroundColor.get();
@@ -128,9 +124,7 @@ public class CategoryPanel implements IComponent {
 
     @Override
     public boolean mouseReleased(Click click) {
-        if (click.button() == 0) {
-            dragging = false;
-        }
+        //if (state == 0) dragging = false;
 
         boolean handled = false;
         for (ModuleComponent component : moduleComponents) {

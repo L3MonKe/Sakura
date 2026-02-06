@@ -3,6 +3,7 @@ package dev.mahiro.client.utils.rotation;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.mixin.accessor.IEntity;
 import dev.mahiro.client.utils.math.MathUtil;
+import dev.mahiro.client.utils.vector.Rotation;
 import dev.mahiro.client.utils.vector.Vector3d;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;

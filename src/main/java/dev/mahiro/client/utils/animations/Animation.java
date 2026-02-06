@@ -54,7 +54,7 @@ public abstract class Animation {
     }
 
     public boolean isDone() {
-        return timerUtil.passedMillise(duration);
+        return timerUtil.passedMS(duration);
     }
 
     public void changeDirection() {

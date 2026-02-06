@@ -1,5 +1,6 @@
 package dev.mahiro.client.utils.rotation;
 
+import dev.mahiro.client.utils.vector.Rotation;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.ShapeContext;
 import net.minecraft.entity.Entity;

@@ -1,4 +1,4 @@
-package dev.mahiro.client.utils.rotation;
+package dev.mahiro.client.utils.vector;
 
 
 public final class Rotation {

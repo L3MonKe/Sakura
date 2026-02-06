@@ -6,10 +6,10 @@ import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseOutSine;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -70,8 +70,14 @@ public class ClickGuiScreen extends Screen {
             }
         }
 
-        if (ClickGui.backgroundBlur.get() && ClickGui.blurMode.is(ClickGui.BlurMode.FullScreen)) {
-            BlurShader.drawQuadBlur(0, 0, mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), ClickGui.blurStrength.get().floatValue());
+        if (ClickGui.backgroundBlur.get()) {
+            float blurStrength = ClickGui.blurStrength.get().floatValue();
+            Shader2DUtil.drawQuadBlur(
+                    0, 0,
+                    mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(),
+                    blurStrength,
+                    1.0f
+            );
         }
 
         NanoVGRenderer.INSTANCE.draw(canvas -> NanoVGHelper.drawRect(0, 0, mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), new Color(18, 18, 18, 50)));

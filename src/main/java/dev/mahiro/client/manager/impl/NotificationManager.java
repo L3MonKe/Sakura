@@ -3,8 +3,8 @@ package dev.mahiro.client.manager.impl;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Easing;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
@@ -77,7 +77,7 @@ public class NotificationManager {
         float width = Math.min(Math.max(minWidth, textWidth), maxWidth);
 
         if (blur) {
-            BlurShader.drawRoundedBlur(x, y, width, height, 0, blurStrength);
+            Shader2DUtil.drawRoundedBlur(x, y, width, height, 0, new Color(0, 0, 0, 0), blurStrength, 1.0f);
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
@@ -102,7 +102,7 @@ public class NotificationManager {
                 Notification notification = notifications.get(i);
                 float[] bounds = notification.getBounds(x, y + offsetY, maxWidth, leftAligned);
                 if (bounds != null) {
-                    BlurShader.drawRoundedBlur(bounds[0], bounds[1], bounds[2], bounds[3], 0, blurStrength);
+                    Shader2DUtil.drawRoundedBlur(bounds[0], bounds[1], bounds[2], bounds[3], 0, new Color(0, 0, 0, 0), blurStrength, 1.0f);
                     offsetY += bounds[3] + 4.0f;
                 }
             }

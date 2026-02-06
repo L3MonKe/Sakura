@@ -92,6 +92,8 @@ import java.util.concurrent.Executors;
 public class Mahiro {
     public static final String MOD_NAME = "M4h1r0";
     public static final String MOD_VER = BuildConfig.VERSION;
+    public static final String MOD_SUFFIX = BuildConfig.BUILD_IDENTIFIER;
+
 
     public static final Logger LOGGER = LogManager.getLogger(MOD_NAME);
     public static final IEventBus EVENT_BUS = new EventBus();

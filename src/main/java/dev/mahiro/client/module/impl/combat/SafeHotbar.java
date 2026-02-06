@@ -58,7 +58,7 @@ public class SafeHotbar extends Module {
     }
 
     private void switchToTotem() {
-        if (!timerUtil.passedMillise(switchDelay.get())) return;
+        if (!timerUtil.passedMS(switchDelay.get())) return;
 
         for (int i = 0; i < 9; i++) {
             if (mc.player.getInventory().getStack(i).getItem() == Items.TOTEM_OF_UNDYING) {

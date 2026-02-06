@@ -9,9 +9,9 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.shaders.MainMenuShader;
 import dev.mahiro.client.utils.TranslationManager;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -131,10 +131,10 @@ public class WelcomeScreen extends Screen {
 
         int langBtnWidth = (int) (200 * scale);
         btnLanguage = new MenuButton(centerX - langBtnWidth / 2, centerY, langBtnWidth, buttonHeight, getLanguageText(), () -> {
-            if (ClickGui.language.get() == ClickGui.LanguageMode.English) {
-                ClickGui.language.set(ClickGui.LanguageMode.Chinese);
+            if (ClickGui.language.get() == ClickGui.Language.English) {
+                ClickGui.language.set(ClickGui.Language.Chinese);
             } else {
-                ClickGui.language.set(ClickGui.LanguageMode.English);
+                ClickGui.language.set(ClickGui.Language.English);
             }
 
             btnLanguage.text = getLanguageText();
@@ -190,12 +190,12 @@ public class WelcomeScreen extends Screen {
     }
 
     private String getLanguageText() {
-        return TranslationManager.get("settings.language") + (ClickGui.language.get() == ClickGui.LanguageMode.English ? "English" : "中文");
+        return TranslationManager.get("settings.language") + (ClickGui.language.get() == ClickGui.Language.English ? "English" : "中文");
     }
 
     private String getColorModeText() {
         String modeName = TranslationManager.get("colormode." + ClickGui.colorMode.get().name().toLowerCase());
-        return (ClickGui.language.get() == ClickGui.LanguageMode.English ? "Color Mode: " : "颜色模式: ") + modeName;
+        return (ClickGui.language.get() == ClickGui.Language.English ? "Color Mode: " : "颜色模式: ") + modeName;
     }
 
     private void changeStep(int newStep) {
@@ -269,7 +269,7 @@ public class WelcomeScreen extends Screen {
         MainMenuShader.getSharedInstance().render(width, height, 1.0f);
 
         if (blurStrength > 0.1f) {
-            BlurShader.drawQuadBlur(0, 0, width, height, blurStrength);
+            Shader2DUtil.drawQuadBlur(0, 0, width, height, blurStrength, 1.0f);
         }
 
         final float finalScale = scale;

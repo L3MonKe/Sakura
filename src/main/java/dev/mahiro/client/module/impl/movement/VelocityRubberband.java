@@ -94,7 +94,7 @@ public class VelocityRubberband extends Module {
 
         if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet) {
             if (packet.getEntityId() != mc.player.getId()) return;
-            if (!lagTimer.passedMillise(500)) return;
+            if (!lagTimer.passedMS(500)) return;
             if (groundOnly.get() && !mc.player.isOnGround()) return;
             if (onlyHurt.get() && !wasHurt) return;
 
@@ -108,7 +108,7 @@ public class VelocityRubberband extends Module {
         }
 
         if (explosion.get() && event.getPacket() instanceof ExplosionS2CPacket) {
-            if (!lagTimer.passedMillise(500)) return;
+            if (!lagTimer.passedMS(500)) return;
 
             IExplosionS2CPacket accessor = (IExplosionS2CPacket) event.getPacket();
             Vec3d kb = accessor.getPlayerKnockback().orElse(null);
@@ -142,7 +142,7 @@ public class VelocityRubberband extends Module {
         }
         lastHealth = currentHealth;
 
-        if (hurtTimer.passedMillise(1000)) {
+        if (hurtTimer.passedMS(1000)) {
             wasHurt = false;
         }
 

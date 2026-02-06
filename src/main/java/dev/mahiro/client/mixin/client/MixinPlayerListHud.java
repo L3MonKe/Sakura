@@ -1,6 +1,7 @@
 package dev.mahiro.client.mixin.client;
 
 import dev.mahiro.client.Mahiro;
+import dev.mahiro.client.module.impl.client.Chat;
 import dev.mahiro.client.module.impl.hud.DynamicIslandHud;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.PlayerListHud;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
@@ -26,12 +28,12 @@ public class MixinPlayerListHud {
     @Shadow
     private Text footer;
 
-    /*@Inject(method = "getPlayerName", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "getPlayerName", at = @At("HEAD"), cancellable = true)
     public void getPlayerName(PlayerListEntry playerListEntry, CallbackInfoReturnable<Text> info) {
         Chat chat = Mahiro.MODULES.getModule(Chat.class);
 
         if (chat.isEnabled() && chat.enableTab.get()) info.setReturnValue(chat.getPlayerName(playerListEntry));
-    }*/
+    }
 
     @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;ILnet/minecraft/scoreboard/Scoreboard;Lnet/minecraft/scoreboard/ScoreboardObjective;)V", at = @At("HEAD"), cancellable = true)
     private void onRender(DrawContext context, int scaledWindowWidth, Scoreboard scoreboard, ScoreboardObjective objective, CallbackInfo ci) {

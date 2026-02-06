@@ -15,7 +15,7 @@ public class TimerUtil {
         return getCurrentMS() - lastMS >= ticks * 1000;
     }
 
-    public boolean passedMillise(double milliseconds) {
+    public boolean passedMS(double milliseconds) {
         if (milliseconds == 0) {
             return true;
         }

@@ -6,15 +6,15 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.color.ColorUtil;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.client.texture.Sprite;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.util.math.MathHelper;
@@ -93,7 +93,7 @@ public class PotionHud extends HudModule {
         animHeight = smooth(animHeight == 0 ? targetHeight : animHeight, targetHeight, 0.2f);
 
         if (showBackground.get() && backgroundBlur.get()) {
-            BlurShader.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, blurStrength.get().floatValue());
+            Shader2DUtil.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 0.9f);
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
@@ -286,7 +286,9 @@ public class PotionHud extends HudModule {
         int ix = Math.round(x);
         int iy = Math.round(y);
         int is = Math.round(size);
-        context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, InGameHud.getEffectTexture(instance.getEffectType()), ix, iy, is, is);
+        Sprite sprite = null;// todo: mc.getAtlasManager().getSprite(); how to draw sprite in yarn 1.21.11??
+        if (sprite == null) return;
+        context.drawSpriteStretched(RenderPipelines.GUI_TEXTURED, sprite, ix, iy, is, is);
     }
 
     private void drawIconGlow(StatusEffectInstance instance, float cx, float cy, float radius, int order, float s) {

@@ -1,8 +1,5 @@
 package dev.mahiro.client.module.impl.hud;
 
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.Mahiro;
 import dev.mahiro.client.events.render.Render3DEvent;
@@ -13,53 +10,43 @@ import dev.mahiro.client.module.impl.combat.KillAura;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.utils.animations.Animation;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.EaseOutSine;
 import dev.mahiro.client.utils.color.ColorUtil;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import dev.mahiro.client.utils.time.TimerUtil;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.*;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.client.texture.GlTexture;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
 import org.lwjgl.nanovg.NanoVG;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryStack;
 
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.function.Function;
 
 public class TargetHud extends HudModule {
-    public TargetHud() {
-        super("TargetHud", "目标显示", 150, 50);
-        this.width = 150;
-        this.height = 50;
-    }
-
     public enum HPmodeEn {
         HP, Percentage
     }
@@ -103,6 +90,9 @@ public class TargetHud extends HudModule {
     // Modern Settings
     private final NumberValue<Integer> modernBgAlpha = new NumberValue<>("BgAlpha", "背景透明度", 100, 0, 255, 1, () -> style.get() == StyleEn.Modern);
     private final NumberValue<Double> modernBlur = new NumberValue<>("ModernBlur", "背景模糊", 10.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Modern);
+    private final NumberValue<Double> modernBloom = new NumberValue<>("ModernBloom", "背景光晕", 10.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Modern);
+    private final BoolValue bloomFollowHP = new BoolValue("BloomFollowHP", "光晕跟随血量", true, () -> style.get() == StyleEn.Modern);
+    private final ColorValue modernBloomColor = new ColorValue("BloomColor", "光晕颜色", new Color(0, 0, 0, 180), () -> style.get() == StyleEn.Modern && !bloomFollowHP.get());
 
     private final EnumValue<HPmodeEn> hpMode = new EnumValue<>("HP Mode", "血量模式", HPmodeEn.HP);
     private final EnumValue<ImageModeEn> imageMode = new EnumValue<>("Image", "图片模式", ImageModeEn.Anime, () -> style.get() == StyleEn.ThunderHack);
@@ -127,9 +117,11 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> glowStrength = new NumberValue<>("GlowStrength", "发光强度", 5.0, 1.0, 20.0, 1.0, glow::get);
     private final BoolValue showArmor = new BoolValue("Armor", "显示装备", true);
 
+    // Renamed or kept for particles
     private final ColorValue color = new ColorValue("Color1", "颜色1", new Color(4, 59, 95));
     private final ColorValue color2 = new ColorValue("Color2", "颜色2", new Color(4, 59, 95));
-
+    // Removed old healthColor definition to avoid conflict
+    private final BoolValue funTimeHP = new BoolValue("FunTimeHP", "FunTime血量", false);
     private final BoolValue absorp = new BoolValue("Absorption", "伤害吸收", true);
 
 
@@ -156,27 +148,10 @@ public class TargetHud extends HudModule {
     private float ticks = 0;
     private boolean needsCacheClear = false;
 
-    private final RenderPipeline TARGET_ICON_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
-            .withLocation("pipeline/mahiro_target_icon")
-            .withBlend(BlendFunction.TRANSLUCENT)
-            .withCull(false)
-            .withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST)
-            .withDepthWrite(false)
-            .build()
-    );
-
-    private final Function<Identifier, RenderLayer> TARGET_ICON_LAYER = Util.memoize(texture -> RenderLayer.of(
-            "mahiro_target_icon",
-            RenderSetup.builder(TARGET_ICON_PIPELINE)
-                    .texture("Sampler0", texture)
-                    .translucent()
-                    .layeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .outputTarget(OutputTarget.ITEM_ENTITY_TARGET)
-                    .build()
-    ));
-
-    private RenderLayer targetIcon(Identifier texture) {
-        return TARGET_ICON_LAYER.apply(texture);
+    public TargetHud() {
+        super("TargetHud", "目标显示", 150, 50);
+        this.width = 150;
+        this.height = 50;
     }
 
     @Override
@@ -188,7 +163,7 @@ public class TargetHud extends HudModule {
         lastTargetHealth = -1;
         delayHealth = -1;
         particles.clear();
-        needsCacheClear = true;
+        needsCacheClear = true; // Ensure clean state on enable
     }
 
     @Override
@@ -277,7 +252,7 @@ public class TargetHud extends HudModule {
         if (MahiroDelay.get()) {
             if (health < delayHealth) {
                 // If WaitMode is ON, check timer. If OFF, bypass timer.
-                if (!MahiroDelayWait.get() || damageTimer.passedMillise(MahiroDelayTime.get())) {
+                if (!MahiroDelayWait.get() || damageTimer.passedMS(MahiroDelayTime.get())) {
                     // Slowly decrease delayHealth
                     delayHealth = MathHelper.lerp(tickDelta * MahiroDelaySpeed.get().floatValue() * 0.05f, delayHealth, health);
                 }
@@ -622,7 +597,7 @@ public class TargetHud extends HudModule {
     }
 
     private void updateParticles(long vg) {
-        if (timer.passedMillise(1000.0 / 60.0)) {
+        if (timer.passedMS(1000D / 60D)) {
             ticks += 0.1f;
             for (int i = 0; i < particles.size(); i++) {
                 Particles p = particles.get(i);
@@ -657,10 +632,6 @@ public class TargetHud extends HudModule {
             }
         }
     }
-
-    // ====================================================================================
-    //                                  3D ESP
-    // ====================================================================================
 
     @EventHandler
     public void onRender3D(Render3DEvent event) {
@@ -708,7 +679,7 @@ public class TargetHud extends HudModule {
         buffer.vertex(matrix, size, size, 0).texture(1, 1).color(c3.getRGB());
         buffer.vertex(matrix, size, -size, 0).texture(1, 0).color(c4.getRGB());
 
-        targetIcon(TARGET_TEX).draw(buffer.end());
+        RenderLayers.entityTranslucent(TARGET_TEX).draw(buffer.end());
     }
 
     private Color getColorForProgress(float progress) {
@@ -725,66 +696,59 @@ public class TargetHud extends HudModule {
     // ====================================================================================
 
     private void drawPlayerAvatar(PlayerEntity player, float x, float y, float size, float radius, float scale, float damageFactor) {
-        if (!(player instanceof AbstractClientPlayerEntity clientPlayer)) {
-            NanoVGHelper.drawRoundRect(x, y, size, size, radius, new Color(80, 80, 80, 200));
-            return;
-        }
-        Identifier skinTexture = clientPlayer.getSkin().body().texturePath();
-        int imageId = getSkinImageId(skinTexture);
-        if (imageId != -1) {
-            long vg = NanoVGRenderer.INSTANCE.getContext();
-            NanoVGHelper.save();
+        CompletableFuture<Optional<SkinTextures>> skinFuture = mc.getSkinProvider().fetchSkinTextures(player.getGameProfile());
+        skinFuture.thenAccept(skinTextures -> {
+            if (skinTextures.isEmpty()) return;
+            Identifier skinTexture = skinTextures.get().body().texturePath();
+            int imageId = getSkinImageId(skinTexture);
+            if (imageId != -1) {
+                long vg = NanoVGRenderer.INSTANCE.getContext();
+                NanoVGHelper.save();
 
-            // Apply scale centered on avatar
-            float cx = x + size / 2f;
-            float cy = y + size / 2f;
-            NanoVGHelper.translate(vg, cx, cy);
-            NanoVGHelper.scale(vg, scale, scale);
-            NanoVGHelper.translate(vg, -cx, -cy);
+                float cx = x + size / 2f;
+                float cy = y + size / 2f;
+                NanoVGHelper.translate(vg, cx, cy);
+                NanoVGHelper.scale(vg, scale, scale);
+                NanoVGHelper.translate(vg, -cx, -cy);
 
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+                try (MemoryStack stack = MemoryStack.stackPush()) {
+                    org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
 
-                // Calculate pattern to focus on the face (8, 8) with size (8, 8) in a 64x64 texture
-                float faceScale = 8.0f;
-                float ox = x - size;
-                float oy = y - size;
-                float ex = size * faceScale;
-                float ey = size * faceScale;
+                    float faceScale = 8.0f;
+                    float ox = x - size;
+                    float oy = y - size;
+                    float ex = size * faceScale;
+                    float ey = size * faceScale;
 
-                NanoVG.nvgImagePattern(vg, ox, oy, ex, ey, 0, imageId, 1f, paint);
-                NanoVG.nvgBeginPath(vg);
-                NanoVG.nvgRoundedRect(vg, x, y, size, size, radius);
-                NanoVG.nvgFillPaint(vg, paint);
-                NanoVG.nvgFill(vg);
-
-                // Red Damage Overlay
-                if (damageFactor > 0.01f) {
+                    NanoVG.nvgImagePattern(vg, ox, oy, ex, ey, 0, imageId, 1f, paint);
                     NanoVG.nvgBeginPath(vg);
                     NanoVG.nvgRoundedRect(vg, x, y, size, size, radius);
-                    // Use damageFactor for alpha (max 0.6 to not fully obscure)
-                    int alpha = (int) (damageFactor * 150);
-                    NanoVG.nvgFillColor(vg, NanoVGHelper.nvgColor(new Color(255, 0, 0, alpha)));
+                    NanoVG.nvgFillPaint(vg, paint);
                     NanoVG.nvgFill(vg);
+
+                    // Red Damage Overlay
+                    if (damageFactor > 0.01f) {
+                        NanoVG.nvgBeginPath(vg);
+                        NanoVG.nvgRoundedRect(vg, x, y, size, size, radius);
+                        // Use damageFactor for alpha (max 0.6 to not fully obscure)
+                        int alpha = (int) (damageFactor * 150);
+                        NanoVG.nvgFillColor(vg, NanoVGHelper.nvgColor(new Color(255, 0, 0, alpha)));
+                        NanoVG.nvgFill(vg);
+                    }
                 }
+                NanoVGHelper.restore();
+            } else {
+                NanoVGHelper.drawRoundRect(x, y, size, size, radius, new Color(80, 80, 80, 200));
             }
-            NanoVGHelper.restore();
-        } else {
-            NanoVGHelper.drawRoundRect(x, y, size, size, radius, new Color(80, 80, 80, 200));
-        }
+        });
     }
 
     private int getSkinImageId(Identifier skinTexture) {
-        AbstractTexture texture = mc.getTextureManager().getTexture(skinTexture);
-        int glId = ((GlTexture) texture.getGlTexture()).getGlId();
-
+        int glId = 0;// TODO: mc.getTextureManager().getTexture(skinTexture).getGlId();
         Integer cached = skinImageCache.get(glId);
         if (cached != null) {
             return cached;
         }
-        GL11.glBindTexture(GL11.GL_TEXTURE_2D, glId);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-        GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
         int imageId = NanoVGHelper.createImageFromHandle(glId, 64, 64);
         if (imageId != -1) {
             skinImageCache.put(glId, imageId);
@@ -822,7 +786,13 @@ public class TargetHud extends HudModule {
         float r = MahiroRadius.get().floatValue() * globalScale * animValue;
         float blur = MahiroBlurRadius.get().floatValue() * globalScale;
 
-        BlurShader.drawRoundedBlur(rx, ry, w, h, r, blur);
+        Shader2DUtil.drawRoundedBlur(
+                rx, ry, w, h,
+                r,
+                new Color(0, 0, 0, 0),
+                blur,
+                1.0f
+        );
     }
 
     private void renderMahiro(long vg, LivingEntity target, float health, float maxHealth, float animationFactor, float damageFactor) {

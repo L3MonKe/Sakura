@@ -648,14 +648,14 @@ public class ColorValueComponent extends Component {
 
     @Override
     public boolean mouseReleased(Click click) {
-        if (click.button() == 0) {
-            pickingHue = false;
-            pickingOthers = false;
-            pickingR = false;
-            pickingG = false;
-            pickingB = false;
-            pickingA = false;
-        }
+        //if (state == 0) {
+        pickingHue = false;
+        pickingOthers = false;
+        pickingR = false;
+        pickingG = false;
+        pickingB = false;
+        pickingA = false;
+        //}
         return super.mouseReleased(click);
     }
 

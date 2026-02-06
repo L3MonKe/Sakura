@@ -6,6 +6,7 @@ import dev.mahiro.client.events.input.MouseButtonEvent;
 import dev.mahiro.client.events.key.KeyEvent;
 import dev.mahiro.client.events.render.Render2DEvent;
 import dev.mahiro.client.events.type.KeyAction;
+import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.manager.impl.NotificationManager;
 import dev.mahiro.client.module.impl.client.*;
 import dev.mahiro.client.module.impl.combat.*;
@@ -94,7 +95,7 @@ public class ModuleManager {
         // Client
         add(new AutoHeypixel());
         add(new Capes());
-//        add(new Chat());
+        add(new Chat());
         add(new ClickGui());
         add(new HudEditor());
         add(new Targets());
@@ -190,14 +191,14 @@ public class ModuleManager {
         for (Module module : affectedModules) {
             if (module.getBindMode() == Module.BindMode.Toggle) {
                 boolean enabling = !module.isEnabled();
-                sendToggleNotification(module, enabling, "");
+                sendToggleNotification(module, enabling, "", false);
                 module.toggle();
             } else if (module.getBindMode() == Module.BindMode.Hold) {
                 if (isPress && !module.isEnabled()) {
-                    sendToggleNotification(module, true, " §8(Hold)");
+                    sendToggleNotification(module, true, " §8(Hold)", false);
                     module.setState(true);
                 } else if (isRelease && module.isEnabled()) {
-                    sendToggleNotification(module, false, "");
+                    sendToggleNotification(module, false, "", false);
                     module.setState(false);
                 }
             }
@@ -205,22 +206,25 @@ public class ModuleManager {
 
         if (!affectedModules.isEmpty()) {
             if (hasEnabling) {
-                ClickGui.playEnableSound();
+                Managers.SOUND.playSound(Managers.SOUND.ENABLE);
             } else {
-                ClickGui.playDisableSound();
+                Managers.SOUND.playSound(Managers.SOUND.DISABLE);
             }
         }
     }
 
-    private void sendToggleNotification(Module module, boolean enabling, String suffix) {
+    private void sendToggleNotification(Module module, boolean enabling, String suffix, boolean playSound) {
         String name = module.getDisplayName();
         String status;
-        if (ClickGui.language.get() == ClickGui.LanguageMode.Chinese) {
+        if (ClickGui.language.get() == ClickGui.Language.Chinese) {
             status = enabling ? "§a 已开启" : "§c 已关闭";
         } else {
             status = enabling ? "§a enabled" : "§c disabled";
         }
         NotificationManager.send(module.hashCode(), "§7" + name + status + suffix, 3000L);
+        if (playSound) {
+            Managers.SOUND.playSound(enabling ? Managers.SOUND.ENABLE : Managers.SOUND.DISABLE);
+        }
     }
 
     @EventHandler

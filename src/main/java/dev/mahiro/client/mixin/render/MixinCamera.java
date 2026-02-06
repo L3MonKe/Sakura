@@ -20,8 +20,6 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 public abstract class MixinCamera {
     @Unique
     private Entity focusedEntity;
-    @Unique
-    private float tickProgress;
 
     @Shadow
     protected abstract float clipToSpace(float desiredCameraDistance);
@@ -46,7 +44,6 @@ public abstract class MixinCamera {
     @Inject(method = "update", at = @At("HEAD"))
     private void onUpdateHead(World area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickProgress, CallbackInfo ci) {
         this.focusedEntity = focusedEntity;
-        this.tickProgress = tickProgress;
     }
 
     @ModifyArgs(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;setPos(DDD)V"))
@@ -54,8 +51,8 @@ public abstract class MixinCamera {
         CameraClip actionCamera = Mahiro.MODULES.getModule(CameraClip.class);
 
         if (actionCamera != null && actionCamera.shouldModifyCamera() && focusedEntity != null) {
-            Vec3d playerPos = focusedEntity.getLerpedPos(this.tickProgress);
-            actionCamera.update(playerPos, this.tickProgress, focusedEntity);
+            Vec3d playerPos = Vec3d.of(focusedEntity.getBlockPos());
+            actionCamera.update(playerPos);
             Vec3d cameraPos = actionCamera.getCameraPos();
             if (cameraPos != null) {
                 args.set(0, cameraPos.x);

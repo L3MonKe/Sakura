@@ -783,7 +783,6 @@ public class AuthScreen extends Screen {
             if (click.button() == 0 && hovered && this.active && this.visible) {
                 pressed = true;
                 pressAnim.setDirection(Direction.FORWARDS);
-                super.onClick(click, doubled);
             }
         }
 

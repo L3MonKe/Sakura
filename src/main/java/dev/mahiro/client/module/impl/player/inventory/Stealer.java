@@ -116,7 +116,7 @@ public class Stealer extends Module {
                         || chestTitle.equals(largeChest)
                         || chestTitle.equals("Chest")
                         || this.pickEnderChest.get() && chestTitle.equals(enderChest)) {
-                    if (this.isChestEmpty(menu) && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
+                    if (this.isChestEmpty(menu) && timer.passedMS(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
                         mc.player.closeHandledScreen();
                     } else {
                         List<Integer> slots = IntStream.range(0, menu.getRows() * 9).boxed().collect(Collectors.toList());
@@ -124,7 +124,7 @@ public class Stealer extends Module {
 
                         for (Integer pSlotId : slots) {
                             ItemStack stack = menu.getSlot(pSlotId).getStack();
-                            if (isItemUseful(stack) && this.isBestItemInChest(menu, stack) && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
+                            if (isItemUseful(stack) && this.isBestItemInChest(menu, stack) && timer.passedMS(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
                                 mc.interactionManager.clickSlot(menu.syncId, pSlotId, 0, SlotActionType.QUICK_MOVE, mc.player);
                                 timer.reset();
                                 break;

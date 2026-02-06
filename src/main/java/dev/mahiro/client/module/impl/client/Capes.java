@@ -4,8 +4,6 @@ import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.values.impl.EnumValue;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.entity.player.SkinTextures;
 import net.minecraft.util.AssetInfo;
 import net.minecraft.util.Identifier;
 
@@ -32,19 +30,23 @@ public class Capes extends Module {
     }
 
     private AssetInfo.TextureAsset getTexture(String capeName) {
-        return new AssetInfo.TextureAssetInfo(Identifier.of("mahiro", "capes/" + capeName), Identifier.of("mahiro", "textures/capes/" + capeName + ".png"));
+        return new AssetInfo.TextureAssetInfo(Identifier.of("mahiro", "textures/capes/" + capeName + ".png"));
     }
 
     public AssetInfo.TextureAsset getCape(AbstractClientPlayerEntity player, boolean elytra) {
-        if (isEnabled() && player.equals(mc.player)) {
-            return getTexture(getName());
+        try {
+            if (isEnabled() && player.equals(mc.player)) {
+                return getTexture(getName());
+            }
+
+            // TODO: IRC的披风
+            /*if (ClientSession.get() != null && ClientSession.get().hasCape(player)) {
+                return getTexture(ClientSession.get().getCapeName(player));
+            }*/
+
+            return elytra ? mc.getNetworkHandler().getPlayerListEntry(player.getUuid()).getSkinTextures().elytra() : mc.getNetworkHandler().getPlayerListEntry(player.getUuid()).getSkinTextures().cape();
+        } catch (Exception e) {
+            return null;
         }
-
-        // IRC的披风
-
-        PlayerListEntry entry = mc.getNetworkHandler().getPlayerListEntry(player.getUuid());
-        if (entry == null) return null;
-        SkinTextures skin = entry.getSkinTextures();
-        return elytra ? skin.elytra() : skin.cape();
     }
 }

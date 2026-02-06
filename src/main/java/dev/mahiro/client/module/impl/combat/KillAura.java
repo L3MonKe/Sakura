@@ -12,9 +12,10 @@ import dev.mahiro.client.module.impl.movement.Scaffold;
 import dev.mahiro.client.utils.math.MathUtil;
 import dev.mahiro.client.utils.render.Render3DUtil;
 import dev.mahiro.client.utils.rotation.MovementFix;
-import dev.mahiro.client.utils.rotation.Rotation;
 import dev.mahiro.client.utils.rotation.RotationUtil;
+import dev.mahiro.client.utils.vector.Rotation;
 import dev.mahiro.client.values.impl.BoolValue;
+import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
@@ -39,8 +40,10 @@ public class KillAura extends Module {
     private final NumberValue<Double> minCps = new NumberValue<>("Min CPS", "最小攻击速度", 10.0, 1.0, 20.0, 1.0);
     private final NumberValue<Double> maxCps = new NumberValue<>("Max CPS", "最大攻击速度", 10.0, 1.0, 20.0, 1.0);
     private final NumberValue<Integer> rotateSpeed = new NumberValue<>("Rotation Speed", "转向速度", 10, 1, 10, 1);
-    private final BoolValue autoBlock = new BoolValue("Auto Block", "自动格挡", true);
-    private final BoolValue debugRender = new BoolValue("Debug Render", "调试渲染", false);
+    private final BoolValue autoBlock = new BoolValue("AutoBlock", "自动格挡", false);
+    private final EnumValue<AutoBlockMode> autoBlockMode = new EnumValue<>("Block Mode", "格挡模式", AutoBlockMode.Fake, autoBlock::get);
+    private final BoolValue teamCheck = new BoolValue("Team Check", "队伍检测", true);
+    private final BoolValue render = new BoolValue("Render", "渲染", true);
 
     private List<LivingEntity> targets;
     private LivingEntity target;
@@ -92,15 +95,15 @@ public class KillAura extends Module {
 
     @EventHandler
     public void onRender(Render3DEvent event) {
-        if (!debugRender.get()) return;
+        if (!render.get()) return;
         if (targets == null || targets.isEmpty()) return;
         for (Entity entity : targets) {
             if (entity.equals(target)) {
                 Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB());
-                Render3DUtil.drawOutlineBox(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB(), 2f);
+                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(200, 0, 0, 60).getRGB(), 2f);
             } else {
                 Render3DUtil.drawFilledBox(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB());
-                Render3DUtil.drawOutlineBox(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB(), 2f);
+                Render3DUtil.drawBoxOutline(event.getMatrices(), entity.getBoundingBox(), new Color(0, 200, 0, 60).getRGB(), 2f);
             }
         }
     }

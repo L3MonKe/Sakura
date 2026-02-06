@@ -6,12 +6,12 @@ import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.nanovg.NanoVGRenderer;
 import dev.mahiro.client.nanovg.font.FontLoader;
 import dev.mahiro.client.nanovg.util.NanoVGHelper;
-import dev.mahiro.client.shaders.BlurShader;
 import dev.mahiro.client.shaders.MainMenuShader;
 import dev.mahiro.client.utils.animations.AnimationUtil;
 import dev.mahiro.client.utils.animations.Direction;
 import dev.mahiro.client.utils.animations.impl.SmoothStepAnimation;
 import dev.mahiro.client.utils.color.ColorUtil;
+import dev.mahiro.client.utils.render.Shader2DUtil;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -119,7 +119,7 @@ public class MainMenuScreen extends Screen {
         entries.clear();
         entries.add(new MainMenuEntry("Single Player", "A", () -> mc.setScreen(new SelectWorldScreen(this))));
         entries.add(new MainMenuEntry("Multi Player", "P", () -> mc.setScreen(new MultiplayerScreen(this))));
-        entries.add(new MainMenuEntry("滚  木", "C", null /*TODO: Rewrite altmanager*/));
+        entries.add(new MainMenuEntry("Alt Manager", "C", null /*TODO: Rewrite altmanager*/));
         entries.add(new MainMenuEntry("Options", "D", () -> mc.setScreen(new OptionsScreen(this, mc.options))));
         entries.add(new MainMenuEntry("Shut down", "E", mc::scheduleStop));
     }
@@ -195,8 +195,17 @@ public class MainMenuScreen extends Screen {
         return new Layout(centerX, centerY, scale);
     }
 
-    private void drawPanelBlur(Layout layout, float opacity) {
-        BlurShader.drawRoundedBlur(layout.panelX, layout.panelY, layout.panelW, layout.panelH, layout.panelR, PANEL_BLUR_COLOR, 10f * layout.scale, 0.8f * opacity);
+    private void drawPanelBlur(DrawContext context, Layout layout, float opacity) {
+        Shader2DUtil.drawRoundedBlur(
+                layout.panelX,
+                layout.panelY,
+                layout.panelW,
+                layout.panelH,
+                layout.panelR,
+                PANEL_BLUR_COLOR,
+                10f * layout.scale,
+                0.8f * opacity
+        );
     }
 
     private void drawBackgroundTints(Layout layout, float opacity) {
@@ -379,7 +388,7 @@ public class MainMenuScreen extends Screen {
         Layout layout = resolveLayout(scale);
 
         float panelP = AnimationUtil.smoothstep(0.15f, 0.55f, p);
-        drawPanelBlur(layout, panelP);
+        drawPanelBlur(context, layout, panelP);
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color accent = ClickGui.color(0);

@@ -88,6 +88,13 @@ public class Hat extends Module {
         double y = MathHelper.lerp(tickDelta, player.lastRenderY, player.getY()) - camera.y;
         double z = MathHelper.lerp(tickDelta, player.lastRenderZ, player.getZ()) - camera.z;
 
+        /*RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableDepthTest();
+        RenderSystem.depthMask(false);
+        RenderSystem.disableCull();
+        RenderSystem.setShader(ShaderProgramKeys.POSITION_COLOR);*/
+
         matrices.push();
 
         matrices.translate(x, y + 1.9, z);

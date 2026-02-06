@@ -123,7 +123,7 @@ public class PacketMine extends Module {
             performSwap(slot, true);
 
             if (remineConfig.get() == RemineMode.Normal) {
-                if (resetTime.passedMillise(calcBreakTime(blockData.currentPos(), swapConfig.get() == Swap.SilentAlt) + 5000L) && reTry.get()) {
+                if (resetTime.passedMS(calcBreakTime(blockData.currentPos(), swapConfig.get() == Swap.SilentAlt) + 5000L) && reTry.get()) {
                     hookPos(blockData.currentPos(), true);
                 }
             }
@@ -195,7 +195,7 @@ public class PacketMine extends Module {
                 lerp(lineColor.get().getBlue(), doneLineColor.get().getBlue(), progress),
                 lerp(lineColor.get().getAlpha(), doneLineColor.get().getAlpha(), progress));
         Render3DUtil.drawFilledBox(matrices, box, lerpedFullColor);
-        Render3DUtil.drawOutlineBox(matrices, box, lerpedLineColor.getRGB(), 1f);
+        Render3DUtil.drawBoxOutline(matrices, box, lerpedLineColor.getRGB(), 1f);
         Vec3d center = new Vec3d(
                 box.minX + (box.maxX - box.minX) * 0.5,
                 box.minY + (box.maxY - box.minY) * 0.5,

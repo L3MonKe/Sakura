@@ -10,8 +10,6 @@ import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.option.Perspective;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.lwjgl.glfw.GLFW;
 
@@ -102,27 +100,27 @@ public class CameraClip extends Module {
         return cameraPos;
     }
 
-    public void update(Vec3d playerPos, float tickProgress, Entity focusedEntity) {
+    public void update(Vec3d playerPos) {
         if (isFirstPerson()) {
             cameraPos = null;
             return;
         }
 
         if (cameraPos == null) {
-            cameraPos = focusedEntity.getClientCameraPosVec(tickProgress);
-            smoothYaw = focusedEntity.getYaw();
-            smoothPitch = focusedEntity.getPitch();
+            cameraPos = mc.player.getEyePos();
+            smoothYaw = mc.player.getYaw();
+            smoothPitch = mc.player.getPitch();
             return;
         }
 
-        float currentYaw = focusedEntity.getYaw();
-        float currentPitch = focusedEntity.getPitch();
+        float currentYaw = mc.player.getYaw();
+        float currentPitch = mc.player.getPitch();
 
         float rotSmooth = rotationSmoothness.get().floatValue();
-        smoothYaw += MathHelper.wrapDegrees(currentYaw - smoothYaw) * rotSmooth;
+        smoothYaw += (currentYaw - smoothYaw) * rotSmooth;
         smoothPitch += (currentPitch - smoothPitch) * rotSmooth;
 
-        float yawDelta = MathHelper.wrapDegrees(currentYaw - smoothYaw);
+        float yawDelta = currentYaw - smoothYaw;
         float pitchDelta = currentPitch - smoothPitch;
 
         float offsetMultiplier = rotationOffset.get().floatValue();
@@ -138,10 +136,9 @@ public class CameraClip extends Module {
 
         double distance = cameraPos.distanceTo(playerPos);
         float maxDist = maxDistance.get().floatValue();
-        double eyeHeight = focusedEntity.getStandingEyeHeight();
 
         if (distance > maxDist) {
-            cameraPos = new Vec3d(playerPos.x, playerPos.y + eyeHeight, playerPos.z);
+            cameraPos = playerPos;
             return;
         }
 
@@ -149,7 +146,7 @@ public class CameraClip extends Module {
         double dynamicFactor = smoothFactor * (1.0 - Math.exp(-distance / maxDist));
 
         double dx = playerPos.x - cameraPos.x + rotOffsetX;
-        double dy = playerPos.y + eyeHeight - cameraPos.y + rotOffsetY;
+        double dy = playerPos.y + mc.player.getEyeHeight(mc.player.getPose()) - cameraPos.y + rotOffsetY;
         double dz = playerPos.z - cameraPos.z + rotOffsetZ;
 
         cameraPos = new Vec3d(

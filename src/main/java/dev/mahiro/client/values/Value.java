@@ -40,7 +40,7 @@ public abstract class Value<V> {
     }
 
     public String getDisplayName() {
-        if (ClickGui.language.get() == ClickGui.LanguageMode.Chinese) {
+        if (ClickGui.language.get() == ClickGui.Language.Chinese) {
             return chineseName == null ? name : chineseName;
         }
         return name;

@@ -37,6 +37,10 @@ public class RenderManager {
         long time = System.currentTimeMillis();
         renderBoxes.removeIf(block -> time - block.startTime > block.fadeTime);
 
+        List<Box> boxesToDraw = new ArrayList<>();
+        List<Color> sideColors = new ArrayList<>();
+        List<Color> lineColors = new ArrayList<>();
+
         for (Renderer boxes : renderBoxes) {
             float factor = 1.0f - ((float) (time - boxes.startTime) / boxes.fadeTime);
 
@@ -60,8 +64,12 @@ public class RenderManager {
                 renderBox = new Box(centerX - halfX, centerY - halfY, centerZ - halfZ, centerX + halfX, centerY + halfY, centerZ + halfZ);
             }
 
-            Render3DUtil.drawFullBox(event.getMatrices(), renderBox, side, line);
+            boxesToDraw.add(renderBox);
+            sideColors.add(side);
+            lineColors.add(line);
         }
+
+        Render3DUtil.drawBatchBoxes(event.getMatrices(), boxesToDraw, sideColors, lineColors, 2f);
     }
 
     private record Renderer(Box box, Color sideColor, Color lineColor, long startTime, int fadeTime, boolean shrink) {
