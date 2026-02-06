@@ -712,8 +712,9 @@ public class ColorValueComponent extends Component {
 
         int chr = input.codepoint();
         if (chr >= '0' && chr <= '9' && tempText.length() < 3) {
-            tempText = tempText.substring(0, cursorPos) + chr + tempText.substring(cursorPos);
-            cursorPos++;
+            String s = new String(Character.toChars(chr));
+            tempText = tempText.substring(0, cursorPos) + s + tempText.substring(cursorPos);
+            cursorPos += s.length();
             resetCursor();
             return true;
         }

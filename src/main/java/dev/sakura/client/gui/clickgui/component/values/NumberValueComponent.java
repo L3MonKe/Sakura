@@ -242,8 +242,9 @@ public class NumberValueComponent extends Component {
             return false;
         }
 
-        tempText = tempText.substring(0, cursorPos) + chr + tempText.substring(cursorPos);
-        cursorPos++;
+        String s = new String(Character.toChars(chr));
+        tempText = tempText.substring(0, cursorPos) + s + tempText.substring(cursorPos);
+        cursorPos += s.length();
         resetCursor();
 
         return true;

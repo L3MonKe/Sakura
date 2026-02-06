@@ -158,14 +158,17 @@ public class ModuleComponent implements IComponent {
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
+        boolean handled = false;
         if (isBindBoxHovered(click)) {
             if (click.button() == 0) {
                 listening = !listening;
             } else if (click.button() == 2) {
                 module.setBindMode(module.getBindMode() == Module.BindMode.Toggle ? Module.BindMode.Hold : Module.BindMode.Toggle);
             }
+            handled = true;
         } else if (listening) {
             listening = false;
+            handled = true;
         }
 
         if (isHovered((int) click.x(), (int) click.y()) && !isBindBoxHovered(click)) {
@@ -173,19 +176,29 @@ public class ModuleComponent implements IComponent {
                 case 0 -> module.toggle();
                 case 1 -> opened = !opened;
             }
+            handled = true;
         }
         if (opened && !isHovered((int) click.x(), (int) click.y())) {
-            settings.forEach(setting -> setting.mouseClicked(click, doubled));
+            for (Component setting : settings) {
+                if (setting.mouseClicked(click, doubled)) {
+                    handled = true;
+                }
+            }
         }
-        return IComponent.super.mouseClicked(click, doubled);
+        return handled || IComponent.super.mouseClicked(click, doubled);
     }
 
     @Override
     public boolean mouseReleased(Click click) {
+        boolean handled = false;
         if (opened && !isHovered((int) click.x(), (int) click.y())) {
-            settings.forEach(setting -> setting.mouseReleased(click));
+            for (Component setting : settings) {
+                if (setting.mouseReleased(click)) {
+                    handled = true;
+                }
+            }
         }
-        return IComponent.super.mouseReleased(click);
+        return handled || IComponent.super.mouseReleased(click);
     }
 
     @Override
@@ -200,7 +213,13 @@ public class ModuleComponent implements IComponent {
             return true;
         }
         if (opened) {
-            settings.forEach(setting -> setting.keyPressed(input));
+            boolean handled = false;
+            for (Component setting : settings) {
+                if (setting.keyPressed(input)) {
+                    handled = true;
+                }
+            }
+            if (handled) return true;
         }
         return IComponent.super.keyPressed(input);
     }
