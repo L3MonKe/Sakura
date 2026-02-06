@@ -44,7 +44,7 @@ public class BlurProgram {
         }
     }
 
-    private void ensureInputFramebuffer(int width, int height) {
+    private void ensureInputBuffer(int width, int height) {
         if (this.input == null) {
             this.input = new SimpleFramebuffer("Sakura Blur Input", width, height, false);
             return;
@@ -54,7 +54,7 @@ public class BlurProgram {
         }
     }
 
-    public void renderRoundedBlur(float x, float y, float width, float height, float radius, Color color, float blurStrength, float blurOpacity) {
+    public void render(float x, float y, float width, float height, float radius, Color color, float blurStrength, float blurOpacity) {
         this.ensureProgram();
 
         if (this.pipeline == null || this.uniforms == null) {
@@ -68,7 +68,7 @@ public class BlurProgram {
 
         int fbWidth = mc.getWindow().getFramebufferWidth();
         int fbHeight = mc.getWindow().getFramebufferHeight();
-        this.ensureInputFramebuffer(fbWidth, fbHeight);
+        this.ensureInputBuffer(fbWidth, fbHeight);
         if (this.input.getColorAttachment() == null || this.input.getColorAttachmentView() == null) {
             return;
         }

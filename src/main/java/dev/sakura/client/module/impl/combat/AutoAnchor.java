@@ -125,6 +125,8 @@ public class AutoAnchor extends Module {
         }
     }
 
+    private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+
     private void findPlacement() {
         BlockPos pPos = mc.player.getBlockPos();
         // 扫描范围内已有的重生锚
@@ -134,39 +136,49 @@ public class AutoAnchor extends Module {
 
         int r = (int) Math.ceil(range.get().doubleValue());
         double rangeSq = range.get().doubleValue() * range.get().doubleValue();
+        double wallRangeSq = wallRange.get().doubleValue() * wallRange.get().doubleValue();
+        Vec3d eyePos = mc.player.getEyePos();
 
         // 扫描周围方块寻找重生锚
         for (int x = -r; x <= r; x++) {
             for (int y = -r; y <= r; y++) {
                 for (int z = -r; z <= r; z++) {
-                    BlockPos pos = pPos.add(x, y, z);
+                    mutablePos.set(pPos.getX() + x, pPos.getY() + y, pPos.getZ() + z);
 
                     // 必须是重生锚
-                    if (mc.world.getBlockState(pos).getBlock() != Blocks.RESPAWN_ANCHOR) continue;
+                    if (mc.world.getBlockState(mutablePos).getBlock() != Blocks.RESPAWN_ANCHOR) continue;
 
-                    // 距离检测
-                    if (mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > rangeSq) continue;
+                    // 距离检测 (Use center coordinates manually)
+                    double centerX = mutablePos.getX() + 0.5;
+                    double centerY = mutablePos.getY() + 0.5;
+                    double centerZ = mutablePos.getZ() + 0.5;
+
+                    double distSq = mc.player.squaredDistanceTo(centerX, centerY, centerZ);
+                    if (distSq > rangeSq) continue;
 
                     // 墙体检测
-                    net.minecraft.util.hit.BlockHitResult hit = RaytraceUtil.rayTraceCollidingBlocks(mc.player.getEyePos(), Vec3d.ofCenter(pos));
-                    boolean canSee = hit != null && hit.getBlockPos().equals(pos);
+                    // Note: We need a new Vec3d for raytrace or rewrite raytrace to take coords (usually takes Vec3d)
+                    // Since raytrace is occasional (only for anchors found), one Vec3d here is acceptable compared to thousands in loop
+                    Vec3d centerVec = new Vec3d(centerX, centerY, centerZ);
+                    net.minecraft.util.hit.BlockHitResult hit = RaytraceUtil.rayTraceCollidingBlocks(eyePos, centerVec);
+                    boolean canSee = hit != null && hit.getBlockPos().equals(mutablePos);
 
                     if (strict.get()) {
                         if (!canSee) continue;
                     } else {
-                        if (!canSee && mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > wallRange.get().doubleValue() * wallRange.get().doubleValue()) {
+                        if (!canSee && distSq > wallRangeSq) {
                             continue;
                         }
                     }
 
-                    BlockPos safety = findSafetyPos(pos);
-                    // safety can be null if no space, but we still might want to explode it
-                    // But user specifically asked for safety. Let's try to find one.
+                    // We need immutable pos for storage if this is a candidate
+                    BlockPos immutablePos = mutablePos.toImmutable();
+                    BlockPos safety = findSafetyPos(immutablePos);
 
-                    double distToTarget = target.squaredDistanceTo(Vec3d.ofCenter(pos));
+                    double distToTarget = target.squaredDistanceTo(centerX, centerY, centerZ);
                     if (distToTarget < bestDistToTarget) {
                         bestDistToTarget = distToTarget;
-                        bestPos = pos;
+                        bestPos = immutablePos;
                         bestSafety = safety;
                     }
                 }

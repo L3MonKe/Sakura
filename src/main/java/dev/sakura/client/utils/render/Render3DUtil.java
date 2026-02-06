@@ -139,15 +139,23 @@ public class Render3DUtil {
     }
 
     public static void drawLine(MatrixStack stack, Vec3d start, Vec3d end, int color, float thickness) {
+        drawLine(stack, start.x, start.y, start.z, end.x, end.y, end.z, color, thickness);
+    }
+
+    public static void drawLine(MatrixStack stack, double x1, double y1, double z1, double x2, double y2, double z2, Color color, float thickness) {
+        drawLine(stack, x1, y1, z1, x2, y2, z2, color.getRGB(), thickness);
+    }
+
+    public static void drawLine(MatrixStack stack, double startX, double startY, double startZ, double endX, double endY, double endZ, int color, float thickness) {
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH);
 
         Vec3d camPos = mc.getEntityRenderDispatcher().camera.getCameraPos();
-        float x1 = (float) (start.x - camPos.getX());
-        float y1 = (float) (start.y - camPos.getY());
-        float z1 = (float) (start.z - camPos.getZ());
-        float x2 = (float) (end.x - camPos.getX());
-        float y2 = (float) (end.y - camPos.getY());
-        float z2 = (float) (end.z - camPos.getZ());
+        float x1 = (float) (startX - camPos.getX());
+        float y1 = (float) (startY - camPos.getY());
+        float z1 = (float) (startZ - camPos.getZ());
+        float x2 = (float) (endX - camPos.getX());
+        float y2 = (float) (endY - camPos.getY());
+        float z2 = (float) (endZ - camPos.getZ());
 
         Matrix4f matrix = stack.peek().getPositionMatrix();
         MatrixStack.Entry entry = stack.peek();

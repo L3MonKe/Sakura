@@ -59,22 +59,37 @@ public class Animations extends Module {
     private final BoolValue eatTransformConfig = new BoolValue("Eat Transform", "食用变换", false);
     private final NumberValue<Double> eatTransformFactorConfig = new NumberValue<>("Eat Factor", "食物变换因子", 1.0, 0.0, 1.0, 0.1, eatTransformConfig::get);
 
+    private ViewModel viewModel;
+    private KillAura killAura;
+
     public boolean flip;
 
     private enum Mode {
         Normal, Default, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen, Fourteen
     }
 
+    private ViewModel getViewModel() {
+        if (viewModel == null) viewModel = Sakura.MODULES.getModule(ViewModel.class);
+        return viewModel;
+    }
+
+    private KillAura getKillAura() {
+        if (killAura == null) killAura = Sakura.MODULES.getModule(KillAura.class);
+        return killAura;
+    }
+
     public boolean shouldAnimate() {
         if (mc.player.isUsingItem()) return false;
         if (onlySword.get() && !(mc.player.getMainHandStack().isIn(ItemTags.SWORDS))) return false;
-        if (Sakura.MODULES.getModule(KillAura.class).isEnabled() && Sakura.MODULES.getModule(KillAura.class).getCurrentTarget() != null && Sakura.MODULES.getModule(KillAura.class).isAutoBlock())
+        KillAura ka = getKillAura();
+        if (ka.isEnabled() && ka.getCurrentTarget() != null && ka.isAutoBlock())
             return true;
         return false;
     }
 
     public boolean shouldChangeAnimationDuration() {
-        return isEnabled() && (!onlyAura.get() || (Sakura.MODULES.getModule(KillAura.class).isEnabled() && Sakura.MODULES.getModule(KillAura.class).getCurrentTarget() != null));
+        KillAura ka = getKillAura();
+        return isEnabled() && (!onlyAura.get() || (ka.isEnabled() && ka.getCurrentTarget() != null));
     }
 
     @EventHandler
@@ -146,12 +161,12 @@ public class Animations extends Module {
     }
 
     private void renderSwordAnimation(MatrixStack matrices, float f, float swingProgress, float equipProgress, Arm arm) {
-        ViewModel viewModel = Sakura.MODULES.getModule(ViewModel.class);
+        ViewModel vm = getViewModel();
         if (arm == Arm.LEFT && (mode.get() == Mode.Eleven || mode.get() == Mode.Ten || mode.get() == Mode.Nine || mode.get() == Mode.Three || mode.get() == Mode.Thirteen || mode.get() == Mode.Fourteen)) {
             applyEquipOffset(matrices, arm, equipProgress);
-            matrices.translate(-viewModel.mainX.get(), viewModel.mainY.get(), viewModel.mainZ.get());
+            matrices.translate(-vm.mainX.get(), vm.mainY.get(), vm.mainZ.get());
             applySwingOffset(matrices, arm, swingProgress);
-            matrices.translate(viewModel.mainX.get(), -viewModel.mainY.get(), -viewModel.mainZ.get());
+            matrices.translate(vm.mainX.get(), -vm.mainY.get(), -vm.mainZ.get());
             return;
         }
 
@@ -274,8 +289,8 @@ public class Animations extends Module {
                     matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(45));
                     matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(g * -85.0F));
 
-                    if (viewModel.isEnabled())
-                        matrices.translate(-0.1F * viewModel.scaleMainX.get(), 0.28F * viewModel.scaleMainX.get(), 0.2F * viewModel.scaleMainX.get());
+                    if (vm.isEnabled())
+                        matrices.translate(-0.1F * vm.scaleMainX.get(), 0.28F * vm.scaleMainX.get(), 0.2F * vm.scaleMainX.get());
                     else
                         matrices.translate(-0.1F, 0.28F, 0.2F);
 
@@ -478,34 +493,34 @@ public class Animations extends Module {
         h = 1.0F - (float) Math.pow(g, 27.0);
         int i = arm == Arm.RIGHT ? 1 : -1;
 
-        ViewModel viewModel = Sakura.MODULES.getModule(ViewModel.class);
-        matrices.translate(h * 0.6F * (float) i * viewModel.eatX.get(), h * -0.5F * viewModel.eatY.get(), h * 0.0F);
+        ViewModel vm = getViewModel();
+        matrices.translate(h * 0.6F * (float) i * vm.eatX.get(), h * -0.5F * vm.eatY.get(), h * 0.0F);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * h * 90.0F));
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(h * 10.0F));
         matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * h * 30.0F));
     }
 
     private void translateToViewModel(MatrixStack matrices) {
-        ViewModel viewModel = Sakura.MODULES.getModule(ViewModel.class);
-        if (viewModel.isEnabled())
-            matrices.translate(viewModel.mainX.get(), viewModel.mainY.get(), viewModel.mainZ.get());
+        ViewModel vm = getViewModel();
+        if (vm.isEnabled())
+            matrices.translate(vm.mainX.get(), vm.mainY.get(), vm.mainZ.get());
     }
 
     private void translateToViewModelOff(MatrixStack matrices) {
-        ViewModel viewModel = Sakura.MODULES.getModule(ViewModel.class);
-        if (viewModel.isEnabled())
-            matrices.translate(-viewModel.mainX.get(), viewModel.mainY.get(), viewModel.mainZ.get());
+        ViewModel vm = getViewModel();
+        if (vm.isEnabled())
+            matrices.translate(-vm.mainX.get(), vm.mainY.get(), vm.mainZ.get());
     }
 
     private void translateBack(MatrixStack matrices) {
-        ViewModel viewModel = Sakura.MODULES.getModule(ViewModel.class);
-        if (viewModel.isEnabled())
-            matrices.translate(-viewModel.mainX.get(), -viewModel.mainY.get(), -viewModel.mainZ.get());
+        ViewModel vm = getViewModel();
+        if (vm.isEnabled())
+            matrices.translate(-vm.mainX.get(), -vm.mainY.get(), -vm.mainZ.get());
     }
 
     private void translateBacklOff(MatrixStack matrices) {
-        ViewModel viewModel = Sakura.MODULES.getModule(ViewModel.class);
-        if (viewModel.isEnabled())
-            matrices.translate(viewModel.mainX.get(), -viewModel.mainY.get(), -viewModel.mainZ.get());
+        ViewModel vm = getViewModel();
+        if (vm.isEnabled())
+            matrices.translate(vm.mainX.get(), -vm.mainY.get(), -vm.mainZ.get());
     }
 }

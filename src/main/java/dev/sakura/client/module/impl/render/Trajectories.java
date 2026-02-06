@@ -128,6 +128,8 @@ public class Trajectories extends Module {
         return EnchantmentHelper.getLevel(multishotEntry, stack) > 0;
     }
 
+    private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+
     private void renderTrajectory(ItemStack stack, Hand hand, float yaw, Render3DEvent event) {
         MatrixStack matrices = event.getMatrices();
         Item item = stack.getItem();
@@ -179,13 +181,16 @@ public class Trajectories extends Module {
         int steps = maxSteps.get();
 
         for (int i = 0; i < steps; i++) {
-            Vec3d lastPos = new Vec3d(x, y, z);
+            double lastX = x;
+            double lastY = y;
+            double lastZ = z;
 
             x += motionX;
             y += motionY;
             z += motionZ;
 
-            if (mc.world.getBlockState(new BlockPos((int) x, (int) y, (int) z)).getBlock() == Blocks.WATER) {
+            mutablePos.set((int) x, (int) y, (int) z);
+            if (mc.world.getBlockState(mutablePos).getBlock() == Blocks.WATER) {
                 motionX *= 0.8;
                 motionY *= 0.8;
                 motionZ *= 0.8;
@@ -201,17 +206,17 @@ public class Trajectories extends Module {
                 motionY -= 0.03;
             }
 
-            Vec3d pos = new Vec3d(x, y, z);
-
             Color lineColor = getPathColor(i);
-            Render3DUtil.drawLine(matrices, lastPos, pos, lineColor, lineWidth.get().floatValue());
+            Render3DUtil.drawLine(matrices, lastX, lastY, lastZ, x, y, z, lineColor, lineWidth.get().floatValue());
 
             if (entityBox.get()) {
                 for (Entity entity : mc.world.getEntities()) {
                     if (entity.equals(mc.player)) continue;
                     Box entityBox = entity.getBoundingBox();
-                    Box hitBox = new Box(x - 0.3, y - 0.3, z - 0.3, x + 0.3, y + 0.3, z + 0.3);
-                    if (entityBox.intersects(hitBox)) {
+                    if (entityBox.minX < x + 0.3 && entityBox.maxX > x - 0.3 &&
+                            entityBox.minY < y + 0.3 && entityBox.maxY > y - 0.3 &&
+                            entityBox.minZ < z + 0.3 && entityBox.maxZ > z - 0.3) {
+
                         Color landing = getLandingColor(i);
                         Color side = withAlpha(landing, 80);
                         Render3DUtil.drawFullBox(matrices, entityBox, side, landing);
@@ -220,8 +225,11 @@ public class Trajectories extends Module {
                 }
             }
 
+            Vec3d startVec = new Vec3d(lastX, lastY, lastZ);
+            Vec3d endVec = new Vec3d(x, y, z);
+
             BlockHitResult bhr = mc.world.raycast(new RaycastContext(
-                    lastPos, pos,
+                    startVec, endVec,
                     RaycastContext.ShapeType.OUTLINE,
                     RaycastContext.FluidHandling.NONE,
                     mc.player
@@ -420,6 +428,7 @@ public class Trajectories extends Module {
     }
 
     private Color withAlpha(Color base, int alpha) {
+        if (base.getAlpha() == alpha) return base;
         return new Color(base.getRed(), base.getGreen(), base.getBlue(), Math.max(0, Math.min(255, alpha)));
     }
 }

@@ -79,8 +79,10 @@ public class Module {
     public void setState(boolean state) {
         if (this.state != state) {
             this.state = state;
+
             DynamicIslandHud.onModuleToggle(this, state);
             ModuleListHud.onModuleToggle(this, state);
+
             if (state) {
                 Sakura.EVENT_BUS.subscribe(this);
                 onEnable();

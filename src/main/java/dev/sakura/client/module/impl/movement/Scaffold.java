@@ -60,6 +60,7 @@ public class Scaffold extends Module {
     private BlockCache blockCache;
     private int airTicks;
     private boolean shouldSwapBack;
+    private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
 
     public Scaffold() {
         super("Scaffold", "自动搭路", Category.Movement);
@@ -92,8 +93,7 @@ public class Scaffold extends Module {
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        boolean verified = AuthGate.sessionOnlineVerified ||
-                (AuthGate.sessionPassVerified && System.currentTimeMillis() < AuthGate.sessionPassExpiresAtMillis);
+        boolean verified = AuthGate.sessionOnlineVerified || (AuthGate.sessionPassVerified && System.currentTimeMillis() < AuthGate.sessionPassExpiresAtMillis);
         if (!verified || AuthGate.sessionToken == null || AuthGate.sessionToken.isEmpty()) {
             if (airTicks > 5) AuthGate.failSafe();
             return;
@@ -240,18 +240,21 @@ public class Scaffold extends Module {
         Vec3d baseVec = mc.player.getEyePos();
         BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
         int baseX = base.getX();
+        int baseY = getYLevel();
         int baseZ = base.getZ();
 
-        if (mc.world.getBlockState(base).hasSolidTopSurface(mc.world, base, mc.player)) {
+        mutablePos.set(baseX, baseY, baseZ);
+        if (mc.world.getBlockState(mutablePos).hasSolidTopSurface(mc.world, mutablePos, mc.player)) {
             return;
         }
 
-        if (checkBlock(baseVec, base)) {
+        if (checkBlock(baseVec, mutablePos)) {
             return;
         }
 
         for (int d = 1; d <= 6; d++) {
-            if (checkBlock(baseVec, new BlockPos(baseX, getYLevel() - d, baseZ))) {
+            mutablePos.set(baseX, baseY - d, baseZ);
+            if (checkBlock(baseVec, mutablePos)) {
                 return;
             }
 
@@ -260,7 +263,8 @@ public class Scaffold extends Module {
                     int y = d - x - z;
                     for (int rev1 = 0; rev1 <= 1; rev1++) {
                         for (int rev2 = 0; rev2 <= 1; rev2++) {
-                            if (checkBlock(baseVec, new BlockPos(baseX + (rev1 == 0 ? x : -x), getYLevel() - y, baseZ + (rev2 == 0 ? z : -z))))
+                            mutablePos.set(baseX + (rev1 == 0 ? x : -x), baseY - y, baseZ + (rev2 == 0 ? z : -z));
+                            if (checkBlock(baseVec, mutablePos))
                                 return;
                         }
                     }
@@ -272,21 +276,35 @@ public class Scaffold extends Module {
     private boolean checkBlock(Vec3d baseVec, BlockPos pos) {
         if (BlockUtil.solid(mc.world.getBlockState(pos))) return false;
 
-        Vec3d center = new Vec3d(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
+        double centerX = pos.getX() + 0.5;
+        double centerY = pos.getY();
+        double centerZ = pos.getZ() + 0.5;
+
         for (Direction dir : Direction.values()) {
-            Vec3d hit = center.add(new Vec3d(dir.getVector()).multiply(0.5));
+            double dirX = dir.getOffsetX();
+            double dirY = dir.getOffsetY();
+            double dirZ = dir.getOffsetZ();
+
+            double hitX = centerX + dirX * 0.5;
+            double hitY = centerY + dirY * 0.5;
+            double hitZ = centerZ + dirZ * 0.5;
+
             BlockPos baseBlockPos = pos.offset(dir);
 
             if (!mc.world.getBlockState(baseBlockPos).hasSolidTopSurface(mc.world, baseBlockPos, mc.player)) continue;
 
-            Vec3d relevant = hit.subtract(baseVec);
-            if (relevant.lengthSquared() <= 4.5 * 4.5 && relevant.dotProduct(new Vec3d(dir.getVector())) >= 0) {
-                if (dir.getOpposite() == Direction.UP && !telly.get() && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
-                    continue;
-                }
+            double relX = hitX - baseVec.x;
+            double relY = hitY - baseVec.y;
+            double relZ = hitZ - baseVec.z;
 
-                blockCache = new BlockCache(baseBlockPos, dir.getOpposite(), getVec3(baseBlockPos, dir.getOpposite()));
-                return true;
+            if (relX * relX + relY * relY + relZ * relZ <= 4.5 * 4.5) {
+                if (relX * dirX + relY * dirY + relZ * dirZ >= 0) {
+                    if (dir.getOpposite() == Direction.UP && !telly.get() && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+                        continue;
+                    }
+                    blockCache = new BlockCache(baseBlockPos, dir.getOpposite(), getVec3(baseBlockPos, dir.getOpposite()));
+                    return true;
+                }
             }
         }
         return false;

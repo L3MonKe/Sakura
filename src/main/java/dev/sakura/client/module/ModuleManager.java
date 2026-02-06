@@ -59,7 +59,6 @@ public class ModuleManager {
         add(new AntiHunger());
         add(new AutoDick());
         add(new AutoTool());
-        add(new Blink());
         add(new BowBomb());
         add(new Disabler());
         add(new MCP());

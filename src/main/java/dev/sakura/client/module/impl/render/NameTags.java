@@ -50,6 +50,58 @@ public class NameTags extends Module {
     private final NumberValue<Double> blurStrength = new NumberValue<>("BlurStrength", "模糊强度", 10.0, 1.0, 25.0, 0.5, blur::get);
 
     private final Map<UUID, Integer> popCounts = new HashMap<>();
+    private final List<ItemStack> equipmentCache = new ArrayList<>(6);
+    private static final Map<String, String> ENCHANT_SHORT_NAMES = new HashMap<>();
+
+    // Cached Colors
+    private static final Color COLOR_GREEN = new Color(100, 255, 100);
+    private static final Color COLOR_YELLOW = new Color(255, 255, 100);
+    private static final Color COLOR_ORANGE = new Color(255, 165, 0);
+    private static final Color COLOR_RED = new Color(255, 100, 100);
+    private static final Color COLOR_PANEL_BG = new Color(158, 158, 158, 48);
+    private static final Color COLOR_PANEL_BORDER = new Color(171, 171, 172, 48);
+    private static final Color COLOR_ITEM_NAME = new Color(184, 184, 186, 184);
+    private static final Color COLOR_ENCHANT_GRAY = new Color(187, 187, 191, 52);
+    private static final Color COLOR_ENCHANT_RED = new Color(255, 100, 100);
+    private static final Color COLOR_PING_BAR_GRAY = new Color(163, 162, 162, 60);
+    private static final Color COLOR_POPS = new Color(255, 80, 80);
+
+    static {
+        ENCHANT_SHORT_NAMES.put("blast_protection", "Bla");
+        ENCHANT_SHORT_NAMES.put("fire_protection", "Fir");
+        ENCHANT_SHORT_NAMES.put("projectile_protection", "Pro");
+        ENCHANT_SHORT_NAMES.put("protection", "Pro");
+        ENCHANT_SHORT_NAMES.put("thorns", "Tho");
+        ENCHANT_SHORT_NAMES.put("sharpness", "Sha");
+        ENCHANT_SHORT_NAMES.put("efficiency", "Eff");
+        ENCHANT_SHORT_NAMES.put("unbreaking", "Unb");
+        ENCHANT_SHORT_NAMES.put("power", "Pow");
+        ENCHANT_SHORT_NAMES.put("mending", "Men");
+        ENCHANT_SHORT_NAMES.put("feather_falling", "Fea");
+        ENCHANT_SHORT_NAMES.put("depth_strider", "Dep");
+        ENCHANT_SHORT_NAMES.put("frost_walker", "Fro");
+        ENCHANT_SHORT_NAMES.put("soul_speed", "Sou");
+        ENCHANT_SHORT_NAMES.put("swift_sneak", "Swi");
+        ENCHANT_SHORT_NAMES.put("respiration", "Res");
+        ENCHANT_SHORT_NAMES.put("aqua_affinity", "Aqu");
+        ENCHANT_SHORT_NAMES.put("fire_aspect", "Fir");
+        ENCHANT_SHORT_NAMES.put("looting", "Loo");
+        ENCHANT_SHORT_NAMES.put("knockback", "Kno");
+        ENCHANT_SHORT_NAMES.put("smite", "Smi");
+        ENCHANT_SHORT_NAMES.put("bane", "Ban");
+        ENCHANT_SHORT_NAMES.put("sweeping", "Swe");
+        ENCHANT_SHORT_NAMES.put("fortune", "For");
+        ENCHANT_SHORT_NAMES.put("silk_touch", "Sil");
+        ENCHANT_SHORT_NAMES.put("vanishing", "Van");
+        ENCHANT_SHORT_NAMES.put("binding", "Bin");
+        ENCHANT_SHORT_NAMES.put("loyalty", "Loy");
+        ENCHANT_SHORT_NAMES.put("riptide", "Rip");
+        ENCHANT_SHORT_NAMES.put("channeling", "Cha");
+        ENCHANT_SHORT_NAMES.put("impaling", "Imp");
+        ENCHANT_SHORT_NAMES.put("multishot", "Mul");
+        ENCHANT_SHORT_NAMES.put("quick_charge", "Qui");
+        ENCHANT_SHORT_NAMES.put("piercing", "Pie");
+    }
 
     public NameTags() {
         super("NameTags", "名牌显示", Category.Render);
@@ -184,14 +236,14 @@ public class NameTags extends Module {
     }
 
     private List<ItemStack> getPlayerEquipment(PlayerEntity player) {
-        List<ItemStack> stacks = new ArrayList<>();
-        stacks.add(player.getMainHandStack());
-        stacks.add(player.getEquippedStack(EquipmentSlot.HEAD));
-        stacks.add(player.getEquippedStack(EquipmentSlot.CHEST));
-        stacks.add(player.getEquippedStack(EquipmentSlot.LEGS));
-        stacks.add(player.getEquippedStack(EquipmentSlot.FEET));
-        stacks.add(player.getOffHandStack());
-        return stacks;
+        equipmentCache.clear();
+        equipmentCache.add(player.getMainHandStack());
+        equipmentCache.add(player.getEquippedStack(EquipmentSlot.HEAD));
+        equipmentCache.add(player.getEquippedStack(EquipmentSlot.CHEST));
+        equipmentCache.add(player.getEquippedStack(EquipmentSlot.LEGS));
+        equipmentCache.add(player.getEquippedStack(EquipmentSlot.FEET));
+        equipmentCache.add(player.getOffHandStack());
+        return equipmentCache;
     }
 
     private String getPlayerMainHandName(PlayerEntity player) {
@@ -219,8 +271,8 @@ public class NameTags extends Module {
     }
 
     private void drawPanelBackground(float x, float y, float width, float height, float headerHeight, float radius) {
-        NanoVGHelper.drawRoundRect(x, y, width, height, radius, new Color(158, 158, 158, 48));
-        NanoVGHelper.drawRoundRect(x + 2, y + 2, width - 4, headerHeight - 2, radius - 2, new Color(171, 171, 172, 48));
+        NanoVGHelper.drawRoundRect(x, y, width, height, radius, COLOR_PANEL_BG);
+        NanoVGHelper.drawRoundRect(x + 2, y + 2, width - 4, headerHeight - 2, radius - 2, COLOR_PANEL_BORDER);
     }
 
     private void drawPanelInfo(float x, float y, float width, float headerHeight, float padding, float fontSize, String name, float hp, int pingVal, int popsVal) {
@@ -255,7 +307,7 @@ public class NameTags extends Module {
             String popStr = "-" + popsVal;
             float healthWidth = health.get() ? NanoVGHelper.getTextWidth(String.format("%.1f", hp), FontLoader.regular(), fontSize) : 0;
             float popX = x + width / 2 + healthWidth / 2 + 8;
-            NanoVGHelper.drawString(popStr, popX, headerY, FontLoader.bold(), fontSize, new Color(255, 80, 80));
+            NanoVGHelper.drawString(popStr, popX, headerY, FontLoader.bold(), fontSize, COLOR_POPS);
         }
     }
 
@@ -339,7 +391,7 @@ public class NameTags extends Module {
             drawNvg(posX, posY, scale, vg -> {
                 float nameWidth = NanoVGHelper.getTextWidth(mainHandName, FontLoader.regular(), 10);
                 float nameX = itemAreaX + itemsWidth / 2 - nameWidth / 2;
-                NanoVGHelper.drawString(mainHandName, nameX, nameY + 8, FontLoader.regular(), 10, new Color(184, 184, 186, 184));
+                NanoVGHelper.drawString(mainHandName, nameX, nameY + 8, FontLoader.regular(), 10, COLOR_ITEM_NAME);
             });
         }
     }
@@ -422,7 +474,7 @@ public class NameTags extends Module {
             if (i < bars) {
                 barColor = color;
             } else {
-                barColor = new Color(163, 162, 162, 60);
+                barColor = COLOR_PING_BAR_GRAY;
             }
 
             NanoVGHelper.drawRoundRect(barX, barY, barWidth, barHeight, 1, barColor);
@@ -431,40 +483,11 @@ public class NameTags extends Module {
 
     private String getEnchantShortName(RegistryEntry<Enchantment> enchant) {
         String id = enchant.getIdAsString();
-        if (id.contains("blast_protection")) return "Bla";
-        if (id.contains("fire_protection")) return "Fir";
-        if (id.contains("projectile_protection")) return "Pro";
-        if (id.contains("protection")) return "Pro";
-        if (id.contains("thorns")) return "Tho";
-        if (id.contains("sharpness")) return "Sha";
-        if (id.contains("efficiency")) return "Eff";
-        if (id.contains("unbreaking")) return "Unb";
-        if (id.contains("power")) return "Pow";
-        if (id.contains("mending")) return "Men";
-        if (id.contains("feather_falling")) return "Fea";
-        if (id.contains("depth_strider")) return "Dep";
-        if (id.contains("frost_walker")) return "Fro";
-        if (id.contains("soul_speed")) return "Sou";
-        if (id.contains("swift_sneak")) return "Swi";
-        if (id.contains("respiration")) return "Res";
-        if (id.contains("aqua_affinity")) return "Aqu";
-        if (id.contains("fire_aspect")) return "Fir";
-        if (id.contains("looting")) return "Loo";
-        if (id.contains("knockback")) return "Kno";
-        if (id.contains("smite")) return "Smi";
-        if (id.contains("bane")) return "Ban";
-        if (id.contains("sweeping")) return "Swe";
-        if (id.contains("fortune")) return "For";
-        if (id.contains("silk_touch")) return "Sil";
-        if (id.contains("vanishing")) return "Van";
-        if (id.contains("binding")) return "Bin";
-        if (id.contains("loyalty")) return "Loy";
-        if (id.contains("riptide")) return "Rip";
-        if (id.contains("channeling")) return "Cha";
-        if (id.contains("impaling")) return "Imp";
-        if (id.contains("multishot")) return "Mul";
-        if (id.contains("quick_charge")) return "Qui";
-        if (id.contains("piercing")) return "Pie";
+        for (Map.Entry<String, String> entry : ENCHANT_SHORT_NAMES.entrySet()) {
+            if (id.contains(entry.getKey())) {
+                return entry.getValue();
+            }
+        }
         return "";
     }
 
@@ -475,22 +498,22 @@ public class NameTags extends Module {
     }
 
     private Color getHealthColor(float health) {
-        if (health >= 15) return new Color(100, 255, 100);
-        if (health >= 10) return new Color(255, 255, 100);
-        if (health >= 5) return new Color(255, 165, 0);
-        return new Color(255, 100, 100);
+        if (health >= 15) return COLOR_GREEN;
+        if (health >= 10) return COLOR_YELLOW;
+        if (health >= 5) return COLOR_ORANGE;
+        return COLOR_RED;
     }
 
     private Color getPingColor(int ping) {
-        if (ping <= 100) return new Color(100, 255, 100);
-        if (ping <= 200) return new Color(255, 255, 100);
-        if (ping <= 300) return new Color(255, 165, 0);
-        return new Color(255, 100, 100);
+        if (ping <= 100) return COLOR_GREEN;
+        if (ping <= 200) return COLOR_YELLOW;
+        if (ping <= 300) return COLOR_ORANGE;
+        return COLOR_RED;
     }
 
     private Color getDurabilityColor(int percent) {
-        if (percent >= 70) return new Color(100, 255, 100);
-        if (percent >= 30) return new Color(255, 255, 100);
-        return new Color(255, 100, 100);
+        if (percent >= 70) return COLOR_GREEN;
+        if (percent >= 30) return COLOR_YELLOW;
+        return COLOR_RED;
     }
 }

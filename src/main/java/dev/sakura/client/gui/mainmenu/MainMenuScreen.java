@@ -26,7 +26,6 @@ import org.lwjgl.nanovg.NanoVG;
 import java.awt.*;
 import java.net.URI;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static dev.sakura.client.Sakura.mc;
@@ -47,6 +46,16 @@ public class MainMenuScreen extends Screen {
     private static final Color LOVE_COLOR = new Color(255, 255, 255, 100);
     private static final Color DEV_HIGHLIGHT = new Color(206, 206, 226, 255);
     private static final Color WHITE = new Color(255, 255, 255, 255);
+
+    private static final List<String> CHANGE_LOGS = List.of(
+            "LemonClientDevelopment",
+            "Minecraft 1.21.11",
+            "Changelog :",
+            "* 你知道吗",
+            "* 这是第一个版本",
+            "* 可是大部分外挂都打不过这个外挂",
+            "* 包括Zen"
+    );
 
     private static final long LOCAL_ENTRANCE_DURATION_MS = 1250L;
     private static final long EXTERNAL_ENTRANCE_DURATION_MS = 1400L;
@@ -121,7 +130,7 @@ public class MainMenuScreen extends Screen {
         entries.clear();
         entries.add(new MainMenuEntry("Single Player", "A", () -> mc.setScreen(new SelectWorldScreen(this))));
         entries.add(new MainMenuEntry("Multi Player", "P", () -> mc.setScreen(new MultiplayerScreen(this))));
-        entries.add(new MainMenuEntry("滚  木", "C", null /*TODO: Rewrite altmanager*/));
+        entries.add(new MainMenuEntry("棍  母", "C", null /*TODO: Rewrite altmanager*/));
         entries.add(new MainMenuEntry("Options", "D", () -> mc.setScreen(new OptionsScreen(this, mc.options))));
         entries.add(new MainMenuEntry("Shut down", "E", mc::scheduleStop));
     }
@@ -212,6 +221,7 @@ public class MainMenuScreen extends Screen {
     }
 
     private void drawPanelBlur(Layout layout, float opacity) {
+        if (opacity <= 0.02f) return;
         BlurShader.drawRoundedBlur(layout.panelX, layout.panelY, layout.panelW, layout.panelH, layout.panelR, PANEL_BLUR_COLOR, 10f * layout.scale, 0.8f * opacity);
     }
 
@@ -488,21 +498,11 @@ public class MainMenuScreen extends Screen {
         float topY = centerY - 100f * scale + 15.5f * scale;
         NanoVGHelper.drawRect(lineX, topY, scale, 78f * scale, applyAlpha(WHITE, opacity));
 
-        List<String> lines = Arrays.asList(
-                "LemonClientDevelopment",
-                "Minecraft 1.21.11",
-                "Changelog :",
-                "* 你知道吗",
-                "* 这是第一个版本",
-                "* 可是大部分外挂都打不过这个外挂",
-                "* 包括Zen"
-        );
-
         float fontSize = refFont(15f, scale);
         float rightEdge = centerX + 130f * scale - 18f * scale;
 
-        for (int i = 0; i < lines.size(); i++) {
-            String text = lines.get(i);
+        for (int i = 0; i < CHANGE_LOGS.size(); i++) {
+            String text = CHANGE_LOGS.get(i);
             Color c = i >= 3 ? applyAlpha(DEV_HIGHLIGHT, opacity) : applyAlpha(WHITE, opacity);
             float y = centerY - 100f * scale + (17.5f + i * 10f) * scale;
             NanoVGHelper.drawString(

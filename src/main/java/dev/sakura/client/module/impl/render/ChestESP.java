@@ -30,8 +30,6 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.chunk.WorldChunk;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
 import java.util.function.Function;
 
 public class ChestESP extends Module {
@@ -91,39 +89,33 @@ public class ChestESP extends Module {
         if (nullCheck()) return;
 
         Vec3d playerPos = mc.player.getEntityPos();
-        double maxSq = range.get() * range.get();
+        double r = range.get();
+        double maxSq = r * r;
 
-        for (BlockEntity blockEntity : getLoadedBlockEntities(range.get())) {
-            if (blockEntity == null) continue;
-
-            BlockPos pos = blockEntity.getPos();
-            Vec3d center = Vec3d.ofCenter(pos);
-            if (playerPos.squaredDistanceTo(center) > maxSq) continue;
-
-            BlockState state = mc.world.getBlockState(pos);
-            if (!isTarget(blockEntity, state)) continue;
-
-            Box box = getOutlineBox(state, pos);
-            if (box == null) continue;
-            box = box.expand(0.002);
-
-            renderBox(event, box);
-        }
-    }
-
-    private Collection<BlockEntity> getLoadedBlockEntities(double range) {
         ChunkPos center = mc.player.getChunkPos();
-        int chunkRadius = Math.max(1, (int) Math.ceil(range / 16.0));
+        int chunkRadius = Math.max(1, (int) Math.ceil(r / 16.0));
 
-        ArrayList<BlockEntity> out = new ArrayList<>();
         for (int dx = -chunkRadius; dx <= chunkRadius; dx++) {
             for (int dz = -chunkRadius; dz <= chunkRadius; dz++) {
                 WorldChunk chunk = mc.world.getChunkManager().getWorldChunk(center.x + dx, center.z + dz);
                 if (chunk == null) continue;
-                out.addAll(chunk.getBlockEntities().values());
+
+                for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
+                    if (blockEntity == null) continue;
+
+                    BlockPos pos = blockEntity.getPos();
+                    if (pos.getSquaredDistance(playerPos.x, playerPos.y, playerPos.z) > maxSq) continue;
+
+                    BlockState state = mc.world.getBlockState(pos);
+                    if (!isTarget(blockEntity, state)) continue;
+
+                    Box box = getOutlineBox(state, pos);
+                    if (box == null) continue;
+
+                    renderBox(event, box.expand(0.002));
+                }
             }
         }
-        return out;
     }
 
     private void renderBox(Render3DEvent event, Box box) {

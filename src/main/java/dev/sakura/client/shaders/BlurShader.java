@@ -21,6 +21,6 @@ public class BlurShader {
 
     public static void drawRoundedBlur(float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity) {
         blurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
-        BLUR_PROGRAM.renderRoundedBlur(x, y, width, height, radius, c1, blurStrenth, blurOpacity);
+        BLUR_PROGRAM.render(x, y, width, height, radius, c1, blurStrenth, blurOpacity);
     }
 }

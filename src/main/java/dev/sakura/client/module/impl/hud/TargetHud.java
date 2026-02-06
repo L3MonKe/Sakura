@@ -155,6 +155,7 @@ public class TargetHud extends HudModule {
     private boolean sentParticles = false;
     private float ticks = 0;
     private boolean needsCacheClear = false;
+    private KillAura killAuraModule;
 
     private final RenderPipeline TARGET_ICON_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
             .withLocation("pipeline/sakura_target_icon")
@@ -182,6 +183,7 @@ public class TargetHud extends HudModule {
     @Override
     protected void onEnable() {
         target = null;
+        killAuraModule = Sakura.MODULES.getModule(KillAura.class);
         animation.setDirection(Direction.BACKWARDS);
         damageAnim.setDirection(Direction.BACKWARDS);
         displayHealth = -1;
@@ -198,9 +200,8 @@ public class TargetHud extends HudModule {
     }
 
     private LivingEntity getCurrentTarget() {
-        KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
-        if (killAura.isEnabled()) {
-            Entity target = killAura.getCurrentTarget();
+        if (killAuraModule.isEnabled()) {
+            Entity target = killAuraModule.getCurrentTarget();
             if (target instanceof LivingEntity living) {
                 return living;
             }
@@ -435,17 +436,17 @@ public class TargetHud extends HudModule {
         if (glow.get()) {
             float strength = glowStrength.get().floatValue();
 
-            // Loop for glow layers
-            for (float i = 0.5f; i <= strength; i += 0.5f) {
+            // Optimization: Increase step size from 0.5f to 1.0f to reduce draw calls
+            for (float i = 1.0f; i <= strength; i += 1.0f) {
                 float normalizedDist = i / (strength + 2);
                 float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
-                float a = alphaFactor * 0.15f;
+                // Adjusted alpha multiplier to compensate for fewer layers (0.15f -> 0.25f)
+                float a = alphaFactor * 0.25f;
                 int alphaInt = MathHelper.clamp((int) (a * 255), 0, 255);
 
                 if (alphaInt > 0) {
                     if (healthGradient.get()) {
                         // Use gradient glow
-                        // We need new Colors with alpha
                         Color gc1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt);
                         Color gc2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alphaInt);
 
@@ -555,15 +556,15 @@ public class TargetHud extends HudModule {
             // Draw manual bloom for stronger effect
             float strength = glowStrength.get().floatValue();
 
-            // Smoother glow loop: use float steps and lower alpha per layer
-            // Start from 0 to strength, step 0.5 for smoother gradient
-            for (float i = 0.5f; i <= strength; i += 0.5f) {
+            // Optimization: Increase step size from 0.5f to 1.0f to reduce draw calls
+            for (float i = 1.0f; i <= strength; i += 1.0f) {
                 // Non-linear alpha falloff for "glowing core" look
                 // (1 - (i/strength)^2) gives a sharper core and softer edge
                 float normalizedDist = i / (strength + 2);
                 float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
                 // Base alpha lowered to prevent over-saturation when stacking
-                float alpha = alphaFactor * 0.15f;
+                // Adjusted alpha multiplier to compensate for fewer layers (0.15f -> 0.25f)
+                float alpha = alphaFactor * 0.25f;
 
                 int alphaInt = MathHelper.clamp((int) (alpha * 255), 0, 255);
                 if (alphaInt > 0) {
@@ -800,13 +801,6 @@ public class TargetHud extends HudModule {
 
         AvatarPosEn avatarPos = MahiroAvatarPos.get();
         float heightIncrease = 0;
-        float contentYOffset = 0;
-
-        if (avatarPos == AvatarPosEn.OnBar) {
-            float offset = MahiroOnBarHeight.get().floatValue();
-            contentYOffset = offset; // Shift content down
-            heightIncrease = offset; // Increase background height
-        }
 
         this.width = baseW * globalScale;
         this.height = (baseH + heightIncrease) * globalScale;
@@ -926,10 +920,10 @@ public class TargetHud extends HudModule {
         // Bar Glow
         if (glow.get()) {
             float strength = glowStrength.get().floatValue();
-            for (float i = 0.5f; i <= strength; i += 0.5f) {
+            for (float i = 1.0f; i <= strength; i += 1.0f) {
                 float normalizedDist = i / (strength + 2);
                 float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
-                float a = alphaFactor * 0.15f;
+                float a = alphaFactor * 0.25f;
                 int alphaInt = MathHelper.clamp((int) (a * 255), 0, 255);
 
                 if (alphaInt > 0) {

@@ -60,6 +60,24 @@ public class JumpCircles extends Module {
     private final List<JumpCircle> circles = new ArrayList<>();
     private boolean wasOnGround = true;
 
+    // Cache for circle geometry
+    private float[] unitX;
+    private float[] unitZ;
+    private int lastSegments = -1;
+
+    private void updateCircleCache(int segments) {
+        if (segments != lastSegments || unitX == null || unitZ == null) {
+            unitX = new float[segments + 1];
+            unitZ = new float[segments + 1];
+            for (int i = 0; i <= segments; i++) {
+                double angle = Math.PI * 2 * i / segments;
+                unitX[i] = (float) Math.cos(angle);
+                unitZ[i] = (float) Math.sin(angle);
+            }
+            lastSegments = segments;
+        }
+    }
+
     @Override
     protected void onEnable() {
         circles.clear();
@@ -99,6 +117,9 @@ public class JumpCircles extends Module {
         circles.removeIf(circle -> circle.getProgress() >= 1.0f);
 
         if (circles.isEmpty()) return;
+
+        // Update cache if segments changed
+        updateCircleCache(segments.get());
 
         for (JumpCircle circle : circles) {
             renderCircle(event.getMatrices(), circle, event.getTickDelta());
@@ -145,65 +166,96 @@ public class JumpCircles extends Module {
                     float layerAlpha = alpha * 0.4f * (1.0f - (float) i / glowLayers.get());
                     float layerRadius = currentRadius * (1.0f - i * 0.05f);
                     if (layerRadius <= 0) break;
-                    drawFilledCircle(matrix, layerRadius, new Color(r, g, b, (int) (layerAlpha * 255)), useDepthTest);
+                    drawFilledCircle(matrix, layerRadius, r, g, b, (int) (layerAlpha * 255), useDepthTest);
                 }
             } else if (fade.get()) {
-                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 100)), useDepthTest);
-                drawFilledCircle(matrix, currentRadius * 0.8f, new Color(r, g, b, (int) (alpha * 150)), useDepthTest);
+                drawFilledCircle(matrix, currentRadius, r, g, b, (int) (alpha * 100), useDepthTest);
+                drawFilledCircle(matrix, currentRadius * 0.8f, r, g, b, (int) (alpha * 150), useDepthTest);
             } else {
-                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 180)), useDepthTest);
+                drawFilledCircle(matrix, currentRadius, r, g, b, (int) (alpha * 180), useDepthTest);
             }
         }
 
         if (mode.is(Mode.Outline) || mode.is(Mode.Both)) {
-            drawCircleOutline(matrices, currentRadius, new Color(r, g, b, (int) (alpha * 255)), 2.0f, useDepthTest);
+            drawCircleOutline(matrices, currentRadius, r, g, b, (int) (alpha * 255), 2.0f, useDepthTest);
         }
 
         matrices.pop();
     }
 
-    private void drawFilledCircle(Matrix4f matrix, float radius, Color color, boolean useDepthTest) {
+    private void drawFilledCircle(Matrix4f matrix, float radius, int rInt, int gInt, int bInt, int aInt, boolean useDepthTest) {
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
 
-        float r = color.getRed() / 255f;
-        float g = color.getGreen() / 255f;
-        float b = color.getBlue() / 255f;
-        float a = color.getAlpha() / 255f;
+        float r = rInt / 255f;
+        float g = gInt / 255f;
+        float b = bInt / 255f;
+        float a = aInt / 255f;
 
         buffer.vertex(matrix, 0, 0, 0).color(r, g, b, a);
 
         int segs = segments.get();
-        for (int i = 0; i <= segs; i++) {
-            double angle = Math.PI * 2 * i / segs;
-            float x = (float) (Math.cos(angle) * radius);
-            float z = (float) (Math.sin(angle) * radius);
-            buffer.vertex(matrix, x, 0, z).color(r, g, b, 0f);
+        // Use cached unit coordinates
+        if (unitX != null && unitZ != null && unitX.length > segs) {
+            for (int i = 0; i <= segs; i++) {
+                float x = unitX[i] * radius;
+                float z = unitZ[i] * radius;
+                buffer.vertex(matrix, x, 0, z).color(r, g, b, 0f);
+            }
+        } else {
+            // Fallback if cache invalid (shouldn't happen)
+            for (int i = 0; i <= segs; i++) {
+                double angle = Math.PI * 2 * i / segs;
+                float x = (float) (Math.cos(angle) * radius);
+                float z = (float) (Math.sin(angle) * radius);
+                buffer.vertex(matrix, x, 0, z).color(r, g, b, 0f);
+            }
         }
 
         (useDepthTest ? RenderLayers.debugTriangleFan() : SakuraPipelines.TRIANGLE_FAN).draw(buffer.end());
     }
 
-    private void drawCircleOutline(MatrixStack matrices, float radius, Color color, float width, boolean useDepthTest) {
+    private void drawCircleOutline(MatrixStack matrices, float radius, int rInt, int gInt, int bInt, int aInt, float width, boolean useDepthTest) {
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH);
         MatrixStack.Entry entry = matrices.peek();
-        int argb = color.getRGB();
+        int argb = ((aInt & 0xFF) << 24) | ((rInt & 0xFF) << 16) | ((gInt & 0xFF) << 8) | (bInt & 0xFF);
         int segs = segments.get();
-        for (int i = 0; i < segs; i++) {
-            double angle1 = Math.PI * 2 * i / segs;
-            double angle2 = Math.PI * 2 * (i + 1) / segs;
-            float x1 = (float) (Math.cos(angle1) * radius);
-            float z1 = (float) (Math.sin(angle1) * radius);
-            float x2 = (float) (Math.cos(angle2) * radius);
-            float z2 = (float) (Math.sin(angle2) * radius);
-            float dx = x2 - x1;
-            float dz = z2 - z1;
-            float len = MathHelper.sqrt(dx * dx + dz * dz);
-            if (len < 1.0E-6f) continue;
-            float nx = dx / len;
-            float nz = dz / len;
 
-            buffer.vertex(entry, x1, 0, z1).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
-            buffer.vertex(entry, x2, 0, z2).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
+        // Use cached unit coordinates
+        if (unitX != null && unitZ != null && unitX.length > segs) {
+            for (int i = 0; i < segs; i++) {
+                float x1 = unitX[i] * radius;
+                float z1 = unitZ[i] * radius;
+                float x2 = unitX[i + 1] * radius;
+                float z2 = unitZ[i + 1] * radius;
+
+                float dx = x2 - x1;
+                float dz = z2 - z1;
+                float len = MathHelper.sqrt(dx * dx + dz * dz);
+                if (len < 1.0E-6f) continue;
+                float nx = dx / len;
+                float nz = dz / len;
+
+                buffer.vertex(entry, x1, 0, z1).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
+                buffer.vertex(entry, x2, 0, z2).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
+            }
+        } else {
+            for (int i = 0; i < segs; i++) {
+                double angle1 = Math.PI * 2 * i / segs;
+                double angle2 = Math.PI * 2 * (i + 1) / segs;
+                float x1 = (float) (Math.cos(angle1) * radius);
+                float z1 = (float) (Math.sin(angle1) * radius);
+                float x2 = (float) (Math.cos(angle2) * radius);
+                float z2 = (float) (Math.sin(angle2) * radius);
+                float dx = x2 - x1;
+                float dz = z2 - z1;
+                float len = MathHelper.sqrt(dx * dx + dz * dz);
+                if (len < 1.0E-6f) continue;
+                float nx = dx / len;
+                float nz = dz / len;
+
+                buffer.vertex(entry, x1, 0, z1).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
+                buffer.vertex(entry, x2, 0, z2).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
+            }
         }
 
         (useDepthTest ? RenderLayers.lines() : SakuraPipelines.LINES).draw(buffer.end());
