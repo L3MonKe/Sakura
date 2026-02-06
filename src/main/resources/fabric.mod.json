@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
-  "id": "mahiro",
+  "id": "sakura",
   "version": "${version}",
-  "name": "M4h1r0-Loader",
-  "description": "M4h1r0 minecraft hacked client.",
+  "name": "Sakura-Loader",
+  "description": "Sakura minecraft hacked client.",
   "authors": [
     "Fin_LemonKe",
     "Nykrop",
@@ -11,10 +11,10 @@
     "_EeZ"
   ],
   "mixins": [
-    "mahiro.mixins.json"
+    "sakura.mixins.json"
   ],
-  "accessWidener": "mahiro.accesswidener",
-  "icon": "assets/mahiro/icons/icon.png",
+  "accessWidener": "sakura.accesswidener",
+  "icon": "assets/sakura/icons/icon.png",
   "depends": {
     "java": ">=21",
     "minecraft": "${minecraft_version}",

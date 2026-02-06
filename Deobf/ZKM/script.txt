@@ -10,20 +10,20 @@ open        openNestedArchives=false
 exclude     @org.spongepowered.asm.mixin.Mixin *.^* and
             @org.spongepowered.asm.mixin.Mixin *.^*^ * and
             @org.spongepowered.asm.mixin.Mixin *.^*^ *(*) and
-            dev.mahiro.niurendeobf.^* and
-            dev.mahiro.niurendeobf.^*^ * and
-            dev.mahiro.niurendeobf.^*^ *(*) and
-            dev.mahiro.client.mixin.** and
-            dev.mahiro.client.mixin.**^ * and
-            dev.mahiro.client.mixin.**^ *(*);
+            dev.sakura.niurendeobf.^* and
+            dev.sakura.niurendeobf.^*^ * and
+            dev.sakura.niurendeobf.^*^ *(*) and
+            dev.sakura.client.mixin.** and
+            dev.sakura.client.mixin.**^ * and
+            dev.sakura.client.mixin.**^ *(*);
 
 obfuscateFlowExclude
     @org.spongepowered.asm.mixin.Mixin *.* and
     **.mixin.^*^;
 
 obfuscateReferencesInclude 
-    containedIn{ @dev.mahiro.niurendeobf.ZKMIndy *.* *(*) } *.* * and
-    containedIn{ @dev.mahiro.niurendeobf.ZKMIndy *.* *(*) } *.* *(*);
+    containedIn{ @dev.sakura.niurendeobf.ZKMIndy *.* *(*) } *.* * and
+    containedIn{ @dev.sakura.niurendeobf.ZKMIndy *.* *(*) } *.* *(*);
 
 stringEncryptionExclude
     *.mixin*.* and

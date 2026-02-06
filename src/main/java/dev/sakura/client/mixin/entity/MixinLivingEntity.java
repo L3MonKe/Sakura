@@ -1,0 +1,145 @@
+package dev.sakura.client.mixin.entity;
+
+import dev.sakura.client.Sakura;
+import dev.sakura.client.events.entity.SwingSpeedEvent;
+import dev.sakura.client.events.player.JumpEvent;
+import dev.sakura.client.events.player.JumpRotationEvent;
+import dev.sakura.client.events.player.SprintEvent;
+import dev.sakura.client.events.player.TravelEvent;
+import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.manager.impl.RotationManager;
+import dev.sakura.client.module.impl.movement.JumpCooldown;
+import dev.sakura.client.utils.rotation.Rotation;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.attribute.*;
+import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.World;
+import org.objectweb.asm.Opcodes;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import static dev.sakura.client.Sakura.mc;
+
+@Mixin(LivingEntity.class)
+public abstract class MixinLivingEntity extends Entity {
+    public MixinLivingEntity(EntityType<?> type, World world) {
+        super(type, world);
+    }
+
+    @Shadow
+    private int jumpingCooldown;
+
+    @Final
+    @Shadow
+    private static EntityAttributeModifier SPRINTING_SPEED_BOOST;
+
+    @Shadow
+    public EntityAttributeInstance getAttributeInstance(RegistryEntry<EntityAttribute> attribute) {
+        return this.getAttributes().getCustomInstance(attribute);
+    }
+
+    @Shadow
+    public AttributeContainer getAttributes() {
+        return null;
+    }
+
+    @Redirect(method = "tickMovement", at = @At(value = "FIELD", target = "Lnet/minecraft/entity/LivingEntity;jumpingCooldown:I", opcode = Opcodes.PUTFIELD, ordinal = 1))
+    private void redirectJumpingCooldown(LivingEntity instance, int jumpingCooldown) {
+        JumpCooldown module = Sakura.MODULES.getModule(JumpCooldown.class);
+        if (instance == mc.player && module.isEnabled()) {
+            this.jumpingCooldown = module.cooldown.get();
+        } else {
+            this.jumpingCooldown = 10;
+        }
+    }
+
+    @Redirect(method = "turnHead", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getYaw()F"))
+    private float modifyHeadYaw(LivingEntity entity) {
+        Rotation animationRotation = RotationManager.animationRotation;
+        if (entity == mc.player && animationRotation != null) {
+            return animationRotation.yaw;
+        } else {
+            return entity.getYaw();
+        }
+    }
+
+    @Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
+    public void setSprintingHook(CallbackInfo ci) {
+        if ((Object) this == MinecraftClient.getInstance().player) {
+            SprintEvent event = new SprintEvent();
+            Sakura.EVENT_BUS.post(event);
+            if (event.isCancelled()) {
+                ci.cancel();
+                boolean sprinting = event.isSprint();
+                super.setSprinting(sprinting);
+                EntityAttributeInstance entityAttributeInstance = this.getAttributeInstance(EntityAttributes.MOVEMENT_SPEED);
+                entityAttributeInstance.removeModifier(SPRINTING_SPEED_BOOST.id());
+                if (sprinting) {
+                    entityAttributeInstance.addTemporaryModifier(SPRINTING_SPEED_BOOST);
+                }
+            }
+        }
+    }
+
+    @Inject(method = "travel", at = @At("HEAD"), cancellable = true)
+    private void onTravelPre(Vec3d movementInput, CallbackInfo ci) {
+        if ((Object) this == mc.player) {
+            TravelEvent event = new TravelEvent(EventType.PRE, movementInput);
+            Sakura.EVENT_BUS.post(event);
+            if (event.isCancelled()) {
+                ci.cancel();
+            }
+        }
+    }
+
+    @Inject(method = "travel", at = @At("RETURN"))
+    private void onTravelPost(Vec3d movementInput, CallbackInfo ci) {
+        if ((Object) this == mc.player) {
+            TravelEvent event = new TravelEvent(EventType.POST, movementInput);
+            Sakura.EVENT_BUS.post(event);
+        }
+    }
+
+    @Redirect(method = "jump", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getYaw()F"))
+    private float redirectGetYawInJump(LivingEntity instance) {
+        if (instance == mc.player) {
+            JumpRotationEvent event = new JumpRotationEvent(instance.getYaw());
+            Sakura.EVENT_BUS.post(event);
+            return event.getYaw();
+        }
+        return instance.getYaw();
+    }
+
+    @Inject(method = "jump", at = @At("HEAD"))
+    private void onJumpPre(CallbackInfo ci) {
+        Sakura.EVENT_BUS.post(new JumpEvent(EventType.PRE));
+    }
+
+    @Inject(method = "jump", at = @At("RETURN"))
+    private void onJumpPost(CallbackInfo ci) {
+        Sakura.EVENT_BUS.post(new JumpEvent(EventType.POST));
+    }
+
+    @Inject(method = "getHandSwingDuration", at = @At("HEAD"), cancellable = true)
+    private void hookGetHandSwingDuration(CallbackInfoReturnable<Integer> cir) {
+        SwingSpeedEvent swingSpeedEvent = new SwingSpeedEvent();
+        Sakura.EVENT_BUS.post(swingSpeedEvent);
+        if (swingSpeedEvent.isCancelled()) {
+            if (swingSpeedEvent.getSelfOnly() && ((Object) this != mc.player)) {
+                return;
+            }
+            cir.cancel();
+            cir.setReturnValue(swingSpeedEvent.getSwingSpeed());
+        }
+    }
+}

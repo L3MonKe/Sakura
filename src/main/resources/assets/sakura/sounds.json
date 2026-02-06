@@ -1,0 +1,50 @@
+{
+  "on": {
+    "sounds": [
+      {
+        "name": "sakura:mahiro/on",
+        "stream": false
+      }
+    ]
+  },
+  "off": {
+    "sounds": [
+      {
+        "name": "sakura:mahiro/off",
+        "stream": false
+      }
+    ]
+  },
+  "enable": {
+    "sounds": [
+      {
+        "name": "sakura:augustus/enable",
+        "stream": false
+      }
+    ]
+  },
+  "disable": {
+    "sounds": [
+      {
+        "name": "sakura:augustus/disable",
+        "stream": false
+      }
+    ]
+  },
+  "activate": {
+    "sounds": [
+      {
+        "name": "sakura:jello/activate",
+        "stream": false
+      }
+    ]
+  },
+  "deactivate": {
+    "sounds": [
+      {
+        "name": "sakura:jello/deactivate",
+        "stream": false
+      }
+    ]
+  }
+}
