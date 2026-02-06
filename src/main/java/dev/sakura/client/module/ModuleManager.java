@@ -73,6 +73,7 @@ public class ModuleManager {
         add(new AspectRatio());
         add(new Animations());
         add(new Atmosphere());
+        add(new WorldTweaks());
         add(new CameraClip());
         add(new Chams());
         add(new ChestESP());

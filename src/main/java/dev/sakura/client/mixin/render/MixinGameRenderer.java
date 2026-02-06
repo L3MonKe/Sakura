@@ -83,7 +83,6 @@ public abstract class MixinGameRenderer {
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;<init>(Lnet/minecraft/client/MinecraftClient;Lnet/minecraft/client/gui/render/state/GuiRenderState;II)V", shift = At.Shift.BEFORE))
     private void onRender(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
         if (!tick || mc.player == null || !hasMatrices) return;
-        //if (projectionSlice == null) return;
 
         RenderSystem.backupProjectionMatrix();
         RenderSystem.setProjectionMatrix(projectionSlice, ProjectionType.PERSPECTIVE);
