@@ -125,7 +125,7 @@ val isMyHome = run {
     userHome == "L3MonKe" || normalized.endsWith("/L3MonKe")
 }
 
-val minecraftModsDir = file("C:/Users/L3MonKe/Desktop/MC/.minecraft/versions/Mahiro-1.21.11/mods")
+val minecraftModsDir = file("C:/Users/L3MonKe/Desktop/MC/.minecraft/versions/Sakura-1.21.11/mods")
 
 val copyJarToMinecraftMods = tasks.register<Copy>("copyJarToMinecraftMods") {
     group = "distribution"

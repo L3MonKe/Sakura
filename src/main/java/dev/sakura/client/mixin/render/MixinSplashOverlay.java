@@ -64,6 +64,9 @@ public class MixinSplashOverlay {
     private boolean sakura$handoffScreenReady = false;
 
     @Unique
+    private boolean sakura$handoffIntroRequested = false;
+
+    @Unique
     private static final float PROGRESS_SMOOTH_SPEED = 0.3f;
 
     @Unique
@@ -71,6 +74,11 @@ public class MixinSplashOverlay {
 
     @Unique
     private static final long MIN_DISPLAY_MS = 5000L;
+
+    @Inject(method = "tick", at = @At("HEAD"), cancellable = true)
+    private void onTick(CallbackInfo ci) {
+        ci.cancel();
+    }
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void onRenderHead(DrawContext context, int mouseX, int mouseY, float delta, CallbackInfo ci) {
@@ -145,6 +153,7 @@ public class MixinSplashOverlay {
                 }
             }
             sakura$handoffScreenReady = false;
+            sakura$handoffIntroRequested = false;
             SplashShader.getInstance().cleanup();
             shaderInitialized = false;
             sakura$handoffStartTime = -1L;
@@ -167,6 +176,9 @@ public class MixinSplashOverlay {
                 Sakura.redirectToMainMenu();
                 if (this.client.currentScreen != null) {
                     this.client.currentScreen.init(width, height);
+                }
+                if (!sakura$handoffIntroRequested && Sakura.startIntro()) {
+                    sakura$handoffIntroRequested = true;
                 }
                 sakura$handoffScreenReady = true;
             } else if (this.client.currentScreen != null) {

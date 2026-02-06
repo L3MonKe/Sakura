@@ -148,4 +148,12 @@ public class Sakura {
             mc.setScreen(new AuthScreen(new MainMenuScreen()));
         }
     }
+
+    public static boolean startIntro() {
+        if (mc.currentScreen instanceof MainMenuScreen menu) {
+            menu.startIntro();
+            return true;
+        }
+        return false;
+    }
 }

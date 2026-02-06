@@ -61,6 +61,7 @@ public class MainMenuScreen extends Screen {
     private boolean postAuthIntroActive = false;
     private long postAuthIntroStartTime = -1L;
     private boolean suppressFadeOverlay = false;
+    private boolean introEverStarted = false;
 
     public MainMenuScreen() {
         super(Text.of("MainMenuScreen"));
@@ -93,6 +94,7 @@ public class MainMenuScreen extends Screen {
             postAuthIntroActive = true;
             postAuthIntroStartTime = now;
             suppressFadeOverlay = true;
+            introEverStarted = true;
             externalEntranceProgress = -1f;
             externalEntranceTarget = -1f;
             externalEntranceStartTime = -1L;
@@ -156,9 +158,23 @@ public class MainMenuScreen extends Screen {
     public void setEntranceProgress(float p) {
         float v = MathHelper.clamp(p, 0f, 1f);
         if (externalEntranceTarget < 0f) {
-            externalEntranceStartTime = Util.getMeasuringTimeMs();
+            if (!postAuthIntroActive) {
+                externalEntranceStartTime = Util.getMeasuringTimeMs();
+            } else {
+                externalEntranceStartTime = -1L;
+            }
         }
         this.externalEntranceTarget = v;
+    }
+
+    public void startIntro() {
+        long now = Util.getMeasuringTimeMs();
+        postAuthIntroActive = true;
+        postAuthIntroStartTime = now;
+        suppressFadeOverlay = true;
+        introEverStarted = true;
+        localEntranceStartTime = -1L;
+        externalEntranceStartTime = -1L;
     }
 
     private float resolveEntranceProgress() {
@@ -267,7 +283,7 @@ public class MainMenuScreen extends Screen {
     private void drawTitleBlock(Layout layout, Color iconColor, float opacity, float socialOpacity) {
         float titleSize = refFont(40f, layout.scale);
         NanoVGHelper.drawString(
-                "Minecraft 1.21.4",
+                "Minecraft 1.21.11",
                 layout.centerX,
                 layout.titleY,
                 FontLoader.bold(),
@@ -291,7 +307,7 @@ public class MainMenuScreen extends Screen {
 
         float loveSize = refFont(15f, layout.scale);
         NanoVGHelper.drawString(
-                "Love By Sakura#1337",
+                "Love By Fin_LemonKe",
                 layout.centerX,
                 layout.loveY,
                 FontLoader.bold(),
@@ -326,15 +342,15 @@ public class MainMenuScreen extends Screen {
 
     private void drawLogo(Layout layout, float liftY, float opacity) {
         float logoSize = refFont(80f, layout.scale);
-        float aWidth = NanoVGHelper.getTextWidth("M", FontLoader.bold(), logoSize);
+        float aWidth = NanoVGHelper.getTextWidth("S", FontLoader.bold(), logoSize);
         float baseY = 7f * layout.scale + height / 2f - 50f * layout.scale - liftY;
 
-        float etaWidth = NanoVGHelper.getTextWidth("4h1r0", FontLoader.bold(), logoSize);
+        float etaWidth = NanoVGHelper.getTextWidth("akura", FontLoader.bold(), logoSize);
         float zX = width / 2f - aWidth / 2f - etaWidth / 2f;
         float etaX = width / 2f - etaWidth / 2f + aWidth / 2f;
 
         NanoVGHelper.drawString(
-                "M",
+                "S",
                 zX,
                 baseY,
                 FontLoader.bold(),
@@ -344,7 +360,7 @@ public class MainMenuScreen extends Screen {
         );
 
         NanoVGHelper.drawString(
-                "4h1r0",
+                "akura",
                 etaX,
                 baseY,
                 FontLoader.bold(),
@@ -366,11 +382,11 @@ public class MainMenuScreen extends Screen {
             postAuthIntroActive = false;
             postAuthIntroStartTime = -1L;
             localEntranceStartTime = now;
-        } else {
-            MainMenuShader.getSharedInstance().render(this.width, this.height, 1.0f);
         }
 
+        boolean fromSplash = externalEntranceTarget >= 0f || externalEntranceProgress >= 0f;
         float p = resolveEntranceProgress();
+        MainMenuShader.getSharedInstance().render(this.width, this.height, fromSplash && !introEverStarted ? AnimationUtil.smoothstep(0.0f, 1.0f, p) : 1.0f);
         if (suppressFadeOverlay && p >= 0.999f) {
             suppressFadeOverlay = false;
         }
@@ -413,7 +429,6 @@ public class MainMenuScreen extends Screen {
 
             NanoVGHelper.restore();
 
-            boolean fromSplash = externalEntranceTarget >= 0f || externalEntranceProgress >= 0f;
             if (!fromSplash && !suppressFadeOverlay) {
                 drawFadeOverlay(p);
             }
@@ -475,7 +490,7 @@ public class MainMenuScreen extends Screen {
 
         List<String> lines = Arrays.asList(
                 "LemonClientDevelopment",
-                "Minecraft 1.21.4",
+                "Minecraft 1.21.11",
                 "Changelog :",
                 "* 你知道吗",
                 "* 这是第一个版本",

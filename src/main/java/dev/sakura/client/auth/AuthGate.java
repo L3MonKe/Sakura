@@ -52,14 +52,6 @@ public final class AuthGate {
     private static volatile AuthClient heartbeatClient;
     private static volatile String heartbeatClientCfgKey;
 
-    public static String getSessionToken() {
-        return sessionToken;
-    }
-
-    public static boolean isSessionOnlineVerified() {
-        return sessionOnlineVerified;
-    }
-
     private AuthGate() {
     }
 
@@ -233,7 +225,9 @@ public final class AuthGate {
         long now = System.currentTimeMillis();
         if (sessionPassVerified && now >= sessionPassExpiresAtMillis && !sessionOnlineVerified) {
             clearSession();
-            if (c.player != null && c.world != null) failSafe();
+            if (c.player != null && c.world != null) {
+                failSafe();
+            }
             return;
         }
 

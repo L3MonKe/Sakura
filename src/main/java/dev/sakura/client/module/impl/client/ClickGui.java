@@ -57,7 +57,7 @@ public class ClickGui extends Module {
 
     public static final Value<Boolean> backgroundBlur = new BoolValue("Background Blur", "背景模糊", true);
     public static final Value<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 8.0, 1.0, 20.0, 0.5, backgroundBlur::get);
-    public static final EnumValue<BlurMode> blurMode = new EnumValue<>("Blur Mode", "模糊方式", BlurMode.FullScreen);
+    public static final EnumValue<BlurMode> blurMode = new EnumValue<>("Blur Mode", "模糊方式", BlurMode.OnlyCategory);
 
     @Override
     protected void onEnable() {

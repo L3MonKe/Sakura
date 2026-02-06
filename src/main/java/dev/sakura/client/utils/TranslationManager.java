@@ -10,7 +10,7 @@ public class TranslationManager {
     private static final Map<String, Map<ClickGui.LanguageMode, String>> translations = new HashMap<>();
 
     static {
-        register("welcome.title", "Welcome to LemonClient", "欢迎使用 " + Sakura.MOD_NAME);
+        register("welcome.title", "Welcome to " + Sakura.MOD_NAME, "欢迎使用 " + Sakura.MOD_NAME);
         register("welcome.subtitle", "The best utility mod for BJD", "布吉岛最强辅助模组");
 
         register("nav.prev", "Previous", "上一步");
@@ -42,11 +42,11 @@ public class TranslationManager {
         register("color.alpha", "Alpha", "透明度");
         register("color.hex", "Hex", "十六进制");
 
-        register("colormode.fade", "Fade", "渐变");
+        register("colormode.fade", "Fade", "消散");
         register("colormode.rainbow", "Rainbow", "彩虹");
         register("colormode.astolfo", "Astolfo", "阿斯托尔福");
         register("colormode.dynamic", "Dynamic", "动态");
-        register("colormode.tenacity", "Tenacity", "Tenacity");
+        register("colormode.tenacity", "Tenacity", "渐变");
         register("colormode.static", "Static", "静态");
         register("colormode.double", "Double", "双色");
     }

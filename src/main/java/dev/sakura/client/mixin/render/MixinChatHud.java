@@ -49,12 +49,12 @@ public class MixinChatHud {
     }
 
     @Shadow
-    public int getWidth() {
+    private int getWidth() {
         return 0;
     }
 
     @Shadow
-    public double getChatScale() {
+    private double getChatScale() {
         return 0;
     }
 
@@ -63,9 +63,8 @@ public class MixinChatHud {
         if (isChatHidden()) return;
         int i = getVisibleLineCount();
         int j = visibleMessages.size();
-        if (j <= 0) return;
+        if (j == 0) return;
 
-        boolean focused = interactable;
         float f = (float) getChatScale();
         int k = MathHelper.ceil((float) getWidth() / f);
         int l = context.getScaledWindowHeight();
@@ -85,8 +84,8 @@ public class MixinChatHud {
             ChatHudLine.Visible visible = this.visibleMessages.get(s);
             if (visible == null) continue;
             int t = currentTick - visible.addedTime();
-            if (t < 200 || focused) {
-                double h = focused ? 1.0 : getMessageOpacityMultiplierLocal(t);
+            if (t < 200 || interactable) {
+                double h = interactable ? 1.0 : getMessageOpacityMultiplierLocal(t);
                 int u = (int) (255.0 * h * d);
                 if (u > 3) {
                     int x = m - r * o;
