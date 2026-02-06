@@ -1,25 +1,34 @@
 package dev.sakura.client.mixin.render;
 
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.render.Render3DEvent;
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.impl.render.NoRender;
-import net.minecraft.client.render.Camera;
+import dev.sakura.client.module.impl.render.Shaders;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.PostEffectProcessor;
+import net.minecraft.client.gl.ShaderLoader;
 import net.minecraft.client.render.FrameGraphBuilder;
-import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.util.ObjectAllocator;
-import net.minecraft.client.util.math.MatrixStack;
-import org.joml.Matrix4f;
-import org.joml.Vector4f;
+import net.minecraft.util.Identifier;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.Set;
 
 @Mixin(WorldRenderer.class)
 public class MixinWorldRenderer {
+    @Shadow
+    private Framebuffer entityOutlineFramebuffer;
+
+    @Unique
+    private static final Identifier vanillaOutline = Identifier.ofVanilla("entity_outline");
+
     /*TODO: @ModifyArg(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/FramePass;setRenderer(Ljava/lang/Runnable;)V"), index = 0)
     private Runnable renderSky$wrapRenderer(Runnable original, @Local SkyRenderState skyRenderState) {
         Atmosphere atmosphere = Sakura.MODULES.getModule(Atmosphere.class);
@@ -39,16 +48,28 @@ public class MixinWorldRenderer {
         };
     }*/
 
-    @Inject(method = "render", at = @At(value = "RETURN"))
-    private void onRender(ObjectAllocator allocator, RenderTickCounter tickCounter, boolean renderBlockOutline, Camera camera, Matrix4f positionMatrix, Matrix4f basicProjectionMatrix, Matrix4f projectionMatrix, GpuBufferSlice fogBuffer, Vector4f fogColor, boolean renderSky, CallbackInfo ci) {
-        RenderSystem.getModelViewStack().pushMatrix().mul(positionMatrix);
-        Sakura.EVENT_BUS.post(new Render3DEvent(new MatrixStack(), tickCounter.getTickProgress(true)));
-        RenderSystem.getModelViewStack().popMatrix();
-    }
-
     @Inject(method = "renderWeather", at = @At("HEAD"), cancellable = true)
     private void onRenderWeather(FrameGraphBuilder frameGraphBuilder, GpuBufferSlice gpuBufferSlice, CallbackInfo ci) {
         NoRender noRender = Sakura.MODULES.getModule(NoRender.class);
         if (noRender.noWeather()) ci.cancel();
+    }
+
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/ShaderLoader;loadPostEffect(Lnet/minecraft/util/Identifier;Ljava/util/Set;)Lnet/minecraft/client/gl/PostEffectProcessor;"))
+    private PostEffectProcessor onRender(ShaderLoader shaderLoader, Identifier id, Set<Identifier> availableExternalTargets) {
+        Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
+        if (shaders != null && shaders.isEnabled() && vanillaOutline.equals(id)) {
+            return null;
+        }
+        return shaderLoader.loadPostEffect(id, availableExternalTargets);
+    }
+
+    @Inject(method = "drawEntityOutlinesFramebuffer", at = @At("HEAD"), cancellable = true)
+    private void onDrawEntityOutlinesFramebuffer(CallbackInfo ci) {
+        Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
+        if (shaders == null || !shaders.isEnabled()) return;
+        if (entityOutlineFramebuffer == null) return;
+
+        Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, shaders.mode.get(), Sakura.mc.getRenderTickCounter().getTickProgress(true));
+        ci.cancel();
     }
 }

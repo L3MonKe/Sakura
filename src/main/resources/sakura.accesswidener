@@ -12,3 +12,5 @@ accessible field net/minecraft/world/entity/SectionedEntityCache trackingSection
 accessible method net/minecraft/client/world/ClientWorld getPendingUpdateManager ()Lnet/minecraft/client/network/PendingUpdateManager;
 
 accessible field net/minecraft/client/gui/screen/ingame/CreativeInventoryScreen selectedTab Lnet/minecraft/item/ItemGroup;
+
+accessible method net/minecraft/client/network/ClientPlayerInteractionManager syncSelectedSlot ()V

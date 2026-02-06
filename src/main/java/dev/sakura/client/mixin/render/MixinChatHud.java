@@ -26,7 +26,7 @@ import java.util.List;
 public class MixinChatHud {
     @Final
     @Shadow
-    MinecraftClient client;
+    private MinecraftClient client;
     @Final
     @Shadow
     private List<ChatHudLine.Visible> visibleMessages;
@@ -49,12 +49,12 @@ public class MixinChatHud {
     }
 
     @Shadow
-    private int getWidth() {
+    public int getWidth() {
         return 0;
     }
 
     @Shadow
-    private double getChatScale() {
+    public double getChatScale() {
         return 0;
     }
 
@@ -63,13 +63,15 @@ public class MixinChatHud {
         if (isChatHidden()) return;
         int i = getVisibleLineCount();
         int j = visibleMessages.size();
-        if (j == 0) return;
+        if (j <= 0) return;
 
+        boolean focused = interactable;
         float f = (float) getChatScale();
         int k = MathHelper.ceil((float) getWidth() / f);
         int l = context.getScaledWindowHeight();
         int m = MathHelper.floor((float) (l - 40) / f);
         double d = client.options.getChatOpacity().getValue() * 0.9 + 0.1;
+        double e = client.options.getTextBackgroundOpacity().getValue();
         int o = getLineHeight();
 
         final int CHAT_MARGIN_LEFT = 4;
@@ -84,10 +86,11 @@ public class MixinChatHud {
             ChatHudLine.Visible visible = this.visibleMessages.get(s);
             if (visible == null) continue;
             int t = currentTick - visible.addedTime();
-            if (t < 200 || interactable) {
-                double h = interactable ? 1.0 : getMessageOpacityMultiplierLocal(t);
+            if (t < 200 || focused) {
+                double h = focused ? 1.0 : getMessageOpacityMultiplierLocal(t);
                 int u = (int) (255.0 * h * d);
-                if (u > 3) {
+                int v = (int) (255.0 * h * e);
+                if (u > 3 && v > 3) {
                     int x = m - r * o;
                     int y1 = x - o;
                     int y2 = x;

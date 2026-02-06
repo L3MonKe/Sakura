@@ -1,14 +1,25 @@
 package dev.sakura.client.module.impl.render;
 
+import dev.sakura.client.manager.impl.ShaderManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.values.impl.BoolValue;
+import dev.sakura.client.values.impl.ColorValue;
+import dev.sakura.client.values.impl.EnumValue;
+import dev.sakura.client.values.impl.NumberValue;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.SpawnGroup;
+import net.minecraft.entity.decoration.EndCrystalEntity;
+import net.minecraft.entity.player.PlayerEntity;
+
+import java.awt.*;
 
 public class Shaders extends Module {
     public Shaders() {
         super("Shaders", "着色器", Category.Render);
     }
 
-    /*private final BoolValue hands = new BoolValue("Hands", "小手手", true);
+    private final BoolValue hands = new BoolValue("Hands", "小手手", true);
     private final BoolValue players = new BoolValue("Players", "玩家", true);
     private final BoolValue self = new BoolValue("Self", "自个儿", true, players::get);
     //private final BoolValue friends = new BoolValue("Friends", "队友", true);
@@ -29,7 +40,7 @@ public class Shaders extends Module {
     public final NumberValue<Integer> quality = new NumberValue<>("Quality", "Quality", 3, 0, 6, 1);
     public final NumberValue<Integer> octaves = new NumberValue<>("Smoke Octaves", "Smoke Octaves", 10, 5, 30, 1);
     public final NumberValue<Integer> fillAlpha = new NumberValue<>("Fill Alpha", "填充透明度", 170, 0, 255, 10);
-    public final BoolValue glow = new BoolValue("SmokeGlow", "抽烟Glow", true);
+    public final BoolValue glow = new BoolValue("Smoke Glow", "抽烟Glow", true);
 
     public final ColorValue outlineColor = new ColorValue("Outline", "外边", new Color(0x8800FF00));
     public final ColorValue outlineColor1 = new ColorValue("Smoke Outline", "烟雾外边", new Color(0x8800FF00), () -> mode.is(ShaderManager.Shader.Smoke) || handsMode.is(ShaderManager.Shader.Smoke));
@@ -38,12 +49,16 @@ public class Shaders extends Module {
     public final ColorValue fillColor2 = new ColorValue("Smoke Fill", "烟雾填充", new Color(0x8800FF00));
     public final ColorValue fillColor3 = new ColorValue("Smoke Fill2", "烟雾次填充", new Color(0x8800FF00));
 
+    public boolean isHandsEnabled() {
+        return hands.get();
+    }
+
     public boolean shouldRender(Entity entity) {
         if (entity == null || mc.player == null) {
             return false;
         }
 
-        if (mc.player.squaredDistanceTo(entity.getPos()) > maxRange.get() * maxRange.get()) {
+        if (mc.player.squaredDistanceTo(entity.getEntityPos()) > maxRange.get() * maxRange.get()) {
             return false;
         }
 
@@ -55,25 +70,18 @@ public class Shaders extends Module {
             return players.get();
         }
 
-        if (entity instanceof EndCrystalEntity)
+        if (entity instanceof EndCrystalEntity) {
             return crystals.get();
-
-        return switch (entity.getType().getSpawnGroup()) {
-            case CREATURE, WATER_CREATURE -> creatures.get();
-            case MONSTER -> monsters.get();
-            case AMBIENT, WATER_AMBIENT -> ambients.get();
-            default -> others.get();
-        };
-    }
-
-    @EventHandler
-    private void onRender3D(Render3DEvent event) {
-        if (hands.get()) {
-            Managers.SHADER.renderShader(() -> ((IGameRenderer) mc.gameRenderer).irenderHand(mc.gameRenderer.getCamera(), mc.getRenderTickCounter().getTickDelta(true), event.getMatrices().peek().getPositionMatrix()), handsMode.get());
         }
+
+        SpawnGroup group = entity.getType().getSpawnGroup();
+        if (group == SpawnGroup.CREATURE || group == SpawnGroup.WATER_CREATURE) return creatures.get();
+        if (group == SpawnGroup.MONSTER) return monsters.get();
+        if (group == SpawnGroup.AMBIENT || group == SpawnGroup.WATER_AMBIENT) return ambients.get();
+        return others.get();
     }
 
     @Override
     public void onDisable() {
-    }*/
+    }
 }

@@ -1,7 +1,7 @@
 package dev.sakura.client.mixin.render;
 
-import dev.sakura.client.shaders.MainMenuShader;
 import dev.sakura.client.nanovg.NanoVGRenderer;
+import dev.sakura.client.shaders.MainMenuShader;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import org.spongepowered.asm.mixin.Mixin;

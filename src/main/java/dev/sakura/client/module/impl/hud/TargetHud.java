@@ -172,7 +172,7 @@ public class TargetHud extends HudModule {
                     .texture("Sampler0", texture)
                     .translucent()
                     .layeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING)
-                    .outputTarget(OutputTarget.ITEM_ENTITY_TARGET)
+                    .outputTarget(OutputTarget.MAIN_TARGET)
                     .build()
     ));
 
@@ -666,18 +666,21 @@ public class TargetHud extends HudModule {
     @EventHandler
     public void onRender3D(Render3DEvent event) {
         if (!espEnabled.get()) return;
+        renderEsp(event.getMatrices(), event.getTickDelta());
+    }
+
+    private void renderEsp(MatrixStack matrices, float tickDelta) {
         LivingEntity target = getCurrentTarget();
         if (target == null) return;
 
         rotation -= rotationSpeed.get().floatValue();
         if (rotation <= -360f) rotation += 360f;
 
-        MatrixStack matrices = event.getMatrices();
         Vec3d cam = mc.getEntityRenderDispatcher().camera.getCameraPos();
 
-        double ex = MathHelper.lerp(event.getTickDelta(), target.lastX, target.getX()) - cam.x;
-        double ey = MathHelper.lerp(event.getTickDelta(), target.lastY, target.getY()) - cam.y;
-        double ez = MathHelper.lerp(event.getTickDelta(), target.lastZ, target.getZ()) - cam.z;
+        double ex = MathHelper.lerp(tickDelta, target.lastX, target.getX()) - cam.x;
+        double ey = MathHelper.lerp(tickDelta, target.lastY, target.getY()) - cam.y;
+        double ez = MathHelper.lerp(tickDelta, target.lastZ, target.getZ()) - cam.z;
 
         float entityHeight = target.getHeight();
         float size = espSize.get().floatValue() * 0.5f;
