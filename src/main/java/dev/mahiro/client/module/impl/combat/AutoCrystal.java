@@ -71,7 +71,7 @@ public class AutoCrystal extends Module {
         if (preserveItems.get() && itemNearby(target, 6))
             return;
 
-        if (timerUtil.passedMS(getCooldownValueWithRandomization(popCooldown.get()))) {
+        if (timerUtil.passedMillise(getCooldownValueWithRandomization(popCooldown.get()))) {
             mc.interactionManager.attackEntity(mc.player, target);
             mc.player.swingHand(Hand.MAIN_HAND);
             timerUtil.reset();
@@ -165,10 +165,10 @@ public class AutoCrystal extends Module {
     }
 
     private void placeCrystal() {
-        if (placementMode.is(PlacementMode.RClick) && mc.options.useKey.isPressed() && mc.player.getInventory().getSelectedSlot() == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
+        if (placementMode.is(PlacementMode.RClick) && mc.options.useKey.isPressed() && mc.player.getInventory().getSelectedSlot() == getCrystalSlot() && (timerUtil.passedMillise(getCooldownValueWithRandomization(placeCooldown.get())))) {
             placeBlock();
             timerUtil.reset();
-        } else if (placementMode.is(PlacementMode.Look) && isObsidianOrBedrockInCrosshair() && mc.player.getInventory().getSelectedSlot() == getCrystalSlot() && (timerUtil.passedMS(getCooldownValueWithRandomization(placeCooldown.get())))) {
+        } else if (placementMode.is(PlacementMode.Look) && isObsidianOrBedrockInCrosshair() && mc.player.getInventory().getSelectedSlot() == getCrystalSlot() && (timerUtil.passedMillise(getCooldownValueWithRandomization(placeCooldown.get())))) {
             placeBlock();
             timerUtil.reset();
         }

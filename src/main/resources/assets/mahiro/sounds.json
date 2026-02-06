@@ -1,4 +1,20 @@
 {
+  "on": {
+    "sounds": [
+      {
+        "name": "mahiro:mahiro/on",
+        "stream": false
+      }
+    ]
+  },
+  "off": {
+    "sounds": [
+      {
+        "name": "mahiro:mahiro/off",
+        "stream": false
+      }
+    ]
+  },
   "enable": {
     "sounds": [
       {

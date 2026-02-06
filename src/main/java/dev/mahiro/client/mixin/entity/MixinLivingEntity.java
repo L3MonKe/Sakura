@@ -9,7 +9,7 @@ import dev.mahiro.client.events.player.TravelEvent;
 import dev.mahiro.client.events.type.EventType;
 import dev.mahiro.client.manager.impl.RotationManager;
 import dev.mahiro.client.module.impl.movement.JumpCooldown;
-import dev.mahiro.client.utils.vector.Rotation;
+import dev.mahiro.client.utils.rotation.Rotation;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;

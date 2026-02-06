@@ -1,6 +1,5 @@
 package dev.mahiro.client.module.impl.render;
 
-import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.mahiro.client.events.client.TickEvent;
 import dev.mahiro.client.events.render.Render3DEvent;
@@ -9,6 +8,7 @@ import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.module.impl.client.ClickGui;
 import dev.mahiro.client.utils.animations.Easing;
+import dev.mahiro.client.utils.render.MahiroPipelines;
 import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
@@ -25,7 +25,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Matrix4f;
-import org.lwjgl.opengl.GL11;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -51,7 +50,7 @@ public class JumpCircles extends Module {
     private final EnumValue<ColorMode> colorMode = new EnumValue<>("Color Mode", "颜色模式", ColorMode.Client);
     private final ColorValue circleColor = new ColorValue("Circle Color", "光圈颜色", new Color(255, 100, 255, 200), () -> colorMode.is(ColorMode.Custom));
 
-    private final BoolValue depthTest = new BoolValue("DepthTest", "深度测试", false);
+    private final BoolValue depthTest = new BoolValue("Depth Test", "深度测试", false);
     private final BoolValue fade = new BoolValue("Fade Effect", "淡出效果", true);
     private final BoolValue glow = new BoolValue("Glow", "发光", true);
     private final NumberValue<Integer> glowLayers = new NumberValue<>("Glow Layers", "发光层数", 3, 1, 10, 1, glow::get);
@@ -101,22 +100,9 @@ public class JumpCircles extends Module {
 
         if (circles.isEmpty()) return;
 
-        GlStateManager._enableBlend();
-        GlStateManager._blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ZERO);
-        if (!depthTest.get()) {
-            GlStateManager._disableDepthTest();
-            GlStateManager._depthMask(false);
-        }
-        GlStateManager._disableCull();
-
         for (JumpCircle circle : circles) {
             renderCircle(event.getMatrices(), circle, event.getTickDelta());
         }
-
-        GlStateManager._enableDepthTest();
-        GlStateManager._depthMask(true);
-        GlStateManager._enableCull();
-        GlStateManager._disableBlend();
     }
 
     private void renderCircle(MatrixStack matrices, JumpCircle circle, float tickDelta) {
@@ -151,6 +137,7 @@ public class JumpCircles extends Module {
         }
 
         Matrix4f matrix = matrices.peek().getPositionMatrix();
+        boolean useDepthTest = depthTest.get();
 
         if (mode.is(Mode.Fill) || mode.is(Mode.Both)) {
             if (glow.get()) {
@@ -158,24 +145,24 @@ public class JumpCircles extends Module {
                     float layerAlpha = alpha * 0.4f * (1.0f - (float) i / glowLayers.get());
                     float layerRadius = currentRadius * (1.0f - i * 0.05f);
                     if (layerRadius <= 0) break;
-                    drawFilledCircle(matrix, layerRadius, new Color(r, g, b, (int) (layerAlpha * 255)));
+                    drawFilledCircle(matrix, layerRadius, new Color(r, g, b, (int) (layerAlpha * 255)), useDepthTest);
                 }
             } else if (fade.get()) {
-                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 100))); // Softer fill
-                drawFilledCircle(matrix, currentRadius * 0.8f, new Color(r, g, b, (int) (alpha * 150)));
+                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 100)), useDepthTest);
+                drawFilledCircle(matrix, currentRadius * 0.8f, new Color(r, g, b, (int) (alpha * 150)), useDepthTest);
             } else {
-                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 180)));
+                drawFilledCircle(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 180)), useDepthTest);
             }
         }
 
         if (mode.is(Mode.Outline) || mode.is(Mode.Both)) {
-            drawCircleOutline(matrix, currentRadius, new Color(r, g, b, (int) (alpha * 255)), 2.0f);
+            drawCircleOutline(matrices, currentRadius, new Color(r, g, b, (int) (alpha * 255)), 2.0f, useDepthTest);
         }
 
         matrices.pop();
     }
 
-    private void drawFilledCircle(Matrix4f matrix, float radius, Color color) {
+    private void drawFilledCircle(Matrix4f matrix, float radius, Color color, boolean useDepthTest) {
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_FAN, VertexFormats.POSITION_COLOR);
 
         float r = color.getRed() / 255f;
@@ -193,38 +180,33 @@ public class JumpCircles extends Module {
             buffer.vertex(matrix, x, 0, z).color(r, g, b, 0f);
         }
 
-        RenderLayers.debugTriangleFan().draw(buffer.end());
+        (useDepthTest ? RenderLayers.debugTriangleFan() : MahiroPipelines.TRIANGLE_FAN).draw(buffer.end());
     }
 
-    private void drawCircleOutline(Matrix4f matrix, float radius, Color color, float width) {
+    private void drawCircleOutline(MatrixStack matrices, float radius, Color color, float width, boolean useDepthTest) {
         BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH);
-
-        float r = color.getRed() / 255f;
-        float g = color.getGreen() / 255f;
-        float b = color.getBlue() / 255f;
-        float a = color.getAlpha() / 255f;
-
+        MatrixStack.Entry entry = matrices.peek();
+        int argb = color.getRGB();
         int segs = segments.get();
         for (int i = 0; i < segs; i++) {
             double angle1 = Math.PI * 2 * i / segs;
             double angle2 = Math.PI * 2 * (i + 1) / segs;
-
             float x1 = (float) (Math.cos(angle1) * radius);
             float z1 = (float) (Math.sin(angle1) * radius);
             float x2 = (float) (Math.cos(angle2) * radius);
             float z2 = (float) (Math.sin(angle2) * radius);
-
             float dx = x2 - x1;
             float dz = z2 - z1;
             float len = MathHelper.sqrt(dx * dx + dz * dz);
-            float nx = len == 0.0f ? 1.0f : dx / len;
-            float nz = len == 0.0f ? 0.0f : dz / len;
+            if (len < 1.0E-6f) continue;
+            float nx = dx / len;
+            float nz = dz / len;
 
-            buffer.vertex(matrix, x1, 0, z1).color(r, g, b, a).normal(nx, 0.0f, nz).lineWidth(width);
-            buffer.vertex(matrix, x2, 0, z2).color(r, g, b, a).normal(nx, 0.0f, nz).lineWidth(width);
+            buffer.vertex(entry, x1, 0, z1).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
+            buffer.vertex(entry, x2, 0, z2).color(argb).normal(entry, nx, 0.0f, nz).lineWidth(width);
         }
 
-        RenderLayers.lines().draw(buffer.end());
+        (useDepthTest ? RenderLayers.lines() : MahiroPipelines.LINES).draw(buffer.end());
     }
 
     private Color getCircleColor() {

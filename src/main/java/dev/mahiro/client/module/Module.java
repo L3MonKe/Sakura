@@ -103,7 +103,7 @@ public class Module {
     }
 
     public String getDisplayName() {
-        if (ClickGui.language.get() == ClickGui.Language.Chinese) {
+        if (ClickGui.language.get() == ClickGui.LanguageMode.Chinese) {
             return chineseName == null ? englishName : chineseName;
         }
         return englishName;

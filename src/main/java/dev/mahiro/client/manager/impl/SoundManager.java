@@ -9,10 +9,12 @@ import net.minecraft.util.Identifier;
 import static dev.mahiro.client.Mahiro.mc;
 
 public class SoundManager {
+    public SoundEvent ON = registerSound("on");
+    public SoundEvent OFF = registerSound("off");
     public SoundEvent ENABLE = registerSound("enable");
     public SoundEvent DISABLE = registerSound("disable");
-    public SoundEvent JELLO_ENABLE = registerSound("activate");
-    public SoundEvent JELLO_DISABLE = registerSound("deactivate");
+    public SoundEvent ACTIVATE = registerSound("activate");
+    public SoundEvent DEACTIVATE = registerSound("deactivate");
 
     private SoundEvent registerSound(String name) {
         Identifier id = Identifier.of("mahiro", name);

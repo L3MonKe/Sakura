@@ -1,6 +1,7 @@
 package dev.mahiro.client.module.impl.client;
 
 import dev.mahiro.client.Mahiro;
+import dev.mahiro.client.manager.Managers;
 import dev.mahiro.client.module.Category;
 import dev.mahiro.client.module.Module;
 import dev.mahiro.client.utils.color.ColorUtil;
@@ -10,21 +11,37 @@ import dev.mahiro.client.values.impl.BoolValue;
 import dev.mahiro.client.values.impl.ColorValue;
 import dev.mahiro.client.values.impl.EnumValue;
 import dev.mahiro.client.values.impl.NumberValue;
+import net.minecraft.sound.SoundEvent;
 
 import java.awt.*;
 
 public class ClickGui extends Module {
+    public ClickGui() {
+        super("ClickGui", "点击GUI", Category.Client);
+    }
+
     public enum ColorMode {
         Fade, Rainbow, Astolfo, Dynamic, Tenacity, Static, Double
     }
 
-    public enum Language {
+    public enum LanguageMode {
         Chinese, English
+    }
+
+    private enum SoundMode {
+        Mahiro, Arcane, Jello
+    }
+
+    public enum BlurMode {
+        FullScreen, OnlyCategory
     }
 
     public static Value<Double> guiScale = new NumberValue<>("Gui Scale", "界面缩放", 1.0, 0.5, 2.0, 0.05);
     public static Value<Double> fontSize = new NumberValue<>("Font Size", "字体大小", 11.0, 6.0, 20.0, 0.5);
-    public static EnumValue<Language> language = new EnumValue<>("Language", "语言", Language.English);
+    public static EnumValue<LanguageMode> language = new EnumValue<>("LanguageMode", "语言", LanguageMode.English);
+
+    private static final BoolValue sound = new BoolValue("Play Sound", "播放声音", true);
+    private static final EnumValue<SoundMode> soundMode = new EnumValue<>("Sound Mode", "声音模式", SoundMode.Mahiro, sound::get);
 
     public static Value<Color> backgroundColor = new ColorValue("Background Color", "背景颜色", new Color(28, 28, 28));
     public static Value<Color> expandedBackgroundColor = new ColorValue("Expanded Background", "展开背景颜色", new Color(20, 20, 20));
@@ -38,13 +55,9 @@ public class ClickGui extends Module {
     public static final Value<Double> astolfoSaturation = new NumberValue<>("Saturation", "饱和度", 0.8, 0.0, 1.0, 0.05, () -> colorMode.is(ColorMode.Astolfo));
     public static final Value<Double> astolfoBrightness = new NumberValue<>("Brightness", "亮度", 1.0, 0.0, 1.0, 0.05, () -> colorMode.is(ColorMode.Astolfo));
 
-    public static Value<Boolean> backgroundBlur = new BoolValue("Background Blur", "背景模糊", true);
-    public static Value<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 8.0, 1.0, 20.0, 0.5, () -> backgroundBlur.get());
-    public static final Value<Boolean> bjdOnly = new BoolValue("BJD Only", "布吉岛筛选", false, () -> false);
-
-    public ClickGui() {
-        super("ClickGui", "点击GUI", Category.Client);
-    }
+    public static final Value<Boolean> backgroundBlur = new BoolValue("Background Blur", "背景模糊", true);
+    public static final Value<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 8.0, 1.0, 20.0, 0.5, backgroundBlur::get);
+    public static final EnumValue<BlurMode> blurMode = new EnumValue<>("Blur Mode", "模糊方式", BlurMode.FullScreen);
 
     @Override
     protected void onEnable() {
@@ -62,12 +75,26 @@ public class ClickGui extends Module {
         }
     }
 
-    public static int colors(int tick) {
-        return color(tick).getRGB();
+    public static void playEnableSound() {
+        if (!sound.get()) return;
+        switch (soundMode.get()) {
+            case Mahiro -> playSound(Managers.SOUND.ON);
+            case Arcane -> playSound(Managers.SOUND.ENABLE);
+            case Jello -> playSound(Managers.SOUND.ACTIVATE);
+        }
     }
 
-    public static int color() {
-        return color(1).getRGB();
+    public static void playDisableSound() {
+        if (!sound.get()) return;
+        switch (soundMode.get()) {
+            case Mahiro -> playSound(Managers.SOUND.OFF);
+            case Arcane -> playSound(Managers.SOUND.DISABLE);
+            case Jello -> playSound(Managers.SOUND.DEACTIVATE);
+        }
+    }
+
+    private static void playSound(SoundEvent sound) {
+        Managers.SOUND.playSound(sound);
     }
 
     public static Color color(int tick) {
