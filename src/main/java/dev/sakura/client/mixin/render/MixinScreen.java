@@ -37,10 +37,14 @@ public class MixinScreen {
     @Inject(method = "renderPanoramaBackground", at = @At("HEAD"), cancellable = true)
     public void renderPanoramaBackgroundHook(DrawContext context, float delta, CallbackInfo ci) {
         if (mc.world == null) {
-            MainMenuShader.getSharedInstance().render(this.width, this.height);
+            if (mainMenuShader == null) {
+                mainMenuShader = new MainMenuShader(MainMenuShader.MainMenuShaderType.CUTE);
+            }
+            mainMenuShader.render(this.width, this.height);
             ci.cancel();
-        } else {
-            MainMenuShader.cleanupSharedInstance();
+        } else if (mainMenuShader != null) {
+            mainMenuShader.cleanup();
+            mainMenuShader = null;
         }
     }
 }
