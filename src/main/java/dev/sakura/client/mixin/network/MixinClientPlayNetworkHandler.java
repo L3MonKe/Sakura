@@ -1,8 +1,10 @@
 package dev.sakura.client.mixin.network;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.ChatMessageEvent;
 import dev.sakura.client.events.client.GameJoinEvent;
+import dev.sakura.client.events.client.SendMessageEvent;
 import dev.sakura.client.events.entity.EntityVelocityUpdateEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientCommonNetworkHandler;
@@ -20,6 +22,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import static dev.sakura.client.Sakura.mc;
+
 @Mixin(ClientPlayNetworkHandler.class)
 public abstract class MixinClientPlayNetworkHandler extends ClientCommonNetworkHandler {
     @Shadow
@@ -29,9 +33,15 @@ public abstract class MixinClientPlayNetworkHandler extends ClientCommonNetworkH
         super(client, connection, connectionState);
     }
 
-    @Inject(method = "sendChatMessage", at = @At(value = "HEAD"), cancellable = true)
-    private void hookSendChatMessage(String content, CallbackInfo ci) {
-        if (Sakura.EVENT_BUS.post(new ChatMessageEvent.Server(content)).isCancelled()) ci.cancel();
+    @Inject(method = "sendChatMessage", at = @At("HEAD"), cancellable = true)
+    private void onSendChatMessage(String message, CallbackInfo ci, @Local(argsOnly = true) LocalRef<String> messageRef) {
+        SendMessageEvent event = Sakura.EVENT_BUS.post(new SendMessageEvent(message));
+
+        if (!event.isCancelled()) {
+            messageRef.set(event.getMessage());
+        } else {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "onGameJoin", at = @At(value = "TAIL"))
@@ -44,9 +54,8 @@ public abstract class MixinClientPlayNetworkHandler extends ClientCommonNetworkH
         NetworkThreadUtils.forceMainThread(packet, (ClientPlayNetworkHandler) (Object) this, this.client.getPacketApplyBatcher());
         Entity entity = this.world.getEntityById(packet.getEntityId());
         if (entity != null) {
-            if (entity == MinecraftClient.getInstance().player) {
-                EntityVelocityUpdateEvent event = new EntityVelocityUpdateEvent();
-                Sakura.EVENT_BUS.post(event);
+            if (entity == mc.player) {
+                EntityVelocityUpdateEvent event = Sakura.EVENT_BUS.post(new EntityVelocityUpdateEvent());
                 if (!event.isCancelled()) {
                     entity.setVelocityClient(packet.getVelocity());
                 }

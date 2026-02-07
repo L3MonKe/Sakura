@@ -4,7 +4,7 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.command.impl.*;
-import dev.sakura.client.events.client.ChatMessageEvent;
+import dev.sakura.client.events.client.SendMessageEvent;
 import dev.sakura.client.events.client.SuggestChatEvent;
 import dev.sakura.client.events.key.KeyEvent;
 import dev.sakura.client.events.type.KeyAction;
@@ -70,7 +70,7 @@ public class CommandManager {
     }
 
     @EventHandler
-    private void onSendMessage(ChatMessageEvent.Client event) {
+    private void onSendMessage(SendMessageEvent.Client event) {
         String msg = event.getMessage();
         Chat chat = Zeta.MODULES.getModule(Chat.class);
 
@@ -85,7 +85,7 @@ public class CommandManager {
     }*/
 
     @EventHandler(priority = 999)
-    public void onChatMessage(ChatMessageEvent.Client event) {
+    public void onChatMessage(SendMessageEvent event) {
         final String text = event.getMessage().trim();
         if (text.startsWith(prefix)) {
             String literal = text.substring(prefix.length());

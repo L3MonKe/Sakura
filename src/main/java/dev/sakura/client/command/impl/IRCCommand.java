@@ -5,7 +5,7 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import client.dev.sakura.Zeta;
 import command.client.dev.sakura.Command;
-import client.events.client.dev.sakura.ChatMessageEvent;
+import client.events.client.dev.sakura.SendMessageEvent;
 import client.lemonchat.dev.sakura.ChatClient;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.command.CommandSource;
@@ -68,7 +68,7 @@ public class IRCCommand extends Command {
 
     public static class MessageHandler {
         @EventHandler
-        public void onMessage(ChatMessageEvent.Client event) {
+        public void onMessage(SendMessageEvent.Client event) {
             event.cancel();
             ChatClient.get().chat(event.getMessage());
         }

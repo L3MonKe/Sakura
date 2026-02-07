@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.command.CommandSource;
 
@@ -11,11 +12,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public abstract class Command {
-    protected static final MinecraftClient mc = MinecraftClient.getInstance();
-
     private final String name;
     private final String description;
     private final List<LiteralArgumentBuilder<CommandSource>> builders = new ArrayList<>();
+
+    protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     public Command(String name, String description, LiteralArgumentBuilder<CommandSource> builder) {
         this.name = name;
@@ -47,7 +48,7 @@ public abstract class Command {
         return RequiredArgumentBuilder.argument(name, type);
     }
 
-    protected static com.mojang.brigadier.suggestion.SuggestionProvider<CommandSource> suggest(String... suggestions) {
+    protected static SuggestionProvider<CommandSource> suggest(String... suggestions) {
         return (context, builder) -> CommandSource.suggestMatching(Lists.newArrayList(suggestions), builder);
     }
 

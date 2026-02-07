@@ -57,9 +57,12 @@ public class Scaffold extends Module {
     private final ColorValue lineColor = new ColorValue("Line Color", "线条颜色", new Color(255, 105, 180), render::get);
 
     private int yLevel;
-    private BlockCache blockCache;
     private int airTicks;
+    private BlockCache blockCache;
+
+    private FindItemResult result;
     private boolean shouldSwapBack;
+
     private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
 
     public Scaffold() {
@@ -73,6 +76,21 @@ public class Scaffold extends Module {
             shouldSwapBack = false;
             InvUtil.swapBack();
         });
+    }
+
+    @Override
+    protected void onEnable() {
+        blockCache = null;
+        shouldSwapBack = false;
+    }
+
+    @Override
+    protected void onDisable() {
+        if (swapMode.is(SwapMode.Normal) && swapBack.get()) {
+            shouldSwapBack = true;
+        }
+        blockCache = null;
+        result = null;
     }
 
     @Override
@@ -104,6 +122,16 @@ public class Scaffold extends Module {
         }
 
         getBlockInfo();
+
+        if (blockCache != null) {
+            if (swapMode.is(SwapMode.InvSwitch)) {
+                result = InvUtil.find(itemStack -> validItem(itemStack, blockCache.position), 0, 35);
+            } else {
+                result = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
+            }
+        }
+
+        if (result == null || !result.found()) return;
 
         MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
         if (telly.get()) {
@@ -205,18 +233,13 @@ public class Scaffold extends Module {
                 } else if (validItem(mc.player.getMainHandStack(), blockCache.position)) {
                     hand = Hand.MAIN_HAND;
                 } else {
-                    FindItemResult item = InvUtil.find(itemStack -> validItem(itemStack, blockCache.position), 0, 35);
-                    if (!item.found()) return;
-                    invSwapped = InvUtil.invSwap(item.slot());
+                    invSwapped = InvUtil.invSwap(result.slot());
                     hand = Hand.MAIN_HAND;
                 }
             } else {
-                FindItemResult item = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
-                if (!item.found()) return;
-
                 boolean remember = swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get());
-                InvUtil.swap(item.isOffhand() ? mc.player.getInventory().getSelectedSlot() : item.slot(), remember);
-                hand = item.getHand();
+                InvUtil.swap(result.isOffhand() ? mc.player.getInventory().getSelectedSlot() : result.slot(), remember);
+                hand = result.getHand();
             }
         }
 
@@ -325,20 +348,6 @@ public class Scaffold extends Module {
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, sideCheck.get());
         if (hasRotated) return reverseYaw;
         return rotations;
-    }
-
-    @Override
-    protected void onEnable() {
-        blockCache = null;
-        shouldSwapBack = false;
-    }
-
-    @Override
-    protected void onDisable() {
-        if (swapMode.is(SwapMode.Normal) && swapBack.get()) {
-            shouldSwapBack = true;
-        }
-        blockCache = null;
     }
 
     private enum SwapMode {

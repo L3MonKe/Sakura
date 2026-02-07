@@ -522,7 +522,7 @@ Class: public dev.sakura.client.command.CommandManager	=>	dev.sakura.client.Mahi
 		public java.util.List getCommands()	=>	Mahiro_h(java.lang.Object[])* :qBGlmw3WV8kZNv
 		public java.lang.String getPrefix()	=>	Mahiro_G(java.lang.Object[])* :SgkJgHYdV8kZNv
 		private int getPrefixKey(java.lang.String)	=>	Mahiro_r(long, java.lang.String)	=>	Mahiro_r(java.lang.Object[])* :BNKFnaHGVyta6S
-		public void onChatMessage(dev.sakura.client.events.client.ChatMessageEvent$Client)	=>	Mahiro_m(dev.sakura.client.Mahiro_I) :AoBGPwAPV8kZNv
+		public void onChatMessage(dev.sakura.client.events.client.SendMessageEvent$Client)	=>	Mahiro_m(dev.sakura.client.Mahiro_I) :AoBGPwAPV8kZNv
 		public void onChatSuggest(dev.sakura.client.events.client.SuggestChatEvent)	=>	Mahiro_q(dev.sakura.client.Mahiro_O5) :ontKdW-QV8kZNv
 		public void onKey(dev.sakura.client.events.key.KeyEvent)	=>	Mahiro_W(dev.sakura.client.Mahiro_Z) :tkAoNRZaV8kZNv
 		private void register(dev.sakura.client.command.Command[])	=>	Mahiro_l(java.lang.Object[])* :wd53KXJmV8kZNv
@@ -685,12 +685,12 @@ Class: public dev.sakura.client.events.Cancellable	=>	dev.sakura.client.Mahiro_y
 		public boolean isCancelled()	=>	isCancelled() :WWqpXovwV8kZNv
 		public void setCancelled(boolean)	=>	setCancelled(boolean) :Efg8Ky-gV8kZNv
 
-Class: public dev.sakura.client.events.client.ChatMessageEvent	=>	dev.sakura.client.Mahiro_d
+Class: public dev.sakura.client.events.client.SendMessageEvent	=>	dev.sakura.client.Mahiro_d
 	Source: "ChatMessageEvent.java"
-	FieldsOf: dev.sakura.client.events.client.ChatMessageEvent
+	FieldsOf: dev.sakura.client.events.client.SendMessageEvent
 		private static java.lang.String b	=>	Mahiro_u Manufactured:
 		private final java.lang.String message	=>	Mahiro_r
-	MethodsOf: dev.sakura.client.events.client.ChatMessageEvent
+	MethodsOf: dev.sakura.client.events.client.SendMessageEvent
 		static void <clinit>()	=>	<clinit>() :onqReomeV8kZNv Manufactured:
 		public void <init>(java.lang.String)	=>	<init>(java.lang.String) :--e9FPKcV8kZNv
 		public static void a(java.lang.String)	=>	Mahiro_k(java.lang.String) Manufactured:
@@ -698,16 +698,16 @@ Class: public dev.sakura.client.events.client.ChatMessageEvent	=>	dev.sakura.cli
 		public java.lang.String getMessage()	=>	Mahiro_z(java.lang.Object[])* :-DU-KqkDV8kZNv
 		private java.lang.String normalize(java.lang.String)	=>	Mahiro_T(java.lang.Object[])* :wTP7OV7LV8kZNv
 
-Class: public dev.sakura.client.events.client.ChatMessageEvent$Client	=>	dev.sakura.client.Mahiro_I
+Class: public dev.sakura.client.events.client.SendMessageEvent$Client	=>	dev.sakura.client.Mahiro_I
 	Source: "ChatMessageEvent.java"
-	FieldsOf: dev.sakura.client.events.client.ChatMessageEvent$Client
-	MethodsOf: dev.sakura.client.events.client.ChatMessageEvent$Client
+	FieldsOf: dev.sakura.client.events.client.SendMessageEvent$Client
+	MethodsOf: dev.sakura.client.events.client.SendMessageEvent$Client
 		public void <init>(java.lang.String)	=>	<init>(java.lang.String) :Gj9oqcJbV8kZNv
 
-Class: public dev.sakura.client.events.client.ChatMessageEvent$Server	=>	dev.sakura.client.Mahiro_S
+Class: public dev.sakura.client.events.client.SendMessageEvent$Server	=>	dev.sakura.client.Mahiro_S
 	Source: "ChatMessageEvent.java"
-	FieldsOf: dev.sakura.client.events.client.ChatMessageEvent$Server
-	MethodsOf: dev.sakura.client.events.client.ChatMessageEvent$Server
+	FieldsOf: dev.sakura.client.events.client.SendMessageEvent$Server
+	MethodsOf: dev.sakura.client.events.client.SendMessageEvent$Server
 		public void <init>(java.lang.String)	=>	<init>(java.lang.String) :IUgMs2HVV8kZNv
 
 Class: public dev.sakura.client.events.client.GameJoinEvent	=>	dev.sakura.client.Mahiro_O3
@@ -8772,7 +8772,7 @@ ForwardClass: dev.sakura.client.command.Command Package: dev.sakura.client.comma
 ForwardClass: dev.sakura.client.command.impl.ToggleCommand Package: dev.sakura.client.command.impl	Data: 42784 a2783 b2784 p
 ForwardClass: dev.sakura.client.config.ConfigManager Package: dev.sakura.client.config	Data: 32825 a2825 b2825 L
 ForwardClass: dev.sakura.client.events.Cancellable Package: dev.sakura.client.events	Data: 12711 a2711 b2711 c2712 q
-ForwardClass: dev.sakura.client.events.client.ChatMessageEvent Package: dev.sakura.niurendeobf	Data: 32691 a2690 b2692 N
+ForwardClass: dev.sakura.client.events.client.SendMessageEvent Package: dev.sakura.niurendeobf	Data: 32691 a2690 b2692 N
 ForwardClass: dev.sakura.client.events.client.TickEvent Package: dev.sakura.client.events.client	Data: M2755 a2755 b2755 F
 ForwardClass: dev.sakura.client.events.client.TickEvent$Post Package: dev.sakura.client.mixin.render	Data: 22767 a2766 b2767 c2768 z
 ForwardClass: dev.sakura.client.events.client.TickEvent$Pre Package: dev.sakura.client.mixin.network	Data: 22729 a2728 b2729 c2730 x
@@ -8866,9 +8866,9 @@ MemberClass: dev.sakura.client.command.impl.SaveCommand	Data: 2685
 MemberClass: dev.sakura.client.command.impl.ToggleCommand	Data: 2648
 MemberClass: dev.sakura.client.config.ConfigManager	Data: 2691 Yd
 MemberClass: dev.sakura.client.events.Cancellable	Data: 2580
-MemberClass: dev.sakura.client.events.client.ChatMessageEvent	Data: 2561
-MemberClass: dev.sakura.client.events.client.ChatMessageEvent$Client	Data: 2534
-MemberClass: dev.sakura.client.events.client.ChatMessageEvent$Server	Data: 2544
+MemberClass: dev.sakura.client.events.client.SendMessageEvent	Data: 2561
+MemberClass: dev.sakura.client.events.client.SendMessageEvent$Client	Data: 2534
+MemberClass: dev.sakura.client.events.client.SendMessageEvent$Server	Data: 2544
 MemberClass: dev.sakura.client.events.client.GameJoinEvent	Data: 2591
 MemberClass: dev.sakura.client.events.client.SuggestChatEvent	Data: 2593
 MemberClass: dev.sakura.client.events.client.TickEvent	Data: 2626

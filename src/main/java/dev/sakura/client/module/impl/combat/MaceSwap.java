@@ -1,6 +1,9 @@
 package dev.sakura.client.module.impl.combat;
 
+import dev.sakura.client.module.Category;
+import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.BoolValue;
+import dev.sakura.client.values.impl.NumberValue;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.component.DataComponentTypes;
@@ -15,9 +18,6 @@ import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
-import dev.sakura.client.module.Category;
-import dev.sakura.client.module.Module;
-import dev.sakura.client.values.impl.NumberValue;
 
 import java.util.Random;
 
@@ -34,7 +34,7 @@ public class MaceSwap extends Module {
     private boolean waitingSwapBack = false;
 
     public MaceSwap() {
-        super("MaceSwap", "重锤秒切",Category.Combat);
+        super("MaceSwap", "重锤秒切", Category.Combat);
 
         ClientTickEvents.END_CLIENT_TICK.register(c -> {
             if (!isEnabled() || mc.player == null || mc.interactionManager == null) return;

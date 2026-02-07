@@ -14,7 +14,6 @@ import java.util.Collection;
 import java.util.concurrent.CompletableFuture;
 
 public class ModuleArgumentType implements ArgumentType<Module> {
-
     public static ModuleArgumentType module() {
         return new ModuleArgumentType();
     }
@@ -34,19 +33,12 @@ public class ModuleArgumentType implements ArgumentType<Module> {
     }
 
     @Override
-    public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context,
-                                                              final SuggestionsBuilder builder) {
-        return CommandSource.suggestMatching(
-                Sakura.MODULES.getAllModules().stream().map(Module::getEnglishName),
-                builder
-        );
+    public <S> CompletableFuture<Suggestions> listSuggestions(final CommandContext<S> context, final SuggestionsBuilder builder) {
+        return CommandSource.suggestMatching(Sakura.MODULES.getAllModules().stream().map(Module::getEnglishName), builder);
     }
 
     @Override
     public Collection<String> getExamples() {
-        return Sakura.MODULES.getAllModules().stream()
-                .map(Module::getEnglishName)
-                .limit(10)
-                .toList();
+        return Sakura.MODULES.getAllModules().stream().map(Module::getEnglishName).limit(10).toList();
     }
 }
