@@ -6,7 +6,6 @@ import dev.sakura.client.mixin.accessor.ISuggestionWindow;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;

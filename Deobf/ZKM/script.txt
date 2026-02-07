@@ -5,7 +5,7 @@
 classpath   "libs\*.jar";
 
 open        openNestedArchives=false
-            "Sakura-1.1.jar";
+            "Sakura-1.1.1.jar";
 
 exclude     @org.spongepowered.asm.mixin.Mixin *.^* and
             @org.spongepowered.asm.mixin.Mixin *.^*^ * and

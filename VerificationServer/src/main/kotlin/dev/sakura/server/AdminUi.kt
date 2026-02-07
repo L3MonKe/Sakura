@@ -69,7 +69,8 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
         add(top, BorderLayout.NORTH)
 
         val userPanel = JPanel(BorderLayout())
-        userPanel.add(JScrollPane(usersTable), BorderLayout.CENTER)
+        val usersScroll = JScrollPane(usersTable)
+        userPanel.add(usersScroll, BorderLayout.CENTER)
         val userActions = JPanel(GridBagLayout())
         val ugc = GridBagConstraints().apply {
             insets = Insets(4, 4, 4, 4)
@@ -87,10 +88,14 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
         userPanel.add(userActions, BorderLayout.SOUTH)
 
         tabs.addTab("用户", userPanel)
-        tabs.addTab("卡密", JScrollPane(licensesTable))
+        val licensesScroll = JScrollPane(licensesTable)
+        tabs.addTab("卡密", licensesScroll)
         add(tabs, BorderLayout.CENTER)
 
         fun refreshAll() {
+            val usersScrollY = usersScroll.verticalScrollBar.value
+            val licensesScrollY = licensesScroll.verticalScrollBar.value
+
             val selectedUsername = run {
                 val row = usersTable.selectedRow
                 if (row < 0) null else usersModel.getValueAt(row, 0)?.toString()
@@ -108,7 +113,6 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
                 for (i in 0 until usersModel.rowCount) {
                     if (usersModel.getValueAt(i, 0)?.toString() == selectedUsername) {
                         usersTable.setRowSelectionInterval(i, i)
-                        usersTable.scrollRectToVisible(usersTable.getCellRect(i, 0, true))
                         break
                     }
                 }
@@ -117,10 +121,16 @@ private class AdminPanel(private val store: JsonStore) : JPanel(BorderLayout()) 
                 for (i in 0 until licensesModel.rowCount) {
                     if (licensesModel.getValueAt(i, 0)?.toString() == selectedLicenseKey) {
                         licensesTable.setRowSelectionInterval(i, i)
-                        licensesTable.scrollRectToVisible(licensesTable.getCellRect(i, 0, true))
                         break
                     }
                 }
+            }
+
+            SwingUtilities.invokeLater {
+                val uBar = usersScroll.verticalScrollBar
+                val lBar = licensesScroll.verticalScrollBar
+                uBar.value = usersScrollY.coerceIn(0, (uBar.maximum - uBar.visibleAmount).coerceAtLeast(0))
+                lBar.value = licensesScrollY.coerceIn(0, (lBar.maximum - lBar.visibleAmount).coerceAtLeast(0))
             }
         }
 
