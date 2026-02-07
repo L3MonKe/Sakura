@@ -1,6 +1,5 @@
 package dev.sakura.client.mixin.render;
 
-import dev.sakura.client.Sakura;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
@@ -10,6 +9,7 @@ import net.minecraft.util.math.ColorHelper;
 import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fc;
 import org.joml.Vector2f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,6 +20,7 @@ import java.awt.*;
 
 @Mixin(targets = "net.minecraft.client.gui.hud.ChatHud$Hud")
 public class MixinChatHudHud {
+    @Final
     @Shadow
     private DrawContext context;
 
@@ -39,8 +40,7 @@ public class MixinChatHudHud {
         float w = Math.abs(b.x - a.x);
         float h = Math.abs(b.y - a.y);
 
-        HudEditor hudEditor = Sakura.MODULES.getModule(HudEditor.class);
-        boolean bloomEnabled = hudEditor.chatBloom.get();
+        boolean bloomEnabled = HudEditor.chatBloom.get();
         float radius = Math.min(2.0f, Math.min(w, h) * 0.5f);
 
         NanoVGRenderer.INSTANCE.drawImmediate(vg -> {

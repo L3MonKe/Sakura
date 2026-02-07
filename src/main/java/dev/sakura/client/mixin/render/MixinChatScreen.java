@@ -1,15 +1,16 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
+import dev.sakura.client.mixin.accessor.IChatInputSuggestor;
+import dev.sakura.client.mixin.accessor.ISuggestionWindow;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
-import dev.sakura.client.mixin.accessor.IChatInputSuggestor;
-import dev.sakura.client.mixin.accessor.ISuggestionWindow;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
+import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.util.math.Rect2i;
 import net.minecraft.util.math.MathHelper;
@@ -22,6 +23,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.*;
 
+import static dev.sakura.client.Sakura.mc;
+
 @Mixin(ChatScreen.class)
 public class MixinChatScreen {
     @Shadow
@@ -32,26 +35,29 @@ public class MixinChatScreen {
 
     @Inject(method = "render", at = @At("HEAD"))
     private void onRender(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
-        HudEditor hudEditor = Sakura.MODULES.getModule(HudEditor.class);
-        boolean bloomEnabled = hudEditor.chatBloom.get();
-
-        MinecraftClient mc = MinecraftClient.getInstance();
         int width = mc.getWindow().getScaledWidth();
         int height = mc.getWindow().getScaledHeight();
 
-        float x = 2.0f;
+        int chatWidth = ChatHud.getWidth(mc.options.getChatWidth().getValue());
+        int fieldWidth = Math.max(1, Math.min(chatWidth + 8, width - 4));
+        if (chatField != null) {
+            chatField.setX(4);
+            chatField.setWidth(fieldWidth);
+        }
+
+        float x = 0.0f;
         float y = height - 14.0f;
-        float w = width - 4.0f;
+        float w = Math.min(chatWidth + 12.0f, width);
         float h = 12.0f;
 
-        float radius = hudEditor.radius.get().floatValue();
+        float radius = HudEditor.radius.get().floatValue();
         float alpha = MathHelper.clamp(mc.options.getTextBackgroundOpacity().getValue().floatValue(), 0.0f, 1.0f);
 
         Color bg = new Color(18, 18, 18, (int) (alpha * 70.0f));
         Color bloom = new Color(0, 0, 0, (int) (alpha * 70.0f));
 
         NanoVGRenderer.INSTANCE.drawImmediate(vg -> {
-            if (bloomEnabled) {
+            if (HudEditor.chatBloom.get()) {
                 NanoVGHelper.drawRoundRectBloom(x, y, w, h, radius, 12.0f, bloom);
             }
             NanoVGHelper.drawRoundRect(x, y, w, h, radius, bg);
@@ -60,7 +66,6 @@ public class MixinChatScreen {
 
     @Inject(method = "render", at = @At("TAIL"))
     private void onRenderTail(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
-        if (Sakura.COMMAND == null) return;
         if (chatField == null) return;
 
         String prefix = Sakura.COMMAND.getPrefix();
@@ -69,78 +74,43 @@ public class MixinChatScreen {
         String text = chatField.getText();
         if (text == null || !text.startsWith(prefix)) return;
 
-        HudEditor hudEditor = Sakura.MODULES.getModule(HudEditor.class);
-        float radius = hudEditor != null ? hudEditor.radius.get().floatValue() : 4.0f;
+        final int screenW = mc.getWindow().getScaledWidth();
+        final int screenH = mc.getWindow().getScaledHeight();
+        final float pad = 0.3f;
 
-        MinecraftClient mc = MinecraftClient.getInstance();
-        int screenW = mc.getWindow().getScaledWidth();
-        int screenH = mc.getWindow().getScaledHeight();
+        int chatWidth = ChatHud.getWidth(mc.options.getChatWidth().getValue());
+        float chatBgW = Math.min(chatWidth + 12.0f, screenW);
 
-        float chatLeft = 2.0f;
-        float chatTop = screenH - 14.0f;
-        float chatRight = screenW - 2.0f;
-        float chatBottom = screenH - 2.0f;
-
-        float suggestLeft = 0.0f;
-        float suggestTop = 0.0f;
-        float suggestRight = 0.0f;
-        float suggestBottom = 0.0f;
-        boolean hasSuggest = false;
-
-        if (chatInputSuggestor != null) {
-            ChatInputSuggestor.SuggestionWindow window = ((IChatInputSuggestor) chatInputSuggestor).getWindow();
-            if (window != null) {
-                Rect2i area = ((ISuggestionWindow) window).getArea();
-                if (area != null && area.getWidth() > 0 && area.getHeight() > 0) {
-                    suggestLeft = area.getX();
-                    suggestTop = area.getY();
-                    suggestRight = suggestLeft + area.getWidth();
-                    suggestBottom = suggestTop + area.getHeight();
-                    hasSuggest = true;
-                }
-            }
-        }
-
-        float pad = 2.0f;
-        chatLeft = MathHelper.clamp(chatLeft - pad, 0.0f, screenW);
-        chatTop = MathHelper.clamp(chatTop - pad, 0.0f, screenH);
-        chatRight = MathHelper.clamp(chatRight + pad, 0.0f, screenW);
-        chatBottom = MathHelper.clamp(chatBottom + pad, 0.0f, screenH);
-
-        if (hasSuggest) {
-            suggestLeft = MathHelper.clamp(suggestLeft - pad, 0.0f, screenW);
-            suggestTop = MathHelper.clamp(suggestTop - pad, 0.0f, screenH);
-            suggestRight = MathHelper.clamp(suggestRight + pad, 0.0f, screenW);
-            suggestBottom = MathHelper.clamp(suggestBottom + pad, 0.0f, screenH);
-        }
-
-        float chatW = Math.max(0.0f, chatRight - chatLeft);
-        float chatH = Math.max(0.0f, chatBottom - chatTop);
-
-        float suggestW = hasSuggest ? Math.max(0.0f, suggestRight - suggestLeft) : 0.0f;
-        float suggestH = hasSuggest ? Math.max(0.0f, suggestBottom - suggestTop) : 0.0f;
+        final float chatLeft = MathHelper.clamp(0.0f - pad, 0.0f, screenW);
+        final float chatTop = MathHelper.clamp((screenH - 14.0f) - pad, 0.0f, screenH);
+        final float chatRight = MathHelper.clamp(chatBgW + pad, 0.0f, screenW);
+        final float chatBottom = MathHelper.clamp((screenH - 2.0f) + pad, 0.0f, screenH);
+        final float chatW = Math.max(0.0f, chatRight - chatLeft);
+        final float chatH = Math.max(0.0f, chatBottom - chatTop);
 
         float alpha = MathHelper.clamp(mc.options.getTextBackgroundOpacity().getValue().floatValue(), 0.0f, 1.0f);
-        Color outline = new Color(255, 183, 197, (int) (alpha * 220.0f));
+        final Color outline = new Color(255, 183, 197, (int) (alpha * 220.0f));
 
-        final float cfx = chatLeft;
-        final float cfy = chatTop;
-        final float cfw = chatW;
-        final float cfh = chatH;
+        NanoVGRenderer.INSTANCE.draw(vg -> {
+            NanoVGHelper.drawRoundRectOutline(chatLeft, chatTop, chatW, chatH, HudEditor.radius.get().floatValue(), 1.25f, outline);
 
-        final boolean finalHasSuggest = hasSuggest;
-        final float sfx = suggestLeft;
-        final float sfy = suggestTop;
-        final float sfw = suggestW;
-        final float sfh = suggestH;
+            if (chatInputSuggestor != null) {
+                ChatInputSuggestor.SuggestionWindow window = ((IChatInputSuggestor) chatInputSuggestor).getWindow();
+                if (window != null) {
+                    Rect2i area = ((ISuggestionWindow) window).getArea();
+                    if (area != null && area.getWidth() > 0 && area.getHeight() > 0) {
+                        float rawLeft = area.getX();
+                        float rawTop = area.getY();
+                        float l = MathHelper.clamp(rawLeft - pad, 0.0f, screenW);
+                        float t = MathHelper.clamp(rawTop - pad, 0.0f, screenH);
+                        float r = MathHelper.clamp(rawLeft + area.getWidth() + pad, 0.0f, screenW);
+                        float b = MathHelper.clamp(rawTop + area.getHeight() + pad, 0.0f, screenH);
 
-        final float fr = radius + 2.0f;
-        final Color fc = outline;
-
-        NanoVGRenderer.INSTANCE.drawImmediate(vg -> {
-            NanoVGHelper.drawRoundRectOutline(cfx, cfy, cfw, cfh, fr, 1.25f, fc);
-            if (finalHasSuggest) {
-                NanoVGHelper.drawRoundRectOutline(sfx, sfy, sfw, sfh, fr, 1.25f, fc);
+                        float suggestW = Math.max(0.0f, r - l);
+                        float suggestH = Math.max(0.0f, b - t);
+                        NanoVGHelper.drawRectOutline(l, t, suggestW, suggestH, 1.25f, outline);
+                    }
+                }
             }
         });
     }

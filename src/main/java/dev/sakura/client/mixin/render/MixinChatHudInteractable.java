@@ -1,6 +1,5 @@
 package dev.sakura.client.mixin.render;
 
-import dev.sakura.client.Sakura;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
@@ -53,8 +52,7 @@ public class MixinChatHudInteractable {
         float w = Math.abs(b.x - a.x);
         float h = Math.abs(b.y - a.y);
 
-        HudEditor hudEditor = Sakura.MODULES.getModule(HudEditor.class);
-        boolean bloomEnabled = hudEditor.chatBloom.get();
+        boolean bloomEnabled = HudEditor.chatBloom.get();
         float radius = Math.min(2.0f, Math.min(w, h) * 0.5f);
 
         NanoVGRenderer.INSTANCE.drawImmediate(vg -> {

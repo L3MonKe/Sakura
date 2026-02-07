@@ -9,8 +9,8 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
 
 public class HudEditor extends Module {
-    public final BoolValue chatBloom = new BoolValue("Chat Bloom", "聊天栏光晕", true);
-    public final NumberValue<Double> radius = new NumberValue<>("Radius", "聊天栏圆角半径", 2.5, 0.0, 20.0, 0.5, chatBloom::get);
+    public static final BoolValue chatBloom = new BoolValue("Chat Bloom", "聊天栏光晕", true);
+    public static final NumberValue<Double> radius = new NumberValue<>("Radius", "聊天栏圆角半径", 2.5, 0.0, 20.0, 0.5, chatBloom::get);
 
 
     public HudEditor() {
