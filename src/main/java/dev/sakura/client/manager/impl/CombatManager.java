@@ -118,20 +118,7 @@ public class CombatManager extends Managers {
             case PlayerEntity player when targetSetting.targets.isEnabled("Player") -> {
                 Teams teams = Sakura.MODULES.getModule(Teams.class);
                 if (teams.isEnabled()) {
-                    if (teams.armorColor.get()) {
-                        int myColor = getLeatherArmorColor(mc.player);
-                        int theirColor = getLeatherArmorColor(player);
-                        if (myColor != -1 && theirColor != -1) {
-                            yield myColor != theirColor;
-                        }
-                    }
-                    if (teams.characterColor.get()) {
-                        Color myNameColor = getMostPopularColor(mc.player.getDisplayName());
-                        Color theirNameColor = getMostPopularColor(player.getDisplayName());
-                        if (myNameColor != null && theirNameColor != null) {
-                            yield myNameColor != theirNameColor;
-                        }
-                    }
+                    yield !teams.isSameTeam(player);
                 }
                 yield !AntiBot.isBot(player);
             }
