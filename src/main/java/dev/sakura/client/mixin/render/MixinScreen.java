@@ -25,17 +25,17 @@ public class MixinScreen {
     public int height;
 
     @Inject(method = "renderWithTooltip", at = @At("HEAD"))
-    private void sakura$beginNanoVgScreenBatch(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+    private void onBeginNanoVgScreenBatch(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         NanoVGRenderer.INSTANCE.beginBatch();
     }
 
     @Inject(method = "renderWithTooltip", at = @At("RETURN"))
-    private void sakura$endNanoVgScreenBatch(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
+    private void onEndNanoVgScreenBatch(DrawContext context, int mouseX, int mouseY, float deltaTicks, CallbackInfo ci) {
         NanoVGRenderer.INSTANCE.endBatch();
     }
 
     @Inject(method = "renderPanoramaBackground", at = @At("HEAD"), cancellable = true)
-    public void renderPanoramaBackgroundHook(DrawContext context, float delta, CallbackInfo ci) {
+    public void onRenderPanoramaBackgroundHook(DrawContext context, float delta, CallbackInfo ci) {
         if (mc.world == null) {
             if (mainMenuShader == null) {
                 mainMenuShader = new MainMenuShader(MainMenuShader.MainMenuShaderType.CUTE);

@@ -42,12 +42,12 @@ public class Shaders extends Module {
     public final NumberValue<Integer> fillAlpha = new NumberValue<>("Fill Alpha", "填充透明度", 170, 0, 255, 10);
     public final BoolValue glow = new BoolValue("Smoke Glow", "抽烟Glow", true);
 
-    public final ColorValue outlineColor = new ColorValue("Outline", "外边", new Color(0x8800FF00));
-    public final ColorValue outlineColor1 = new ColorValue("Smoke Outline", "烟雾外边", new Color(0x8800FF00), () -> mode.is(ShaderManager.Shader.Smoke) || handsMode.is(ShaderManager.Shader.Smoke));
-    public final ColorValue outlineColor2 = new ColorValue("Smoke Outline2", "烟雾次外边", new Color(0x8800FF00), () -> mode.is(ShaderManager.Shader.Smoke) || handsMode.is(ShaderManager.Shader.Smoke));
-    public final ColorValue fillColor1 = new ColorValue("Fill", "填充", new Color(0x8800FF00));
-    public final ColorValue fillColor2 = new ColorValue("Smoke Fill", "烟雾填充", new Color(0x8800FF00));
-    public final ColorValue fillColor3 = new ColorValue("Smoke Fill2", "烟雾次填充", new Color(0x8800FF00));
+    public final ColorValue outlineColor = new ColorValue("Outline", "外边", new Color(255, 183, 197));
+    public final ColorValue outlineColor1 = new ColorValue("Smoke Outline", "烟雾外边", new Color(255, 183, 197), () -> mode.is(ShaderManager.Shader.Smoke) || handsMode.is(ShaderManager.Shader.Smoke));
+    public final ColorValue outlineColor2 = new ColorValue("Smoke Outline2", "烟雾次外边", new Color(255, 183, 197), () -> mode.is(ShaderManager.Shader.Smoke) || handsMode.is(ShaderManager.Shader.Smoke));
+    public final ColorValue fillColor1 = new ColorValue("Fill", "填充", new Color(255, 183, 197));
+    public final ColorValue fillColor2 = new ColorValue("Smoke Fill", "烟雾填充", new Color(255, 183, 197));
+    public final ColorValue fillColor3 = new ColorValue("Smoke Fill2", "烟雾次填充", new Color(255, 183, 197));
 
     public boolean isHandsEnabled() {
         return hands.get();

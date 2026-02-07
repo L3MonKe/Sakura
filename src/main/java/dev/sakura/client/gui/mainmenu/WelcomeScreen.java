@@ -78,9 +78,7 @@ public class WelcomeScreen extends Screen {
             panel.setOpened(true);
 
             for (ModuleComponent component : panel.getModuleComponents()) {
-                if (component.getModule().getEnglishName().equalsIgnoreCase("KillAura")) {
-                    component.setOpened(true);
-                } else if (Math.random() > 0.9) {
+                if (Math.random() > 0.9) {
                     component.setPreviewEnabled(true);
                 }
             }
@@ -542,11 +540,51 @@ public class WelcomeScreen extends Screen {
         NanoVGHelper.translate(x - (totalWidth * scale) / 2f, y);
         NanoVGHelper.scale(scale, scale);
 
-        for (CategoryPanel panel : previewPanels) {
-            panel.render(context, -1000, -1000, 0);
-        }
+        previewPanels.forEach(this::drawPanelManually);
 
         NanoVGHelper.restore();
+    }
+
+    private void drawPanelManually(CategoryPanel panel) {
+        float guiScale = (float) ClickGui.getGuiScale();
+        float baseFontSize = (float) ClickGui.getFontSize();
+        float scaledWidth = panel.getWidth() * guiScale;
+        float headerHeight = 18 * guiScale;
+
+        float currentY = headerHeight;
+        if (panel.isOpened()) {
+            for (ModuleComponent comp : panel.getModuleComponents()) {
+                currentY += 18 * guiScale;
+            }
+        }
+        float height = currentY + 9 * guiScale;
+
+        float drawX = panel.getX();
+        float drawY = panel.getY();
+
+        Color bgColor = ClickGui.backgroundColor.get();
+        NanoVGHelper.drawRoundRectBloom(drawX, drawY - 1, scaledWidth, height, 7, new Color(bgColor.getRed(), bgColor.getGreen(), bgColor.getBlue(), 100));
+        NanoVGHelper.drawString(panel.getCategory().getName(), drawX + 4 * guiScale, drawY + 12f * guiScale, FontLoader.bold(), baseFontSize, new Color(255, 255, 255, 255));
+
+        float iconSize = baseFontSize * 1.5f;
+        String icon = panel.getCategory().icon;
+        NanoVGHelper.drawString(icon, drawX + 4 * guiScale + scaledWidth - NanoVGHelper.getTextWidth(icon, FontLoader.icons(), iconSize) - (panel.getCategory() == Category.Render ? 7 : 3) * guiScale, drawY + 13f * guiScale, FontLoader.icons(), iconSize, new Color(255, 255, 255, 255));
+
+        if (!panel.isOpened()) return;
+
+        float moduleY = drawY + headerHeight;
+        for (ModuleComponent comp : panel.getModuleComponents()) {
+            float modHeight = 18 * guiScale;
+
+            if (comp.getModule().isEnabled() || comp.isPreviewEnabled()) {
+                NanoVGHelper.drawGradientRRect2(drawX, moduleY, scaledWidth, modHeight, 0, ClickGui.color(0), ClickGui.color2(0));
+            }
+            NanoVGHelper.drawRect(drawX, moduleY, scaledWidth, modHeight, dev.sakura.client.utils.color.ColorUtil.applyOpacity(ClickGui.backgroundColor.get(), 0.4f));
+
+            NanoVGHelper.drawString(comp.getModule().getDisplayName(), drawX + 4 * guiScale, moduleY + 11 * guiScale, FontLoader.regular(), baseFontSize * 0.75f, Color.WHITE);
+
+            moduleY += modHeight;
+        }
     }
 
     private void renderProgressDots() {

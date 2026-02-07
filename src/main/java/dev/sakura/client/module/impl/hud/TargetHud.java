@@ -65,7 +65,7 @@ public class TargetHud extends HudModule {
     }
 
     public enum StyleEn {
-        ThunderHack, Modern, Mahiro
+        ThunderHack, Modern, Sakura
     }
 
     public enum ImageModeEn {
@@ -80,25 +80,25 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> blurRadius = new NumberValue<>("BallonBlur", "气泡模糊", 10.0, 1.0, 10.0, 1.0, () -> style.get() == StyleEn.ThunderHack);
 
     // Sakura Settings
-    private final NumberValue<Double> MahiroScale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 2.0, 0.1, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroWidth = new NumberValue<>("Width", "宽度", 150.0, 100.0, 300.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroHeight = new NumberValue<>("Height", "高度", 50.0, 30.0, 100.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroRadius = new NumberValue<>("Radius", "圆角半径", 10.0, 0.0, 20.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroBlurRadius = new NumberValue<>("BlurRadius", "模糊半径", 10.0, 1.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroBarHeight = new NumberValue<>("BarHeight", "血条粗细", 10.0, 2.0, 30.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroBarRadius = new NumberValue<>("BarRadius", "血条圆角", 4.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final EnumValue<AvatarPosEn> MahiroAvatarPos = new EnumValue<>("AvatarPos", "头像位置", AvatarPosEn.Left, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroNameSize = new NumberValue<>("NameSize", "名字大小", 14.0, 8.0, 24.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroNameX = new NumberValue<>("NameX", "名字X偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro);
-    private final NumberValue<Double> MahiroOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Mahiro && MahiroAvatarPos.get() == AvatarPosEn.OnBar);
+    private final NumberValue<Double> MahiroScale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 2.0, 0.1, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroWidth = new NumberValue<>("Width", "宽度", 150.0, 100.0, 300.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroHeight = new NumberValue<>("Height", "高度", 50.0, 30.0, 100.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroRadius = new NumberValue<>("Radius", "圆角半径", 10.0, 0.0, 20.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroBlurRadius = new NumberValue<>("BlurRadius", "模糊半径", 10.0, 1.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroBarHeight = new NumberValue<>("BarHeight", "血条粗细", 10.0, 2.0, 30.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroBarRadius = new NumberValue<>("BarRadius", "血条圆角", 4.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final EnumValue<AvatarPosEn> MahiroAvatarPos = new EnumValue<>("AvatarPos", "头像位置", AvatarPosEn.Left, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroNameSize = new NumberValue<>("NameSize", "名字大小", 14.0, 8.0, 24.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroNameX = new NumberValue<>("NameX", "名字X偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroAvatarPos.get() == AvatarPosEn.OnBar);
 
     // Sakura Delay Settings
-    private final BoolValue MahiroDelay = new BoolValue("DelayBar", "延迟血条", true, () -> style.get() == StyleEn.Mahiro);
-    private final BoolValue MahiroDelayWait = new BoolValue("WaitMode", "受伤等待", true, () -> style.get() == StyleEn.Mahiro && MahiroDelay.get());
-    private final NumberValue<Integer> MahiroDelayTime = new NumberValue<>("DelayTime", "延迟时间(ms)", 600, 0, 2000, 50, () -> style.get() == StyleEn.Mahiro && MahiroDelay.get() && MahiroDelayWait.get());
-    private final NumberValue<Double> MahiroDelaySpeed = new NumberValue<>("DelaySpeed", "延迟动画速度", 2.0, 0.1, 10.0, 0.1, () -> style.get() == StyleEn.Mahiro && MahiroDelay.get());
-    private final ColorValue MahiroDelayColor = new ColorValue("DelayColor", "延迟血条颜色", new Color(255, 255, 0, 150), () -> style.get() == StyleEn.Mahiro && MahiroDelay.get());
+    private final BoolValue MahiroDelay = new BoolValue("DelayBar", "延迟血条", true, () -> style.get() == StyleEn.Sakura);
+    private final BoolValue MahiroDelayWait = new BoolValue("WaitMode", "受伤等待", true, () -> style.get() == StyleEn.Sakura && MahiroDelay.get());
+    private final NumberValue<Integer> MahiroDelayTime = new NumberValue<>("DelayTime", "延迟时间(ms)", 600, 0, 2000, 50, () -> style.get() == StyleEn.Sakura && MahiroDelay.get() && MahiroDelayWait.get());
+    private final NumberValue<Double> MahiroDelaySpeed = new NumberValue<>("DelaySpeed", "延迟动画速度", 2.0, 0.1, 10.0, 0.1, () -> style.get() == StyleEn.Sakura && MahiroDelay.get());
+    private final ColorValue MahiroDelayColor = new ColorValue("DelayColor", "延迟血条颜色", new Color(255, 255, 0, 150), () -> style.get() == StyleEn.Sakura && MahiroDelay.get());
 
     // Modern Settings
     private final NumberValue<Integer> modernBgAlpha = new NumberValue<>("BgAlpha", "背景透明度", 100, 0, 255, 1, () -> style.get() == StyleEn.Modern);
@@ -300,7 +300,7 @@ public class TargetHud extends HudModule {
         renderKawaseBloom(context, animValue);
         */
 
-        if (style.get() == StyleEn.Mahiro) {
+        if (style.get() == StyleEn.Sakura) {
             renderMahiroBackground(animValue);
         }
 
@@ -319,7 +319,7 @@ public class TargetHud extends HudModule {
 
             if (style.get() == StyleEn.Modern) {
                 renderModern(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
-            } else if (style.get() == StyleEn.Mahiro) {
+            } else if (style.get() == StyleEn.Sakura) {
                 renderMahiro(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
             } else {
                 renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
