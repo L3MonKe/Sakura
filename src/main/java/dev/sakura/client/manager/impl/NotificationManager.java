@@ -8,10 +8,8 @@ import dev.sakura.client.utils.animations.Easing;
 import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class NotificationManager {
     private static final long DEFAULT_TIMEOUT = 3000L;

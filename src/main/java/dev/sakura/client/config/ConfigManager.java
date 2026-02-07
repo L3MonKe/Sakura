@@ -6,199 +6,439 @@ import dev.sakura.client.gui.clickgui.panel.CategoryPanel;
 import dev.sakura.client.gui.hud.HudPanel;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.values.Value;
 import dev.sakura.client.values.impl.*;
+import dev.sakura.client.verify.VerificationClient;
+import dev.sakura.client.verify.client.IRCHandler;
+import net.minecraft.client.MinecraftClient;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
-public class ConfigManager {
+public final class ConfigManager {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+
     public static final Path CONFIG_DIR = Paths.get("sakura-config");
-    private static final Path MODULES_DIR = CONFIG_DIR.resolve("modules");
-    private static final Path CLICKGUI_FILE = CONFIG_DIR.resolve("clickgui.json");
+    private static final Path CONFIG_FILE = CONFIG_DIR.resolve("config.json");
+    private static final Path LEGACY_MODULES_DIR = CONFIG_DIR.resolve("modules");
+    private static final Path LEGACY_CLICKGUI_FILE = CONFIG_DIR.resolve("clickgui.json");
+    private static final Path PREFIX_FILE = CONFIG_DIR.resolve("prefix.json");
+
+    private final CloudConfigService cloud = new CloudConfigService();
+
+    private volatile ClientConfig current = new ClientConfig();
 
     public ConfigManager() {
         createConfigDir();
+        VerificationClient.addHandler(new IRCHandler() {
+            @Override
+            public void onMessage(String sender, String message) {
+            }
 
-        loadModules();
-        loadClickGui();
+            @Override
+            public void onDisconnected(String message) {
+                MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c验证连接断开: " + (message == null ? "" : message)));
+            }
+
+            @Override
+            public void onConnected() {
+                MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§a验证连接已连接"));
+            }
+
+            @Override
+            public String getInGameUsername() {
+                MinecraftClient mc = MinecraftClient.getInstance();
+                if (mc.player == null) return mc.getSession().getUsername();
+                return mc.player.getName().getString();
+            }
+        });
+        VerificationClient.addHandler(cloud.asHandler());
+        loadLocal();
+    }
+
+    public void saveDefaultConfig() {
+        saveLocal();
+    }
+
+    public CompletableFuture<CloudConfigService.ListResult> cloudList() {
+        return cloud.list();
+    }
+
+    public CompletableFuture<CloudConfigService.UploadResult> cloudSave(String name) {
+        String content = saveConfigToString();
+        return cloud.upload(name, content);
+    }
+
+    public CompletableFuture<CloudConfigService.GetResult> cloudLoad(String owner, String name) {
+        return cloud.get(owner, name);
+    }
+
+    public CompletableFuture<CloudConfigService.DeleteResult> cloudDelete(String owner, String name) {
+        return cloud.delete(owner, name);
+    }
+
+    public String saveConfigToString() {
+        updateFromRuntime();
+        return GSON.toJson(current);
+    }
+
+    public void loadConfigFromString(String json) {
+        if (json == null || json.isBlank()) {
+            return;
+        }
+        try {
+            ClientConfig cfg = GSON.fromJson(json, ClientConfig.class);
+            if (cfg == null) {
+                return;
+            }
+            apply(cfg);
+            saveLocal();
+        } catch (Exception e) {
+            Sakura.LOGGER.error("Failed to load cloud config: {}", e.getMessage());
+        }
+    }
+
+    public void savePrefix(String prefix) {
+        String p = prefix == null || prefix.isEmpty() ? "." : prefix;
+        current.prefix = p;
+        writePrefixFile(p);
+        saveLocal();
+    }
+
+    public String loadPrefix() {
+        String fromFile = readPrefixFile();
+        if (fromFile != null && !fromFile.isBlank()) {
+            return fromFile;
+        }
+        try {
+            if (Files.exists(CONFIG_FILE)) {
+                ClientConfig cfg = GSON.fromJson(Files.readString(CONFIG_FILE, StandardCharsets.UTF_8), ClientConfig.class);
+                if (cfg != null && cfg.prefix != null && !cfg.prefix.isBlank()) {
+                    return cfg.prefix;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return ".";
     }
 
     private void createConfigDir() {
         try {
-            if (!Files.exists(CONFIG_DIR)) {
-                Files.createDirectories(CONFIG_DIR);
-            }
-            if (!Files.exists(MODULES_DIR)) {
-                Files.createDirectories(MODULES_DIR);
-            }
+            Files.createDirectories(CONFIG_DIR);
         } catch (IOException e) {
             Sakura.LOGGER.error("Failed to create config directory: {}", e.getMessage());
         }
     }
 
-    public void saveDefaultConfig() {
-        saveModules();
-        saveClickGui();
+    private void loadLocal() {
+        if (Files.exists(CONFIG_FILE)) {
+            try {
+                ClientConfig cfg = GSON.fromJson(Files.readString(CONFIG_FILE, StandardCharsets.UTF_8), ClientConfig.class);
+                if (cfg != null) {
+                    apply(cfg);
+                    return;
+                }
+            } catch (Exception e) {
+                Sakura.LOGGER.error("Failed to load config: {}", e.getMessage());
+            }
+        }
+
+        loadLegacyModules();
+        loadLegacyClickGui();
+        current.prefix = loadPrefix();
+        saveLocal();
     }
 
-    private void saveModules() {
-        for (Module module : Sakura.MODULES.getAllModules()) {
-            saveModule(module);
+    private void saveLocal() {
+        try {
+            updateFromRuntime();
+            Files.createDirectories(CONFIG_DIR);
+            Path tmp = CONFIG_DIR.resolve("config.json.tmp");
+            Files.writeString(tmp, GSON.toJson(current), StandardCharsets.UTF_8);
+            try {
+                Files.move(tmp, CONFIG_FILE, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
+            } catch (Exception ignored) {
+                Files.move(tmp, CONFIG_FILE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            writePrefixFile(current.prefix);
+        } catch (Exception e) {
+            Sakura.LOGGER.error("Failed to save config: {}", e.getMessage());
         }
     }
 
-    private void saveModule(Module module) {
-        try {
-            Path moduleFile = MODULES_DIR.resolve(module.getEnglishName() + ".json");
-            JsonObject moduleObject = new JsonObject();
-
-            moduleObject.addProperty("enabled", module.isEnabled());
-            moduleObject.addProperty("keybind", module.getKey());
-            moduleObject.addProperty("bindMode", module.getBindMode().name());
-            moduleObject.addProperty("suffix", module.getSuffix());
-
-            if (module instanceof HudModule hudModule) {
-                moduleObject.addProperty("hudX", hudModule.getX());
-                moduleObject.addProperty("hudY", hudModule.getY());
-            }
-
-            JsonObject valuesObject = new JsonObject();
-            for (Value<?> value : module.getValues()) {
-                valuesObject.add(value.getName(), saveValue(value));
-            }
-            moduleObject.add("values", valuesObject);
-
-            try (Writer writer = new OutputStreamWriter(
-                    new FileOutputStream(moduleFile.toFile()), StandardCharsets.UTF_8)) {
-                GSON.toJson(moduleObject, writer);
-            }
-        } catch (IOException e) {
-            Sakura.LOGGER.error("Failed to save module {}: {}", module.getEnglishName(), e.getMessage());
+    private void apply(ClientConfig cfg) {
+        current = cfg;
+        if (cfg.prefix != null && !cfg.prefix.isBlank()) {
+            writePrefixFile(cfg.prefix);
         }
-    }
 
-    private void loadModules() {
-        try {
-            if (!Files.exists(MODULES_DIR)) return;
-
-            Files.list(MODULES_DIR)
-                    .filter(path -> path.toString().endsWith(".json"))
-                    .forEach(path -> {
-                        String moduleName = path.getFileName().toString();
-                        moduleName = moduleName.substring(0, moduleName.length() - 5);
-                        Module module = Sakura.MODULES.getModuleByString(moduleName);
-                        if (module != null) {
-                            loadModule(module, path);
-                        }
-                    });
-        } catch (IOException e) {
-            Sakura.LOGGER.error("Failed to load modules: {}", e.getMessage());
-        }
-    }
-
-    private void loadModule(Module module, Path path) {
-        try {
-            JsonObject moduleObject = JsonParser.parseString(Files.readString(path)).getAsJsonObject();
-
-            if (moduleObject.has("enabled")) {
-                module.setState(moduleObject.get("enabled").getAsBoolean());
+        for (var entry : cfg.modules.entrySet()) {
+            String moduleName = entry.getKey();
+            ClientConfig.ModuleData data = entry.getValue();
+            Module module = Sakura.MODULES.getModuleByString(moduleName);
+            if (module == null || data == null) {
+                continue;
             }
-            if (moduleObject.has("keybind")) {
-                module.setKey(moduleObject.get("keybind").getAsInt());
-            }
-            if (moduleObject.has("bindMode")) {
+
+            module.setKey(data.keybind);
+            if (data.bindMode != null) {
                 try {
-                    module.setBindMode(Module.BindMode.valueOf(moduleObject.get("bindMode").getAsString()));
-                } catch (IllegalArgumentException ignored) {
+                    module.setBindMode(Module.BindMode.valueOf(data.bindMode));
+                } catch (Exception ignored) {
                 }
             }
-            if (moduleObject.has("suffix")) {
-                module.setSuffix(moduleObject.get("suffix").getAsString());
+            if (data.suffix != null) {
+                module.setSuffix(data.suffix);
             }
+            module.setState(data.enabled);
 
             if (module instanceof HudModule hudModule) {
-                if (moduleObject.has("hudX")) {
-                    hudModule.setX(moduleObject.get("hudX").getAsFloat());
+                if (data.hudX != null) {
+                    hudModule.setX(data.hudX);
                 }
-                if (moduleObject.has("hudY")) {
-                    hudModule.setY(moduleObject.get("hudY").getAsFloat());
+                if (data.hudY != null) {
+                    hudModule.setY(data.hudY);
                 }
             }
 
-            if (moduleObject.has("values")) {
-                JsonObject valuesObject = moduleObject.getAsJsonObject("values");
-                for (Value<?> value : module.getValues()) {
-                    if (valuesObject.has(value.getName())) {
-                        JsonElement valueElement = valuesObject.get(value.getName());
-                        loadValue(value, valueElement);
+            if (data.values != null) {
+                for (Value<?> v : module.getValues()) {
+                    JsonElement el = data.values.get(v.getName());
+                    if (el != null) {
+                        decodeValue(v, el);
                     }
                 }
             }
-        } catch (IOException e) {
-            Sakura.LOGGER.error("Failed to load module {}: {}", module.getEnglishName(), e.getMessage());
         }
-    }
 
-    public void saveClickGui() {
-        try {
-            JsonObject clickGuiObject = new JsonObject();
-
-            JsonArray panelsArray = new JsonArray();
-            if (Sakura.CLICKGUI != null) {
+        if (Sakura.CLICKGUI != null && cfg.gui != null && cfg.gui.panels != null) {
+            for (ClientConfig.Panel p : cfg.gui.panels) {
+                if (p == null || p.category == null) {
+                    continue;
+                }
                 for (CategoryPanel panel : Sakura.CLICKGUI.getPanels()) {
-                    JsonObject panelObject = new JsonObject();
-                    panelObject.addProperty("category", panel.getCategory().name());
-                    panelObject.addProperty("x", panel.getX());
-                    panelObject.addProperty("y", panel.getY());
-                    panelObject.addProperty("opened", panel.isOpened());
-                    panelsArray.add(panelObject);
+                    if (panel.getCategory().name().equals(p.category)) {
+                        panel.setX(p.x);
+                        panel.setY(p.y);
+                        panel.setOpened(p.opened);
+                        break;
+                    }
                 }
             }
-            clickGuiObject.add("panels", panelsArray);
+        }
 
-            if (Sakura.HUDEDITOR != null) {
-                HudPanel hudPanel = Sakura.HUDEDITOR.getHudPanel();
-                if (hudPanel != null) {
-                    JsonObject hudPanelObject = new JsonObject();
-                    hudPanelObject.addProperty("x", hudPanel.getX());
-                    hudPanelObject.addProperty("y", hudPanel.getY());
-                    clickGuiObject.add("hudPanel", hudPanelObject);
-                }
+        if (Sakura.HUDEDITOR != null && cfg.gui != null && cfg.gui.hudPanel != null) {
+            HudPanel hudPanel = Sakura.HUDEDITOR.getHudPanel();
+            if (hudPanel != null) {
+                hudPanel.setX(cfg.gui.hudPanel.x);
+                hudPanel.setY(cfg.gui.hudPanel.y);
             }
-
-            try (Writer writer = new OutputStreamWriter(
-                    new FileOutputStream(CLICKGUI_FILE.toFile()), StandardCharsets.UTF_8)) {
-                GSON.toJson(clickGuiObject, writer);
-            }
-            System.out.println("ClickGui saved to: " + CLICKGUI_FILE);
-        } catch (IOException e) {
-            System.err.println("Failed to save clickgui: " + e.getMessage());
         }
     }
 
-    public void loadClickGui() {
+    private void updateFromRuntime() {
+        ClientConfig cfg = new ClientConfig();
+        cfg.version = 1;
+        cfg.prefix = loadPrefix();
+
+        for (Module module : Sakura.MODULES.getAllModules()) {
+            ClientConfig.ModuleData data = new ClientConfig.ModuleData();
+            data.enabled = module.isEnabled();
+            data.keybind = module.getKey();
+            data.bindMode = module.getBindMode() == null ? "TOGGLE" : module.getBindMode().name();
+            data.suffix = module.getSuffix();
+
+            if (module instanceof HudModule hudModule) {
+                data.hudX = hudModule.getX();
+                data.hudY = hudModule.getY();
+            }
+
+            for (Value<?> value : module.getValues()) {
+                data.values.put(value.getName(), encodeValue(value));
+            }
+
+            cfg.modules.put(module.getEnglishName(), data);
+        }
+
+        if (Sakura.CLICKGUI != null) {
+            for (CategoryPanel panel : Sakura.CLICKGUI.getPanels()) {
+                ClientConfig.Panel p = new ClientConfig.Panel();
+                p.category = panel.getCategory().name();
+                p.x = panel.getX();
+                p.y = panel.getY();
+                p.opened = panel.isOpened();
+                cfg.gui.panels.add(p);
+            }
+        }
+
+        if (Sakura.HUDEDITOR != null) {
+            HudPanel hudPanel = Sakura.HUDEDITOR.getHudPanel();
+            if (hudPanel != null) {
+                cfg.gui.hudPanel.x = hudPanel.getX();
+                cfg.gui.hudPanel.y = hudPanel.getY();
+            }
+        }
+
+        current = cfg;
+    }
+
+    private static JsonElement encodeValue(Value<?> value) {
+        Object val = value.get();
+        if (value instanceof BoolValue) {
+            return new JsonPrimitive((Boolean) val);
+        }
+        if (value instanceof NumberValue<?> numberValue) {
+            Number n = numberValue.get();
+            if (n instanceof Integer) {
+                return new JsonPrimitive(n.intValue());
+            }
+            if (n instanceof Float) {
+                return new JsonPrimitive(n.floatValue());
+            }
+            return new JsonPrimitive(n.doubleValue());
+        }
+        if (value instanceof StringValue stringValue) {
+            return new JsonPrimitive(stringValue.get());
+        }
+        if (value instanceof EnumValue) {
+            return new JsonPrimitive(((Enum<?>) val).name());
+        }
+        if (value instanceof ColorValue colorValue) {
+            JsonObject o = new JsonObject();
+            o.addProperty("hue", colorValue.getHue());
+            o.addProperty("saturation", colorValue.getSaturation());
+            o.addProperty("brightness", colorValue.getBrightness());
+            o.addProperty("alpha", colorValue.getAlpha());
+            o.addProperty("rainbow", colorValue.isRainbow());
+            o.addProperty("expand", colorValue.isExpand());
+            return o;
+        }
+        if (value instanceof MultiBoolValue multiBoolValue) {
+            JsonObject o = new JsonObject();
+            List<BoolValue> vs = multiBoolValue.getValues();
+            for (BoolValue b : vs) {
+                o.addProperty(b.getName(), b.get());
+            }
+            return o;
+        }
+        return JsonNull.INSTANCE;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void decodeValue(Value<?> value, JsonElement el) {
         try {
-            if (!Files.exists(CLICKGUI_FILE)) return;
+            if (value instanceof BoolValue && el.isJsonPrimitive()) {
+                ((Value<Boolean>) value).set(el.getAsBoolean());
+                return;
+            }
+            if (value instanceof NumberValue<?> numberValue && el.isJsonPrimitive()) {
+                if (numberValue.get() instanceof Integer) {
+                    ((NumberValue<Integer>) numberValue).set(el.getAsInt());
+                } else if (numberValue.get() instanceof Float) {
+                    ((NumberValue<Float>) numberValue).set(el.getAsFloat());
+                } else {
+                    ((NumberValue<Double>) numberValue).set(el.getAsDouble());
+                }
+                return;
+            }
+            if (value instanceof StringValue && el.isJsonPrimitive()) {
+                ((StringValue) value).setText(el.getAsString());
+                return;
+            }
+            if (value instanceof EnumValue && el.isJsonPrimitive()) {
+                ((EnumValue<?>) value).setMode(el.getAsString());
+                return;
+            }
+            if (value instanceof ColorValue cv && el.isJsonObject()) {
+                JsonObject o = el.getAsJsonObject();
+                if (o.has("hue")) cv.setHue(o.get("hue").getAsFloat());
+                if (o.has("saturation")) cv.setSaturation(o.get("saturation").getAsFloat());
+                if (o.has("brightness")) cv.setBrightness(o.get("brightness").getAsFloat());
+                if (o.has("alpha")) cv.setAlpha(o.get("alpha").getAsFloat());
+                if (o.has("rainbow")) cv.setRainbow(o.get("rainbow").getAsBoolean());
+                if (o.has("expand")) cv.setExpand(o.get("expand").getAsBoolean());
+                return;
+            }
+            if (value instanceof MultiBoolValue mb && el.isJsonObject()) {
+                JsonObject o = el.getAsJsonObject();
+                for (String k : o.keySet()) {
+                    mb.set(k, o.get(k).getAsBoolean());
+                }
+            }
+        } catch (Exception ignored) {
+        }
+    }
 
-            String content = new String(Files.readAllBytes(CLICKGUI_FILE), StandardCharsets.UTF_8);
-            JsonObject clickGuiObject = JsonParser.parseString(content).getAsJsonObject();
+    private void loadLegacyModules() {
+        if (!Files.exists(LEGACY_MODULES_DIR)) {
+            return;
+        }
+        try {
+            Files.list(LEGACY_MODULES_DIR)
+                    .filter(p -> p.toString().endsWith(".json"))
+                    .forEach(p -> {
+                        String moduleName = p.getFileName().toString();
+                        moduleName = moduleName.substring(0, moduleName.length() - 5);
+                        Module module = Sakura.MODULES.getModuleByString(moduleName);
+                        if (module == null) {
+                            return;
+                        }
+                        try {
+                            JsonObject moduleObject = JsonParser.parseString(Files.readString(p, StandardCharsets.UTF_8)).getAsJsonObject();
+                            if (moduleObject.has("enabled")) {
+                                module.setState(moduleObject.get("enabled").getAsBoolean());
+                            }
+                            if (moduleObject.has("keybind")) {
+                                module.setKey(moduleObject.get("keybind").getAsInt());
+                            }
+                            if (moduleObject.has("bindMode")) {
+                                try {
+                                    module.setBindMode(Module.BindMode.valueOf(moduleObject.get("bindMode").getAsString()));
+                                } catch (Exception ignored) {
+                                }
+                            }
+                            if (moduleObject.has("suffix")) {
+                                module.setSuffix(moduleObject.get("suffix").getAsString());
+                            }
+                            if (module instanceof HudModule hudModule) {
+                                if (moduleObject.has("hudX")) {
+                                    hudModule.setX(moduleObject.get("hudX").getAsFloat());
+                                }
+                                if (moduleObject.has("hudY")) {
+                                    hudModule.setY(moduleObject.get("hudY").getAsFloat());
+                                }
+                            }
+                            if (moduleObject.has("values")) {
+                                JsonObject valuesObject = moduleObject.getAsJsonObject("values");
+                                for (Value<?> v : module.getValues()) {
+                                    if (valuesObject.has(v.getName())) {
+                                        decodeValue(v, valuesObject.get(v.getName()));
+                                    }
+                                }
+                            }
+                        } catch (Exception ignored) {
+                        }
+                    });
+        } catch (Exception ignored) {
+        }
+    }
 
+    private void loadLegacyClickGui() {
+        if (!Files.exists(LEGACY_CLICKGUI_FILE)) {
+            return;
+        }
+        try {
+            JsonObject clickGuiObject = JsonParser.parseString(Files.readString(LEGACY_CLICKGUI_FILE, StandardCharsets.UTF_8)).getAsJsonObject();
             if (clickGuiObject.has("panels") && Sakura.CLICKGUI != null) {
-                JsonArray panelsArray = clickGuiObject.getAsJsonArray("panels");
-                for (JsonElement element : panelsArray) {
+                for (JsonElement element : clickGuiObject.getAsJsonArray("panels")) {
                     JsonObject panelObject = element.getAsJsonObject();
                     String categoryName = panelObject.get("category").getAsString();
-
                     for (CategoryPanel panel : Sakura.CLICKGUI.getPanels()) {
                         if (panel.getCategory().name().equals(categoryName)) {
                             if (panelObject.has("x")) panel.setX(panelObject.get("x").getAsFloat());
@@ -209,7 +449,6 @@ public class ConfigManager {
                     }
                 }
             }
-
             if (clickGuiObject.has("hudPanel") && Sakura.HUDEDITOR != null) {
                 JsonObject hudPanelObject = clickGuiObject.getAsJsonObject("hudPanel");
                 HudPanel hudPanel = Sakura.HUDEDITOR.getHudPanel();
@@ -218,131 +457,32 @@ public class ConfigManager {
                     if (hudPanelObject.has("y")) hudPanel.setY(hudPanelObject.get("y").getAsFloat());
                 }
             }
-        } catch (IOException e) {
-            Sakura.LOGGER.error("Failed to load clickgui: {}", e.getMessage());
+        } catch (Exception ignored) {
         }
     }
 
-    private JsonElement saveValue(Value<?> value) {
-        Object val = value.get();
-
-        if (value instanceof BoolValue) {
-            return new JsonPrimitive((Boolean) val);
-        } else if (value instanceof NumberValue<?> numberValue) {
-            if (numberValue.get() instanceof Integer) {
-                return new JsonPrimitive(numberValue.get().intValue());
-            } else if (numberValue.get() instanceof Float) {
-                return new JsonPrimitive(numberValue.get().floatValue());
-            } else {
-                return new JsonPrimitive(numberValue.get().doubleValue());
-            }
-        } else if (value instanceof StringValue) {
-            return new JsonPrimitive(((StringValue) value).get());
-        } else if (value instanceof EnumValue) {
-            return new JsonPrimitive(((Enum<?>) val).name());
-        } else if (value instanceof ColorValue colorValue) {
-            JsonObject colorObject = new JsonObject();
-            colorObject.addProperty("hue", colorValue.getHue());
-            colorObject.addProperty("saturation", colorValue.getSaturation());
-            colorObject.addProperty("brightness", colorValue.getBrightness());
-            colorObject.addProperty("alpha", colorValue.getAlpha());
-            colorObject.addProperty("rainbow", colorValue.isRainbow());
-            colorObject.addProperty("expand", colorValue.isExpand());
-            return colorObject;
-        } else if (value instanceof MultiBoolValue multiBoolValue) {
-            JsonObject multiObject = new JsonObject();
-            for (int i = 0; i < multiBoolValue.getValues().size(); i++) {
-                BoolValue boolValue = multiBoolValue.getValues().get(i);
-                multiObject.addProperty(boolValue.getName(), boolValue.get());
-            }
-            return multiObject;
-        }
-
-        return JsonNull.INSTANCE;
-    }
-
-    @SuppressWarnings("unchecked")
-    private void loadValue(Value<?> value, JsonElement valueElement) {
+    private static void writePrefixFile(String prefix) {
         try {
-            if (value instanceof BoolValue && valueElement.isJsonPrimitive()) {
-                ((Value<Boolean>) value).set(valueElement.getAsBoolean());
-            } else if (value instanceof NumberValue<?> numberValue && valueElement.isJsonPrimitive()) {
-                if (numberValue.get() instanceof Integer) {
-                    ((NumberValue<Integer>) numberValue).set(valueElement.getAsInt());
-                } else if (numberValue.get() instanceof Float) {
-                    ((NumberValue<Float>) numberValue).set(valueElement.getAsFloat());
-                } else {
-                    ((NumberValue<Double>) numberValue).set(valueElement.getAsDouble());
-                }
-            } else if (value instanceof StringValue && valueElement.isJsonPrimitive()) {
-                ((StringValue) value).setText(valueElement.getAsString());
-            } else if (value instanceof EnumValue && valueElement.isJsonPrimitive()) {
-                ((EnumValue<?>) value).setMode(valueElement.getAsString());
-            } else if (value instanceof ColorValue && valueElement.isJsonObject()) {
-                JsonObject colorObject = valueElement.getAsJsonObject();
-                ColorValue colorValue = (ColorValue) value;
-
-                if (colorObject.has("hue")) colorValue.setHue(colorObject.get("hue").getAsFloat());
-                if (colorObject.has("saturation")) colorValue.setSaturation(colorObject.get("saturation").getAsFloat());
-                if (colorObject.has("brightness")) colorValue.setBrightness(colorObject.get("brightness").getAsFloat());
-                if (colorObject.has("alpha")) colorValue.setAlpha(colorObject.get("alpha").getAsFloat());
-                if (colorObject.has("rainbow")) colorValue.setRainbow(colorObject.get("rainbow").getAsBoolean());
-                if (colorObject.has("expand")) colorValue.setExpand(colorObject.get("expand").getAsBoolean());
-            } else if (value instanceof MultiBoolValue multiBoolValue && valueElement.isJsonObject()) {
-                JsonObject multiObject = valueElement.getAsJsonObject();
-                for (String optionName : multiObject.keySet()) {
-                    multiBoolValue.set(optionName, multiObject.get(optionName).getAsBoolean());
-                }
-            }
+            Files.createDirectories(CONFIG_DIR);
+            JsonObject o = new JsonObject();
+            o.addProperty("prefix", prefix == null || prefix.isEmpty() ? "." : prefix);
+            Files.writeString(PREFIX_FILE, GSON.toJson(o), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            System.err.println("Failed to load value " + value.getName() + ": " + e.getMessage());
-        }
-    }
-
-    public List<String> getConfigList() {
-        List<String> configs = new ArrayList<>();
-        try {
-            Files.list(MODULES_DIR)
-                    .filter(path -> path.toString().endsWith(".json"))
-                    .forEach(path -> {
-                        String fileName = path.getFileName().toString();
-                        configs.add(fileName.substring(0, fileName.length() - 5));
-                    });
-        } catch (IOException e) {
-            System.err.println("Failed to list configs: " + e.getMessage());
-        }
-        return configs;
-    }
-
-    public void savePrefix(String prefix) {
-        try {
-            Path prefixFile = CONFIG_DIR.resolve("prefix.json");
-            JsonObject prefixObject = new JsonObject();
-            prefixObject.addProperty("prefix", prefix);
-
-            try (Writer writer = new OutputStreamWriter(
-                    new FileOutputStream(prefixFile.toFile()), StandardCharsets.UTF_8)) {
-                GSON.toJson(prefixObject, writer);
-            }
-        } catch (IOException e) {
             Sakura.LOGGER.error("Failed to save prefix: {}", e.getMessage());
         }
     }
 
-    public String loadPrefix() {
+    private static String readPrefixFile() {
         try {
-            Path prefixFile = CONFIG_DIR.resolve("prefix.json");
-            if (!Files.exists(prefixFile)) return ".";
-
-            String content = new String(Files.readAllBytes(prefixFile), StandardCharsets.UTF_8);
-            JsonObject prefixObject = JsonParser.parseString(content).getAsJsonObject();
-
-            if (prefixObject.has("prefix")) {
-                return prefixObject.get("prefix").getAsString();
+            if (!Files.exists(PREFIX_FILE)) {
+                return null;
             }
-        } catch (IOException e) {
-            Sakura.LOGGER.error("Failed to load prefix: {}", e.getMessage());
+            JsonObject o = JsonParser.parseString(Files.readString(PREFIX_FILE, StandardCharsets.UTF_8)).getAsJsonObject();
+            if (o.has("prefix")) {
+                return o.get("prefix").getAsString();
+            }
+        } catch (Exception ignored) {
         }
-        return ".";
+        return null;
     }
 }

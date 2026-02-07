@@ -21,6 +21,8 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
+import dev.sakura.client.verify.VerificationClient;
+import dev.sakura.client.verify.util.AuthUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
@@ -109,6 +111,10 @@ public class Scaffold extends Module {
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
+
+        if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
+            return;
+        }
 
         if (mc.options.attackKey.isPressed()) {
             mc.options.attackKey.setPressed(false);

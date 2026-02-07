@@ -9,6 +9,7 @@ import dev.sakura.client.gui.hud.HudEditorScreen;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
+import dev.sakura.client.verify.AuthState;
 import dev.sakura.niurendeobf.ZKMIndy;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.IEventBus;
@@ -135,6 +136,15 @@ public class Sakura {
     }
 
     public static void redirectToMainMenu() {
+        if (AuthState.isAuthed()) {
+            long expireAt = AuthState.getExpireAt();
+            long now = System.currentTimeMillis();
+            if (expireAt > now) {
+                mc.setScreen(new MainMenuScreen());
+                return;
+            }
+            AuthState.clear();
+        }
         mc.setScreen(new AuthScreen(new MainMenuScreen()));
     }
 

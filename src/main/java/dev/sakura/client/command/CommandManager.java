@@ -38,6 +38,7 @@ public class CommandManager {
 
         register(
                 new BindCommand(),
+                new ConfigCommand(),
                 new HelpCommand(),
                 //new IRCCommand(),
                 new PrefixCommand(),

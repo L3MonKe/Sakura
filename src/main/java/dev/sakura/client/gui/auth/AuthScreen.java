@@ -1,6 +1,5 @@
 package dev.sakura.client.gui.auth;
 
-import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.gui.theme.SakuraTheme;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
@@ -8,6 +7,7 @@ import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.utils.animations.Animation;
 import dev.sakura.client.utils.animations.Direction;
 import dev.sakura.client.utils.animations.impl.DecelerateAnimation;
+import dev.sakura.client.verify.util.AuthUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -204,13 +204,16 @@ public class AuthScreen extends Screen {
     private void startAuth() {
         if (verifying) return;
 
-        // TODO: 这里加入验证逻辑
-        // 此处为新验证逻辑的接入点
-        // 当你的验证通过, 唤出:
-        // MinecraftClient.getInstance().setScreen(new MainMenuScreen());
+        saveInputs(mode);
+        String usernameRaw = usernameField != null ? usernameField.getText() : "";
+        String passwordRaw = passwordField != null ? passwordField.getText() : "";
+        String licenseRaw = licenseField != null ? licenseField.getText() : "";
 
-        System.out.println("Bypassing authentication for development purposes.");
-        MinecraftClient.getInstance().setScreen(new MainMenuScreen());
+        final String username = usernameRaw == null ? "" : usernameRaw.trim();
+        final String password = passwordRaw == null ? "" : passwordRaw;
+        final String license = licenseRaw == null ? "" : licenseRaw.trim();
+        final AuthUtil.Mode currentMode = mode == Mode.Login ? AuthUtil.Mode.Login : AuthUtil.Mode.Register;
+        AuthUtil.startAuth(currentMode, username, password, license, this::applyVerifyingState);
     }
 
     private void applyVerifyingState(boolean v, String status) {

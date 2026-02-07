@@ -27,12 +27,6 @@ buildConfig {
     buildConfigField("String", "VERSION", "\"${property("mod_version")}\"")
     buildConfigField("String", "BUILD_TIME", "\"${SimpleDateFormat("MM/dd/yyyy HH:mm").format(Date())}\"")
 
-    val pinnedKeyRaw = (findProperty("pinned_server_signing_key_x509_base64") as String?)
-        ?: System.getenv("PINNED_SERVER_SIGNING_KEY_X509_BASE64")
-        ?: ""
-    val pinnedKey = pinnedKeyRaw.replace("\\", "\\\\").replace("\"", "\\\"")
-    buildConfigField("String", "PINNED_SERVER_SIGNING_KEY_X509_BASE64", "\"$pinnedKey\"")
-
     packageName("dev.sakura.client")
     useJavaOutput()
     generateAtSync.set(true)
@@ -71,6 +65,9 @@ dependencies {
     modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
 
     implementation(include("meteordevelopment:orbit:${property("orbit_version")}")!!)
+
+    implementation(include("net.java.dev.jna:jna:5.17.0")!!)
+    implementation(include("net.java.dev.jna:jna-platform:5.17.0")!!)
 
     // native-obfuscator annotations
     implementation(files("libs/annotations.jar"))
