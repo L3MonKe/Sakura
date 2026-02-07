@@ -84,6 +84,7 @@ public class ModuleManager {
 //        add(new MotionBlur());
         add(new NameTags());
         add(new NoRender());
+        add(new Rainy());
         add(new Shaders());
         add(new TotemParticles());
         add(new Trajectories());

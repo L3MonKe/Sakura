@@ -92,6 +92,12 @@ public class NanoVGRenderer {
             return;
         }
 
+        drawImmediate(drawingLogic);
+    }
+
+    public void drawImmediate(Consumer<Long> drawingLogic) {
+        if (!initialized) initNanoVG();
+
         if (inFrame) { // 防止叠帧
             drawingLogic.accept(vg);
             return;

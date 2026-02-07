@@ -1,8 +1,8 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.interfaces.ISakuraSplashOverlay;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
+import dev.sakura.client.interfaces.ISakuraSplashOverlay;
 import dev.sakura.client.shaders.SplashShader;
 import dev.sakura.client.utils.animations.AnimationUtil;
 import net.minecraft.client.MinecraftClient;

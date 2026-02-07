@@ -3,9 +3,7 @@ package dev.sakura.client.module.impl.client;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
-import net.minecraft.client.realms.dto.PlayerInfo;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Scoreboard;
@@ -41,7 +39,7 @@ public class Teams extends Module {
     public String getTeam(Entity entity) {
         Scoreboard scoreboard = mc.getNetworkHandler().getScoreboard();
         if (scoreboard == null) {
-           return null;
+            return null;
         } else {
             Team team = scoreboard.getTeam(entity.getName().getString());
             return team != null ? team.getName() : null;

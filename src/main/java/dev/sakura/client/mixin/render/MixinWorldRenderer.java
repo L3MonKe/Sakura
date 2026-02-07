@@ -39,7 +39,7 @@ public class MixinWorldRenderer {
     private static final Identifier vanillaOutline = Identifier.ofVanilla("entity_outline");
 
     @ModifyArg(method = "renderSky", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/FramePass;setRenderer(Ljava/lang/Runnable;)V"), index = 0)
-    private Runnable renderSky$wrapRenderer(Runnable original) {
+    private Runnable onRenderSky(Runnable original) {
         if (Sakura.MODULES == null) return original;
         WorldTweaks worldTweaks = Sakura.MODULES.getModule(WorldTweaks.class);
         if (!worldTweaks.isEnabled() || !worldTweaks.fogModify.get()) return original;
