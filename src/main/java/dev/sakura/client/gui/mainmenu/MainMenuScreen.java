@@ -1,7 +1,6 @@
 package dev.sakura.client.gui.mainmenu;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.auth.AuthGate;
 import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
@@ -99,23 +98,10 @@ public class MainMenuScreen extends Screen {
         }
 
         long now = Util.getMeasuringTimeMs();
-        if (AuthGate.consumeMainMenuIntro()) {
-            postAuthIntroActive = true;
-            postAuthIntroStartTime = now;
-            suppressFadeOverlay = true;
-            introEverStarted = true;
-            externalEntranceProgress = -1f;
-            externalEntranceTarget = -1f;
-            externalEntranceStartTime = -1L;
-            localEntranceStartTime = -1L;
-            setupEntries();
-            setupSocialLinks();
-            return;
-        } else {
-            postAuthIntroActive = false;
-            postAuthIntroStartTime = -1L;
-            suppressFadeOverlay = false;
-        }
+
+        postAuthIntroActive = false;
+        postAuthIntroStartTime = -1L;
+        suppressFadeOverlay = false;
 
         if (externalEntranceTarget >= 0f) {
             localEntranceStartTime = -1L;
@@ -177,6 +163,9 @@ public class MainMenuScreen extends Screen {
     }
 
     public void startIntro() {
+        // TODO: 对接验证动画
+        // 当 AuthScreen 验证通过后，调用此方法播放进入主界面的动画
+        // 此动画 (postAuthIntroActive) 会在 MainMenuShader 中渲染过渡效果
         long now = Util.getMeasuringTimeMs();
         postAuthIntroActive = true;
         postAuthIntroStartTime = now;
@@ -384,6 +373,8 @@ public class MainMenuScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         long now = Util.getMeasuringTimeMs();
         if (postAuthIntroActive) {
+            // TODO: 验证动画渲染逻辑
+            // 这里处理从 AuthScreen 过渡到 MainMenuScreen 的动画效果
             if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
             float t = MathHelper.clamp((float) (now - postAuthIntroStartTime) / (float) POST_AUTH_INTRO_DURATION_MS, 0f, 1f);
             float shaderT = AnimationUtil.smoothstep(0.0f, 1.0f, t);

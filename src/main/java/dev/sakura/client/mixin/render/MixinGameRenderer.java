@@ -7,7 +7,7 @@ import com.mojang.blaze3d.systems.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.events.render.Render3DEvent;
-import dev.sakura.client.interfaces.ISakuraSplashOverlay;
+import dev.sakura.client.interfaces.ISplashOverlayState;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IGameRenderer;
 import dev.sakura.client.module.impl.render.AspectRatio;
@@ -53,7 +53,7 @@ public abstract class MixinGameRenderer {
     private void sakura$renderScreenNanoVgOnTop(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
         NanoVGRenderer.INSTANCE.flushScreenQueue();
 
-        if (mc.getOverlay() instanceof SplashOverlay && mc.getOverlay() instanceof ISakuraSplashOverlay sakuraSplashOverlay && sakuraSplashOverlay.sakura$shouldRenderSplash()) {
+        if (mc.getOverlay() instanceof SplashOverlay && mc.getOverlay() instanceof ISplashOverlayState sakuraSplashOverlay && sakuraSplashOverlay.sakura$shouldRenderSplash()) {
             SplashShader.getInstance().render(mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), sakuraSplashOverlay.sakura$getSplashProgress(), sakuraSplashOverlay.sakura$getSplashFadeOut(), sakuraSplashOverlay.sakura$getSplashZoom());
         }
     }

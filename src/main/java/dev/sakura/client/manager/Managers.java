@@ -5,7 +5,6 @@ import dev.sakura.client.manager.impl.*;
 public class Managers {
     private static boolean initialized;
 
-    public static ChatAnimationUpdater CHAT_ANIMATION;
     public static CombatManager COMBAT;
     public static ExtrapolationManager EXTRAPOLATION;
     public static HealthManager HEALTH;
@@ -17,7 +16,6 @@ public class Managers {
     public static void init() {
         if (initialized) return;
 
-        CHAT_ANIMATION = new ChatAnimationUpdater();
         COMBAT = new CombatManager();
         EXTRAPOLATION = new ExtrapolationManager();
         HEALTH = new HealthManager();

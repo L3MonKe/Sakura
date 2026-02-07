@@ -2,7 +2,7 @@ package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
-import dev.sakura.client.interfaces.ISakuraSplashOverlay;
+import dev.sakura.client.interfaces.ISplashOverlayState;
 import dev.sakura.client.shaders.SplashShader;
 import dev.sakura.client.utils.animations.AnimationUtil;
 import net.minecraft.client.MinecraftClient;
@@ -23,7 +23,7 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 @Mixin(SplashOverlay.class)
-public class MixinSplashOverlay implements ISakuraSplashOverlay {
+public class MixinSplashOverlay implements ISplashOverlayState {
     @Shadow
     @Final
     private ResourceReload reload;
@@ -141,6 +141,11 @@ public class MixinSplashOverlay implements ISakuraSplashOverlay {
                     if (this.client.currentScreen.width != width || this.client.currentScreen.height != height) {
                         this.client.currentScreen.init(width, height);
                     }
+                    // TODO: 验证动画对接
+                    // 如果当前屏幕是 AuthScreen (由 Sakura.redirectToMainMenu() 设置)，
+                    // 此处的 instanceof MainMenuScreen 检查将会失败，导致从加载屏到主菜单的无缝过渡动画失效。
+                    // 如果希望 AuthScreen 也能支持无缝过渡，需要在 AuthScreen 中实现类似的 setEntranceProgress 接口，
+                    // 或者在此处添加对 AuthScreen 的支持。
                     if (this.client.currentScreen instanceof MainMenuScreen menu) {
                         menu.setEntranceProgress(ease);
                     }

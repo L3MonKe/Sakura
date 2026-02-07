@@ -1,7 +1,6 @@
 package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.auth.AuthGate;
 import dev.sakura.client.events.client.TickEvent;
 import dev.sakura.client.events.render.Render3DEvent;
 import dev.sakura.client.manager.Managers;
@@ -64,13 +63,6 @@ public class KillAura extends Module {
     @EventHandler
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
-
-        boolean verified = AuthGate.sessionOnlineVerified ||
-                (AuthGate.sessionPassVerified && System.currentTimeMillis() < AuthGate.sessionPassExpiresAtMillis);
-        if (!verified || AuthGate.sessionToken == null || AuthGate.sessionToken.isEmpty()) {
-            if (target != null) AuthGate.failSafe();
-            return;
-        }
 
         boolean scaffoldEnable = Sakura.MODULES.getModule(Scaffold.class).isEnabled();
         //boolean blinkEnable = Sakura.MODULES.getModule(Blink.class).isEnabled();

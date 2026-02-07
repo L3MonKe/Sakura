@@ -1,7 +1,6 @@
 package dev.sakura.client;
 
 import by.radioegor146.nativeobfuscator.Native;
-import dev.sakura.client.auth.AuthGate;
 import dev.sakura.client.command.CommandManager;
 import dev.sakura.client.config.ConfigManager;
 import dev.sakura.client.gui.auth.AuthScreen;
@@ -13,7 +12,6 @@ import dev.sakura.client.module.ModuleManager;
 import dev.sakura.niurendeobf.ZKMIndy;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.IEventBus;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.MinecraftClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -113,8 +111,6 @@ public class Sakura {
 
         mc = client;
 
-        AuthGate.init();
-
         EVENT_BUS.registerLambdaFactory(Sakura.class.getPackageName(), (lookupInMethod, klass) -> (MethodHandles.Lookup) lookupInMethod.invoke(null, klass, MethodHandles.lookup()));
 
         EXECUTOR = Executors.newFixedThreadPool(1);
@@ -130,9 +126,6 @@ public class Sakura {
         CONFIG = new ConfigManager();
 
         COMMAND = new CommandManager();
-
-        ClientTickEvents.END_CLIENT_TICK.register(AuthGate::onClientTick);
-
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("正在保存配置并且关闭游戏!");
             CONFIG.saveDefaultConfig();
@@ -142,11 +135,7 @@ public class Sakura {
     }
 
     public static void redirectToMainMenu() {
-        if (AuthGate.isVerified()) {
-            mc.setScreen(new MainMenuScreen());
-        } else {
-            mc.setScreen(new AuthScreen(new MainMenuScreen()));
-        }
+        mc.setScreen(new AuthScreen(new MainMenuScreen()));
     }
 
     public static boolean startIntro() {

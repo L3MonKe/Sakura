@@ -1,6 +1,5 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.auth.AuthGate;
 import dev.sakura.client.events.client.TickEvent;
 import dev.sakura.client.events.input.MouseButtonEvent;
 import dev.sakura.client.events.player.StrafeEvent;
@@ -110,12 +109,6 @@ public class Scaffold extends Module {
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
-
-        boolean verified = AuthGate.sessionOnlineVerified || (AuthGate.sessionPassVerified && System.currentTimeMillis() < AuthGate.sessionPassExpiresAtMillis);
-        if (!verified || AuthGate.sessionToken == null || AuthGate.sessionToken.isEmpty()) {
-            if (airTicks > 5) AuthGate.failSafe();
-            return;
-        }
 
         if (mc.options.attackKey.isPressed()) {
             mc.options.attackKey.setPressed(false);

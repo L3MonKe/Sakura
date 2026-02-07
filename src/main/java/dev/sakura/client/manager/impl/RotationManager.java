@@ -1,7 +1,6 @@
 package dev.sakura.client.manager.impl;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.auth.AuthGate;
 import dev.sakura.client.events.input.MoveInputEvent;
 import dev.sakura.client.events.player.*;
 import dev.sakura.client.events.type.EventType;
@@ -61,8 +60,6 @@ public class RotationManager {
     }
 
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, final Function<Rotation, Boolean> raycast, Priority priority) {
-        if (!AuthGate.isVerified()) return;
-
         if (rotations == null || Double.isNaN(rotations.yaw) || Double.isNaN(rotations.pitch) || Double.isInfinite(rotations.yaw) || Double.isInfinite(rotations.pitch)) {
             return;
         }

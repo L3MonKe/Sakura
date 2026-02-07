@@ -1,8 +1,6 @@
 package dev.sakura.client.gui.auth;
 
-import dev.sakura.client.auth.AuthGate;
-import dev.sakura.client.auth.net.AuthClient;
-import dev.sakura.client.auth.net.AuthVerifyResult;
+import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.gui.theme.SakuraTheme;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
@@ -21,8 +19,6 @@ import net.minecraft.util.math.MathHelper;
 import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
-import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
 
 public class AuthScreen extends Screen {
     private final Screen parent;
@@ -50,7 +46,6 @@ public class AuthScreen extends Screen {
 
     private String statusLine = "";
     private volatile boolean verifying;
-    private volatile long verifyAttemptSeq;
 
     public AuthScreen(Screen parent) {
         super(Text.of("Auth"));
@@ -135,7 +130,7 @@ public class AuthScreen extends Screen {
             licenseField = new AuthTextField(textRenderer, formX, fieldsTop + (fieldH + fieldGap) * 2, formW, fieldH, Text.of(""));
             licenseField.setPlaceholder("卡密");
             licenseField.setMaxLength(128);
-            String licenseToSet = registerLicense == null || registerLicense.isBlank() ? AuthGate.getLicenseKey() : registerLicense;
+            String licenseToSet = registerLicense;
             if (licenseToSet != null && !licenseToSet.isBlank()) licenseField.setText(licenseToSet);
             addDrawableChild(licenseField);
         } else {
@@ -190,51 +185,6 @@ public class AuthScreen extends Screen {
         primaryButton.active = !verifying && userOk && passOk && licenseOk;
     }
 
-    private static String translateStatus(String raw) {
-        String s = raw == null ? "" : raw.trim();
-        if (s.isEmpty()) return "";
-
-        String upper = s.toUpperCase(Locale.ROOT);
-        if (upper.startsWith("HTTP_")) {
-            return "服务器请求失败（" + upper + "）";
-        }
-
-        String lower = s.toLowerCase(Locale.ROOT);
-        if (lower.contains("connection refused") || lower.contains("connectexception")) return "无法连接服务器";
-        if (lower.contains("timed out") || lower.contains("timeout")) return "连接超时";
-        if (lower.contains("unknownhost")) return "服务器地址无效";
-
-        return switch (upper) {
-            case "BAD_REQUEST" -> "请求参数错误";
-            case "BAD_TIMESTAMP" -> "请求已过期，请重试";
-            case "BAD_CREDENTIALS" -> "账号或密码错误";
-            case "USER_NOT_FOUND" -> "账号不存在";
-            case "USER_EXISTS" -> "账号已存在";
-            case "USER_CREATE_FAILED" -> "创建账号失败";
-            case "LICENSE_KEY_EMPTY" -> "卡密为空";
-            case "LICENSE_NOT_FOUND" -> "卡密不存在";
-            case "NO_TOKEN" -> "服务器未下发令牌";
-            case "TOKEN_EMPTY" -> "令牌为空";
-            case "TOKEN_EXPIRED" -> "令牌已过期";
-            case "DECODE_FAILED" -> "响应解析失败";
-            case "INTERNAL_ERROR" -> "服务器内部错误";
-            case "UNSUPPORTED_MEDIA_TYPE" -> "请求格式不支持";
-            case "DEVICE_ID_EMPTY" -> "设备码为空";
-            case "LICENSE_REVOKED" -> "操你妈滚";
-            case "LICENSE_EXPIRED" -> "卡密已过期";
-            case "LICENSE_ALREADY_CLAIMED" -> "卡密已被绑定";
-            case "NO_LICENSE_BOUND" -> "账号未绑定卡密";
-            case "LICENSE_NOT_OWNED" -> "该卡密不属于此账号";
-            case "DEVICE_NOT_BOUND" -> "未绑定机器码";
-            case "DEVICE_MISMATCH" -> "机器码不匹配";
-            case "INVALID_TOKEN" -> "令牌无效";
-            case "DENIED" -> "验证失败";
-            case "EMPTY_RESPONSE" -> "服务器无响应";
-            case "INVALID_RESPONSE" -> "服务器响应异常";
-            default -> "未知错误";
-        };
-    }
-
     private void saveInputs(Mode m) {
         if (m == null) return;
         String u = usernameField != null ? usernameField.getText() : "";
@@ -254,109 +204,13 @@ public class AuthScreen extends Screen {
     private void startAuth() {
         if (verifying) return;
 
-        long attempt = ++verifyAttemptSeq;
-        String username = usernameField != null ? usernameField.getText() : "";
-        String password = passwordField != null ? passwordField.getText() : "";
+        // TODO: 这里加入验证逻辑
+        // 此处为新验证逻辑的接入点
+        // 当你的验证通过, 唤出:
+        // MinecraftClient.getInstance().setScreen(new MainMenuScreen());
 
-        if (username == null || username.isBlank() || password == null || password.isBlank()) {
-            applyVerifyingState(false, "请输入用户名和密码");
-            if (usernameField != null) usernameField.pulseError();
-            if (passwordField != null) passwordField.pulseError();
-            return;
-        }
-
-        String deviceId = AuthGate.getDeviceId();
-
-        CompletableFuture<AuthVerifyResult> fut;
-        if (mode == Mode.Register) {
-            String license = licenseField == null ? "" : licenseField.getText();
-            if (license == null || license.isBlank()) {
-                applyVerifyingState(false, "请输入卡密");
-                if (licenseField != null) licenseField.pulseError();
-                return;
-            }
-            String licenseNorm = license.trim().toUpperCase(Locale.ROOT);
-            AuthGate.saveLicenseKey(licenseNorm);
-            applyVerifyingState(true, "注册中...");
-            fut = new AuthClient().register(username, password, licenseNorm, deviceId);
-        } else {
-            applyVerifyingState(true, "登录中...");
-            fut = new AuthClient().login(username, password, deviceId);
-        }
-
-        fut.whenComplete((res, err) -> {
-            MinecraftClient c = this.client != null ? this.client : MinecraftClient.getInstance();
-            if (c == null) return;
-            c.execute(() -> {
-                if (verifyAttemptSeq != attempt) return;
-
-                if (err != null) {
-                    String msg = err.getMessage();
-                    if (msg == null || msg.isBlank()) msg = err.getClass().getSimpleName();
-                    applyVerifyingState(false, translateStatus(msg));
-                    if (usernameField != null) usernameField.pulseError();
-                    if (passwordField != null) passwordField.pulseError();
-                    if (licenseField != null && mode == Mode.Register) licenseField.pulseError();
-                    return;
-                }
-
-                if (res == null) {
-                    applyVerifyingState(false, "验证失败，请稍后重试");
-                    if (usernameField != null) usernameField.pulseError();
-                    if (passwordField != null) passwordField.pulseError();
-                    if (licenseField != null && mode == Mode.Register) licenseField.pulseError();
-                    return;
-                }
-
-                if (!res.ok()) {
-                    String code = res.error();
-                    applyVerifyingState(false, translateStatus(code));
-                    if ("BAD_CREDENTIALS".equalsIgnoreCase(code) || "AUTH_FAILED".equalsIgnoreCase(code) || "USER_NOT_FOUND".equalsIgnoreCase(code)) {
-                        if (usernameField != null) usernameField.pulseError();
-                        if (passwordField != null) passwordField.pulseError();
-                    }
-                    if (mode == Mode.Register && ("LICENSE_NOT_FOUND".equalsIgnoreCase(code) || "LICENSE_KEY_EMPTY".equalsIgnoreCase(code) || "LICENSE_EXPIRED".equalsIgnoreCase(code) || "LICENSE_REVOKED".equalsIgnoreCase(code) || "LICENSE_ALREADY_CLAIMED".equalsIgnoreCase(code))) {
-                        if (licenseField != null) licenseField.pulseError();
-                    }
-                    return;
-                }
-
-                String token = res.token();
-                if (token == null || token.isBlank()) {
-                    applyVerifyingState(false, translateStatus("NO_TOKEN"));
-                    return;
-                }
-
-                //applyVerifyingState(true, "验证中...");
-                if (primaryButton != null) primaryButton.active = false;
-
-                new AuthClient().verifyToken(token, deviceId).whenComplete((vRes, vErr) -> {
-                    MinecraftClient c2 = this.client != null ? this.client : MinecraftClient.getInstance();
-                    if (c2 == null) return;
-                    c2.execute(() -> {
-                        if (verifyAttemptSeq != attempt) return;
-
-                        if (vErr != null) {
-                            String msg = vErr.getMessage();
-                            if (msg == null || msg.isBlank()) msg = vErr.getClass().getSimpleName();
-                            applyVerifyingState(false, translateStatus(msg));
-                            return;
-                        }
-
-                        if (vRes == null || !vRes.ok()) {
-                            String code = vRes != null ? vRes.error() : "DENIED";
-                            applyVerifyingState(false, translateStatus(code));
-                            return;
-                        }
-
-                        applyVerifyingState(false, "");
-                        AuthGate.requestMainMenuIntro();
-                        AuthGate.acceptVerifiedToken(token);
-                        c2.setScreen(parent);
-                    });
-                });
-            });
-        });
+        System.out.println("Bypassing authentication for development purposes.");
+        MinecraftClient.getInstance().setScreen(new MainMenuScreen());
     }
 
     private void applyVerifyingState(boolean v, String status) {

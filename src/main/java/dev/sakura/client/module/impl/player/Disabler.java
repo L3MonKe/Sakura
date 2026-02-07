@@ -20,7 +20,8 @@ public class Disabler extends Module {
 
     @EventHandler
     private void onPacketSend(PacketEvent event) {
-        if (event.getType() != EventType.SEND || nullCheck()) return;
+        if (nullCheck()) return;
+        if (event.getType() != EventType.SEND) return;
 
         if (disAim360.get()) {
             if (event.getPacket() instanceof PlayerMoveC2SPacket packet && packet.changesLook()) {

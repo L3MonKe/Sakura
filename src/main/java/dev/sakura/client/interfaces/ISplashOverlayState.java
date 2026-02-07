@@ -1,6 +1,6 @@
 package dev.sakura.client.interfaces;
 
-public interface ISakuraSplashOverlay {
+public interface ISplashOverlayState {
     boolean sakura$shouldRenderSplash();
 
     float sakura$getSplashProgress();

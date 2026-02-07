@@ -32,15 +32,9 @@ public class KeyUtil {
 
     public static InputUtil.Key getKeyFromName(String name) {
         String lower = name.toLowerCase();
+        String translationKey = KEY_NAME_MAP.getOrDefault(lower, lower.startsWith("key.keyboard.") ? lower : "key.keyboard." + lower);
+        InputUtil.Key key = InputUtil.fromTranslationKey(translationKey);
+        return key != null ? key : InputUtil.UNKNOWN_KEY;
 
-        String translationKey = KEY_NAME_MAP.getOrDefault(lower,
-                lower.startsWith("key.keyboard.") ? lower : "key.keyboard." + lower);
-
-        try {
-            InputUtil.Key key = InputUtil.fromTranslationKey(translationKey);
-            return key != null ? key : InputUtil.UNKNOWN_KEY;
-        } catch (Exception e) {
-            return InputUtil.UNKNOWN_KEY;
-        }
     }
 }

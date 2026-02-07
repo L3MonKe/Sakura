@@ -1,7 +1,6 @@
 package dev.sakura.client.module;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.auth.AuthGate;
 import dev.sakura.client.events.input.MouseButtonEvent;
 import dev.sakura.client.events.key.KeyEvent;
 import dev.sakura.client.events.render.Render2DEvent;
@@ -160,7 +159,6 @@ public class ModuleManager {
     @EventHandler
     public void onKey(KeyEvent event) {
         if (mc.currentScreen != null) return;
-        if (!AuthGate.isVerified()) return;
 
         int keyCode = event.getKey();
         if (keyCode == GLFW.GLFW_KEY_UNKNOWN) return;
@@ -224,12 +222,11 @@ public class ModuleManager {
     }
 
     @EventHandler
-    public void onKey(MouseButtonEvent e) {
-        if (!AuthGate.isVerified()) return;
-        if (e.getAction() == KeyAction.Press) {
-            if (e.getButton() == 3 || e.getButton() == 4) {
+    public void onKey(MouseButtonEvent event) {
+        if (event.getAction() == KeyAction.Press) {
+            if (event.getButton() == 3 || event.getButton() == 4) {
                 for (Module module : modules.values()) {
-                    if (module.getKey() == -e.getButton()) {
+                    if (module.getKey() == -event.getButton()) {
                         module.toggle();
                     }
                 }

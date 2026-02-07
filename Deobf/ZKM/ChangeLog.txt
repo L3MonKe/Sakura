@@ -2246,10 +2246,10 @@ Class: public abstract dev.sakura.client.interfaces.IHeldItemRenderer	=>	dev.sak
 		public abstract void setItemStackMainHand(net.minecraft.class_1799)	=>	setItemStackMainHand(net.minecraft.class_1799) :Q1XK1cG9V8kZNv
 		public abstract void setItemStackOffHand(net.minecraft.class_1799)	=>	setItemStackOffHand(net.minecraft.class_1799) :V_USVGcpV8kZNv
 
-Class: public abstract dev.sakura.client.interfaces.ISakuraSplashOverlay	=>	dev.sakura.client.Mahiro_Iy
+Class: public abstract dev.sakura.client.interfaces.ISplashOverlayState	=>	dev.sakura.client.Mahiro_Iy
 	Source: "ISakuraSplashOverlay.java"
-	FieldsOf: dev.sakura.client.interfaces.ISakuraSplashOverlay
-	MethodsOf: dev.sakura.client.interfaces.ISakuraSplashOverlay
+	FieldsOf: dev.sakura.client.interfaces.ISplashOverlayState
+	MethodsOf: dev.sakura.client.interfaces.ISplashOverlayState
 		public abstract float sakura$getSplashFadeOut()	=>	sakura$getSplashFadeOut() :e3QDdmieV8kZNv
 		public abstract float sakura$getSplashProgress()	=>	sakura$getSplashProgress() :zirb$0ayV8kZNv
 		public abstract float sakura$getSplashZoom()	=>	sakura$getSplashZoom() :qZlj$jF_V8kZNv
@@ -9089,7 +9089,7 @@ MemberClass: dev.sakura.client.gui.mainmenu.WelcomeScreen	Data: 2695 Nv
 MemberClass: dev.sakura.client.gui.theme.SakuraTheme	Data: 2602 Zt
 MemberClass: dev.sakura.client.interfaces.IEntityRenderState	Data: 2588
 MemberClass: dev.sakura.client.interfaces.IHeldItemRenderer	Data: 2748
-MemberClass: dev.sakura.client.interfaces.ISakuraSplashOverlay	Data: 2708
+MemberClass: dev.sakura.client.interfaces.ISplashOverlayState	Data: 2708
 MemberClass: dev.sakura.client.manager.Managers	Data: 2610
 MemberClass: dev.sakura.client.manager.impl.ChatAnimationUpdater	Data: 2700
 MemberClass: dev.sakura.client.manager.impl.CombatManager	Data: 2676
