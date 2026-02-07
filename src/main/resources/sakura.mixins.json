@@ -62,6 +62,7 @@
     "render.MixinChestBlockEntityRenderer",
     "render.MixinTitleScreen",
     "render.MixinTransformation",
+    "render.MixinWeatherRendering",
     "render.MixinWindow",
     "render.MixinWorldRenderer"
   ],

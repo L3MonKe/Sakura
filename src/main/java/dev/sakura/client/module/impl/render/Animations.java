@@ -48,7 +48,6 @@ public class Animations extends Module {
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Default);
     private final BoolValue onlySword = new BoolValue("Only Sword", "仅持剑", true);
-    private final BoolValue onlyAura = new BoolValue("Only Aura", "仅光环时启用", true);
     private final BoolValue noOffhand = new BoolValue("No Offhand", "隐藏副手", false);
     public final BoolValue oldAnimationsM = new BoolValue("Disable Swap Main", "禁用主手切换动画", true);
     public final BoolValue oldAnimationsOff = new BoolValue("Disable Swap Off", "禁用副手切换动画", true);
@@ -85,11 +84,6 @@ public class Animations extends Module {
         if (ka.isEnabled() && ka.getCurrentTarget() != null && ka.isAutoBlock())
             return true;
         return false;
-    }
-
-    public boolean shouldChangeAnimationDuration() {
-        KillAura ka = getKillAura();
-        return isEnabled() && (!onlyAura.get() || (ka.isEnabled() && ka.getCurrentTarget() != null));
     }
 
     @EventHandler

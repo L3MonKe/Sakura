@@ -56,7 +56,7 @@ public class ColorValueComponent extends Component {
         float rowGap = 3 * scale;
         float rowHeight = 12 * scale;
         int rows = setting.allowAlpha() ? 4 : 3;
-        float bottomSpacing = 6 * scale;
+        float bottomSpacing = 10 * scale;
 
         float totalExpandedHeight = (fontHeight + 2 * scale) + panelHeight + 6 * scale + rows * rowHeight + (rows - 1) * rowGap + 2 * scale + bottomSpacing;
 

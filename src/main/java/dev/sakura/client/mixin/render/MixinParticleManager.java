@@ -3,6 +3,7 @@ package dev.sakura.client.mixin.render;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.mixin.accessor.IBillboardParticle;
 import dev.sakura.client.module.impl.render.NoRender;
+import dev.sakura.client.module.impl.render.Rainy;
 import dev.sakura.client.module.impl.render.TotemParticles;
 import net.minecraft.client.particle.Particle;
 import net.minecraft.client.particle.ParticleManager;
@@ -49,6 +50,17 @@ public abstract class MixinParticleManager {
         if (totemParticles != null && totemParticles.isEnabled() && !totemParticles.isNoRender()) {
             if (parameters.getType() == ParticleTypes.TOTEM_OF_UNDYING) {
                 Color color = totemParticles.getNextColor();
+                IBillboardParticle accessor = (IBillboardParticle) particle;
+                accessor.setRed(color.getRed() / 255f);
+                accessor.setGreen(color.getGreen() / 255f);
+                accessor.setBlue(color.getBlue() / 255f);
+            }
+        }
+
+        Rainy rainy = Sakura.MODULES.getModule(Rainy.class);
+        if (rainy != null && rainy.isEnabled() && rainy.isSakura() && rainy.isTintEnabled()) {
+            if (parameters.getType() == ParticleTypes.CHERRY_LEAVES) {
+                Color color = rainy.getPetalColor(x, z);
                 IBillboardParticle accessor = (IBillboardParticle) particle;
                 accessor.setRed(color.getRed() / 255f);
                 accessor.setGreen(color.getGreen() / 255f);
