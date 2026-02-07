@@ -41,6 +41,7 @@ public class ModuleManager {
         add(new AutoTotem());
         add(new LegitCrystal());
         add(new SafeHotbar());
+        add(new MaceSwap());
 
         // Movement
         add(new AutoSprint());
