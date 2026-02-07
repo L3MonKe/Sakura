@@ -41,7 +41,7 @@ if not exist "build\build\lib\native_library.dll" (
 echo [OK] DLL verified
 
 echo [5/5] Integrating into JAR as x64-windows.dll...
-set "JAR=..\Sakura-1.1.jar_obf.jar"
+set "JAR=..\Sakura-1.1.1.jar_obf.jar"
 if not exist "%JAR%" (
     echo.
     echo ERROR: Target JAR not found: %JAR%
