@@ -1,7 +1,7 @@
 package dev.sakura.server;
 
 import dev.sakura.server.packet.IRCPacket;
-import dev.sakura.server.packet.implemention.serverbound.ServerBoundCloudConfigPacket;
+import dev.sakura.server.packet.implemention.c2s.CloudConfigC2S;
 import dev.sakura.server.processor.IRCProtocol;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -50,12 +50,12 @@ public class LargeFrameTransportTest {
         try (Socket socket = new Socket("127.0.0.1", port)) {
             DataOutputStream out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream(), 1024 * 64));
             String content = "x".repeat(512 * 1024);
-            byte[] payload = protocol.encode(new ServerBoundCloudConfigPacket("upload", "", "Fin", content));
+            byte[] payload = protocol.encode(new CloudConfigC2S("upload", "", "Fin", content));
             out.writeInt(payload.length);
             out.write(payload);
             out.flush();
             Assertions.assertTrue(latch.await(3, TimeUnit.SECONDS), "impl did not receive packet");
-            Assertions.assertInstanceOf(ServerBoundCloudConfigPacket.class, received.get());
+            Assertions.assertInstanceOf(CloudConfigC2S.class, received.get());
         } finally {
             tryInvoke(server, "shutdown");
             tryInvoke(server, "stop");

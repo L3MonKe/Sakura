@@ -42,12 +42,12 @@ public final class ConfigManager {
 
             @Override
             public void onDisconnected(String message) {
-                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§c验证连接断开: " + (message == null ? "" : message)));
+                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§cIRC服务器连接断开: " + (message == null ? "" : message)));
             }
 
             @Override
             public void onConnected() {
-                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§a验证连接已连接"));
+                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§aIRC服务器已连接"));
             }
 
             @Override

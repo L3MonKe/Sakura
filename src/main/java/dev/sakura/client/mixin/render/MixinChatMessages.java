@@ -12,7 +12,6 @@ import net.minecraft.text.Style;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.Language;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -23,7 +22,6 @@ import java.util.Optional;
 
 @Mixin(ChatMessages.class)
 public class MixinChatMessages {
-    @Unique
     private static final OrderedText SAKURA_SPACES = OrderedText.styled(32, Style.EMPTY);
 
     @Inject(method = "breakRenderedChatMessageLines", at = @At("HEAD"), cancellable = true)
@@ -53,7 +51,6 @@ public class MixinChatMessages {
         cir.cancel();
     }
 
-    @Unique
     private static String rawString(StringVisitable visitable) {
         StringBuilder sb = new StringBuilder();
         visitable.visit(s -> {
