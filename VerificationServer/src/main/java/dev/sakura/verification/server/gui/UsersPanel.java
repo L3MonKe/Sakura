@@ -25,7 +25,7 @@ public final class UsersPanel extends JPanel {
     private final JComboBox<String> modeBox = new JComboBox<>(new String[]{"全部", "用户名", "QQ", "在线"});
     private final JTextField queryField = new JTextField(24);
     private final JButton refreshBtn = new JButton("刷新");
-    private final JButton banBtn = new JButton("封禁/解封");
+    private final JButton deleteBtn = new JButton("删除用户");
     private final JButton kickBtn = new JButton("踢下线");
     private final JButton resetHwidBtn = new JButton("重置HWID");
     private final JButton setPwdBtn = new JButton("改密码");
@@ -49,7 +49,7 @@ public final class UsersPanel extends JPanel {
         add(new JScrollPane(table), BorderLayout.CENTER);
 
         JPanel actions = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        actions.add(banBtn);
+        actions.add(deleteBtn);
         actions.add(kickBtn);
         actions.add(resetHwidBtn);
         actions.add(setPwdBtn);
@@ -58,7 +58,7 @@ public final class UsersPanel extends JPanel {
         add(actions, BorderLayout.SOUTH);
 
         refreshBtn.addActionListener(e -> refresh());
-        banBtn.addActionListener(e -> banOrUnban());
+        deleteBtn.addActionListener(e -> deleteUser());
         kickBtn.addActionListener(e -> kick());
         resetHwidBtn.addActionListener(e -> resetHwid());
         setPwdBtn.addActionListener(e -> setPassword());
@@ -138,37 +138,30 @@ public final class UsersPanel extends JPanel {
         return row == null ? null : row.username();
     }
 
-    private void banOrUnban() {
-        int r = table.getSelectedRow();
-        if (r < 0) {
+    private void deleteUser() {
+        String username = getSelectedUsername();
+        if (username == null || username.isEmpty()) {
             return;
         }
-        UserRepository.UserRow row = model.getRow(r);
-        if (row == null) {
-            return;
-        }
-        boolean banned = row.banned();
-        String action = banned ? "解封" : "封禁";
-        int ok = JOptionPane.showConfirmDialog(this, "确定要" + action + "用户: " + row.username() + " ?", "确认", JOptionPane.YES_NO_OPTION);
+        int ok = JOptionPane.showConfirmDialog(this, "确定要删除用户: " + username + " ?\n该操作不可恢复。", "确认", JOptionPane.YES_NO_OPTION);
         if (ok != JOptionPane.YES_OPTION) {
             return;
         }
-
         new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
-                return service.setBanned(row.username(), !banned);
+                return service.deleteUser(username);
             }
 
             @Override
             protected void done() {
                 try {
                     if (!get()) {
-                        JOptionPane.showMessageDialog(UsersPanel.this, action + "失败", "提示", JOptionPane.WARNING_MESSAGE);
+                        JOptionPane.showMessageDialog(UsersPanel.this, "删除失败", "提示", JOptionPane.WARNING_MESSAGE);
                     }
                     refresh();
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(UsersPanel.this, action + "失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(UsersPanel.this, "删除失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
                 }
             }
         }.execute();
@@ -292,7 +285,7 @@ public final class UsersPanel extends JPanel {
     }
 
     private static final class UsersTableModel extends AbstractTableModel {
-        private static final String[] COLS = new String[]{"用户名", "QQ", "到期时间", "在线", "封禁", "Prefix", "Phone"};
+        private static final String[] COLS = new String[]{"用户名", "QQ", "到期时间", "在线", "Prefix", "Phone"};
         private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private final List<UserRepository.UserRow> rows = new ArrayList<>();
 
@@ -335,9 +328,8 @@ public final class UsersPanel extends JPanel {
                 case 1 -> qq;
                 case 2 -> formatExpireAt(r.expireAt());
                 case 3 -> r.online();
-                case 4 -> r.banned();
-                case 5 -> r.prefix();
-                case 6 -> r.phone();
+                case 4 -> r.prefix();
+                case 5 -> r.phone();
                 default -> "";
             };
         }

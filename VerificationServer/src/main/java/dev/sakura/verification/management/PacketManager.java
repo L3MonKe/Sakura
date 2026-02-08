@@ -2,8 +2,8 @@ package dev.sakura.verification.management;
 
 import com.google.gson.JsonObject;
 import dev.sakura.verification.packet.IRCPacket;
-import dev.sakura.verification.packet.implemention.clientbound.*;
-import dev.sakura.verification.packet.implemention.serverbound.*;
+import dev.sakura.verification.packet.implemention.c2s.*;
+import dev.sakura.verification.packet.implemention.s2c.*;
 import dev.sakura.verification.util.UnsafeReflect;
 
 import java.util.HashMap;

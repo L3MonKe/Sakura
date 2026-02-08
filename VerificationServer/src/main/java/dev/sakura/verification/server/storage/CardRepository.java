@@ -6,7 +6,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 public final class CardRepository {
     private static final SecureRandom RANDOM = new SecureRandom();
@@ -57,6 +59,37 @@ public final class CardRepository {
         try (PreparedStatement ps = connection.prepareStatement("DELETE FROM cards WHERE grp = ?")) {
             ps.setString(1, group);
             return ps.executeUpdate();
+        }
+    }
+
+    public String findUsedBy(Connection connection, String cardKey) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement("SELECT used_by FROM cards WHERE card_key = ?")) {
+            ps.setString(1, cardKey);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                String usedBy = rs.getString(1);
+                return usedBy == null || usedBy.isBlank() ? null : usedBy;
+            }
+        }
+    }
+
+    public List<String> listUsedByGroup(Connection connection, String group) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT DISTINCT used_by FROM cards WHERE grp = ? AND used_by IS NOT NULL AND used_by != ''"
+        )) {
+            ps.setString(1, group);
+            try (ResultSet rs = ps.executeQuery()) {
+                List<String> out = new ArrayList<>();
+                while (rs.next()) {
+                    String usedBy = rs.getString(1);
+                    if (usedBy != null && !usedBy.isBlank()) {
+                        out.add(usedBy);
+                    }
+                }
+                return out;
+            }
         }
     }
 

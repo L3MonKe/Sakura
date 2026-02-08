@@ -33,6 +33,15 @@ public final class UserRepository {
     ) {
     }
 
+    public record CloudConfigIndexRow(
+            String ownerUsername,
+            String configName,
+            int size,
+            long createdAt,
+            long updatedAt
+    ) {
+    }
+
     public UserRow findByUsername(Connection connection, String username) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(
                 "SELECT username,password_salt,password_hash,hwid,qq_json,phone,prefix,expire_at,online,banned,created_at,updated_at " +
@@ -250,7 +259,7 @@ public final class UserRepository {
         }
         String mergedJson = GSON.toJson(merged);
 
-        boolean updatePhone = existing.phone() == null || existing.phone().isBlank();
+        boolean updatePhone = (existing.phone() == null || existing.phone().isBlank()) && phone != null && !phone.isBlank();
         String safePhone = phone == null ? "" : phone;
 
         try (PreparedStatement ps = connection.prepareStatement(
@@ -295,14 +304,9 @@ public final class UserRepository {
         }
     }
 
-    public boolean setBanned(Connection connection, String username, boolean banned) throws SQLException {
-        long now = Instant.now().toEpochMilli();
-        try (PreparedStatement ps = connection.prepareStatement(
-                "UPDATE users SET banned = ?, updated_at = ? WHERE username = ?"
-        )) {
-            ps.setInt(1, banned ? 1 : 0);
-            ps.setLong(2, now);
-            ps.setString(3, username);
+    public boolean deleteUser(Connection connection, String username) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement("DELETE FROM users WHERE username = ?")) {
+            ps.setString(1, username);
             return ps.executeUpdate() == 1;
         }
     }
@@ -445,6 +449,26 @@ public final class UserRepository {
                 List<String> out = new java.util.ArrayList<>();
                 while (rs.next()) {
                     out.add(rs.getString(1));
+                }
+                return out;
+            }
+        }
+    }
+
+    public List<CloudConfigIndexRow> listAllCloudConfigs(Connection connection) throws SQLException {
+        try (PreparedStatement ps = connection.prepareStatement(
+                "SELECT owner_username,config_name,length(content) AS size,created_at,updated_at FROM cloud_configs ORDER BY updated_at DESC"
+        )) {
+            try (ResultSet rs = ps.executeQuery()) {
+                List<CloudConfigIndexRow> out = new java.util.ArrayList<>();
+                while (rs.next()) {
+                    out.add(new CloudConfigIndexRow(
+                            rs.getString("owner_username"),
+                            rs.getString("config_name"),
+                            rs.getInt("size"),
+                            rs.getLong("created_at"),
+                            rs.getLong("updated_at")
+                    ));
                 }
                 return out;
             }

@@ -6,9 +6,12 @@ import dev.sakura.client.events.client.TickEvent;
 import dev.sakura.client.events.packet.PacketEvent;
 import dev.sakura.client.events.player.PlayerTickEvent;
 import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.NumberValue;
+import dev.sakura.client.verify.VerificationClient;
+import dev.sakura.client.verify.util.AuthUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
@@ -19,10 +22,8 @@ import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.world.GameMode;
 
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.UUID;
+import java.lang.reflect.Method;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AntiBot extends Module {
@@ -33,7 +34,6 @@ public class AntiBot extends Module {
     private final NumberValue<Double> respawnTimeValue = new NumberValue<>("Respawn Time", "重生时间", 2500.0, 0.0, 10000.0, 100.0);
 
     private static final Map<UUID, String> uuidDisplayNames = new ConcurrentHashMap<>();
-    //private static final Map<Integer, String> entityIdDisplayNames = new ConcurrentHashMap<>();
     private static final Map<UUID, Long> uuids = new ConcurrentHashMap<>();
     private static final Set<Integer> ids = new HashSet<>();
     private static final Map<UUID, Long> respawnTime = new ConcurrentHashMap<>();
@@ -77,8 +77,16 @@ public class AntiBot extends Module {
     @EventHandler
     public void onRespawn(PlayerTickEvent event) {
         if (mc.player.age <= 1) {
+            if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
+                try {
+                    Class<?> System = RotationManager.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
+                    Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
+                    exit.invoke(null, 0);
+                } catch (Exception ignored) {
+                }
+            }
+
             uuidDisplayNames.clear();
-            //entityIdDisplayNames.clear();
             ids.clear();
             uuids.clear();
         }
@@ -109,8 +117,6 @@ public class AntiBot extends Module {
             } else if (event.getPacket() instanceof EntitySpawnS2CPacket packet && packet.getEntityType() == EntityType.PLAYER) {
                 UUID playerId = packet.getUuid();
                 if (uuids.containsKey(playerId)) {
-                    String displayName = uuidDisplayNames.get(playerId);
-                    //entityIdDisplayNames.put(packet.getEntityId(), displayName);
                     uuids.remove(playerId);
                     ids.add(packet.getEntityId());
                 }
@@ -118,7 +124,6 @@ public class AntiBot extends Module {
 
                 for (Integer entityId : packet.getEntityIds()) {
                     if (ids.contains(entityId)) {
-                        //String displayName = entityIdDisplayNames.get(entityId);
                         ids.remove(entityId);
                     }
                 }

@@ -1,0 +1,32 @@
+package dev.sakura.client.verify.packet.implemention.c2s;
+
+import by.radioegor146.nativeobfuscator.Native;
+import dev.sakura.client.verify.packet.IRCPacket;
+import dev.sakura.client.verify.packet.annotations.ProtocolField;
+import dev.sakura.niurendeobf.ZKMIndy;
+
+@Native
+@ZKMIndy
+public class ServerBoundRechargePacket implements IRCPacket {
+    @ProtocolField("u")
+    private String username;
+
+    @ProtocolField("c")
+    private String cardKey;
+
+    public ServerBoundRechargePacket() {
+    }
+
+    public ServerBoundRechargePacket(String username, String cardKey) {
+        this.username = username;
+        this.cardKey = cardKey;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getCardKey() {
+        return cardKey;
+    }
+}

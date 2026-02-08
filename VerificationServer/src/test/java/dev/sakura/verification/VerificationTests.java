@@ -1,11 +1,12 @@
 package dev.sakura.verification;
 
 import dev.sakura.verification.packet.IRCPacket;
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundLoginResultPacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundHandshakePacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundLoginResultPacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundHandshakePacket;
 import dev.sakura.verification.processor.IRCProtocol;
 import dev.sakura.verification.server.handler.HandlerManager;
 import dev.sakura.verification.server.auth.AuthService;
+import dev.sakura.verification.server.service.AdminService;
 import dev.sakura.verification.server.storage.CardRepository;
 import dev.sakura.verification.server.storage.SqliteDatabase;
 import dev.sakura.verification.server.storage.UserRepository;
@@ -116,6 +117,69 @@ public class VerificationTests {
 
             Assertions.assertTrue(userRepository.deleteCloudConfig(c, "user_test", "Fin2"));
             Assertions.assertFalse(userRepository.cloudConfigExists(c, "user_test", "Fin2"));
+        }
+    }
+
+    @Test
+    public void loginMergesPhoneWhenEmpty() throws Exception {
+        Path dbFile = Files.createTempFile("verify", ".sqlite");
+        SqliteDatabase database = new SqliteDatabase(dbFile);
+        database.initSchema();
+
+        UserRepository userRepository = new UserRepository();
+        CardRepository cardRepository = new CardRepository();
+        AuthService authService = new AuthService(database, userRepository, cardRepository);
+
+        String cardKey;
+        try (Connection c = database.openConnection()) {
+            cardKey = cardRepository.createCard(c, "test", 24L * 60L * 60L * 1000L);
+        }
+        AuthService.AuthResult reg = authService.register("user_test", "pw", "hwid", java.util.Set.of(), "", cardKey);
+        Assertions.assertTrue(reg.success(), reg.message());
+
+        try (Connection c = database.openConnection()) {
+            userRepository.setOnline(c, "user_test", false);
+            UserRepository.UserRow row = userRepository.findByUsername(c, "user_test");
+            Assertions.assertNotNull(row);
+            Assertions.assertTrue(row.phone() == null || row.phone().isBlank());
+        }
+
+        AuthService.AuthResult login = authService.login("user_test", "pw", "hwid", java.util.Set.of(), "18800001111");
+        Assertions.assertTrue(login.success(), login.message());
+
+        try (Connection c = database.openConnection()) {
+            userRepository.setOnline(c, "user_test", false);
+            userRepository.mergeQqAndPhone(c, "user_test", java.util.Set.of(), "18800001111");
+            UserRepository.UserRow row = userRepository.findByUsername(c, "user_test");
+            Assertions.assertNotNull(row);
+            Assertions.assertEquals("18800001111", row.phone());
+        }
+    }
+
+    @Test
+    public void deletingUsedCardDeletesUser() throws Exception {
+        Path dbFile = Files.createTempFile("verify", ".sqlite");
+        SqliteDatabase database = new SqliteDatabase(dbFile);
+        database.initSchema();
+
+        UserRepository userRepository = new UserRepository();
+        CardRepository cardRepository = new CardRepository();
+        AuthService authService = new AuthService(database, userRepository, cardRepository);
+        AdminService adminService = new AdminService(null, database, userRepository, cardRepository);
+
+        String cardKey;
+        try (Connection c = database.openConnection()) {
+            cardKey = cardRepository.createCard(c, "test", 24L * 60L * 60L * 1000L);
+        }
+
+        AuthService.AuthResult reg = authService.register("user_test", "pw", "hwid", java.util.Set.of("123"), "phone", cardKey);
+        Assertions.assertTrue(reg.success(), reg.message());
+
+        boolean deleted = adminService.deleteCard(cardKey);
+        Assertions.assertTrue(deleted);
+
+        try (Connection c = database.openConnection()) {
+            Assertions.assertNull(userRepository.findByUsername(c, "user_test"));
         }
     }
 }

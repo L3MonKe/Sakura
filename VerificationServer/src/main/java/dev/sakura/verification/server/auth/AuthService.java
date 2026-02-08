@@ -98,10 +98,6 @@ public final class AuthService {
                 connection.rollback();
                 return new AuthResult(false, 0, timeWindow, "账号不存在");
             }
-            if (user.banned()) {
-                connection.rollback();
-                return new AuthResult(false, 0, timeWindow, "账号已封禁");
-            }
 
             if (user.expireAt() <= now) {
                 connection.rollback();
@@ -154,10 +150,6 @@ public final class AuthService {
             if (user == null) {
                 connection.rollback();
                 return new AuthResult(false, 0, timeWindow, "账号不存在");
-            }
-            if (user.banned()) {
-                connection.rollback();
-                return new AuthResult(false, 0, timeWindow, "账号已封禁");
             }
 
             CardRepository.CardRow card = cardRepository.findUnused(connection, cardKey);

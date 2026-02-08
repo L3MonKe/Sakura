@@ -1,9 +1,14 @@
 package dev.sakura.client.verify;
 
+import by.radioegor146.nativeobfuscator.Native;
+import dev.sakura.niurendeobf.ZKMIndy;
+
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
+@Native
+@ZKMIndy
 public final class AuthState {
     private static final AtomicBoolean authed = new AtomicBoolean(false);
     private static final AtomicReference<String> currentUser = new AtomicReference<>("");

@@ -1,11 +1,11 @@
 package dev.sakura.verification.server;
 
 import dev.sakura.verification.packet.IRCPacket;
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundDisconnectPacket;
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundMessagePacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundHandshakePacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundLoginPacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundRegisterPacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundHandshakePacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundLoginPacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundRegisterPacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundDisconnectPacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundMessagePacket;
 import dev.sakura.verification.processor.IRCProtocol;
 import dev.sakura.verification.server.auth.AuthService;
 import dev.sakura.verification.server.cli.CommandConsole;

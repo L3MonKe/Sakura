@@ -1,11 +1,13 @@
 package dev.sakura.client.verify.util;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.sakura.niurendeobf.ZKMIndy;
 
 import java.io.File;
 import java.util.HashSet;
 import java.util.Set;
 
+@Native
 @ZKMIndy
 public final class QQUtils {
     private QQUtils() {

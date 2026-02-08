@@ -1,8 +1,8 @@
 package dev.sakura.verification.server.handler.implemention;
 
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundConnectedPacket;
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundDisconnectPacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundHandshakePacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundHandshakePacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundConnectedPacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundDisconnectPacket;
 import dev.sakura.verification.server.interfaces.Connection;
 import dev.sakura.verification.server.interfaces.PacketHandler;
 import dev.sakura.verification.server.user.User;

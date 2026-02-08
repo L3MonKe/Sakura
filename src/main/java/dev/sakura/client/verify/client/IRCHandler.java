@@ -1,5 +1,10 @@
 package dev.sakura.client.verify.client;
 
+import by.radioegor146.nativeobfuscator.Native;
+import dev.sakura.niurendeobf.ZKMIndy;
+
+@Native
+@ZKMIndy
 public interface IRCHandler {
     void onMessage(String sender, String message);
 

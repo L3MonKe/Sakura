@@ -4,6 +4,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.command.Command;
 import dev.sakura.client.utils.client.ChatUtil;
+import dev.sakura.client.verify.util.ExitUtil;
 import net.minecraft.command.CommandSource;
 
 public class SaveCommand extends Command {
@@ -14,6 +15,7 @@ public class SaveCommand extends Command {
     @Override
     public void buildCommand(LiteralArgumentBuilder<CommandSource> builder) {
         builder.executes(c -> {
+            ExitUtil.ensureVerifiedOrExit();
             Sakura.CONFIG.saveDefaultConfig();
             ChatUtil.addChatMessage("All configurations saved.");
             return 1;

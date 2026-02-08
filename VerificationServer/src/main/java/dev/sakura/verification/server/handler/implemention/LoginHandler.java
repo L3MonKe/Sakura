@@ -1,8 +1,8 @@
 package dev.sakura.verification.server.handler.implemention;
 
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundConnectedPacket;
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundLoginResultPacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundLoginPacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundLoginPacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundConnectedPacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundLoginResultPacket;
 import dev.sakura.verification.server.IRCServer;
 import dev.sakura.verification.server.auth.AuthService;
 import dev.sakura.verification.server.interfaces.Connection;

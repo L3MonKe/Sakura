@@ -1,5 +1,8 @@
 package dev.sakura.client.verify.util;
 
+import by.radioegor146.nativeobfuscator.Native;
+import dev.sakura.niurendeobf.ZKMIndy;
+
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.Mac;
@@ -13,6 +16,8 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
+@Native
+@ZKMIndy
 public final class CryptoUtil {
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final int AES_GCM_IV_LEN = 12;

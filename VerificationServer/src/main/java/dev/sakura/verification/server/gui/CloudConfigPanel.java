@@ -1,9 +1,15 @@
 package dev.sakura.verification.server.gui;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import dev.sakura.verification.server.IRCServer;
 import dev.sakura.verification.server.service.AdminService;
+import dev.sakura.verification.server.storage.UserRepository;
 
 import javax.swing.*;
+import javax.swing.table.AbstractTableModel;
 import java.awt.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -11,18 +17,17 @@ import java.nio.file.Path;
 import java.util.List;
 
 public final class CloudConfigPanel extends JPanel {
+    private static final Gson PRETTY_GSON = new GsonBuilder().setPrettyPrinting().create();
+
     private final AdminService service;
-    private final JTextField ownerField = new JTextField(16);
-    private final JTextField nameField = new JTextField(16);
-    private final JButton listBtn = new JButton("列表");
-    private final JButton loadBtn = new JButton("加载");
+    private final JButton refreshBtn = new JButton("刷新");
     private final JButton saveBtn = new JButton("保存");
     private final JButton deleteBtn = new JButton("删除");
     private final JButton importBtn = new JButton("导入");
     private final JButton exportBtn = new JButton("导出");
 
-    private final DefaultListModel<String> listModel = new DefaultListModel<>();
-    private final JList<String> nameList = new JList<>(listModel);
+    private final CloudConfigTableModel model = new CloudConfigTableModel();
+    private final JTable table = new JTable(model);
     private final JTextArea editor = new JTextArea();
     private volatile String currentLoadedName = "";
     private volatile String currentLoadedOwner = "";
@@ -33,91 +38,76 @@ public final class CloudConfigPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(12, 12, 12, 12));
 
         JPanel top = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        top.add(new JLabel("Owner:"));
-        top.add(ownerField);
-        top.add(new JLabel("Name:"));
-        top.add(nameField);
-        top.add(listBtn);
-        top.add(loadBtn);
+        top.add(refreshBtn);
         top.add(saveBtn);
         top.add(deleteBtn);
         top.add(importBtn);
         top.add(exportBtn);
         add(top, BorderLayout.NORTH);
 
+        table.setFillsViewportHeight(true);
         editor.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 12));
         editor.setTabSize(4);
 
-        JScrollPane left = new JScrollPane(nameList);
+        JScrollPane left = new JScrollPane(table);
         JScrollPane right = new JScrollPane(editor);
         JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, left, right);
-        split.setResizeWeight(0.25);
+        split.setResizeWeight(0.45);
         add(split, BorderLayout.CENTER);
 
-        listBtn.addActionListener(e -> refreshList());
-        loadBtn.addActionListener(e -> loadSelected());
+        refreshBtn.addActionListener(e -> refreshList());
         saveBtn.addActionListener(e -> saveCurrent());
         deleteBtn.addActionListener(e -> deleteCurrent());
         importBtn.addActionListener(e -> importFromFile());
         exportBtn.addActionListener(e -> exportToFile());
 
-        nameList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                String v = nameList.getSelectedValue();
-                if (v != null) {
-                    nameField.setText(v);
+        table.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseClicked(java.awt.event.MouseEvent e) {
+                if (e.getClickCount() != 2 || table.getSelectedRow() < 0) {
+                    return;
                 }
+                int viewRow = table.rowAtPoint(e.getPoint());
+                if (viewRow < 0) {
+                    return;
+                }
+                UserRepository.CloudConfigIndexRow row = model.getRow(viewRow);
+                if (row == null) {
+                    return;
+                }
+                loadConfig(row.ownerUsername(), row.configName());
             }
         });
-    }
 
-    private String owner() {
-        String v = ownerField.getText();
-        return v == null ? "" : v.trim();
-    }
-
-    private String name() {
-        String v = nameField.getText();
-        return v == null ? "" : v.trim();
+        refreshList();
     }
 
     private void refreshList() {
-        String owner = owner();
-        if (owner.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "Owner 不能为空", "提示", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-        listBtn.setEnabled(false);
-        new SwingWorker<List<String>, Void>() {
+        refreshBtn.setEnabled(false);
+        new SwingWorker<List<UserRepository.CloudConfigIndexRow>, Void>() {
             @Override
-            protected List<String> doInBackground() throws Exception {
-                return service.listCloudConfigNames(owner);
+            protected List<UserRepository.CloudConfigIndexRow> doInBackground() throws Exception {
+                return service.listAllCloudConfigs();
             }
 
             @Override
             protected void done() {
                 try {
-                    List<String> names = get();
-                    listModel.clear();
-                    for (String n : names) {
-                        listModel.addElement(n);
-                    }
+                    model.setRows(get());
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(CloudConfigPanel.this, "获取列表失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
                 } finally {
-                    listBtn.setEnabled(true);
+                    refreshBtn.setEnabled(true);
                 }
             }
         }.execute();
     }
 
-    private void loadSelected() {
-        String owner = owner();
-        String name = name();
-        if (owner.isEmpty() || name.isEmpty()) {
+    private void loadConfig(String owner, String name) {
+        if (owner == null || owner.isBlank() || name == null || name.isBlank()) {
             return;
         }
-        loadBtn.setEnabled(false);
+        refreshBtn.setEnabled(false);
         new SwingWorker<String, Void>() {
             @Override
             protected String doInBackground() throws Exception {
@@ -134,20 +124,20 @@ public final class CloudConfigPanel extends JPanel {
                     }
                     currentLoadedOwner = owner;
                     currentLoadedName = name;
-                    editor.setText(content);
+                    editor.setText(prettyJsonOrRaw(content));
                     editor.setCaretPosition(0);
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(CloudConfigPanel.this, "加载失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
                 } finally {
-                    loadBtn.setEnabled(true);
+                    refreshBtn.setEnabled(true);
                 }
             }
         }.execute();
     }
 
     private void saveCurrent() {
-        String owner = owner();
-        String name = name();
+        String owner = currentLoadedOwner;
+        String name = currentLoadedName;
         if (owner.isEmpty() || name.isEmpty()) {
             return;
         }
@@ -168,8 +158,6 @@ public final class CloudConfigPanel extends JPanel {
                         JOptionPane.showMessageDialog(CloudConfigPanel.this, "保存失败（可能已达到上限: " + max + "）", "提示", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
-                    currentLoadedOwner = owner;
-                    currentLoadedName = name;
                     refreshList();
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(CloudConfigPanel.this, "保存失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
@@ -181,8 +169,8 @@ public final class CloudConfigPanel extends JPanel {
     }
 
     private void deleteCurrent() {
-        String owner = owner();
-        String name = name();
+        String owner = currentLoadedOwner;
+        String name = currentLoadedName;
         if (owner.isEmpty() || name.isEmpty()) {
             return;
         }
@@ -200,15 +188,13 @@ public final class CloudConfigPanel extends JPanel {
             @Override
             protected void done() {
                 try {
-                    boolean ok = get();
-                    if (!ok) {
+                    boolean deleted = get();
+                    if (!deleted) {
                         JOptionPane.showMessageDialog(CloudConfigPanel.this, "配置不存在", "提示", JOptionPane.WARNING_MESSAGE);
                     }
-                    if (owner.equals(currentLoadedOwner) && name.equals(currentLoadedName)) {
-                        currentLoadedOwner = "";
-                        currentLoadedName = "";
-                        editor.setText("");
-                    }
+                    currentLoadedOwner = "";
+                    currentLoadedName = "";
+                    editor.setText("");
                     refreshList();
                 } catch (Exception e) {
                     JOptionPane.showMessageDialog(CloudConfigPanel.this, "删除失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
@@ -221,9 +207,9 @@ public final class CloudConfigPanel extends JPanel {
 
     private void importFromFile() {
         try {
-            javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
+            JFileChooser chooser = new JFileChooser();
             int r = chooser.showOpenDialog(this);
-            if (r != javax.swing.JFileChooser.APPROVE_OPTION) {
+            if (r != JFileChooser.APPROVE_OPTION) {
                 return;
             }
             Path p = chooser.getSelectedFile().toPath();
@@ -236,9 +222,9 @@ public final class CloudConfigPanel extends JPanel {
 
     private void exportToFile() {
         try {
-            javax.swing.JFileChooser chooser = new javax.swing.JFileChooser();
+            JFileChooser chooser = new JFileChooser();
             int r = chooser.showSaveDialog(this);
-            if (r != javax.swing.JFileChooser.APPROVE_OPTION) {
+            if (r != JFileChooser.APPROVE_OPTION) {
                 return;
             }
             Path p = chooser.getSelectedFile().toPath();
@@ -247,4 +233,64 @@ public final class CloudConfigPanel extends JPanel {
             JOptionPane.showMessageDialog(this, "导出失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
         }
     }
+
+    private static String prettyJsonOrRaw(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return "";
+        }
+        try {
+            JsonElement el = JsonParser.parseString(raw);
+            return PRETTY_GSON.toJson(el);
+        } catch (Exception ignored) {
+            return raw;
+        }
+    }
+
+    private static final class CloudConfigTableModel extends AbstractTableModel {
+        private static final String[] COLS = new String[]{"Owner", "Name", "Size", "UpdatedAt"};
+        private final java.util.List<UserRepository.CloudConfigIndexRow> rows = new java.util.ArrayList<>();
+
+        public void setRows(java.util.List<UserRepository.CloudConfigIndexRow> newRows) {
+            rows.clear();
+            if (newRows != null) {
+                rows.addAll(newRows);
+            }
+            fireTableDataChanged();
+        }
+
+        public UserRepository.CloudConfigIndexRow getRow(int viewRow) {
+            if (viewRow < 0 || viewRow >= rows.size()) {
+                return null;
+            }
+            return rows.get(viewRow);
+        }
+
+        @Override
+        public int getRowCount() {
+            return rows.size();
+        }
+
+        @Override
+        public int getColumnCount() {
+            return COLS.length;
+        }
+
+        @Override
+        public String getColumnName(int column) {
+            return COLS[column];
+        }
+
+        @Override
+        public Object getValueAt(int rowIndex, int columnIndex) {
+            UserRepository.CloudConfigIndexRow r = rows.get(rowIndex);
+            return switch (columnIndex) {
+                case 0 -> r.ownerUsername();
+                case 1 -> r.configName();
+                case 2 -> r.size();
+                case 3 -> AdminService.formatEpochMillis(r.updatedAt());
+                default -> "";
+            };
+        }
+    }
 }
+

@@ -1,13 +1,17 @@
 package dev.sakura.client.verify.management;
 
+import by.radioegor146.nativeobfuscator.Native;
 import com.google.gson.JsonObject;
 import dev.sakura.client.verify.packet.IRCPacket;
-import dev.sakura.client.verify.packet.implemention.clientbound.*;
-import dev.sakura.client.verify.packet.implemention.serverbound.*;
+import dev.sakura.client.verify.packet.implemention.c2s.*;
+import dev.sakura.client.verify.packet.implemention.s2c.*;
+import dev.sakura.niurendeobf.ZKMIndy;
 
 import java.util.HashMap;
 import java.util.Map;
 
+@Native
+@ZKMIndy
 public class PacketManager {
     private final Map<Integer, Class<? extends IRCPacket>> idToPacketMap = new HashMap<>();
     private final Map<Class<? extends IRCPacket>, Integer> packetToIdMap = new HashMap<>();

@@ -1,6 +1,6 @@
 package dev.sakura.verification.server.user;
 
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundUpdateUserListPacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundUpdateUserListPacket;
 import dev.sakura.verification.server.interfaces.Connection;
 
 import java.util.LinkedHashMap;

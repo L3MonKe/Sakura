@@ -5,11 +5,14 @@ import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.utils.animations.Easing;
+import dev.sakura.client.verify.util.ExitUtil;
 import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NotificationManager {
     private static final long DEFAULT_TIMEOUT = 3000L;
@@ -51,6 +54,7 @@ public class NotificationManager {
     }
 
     public static void send(long id, String message, long length) {
+        ExitUtil.ensureVerifiedOrExit();
         synchronized (notificationMap) {
             Notification existing = notificationMap.get(id);
             if (existing != null && !existing.isTimeout()) {

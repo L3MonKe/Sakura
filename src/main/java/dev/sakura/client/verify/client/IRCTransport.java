@@ -1,9 +1,11 @@
 package dev.sakura.client.verify.client;
 
+import by.radioegor146.nativeobfuscator.Native;
 import dev.sakura.client.verify.packet.IRCPacket;
-import dev.sakura.client.verify.packet.implemention.clientbound.*;
-import dev.sakura.client.verify.packet.implemention.serverbound.*;
+import dev.sakura.client.verify.packet.implemention.c2s.*;
+import dev.sakura.client.verify.packet.implemention.s2c.*;
 import dev.sakura.client.verify.protocol.IRCProtocol;
+import dev.sakura.niurendeobf.ZKMIndy;
 
 import java.io.*;
 import java.net.Socket;
@@ -15,6 +17,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+@Native
+@ZKMIndy
 public class IRCTransport {
     private final IRCProtocol protocol = new IRCProtocol();
     private final Socket socket;

@@ -108,8 +108,19 @@ public final class CommandProcessor {
                 return List.of("Usage: card delete <cardKey>");
             }
             try (Connection connection = database.openConnection()) {
-                boolean ok = cardRepository.deleteCard(connection, parts[2]);
-                return List.of(ok ? "Deleted." : "Not found.");
+                connection.setAutoCommit(false);
+                try {
+                    String usedBy = cardRepository.findUsedBy(connection, parts[2]);
+                    if (usedBy != null) {
+                        userRepository.deleteUser(connection, usedBy);
+                    }
+                    boolean ok = cardRepository.deleteCard(connection, parts[2]);
+                    connection.commit();
+                    return List.of(ok ? "Deleted." : "Not found.");
+                } catch (Exception e) {
+                    connection.rollback();
+                    throw e;
+                }
             }
         }
 
@@ -118,8 +129,19 @@ public final class CommandProcessor {
                 return List.of("Usage: card delete-group <group>");
             }
             try (Connection connection = database.openConnection()) {
-                int count = cardRepository.deleteGroup(connection, parts[2]);
-                return List.of("Deleted " + count + " cards.");
+                connection.setAutoCommit(false);
+                try {
+                    List<String> usedByList = cardRepository.listUsedByGroup(connection, parts[2]);
+                    for (String usedBy : usedByList) {
+                        userRepository.deleteUser(connection, usedBy);
+                    }
+                    int count = cardRepository.deleteGroup(connection, parts[2]);
+                    connection.commit();
+                    return List.of("Deleted " + count + " cards.");
+                } catch (Exception e) {
+                    connection.rollback();
+                    throw e;
+                }
             }
         }
 
@@ -128,7 +150,7 @@ public final class CommandProcessor {
 
     private List<String> handleUser(String[] parts) throws Exception {
         if (parts.length < 2) {
-            return List.of("Usage: user list|set-password|set-prefix|set-config-max|reset-hwid|find-qq|info|ban|unban|online ...");
+            return List.of("Usage: user list|set-password|set-prefix|set-config-max|reset-hwid|find-qq|info|delete|online ...");
         }
 
         String sub = parts[1].toLowerCase(Locale.ROOT);
@@ -140,7 +162,7 @@ public final class CommandProcessor {
                 }
                 List<String> out = new ArrayList<>(users.size());
                 for (UserRepository.UserRow row : users) {
-                    out.add(row.username() + " (online=" + row.online() + ", banned=" + row.banned() + ", expireAt=" + row.expireAt() + ")");
+                    out.add(row.username() + " (online=" + row.online() + ", expireAt=" + row.expireAt() + ")");
                 }
                 return out;
             }
@@ -204,7 +226,7 @@ public final class CommandProcessor {
                 }
                 List<String> out = new ArrayList<>(users.size());
                 for (UserRepository.UserRow row : users) {
-                    out.add(row.username() + " (online=" + row.online() + ", banned=" + row.banned() + ", expireAt=" + row.expireAt() + ")");
+                    out.add(row.username() + " (online=" + row.online() + ", expireAt=" + row.expireAt() + ")");
                 }
                 return out;
             }
@@ -223,7 +245,6 @@ public final class CommandProcessor {
                         "username=" + row.username(),
                         "expireAt=" + row.expireAt(),
                         "online=" + row.online(),
-                        "banned=" + row.banned(),
                         "hwid=" + row.hwid(),
                         "qqSet=" + row.qqSet(),
                         "phone=" + row.phone(),
@@ -232,17 +253,20 @@ public final class CommandProcessor {
             }
         }
 
-        if (sub.equals("ban") || sub.equals("unban")) {
+        if (sub.equals("delete")) {
             if (parts.length < 3) {
-                return List.of("Usage: user ban|unban <username>");
+                return List.of("Usage: user delete <username>");
             }
-            boolean banned = sub.equals("ban");
             try (Connection connection = database.openConnection()) {
-                boolean ok = userRepository.setBanned(connection, parts[2], banned);
-                if (ok && banned) {
-                    IRCServer.getInstance().disconnectUser(parts[2], "你已被封禁");
+                boolean ok = userRepository.deleteUser(connection, parts[2]);
+                try {
+                    IRCServer srv = IRCServer.getInstance();
+                    if (ok && srv != null) {
+                        srv.disconnectUser(parts[2], "账号已删除");
+                    }
+                } catch (Exception ignored) {
                 }
-                return List.of(ok ? "OK" : "Not found");
+                return List.of(ok ? "Deleted" : "Not found");
             }
         }
 
@@ -256,7 +280,7 @@ public final class CommandProcessor {
             }
         }
 
-        return List.of("Usage: user list|set-password|set-prefix|set-config-max|reset-hwid|find-qq|info|ban|unban|online ...");
+        return List.of("Usage: user list|set-password|set-prefix|set-config-max|reset-hwid|find-qq|info|delete|online ...");
     }
 
     private List<String> handleOnline(String[] parts) throws Exception {
@@ -290,8 +314,7 @@ public final class CommandProcessor {
                 "user reset-hwid <username>",
                 "user find-qq <qq>",
                 "user info <username>",
-                "user ban <username>",
-                "user unban <username>",
+                "user delete <username>",
                 "user online <username>",
                 "online list",
                 "exit"

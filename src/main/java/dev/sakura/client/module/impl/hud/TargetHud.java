@@ -292,6 +292,8 @@ public class TargetHud extends HudModule {
 
         // Render Background and Main Elements via NanoVG
         final LivingEntity renderTarget = target;
+        if (renderTarget == null) return;
+
         final float finalHealth = displayHealth; // Use smooth health
         final float finalMaxHealth = maxHealth;
         final float damageFactor = damageAnim.getOutput().floatValue();

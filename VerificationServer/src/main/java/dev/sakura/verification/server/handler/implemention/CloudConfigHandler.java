@@ -1,7 +1,7 @@
 package dev.sakura.verification.server.handler.implemention;
 
-import dev.sakura.verification.packet.implemention.clientbound.ClientBoundCloudConfigPacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundCloudConfigPacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundCloudConfigPacket;
+import dev.sakura.verification.packet.implemention.s2c.ClientBoundCloudConfigPacket;
 import dev.sakura.verification.server.IRCServer;
 import dev.sakura.verification.server.interfaces.Connection;
 import dev.sakura.verification.server.interfaces.PacketHandler;

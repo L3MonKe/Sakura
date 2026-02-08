@@ -1,16 +1,20 @@
 package dev.sakura.client.verify.protocol;
 
+import by.radioegor146.nativeobfuscator.Native;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import dev.sakura.client.verify.management.PacketManager;
 import dev.sakura.client.verify.packet.IRCPacket;
 import dev.sakura.client.verify.util.CryptoUtil;
+import dev.sakura.niurendeobf.ZKMIndy;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
+@Native
+@ZKMIndy
 public class IRCProtocol {
     private static final byte[] ENC_MAGIC = new byte[]{'E', 'N', 'C', 1};
     private static final int MAX_FRAME_LENGTH = 8 * 1024 * 1024;

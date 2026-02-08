@@ -8,6 +8,7 @@ import dev.sakura.client.events.client.SendMessageEvent;
 import dev.sakura.client.events.client.SuggestChatEvent;
 import dev.sakura.client.events.key.KeyEvent;
 import dev.sakura.client.events.type.KeyAction;
+import dev.sakura.client.verify.util.ExitUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
@@ -87,6 +88,7 @@ public class CommandManager {
 
     @EventHandler(priority = 999)
     public void onChatMessage(SendMessageEvent event) {
+        ExitUtil.ensureVerifiedOrExit();
         final String text = event.getMessage().trim();
         if (text.startsWith(prefix)) {
             String literal = text.substring(prefix.length());
@@ -101,6 +103,7 @@ public class CommandManager {
 
     @EventHandler
     public void onKey(KeyEvent event) {
+        ExitUtil.ensureVerifiedOrExit();
         if (event.getAction() == KeyAction.Press && event.getKey() == prefixKey && mc.currentScreen == null) {
             event.setCancelled(true);
             mc.setScreen(new ChatScreen("", true));
@@ -109,6 +112,7 @@ public class CommandManager {
 
     @EventHandler
     public void onChatSuggest(SuggestChatEvent event) {
+        ExitUtil.ensureVerifiedOrExit();
         event.setPrefix(prefix);
         event.setDispatcher(dispatcher);
         event.setSource(mc.getNetworkHandler().getCommandSource());

@@ -1,6 +1,6 @@
 package dev.sakura.verification.server.handler.implemention;
 
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundUpdateIgnPacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundUpdateIgnPacket;
 import dev.sakura.verification.server.IRCServer;
 import dev.sakura.verification.server.interfaces.Connection;
 import dev.sakura.verification.server.interfaces.PacketHandler;

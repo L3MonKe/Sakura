@@ -1,7 +1,7 @@
 package dev.sakura.verification;
 
 import dev.sakura.verification.packet.IRCPacket;
-import dev.sakura.verification.packet.implemention.serverbound.ServerBoundCloudConfigPacket;
+import dev.sakura.verification.packet.implemention.c2s.ServerBoundCloudConfigPacket;
 import dev.sakura.verification.processor.IRCProtocol;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,6 @@ import java.io.DataOutputStream;
 import java.lang.reflect.Method;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;

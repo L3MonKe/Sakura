@@ -54,6 +54,12 @@ public final class AdminService {
         }
     }
 
+    public List<UserRepository.CloudConfigIndexRow> listAllCloudConfigs() throws Exception {
+        try (java.sql.Connection c = database.openConnection()) {
+            return userRepository.listAllCloudConfigs(c);
+        }
+    }
+
     public boolean setPassword(String username, String newPassword) {
         return server.getAuthService().changePassword(username, newPassword);
     }
@@ -80,22 +86,29 @@ public final class AdminService {
         }
     }
 
-    public boolean setBanned(String username, boolean banned) throws Exception {
+    public boolean deleteUser(String username) throws Exception {
+        if (username == null || username.isBlank()) {
+            return false;
+        }
+        if (server != null) {
+            server.disconnectUser(username, "账号已删除");
+        }
         try (java.sql.Connection c = database.openConnection()) {
-            boolean ok = userRepository.setBanned(c, username, banned);
-            if (ok && banned) {
-                server.disconnectUser(username, "你已被封禁");
-            }
-            return ok;
+            return userRepository.deleteUser(c, username);
         }
     }
 
     public boolean setOnline(String username, boolean online) {
+        if (server == null) {
+            return false;
+        }
         return server.getAuthService().setUserOnline(username, online);
     }
 
     public void disconnectUser(String username, String reason) {
-        server.disconnectUser(username, reason);
+        if (server != null) {
+            server.disconnectUser(username, reason);
+        }
     }
 
     public String createCard(String group, long durationMs) throws Exception {
@@ -123,13 +136,43 @@ public final class AdminService {
 
     public boolean deleteCard(String cardKey) throws Exception {
         try (java.sql.Connection c = database.openConnection()) {
-            return cardRepository.deleteCard(c, cardKey);
+            c.setAutoCommit(false);
+            try {
+                String usedBy = cardRepository.findUsedBy(c, cardKey);
+                if (usedBy != null) {
+                    if (server != null) {
+                        server.disconnectUser(usedBy, "账号已删除（卡密已删除）");
+                    }
+                    userRepository.deleteUser(c, usedBy);
+                }
+                boolean ok = cardRepository.deleteCard(c, cardKey);
+                c.commit();
+                return ok;
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
         }
     }
 
     public int deleteCardGroup(String group) throws Exception {
         try (java.sql.Connection c = database.openConnection()) {
-            return cardRepository.deleteGroup(c, group);
+            c.setAutoCommit(false);
+            try {
+                List<String> usedByList = cardRepository.listUsedByGroup(c, group);
+                for (String usedBy : usedByList) {
+                    if (server != null) {
+                        server.disconnectUser(usedBy, "账号已删除（卡密组已删除）");
+                    }
+                    userRepository.deleteUser(c, usedBy);
+                }
+                int count = cardRepository.deleteGroup(c, group);
+                c.commit();
+                return count;
+            } catch (Exception e) {
+                c.rollback();
+                throw e;
+            }
         }
     }
 

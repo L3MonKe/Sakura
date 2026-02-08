@@ -8,6 +8,7 @@ import dev.sakura.client.utils.animations.Animation;
 import dev.sakura.client.utils.animations.Direction;
 import dev.sakura.client.utils.animations.impl.DecelerateAnimation;
 import dev.sakura.client.verify.util.AuthUtil;
+import dev.sakura.niurendeobf.ZKMIndy;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
@@ -20,6 +21,7 @@ import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 
+@ZKMIndy
 public class AuthScreen extends Screen {
     private final Screen parent;
 

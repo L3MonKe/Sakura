@@ -7,8 +7,9 @@ import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.verify.AuthState;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.client.IRCTransport;
-import dev.sakura.client.verify.packet.implemention.serverbound.ServerBoundCloudConfigPacket;
+import dev.sakura.client.verify.packet.implemention.c2s.ServerBoundCloudConfigPacket;
 import dev.sakura.client.verify.protocol.IRCProtocol;
+import dev.sakura.client.verify.util.ExitUtil;
 import net.minecraft.command.CommandSource;
 
 import static com.mojang.brigadier.arguments.StringArgumentType.getString;
@@ -166,6 +167,7 @@ public final class ConfigCommand extends Command {
             ChatUtil.addChatMessage("§c请先完成验证登录/注册，再使用云配置。");
             return null;
         }
+        ExitUtil.ensureVerifiedOrExit();
         IRCTransport t = VerificationClient.getTransport();
         if (t == null) {
             try {
