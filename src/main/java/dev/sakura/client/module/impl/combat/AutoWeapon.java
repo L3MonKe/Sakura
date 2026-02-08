@@ -106,8 +106,8 @@ public class AutoWeapon extends Module {
         if (backTimer.passedMillise(swapBackDelay.get())) {
             InvUtil.swapBack();
             backTimer.reset();
+            awaitingBack = false;
         }
-        awaitingBack = false;
     }
 
     private boolean canSwapByWeapon() {
