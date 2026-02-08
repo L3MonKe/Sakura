@@ -18,15 +18,15 @@ public class PacketManager {
     private int id;
 
     public PacketManager() {
-        register(ClientBoundDisconnectPacket.class, ClientBoundConnectedPacket.class, ClientBoundUpdateUserListPacket.class, ClientBoundMessagePacket.class);
+        register(DisconnectS2C.class, ConnectedS2C.class, UpdateUserListS2C.class, MessageS2C.class);
 
-        register(ServerBoundHandshakePacket.class, ServerBoundUpdateIgnPacket.class, ServerBoundMessagePacket.class);
+        register(HandshakeC2S.class, UpdateIgnC2S.class, MessageC2S.class);
 
-        register(ClientBoundLoginResultPacket.class, ClientBoundRegisterResultPacket.class, ClientBoundRechargeResultPacket.class);
-        register(ServerBoundLoginPacket.class, ServerBoundRegisterPacket.class, ServerBoundRechargePacket.class);
+        register(LoginResultS2C.class, RegisterResultS2C.class, RechargeResultS2C.class);
+        register(LoginC2S.class, RegisterC2S.class, RechargeC2S.class);
 
-        register(ClientBoundCloudConfigPacket.class);
-        register(ServerBoundCloudConfigPacket.class);
+        register(CloudConfigS2C.class);
+        register(CloudConfigC2S.class);
     }
 
     @SafeVarargs

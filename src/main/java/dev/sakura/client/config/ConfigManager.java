@@ -28,7 +28,6 @@ public final class ConfigManager {
     private static final Path CONFIG_FILE = CONFIG_DIR.resolve("config.json");
     private static final Path LEGACY_MODULES_DIR = CONFIG_DIR.resolve("modules");
     private static final Path LEGACY_CLICKGUI_FILE = CONFIG_DIR.resolve("clickgui.json");
-    private static final Path PREFIX_FILE = CONFIG_DIR.resolve("prefix.json");
 
     private final CloudConfigService cloud = new CloudConfigService();
 
@@ -107,14 +106,13 @@ public final class ConfigManager {
     public void savePrefix(String prefix) {
         String p = prefix == null || prefix.isEmpty() ? "." : prefix;
         current.prefix = p;
-        writePrefixFile(p);
         saveLocal();
     }
 
     public String loadPrefix() {
-        String fromFile = readPrefixFile();
-        if (fromFile != null && !fromFile.isBlank()) {
-            return fromFile;
+        String v = current == null ? null : current.prefix;
+        if (v != null && !v.isBlank()) {
+            return v;
         }
         try {
             if (Files.exists(CONFIG_FILE)) {
@@ -151,7 +149,7 @@ public final class ConfigManager {
 
         loadLegacyModules();
         loadLegacyClickGui();
-        current.prefix = loadPrefix();
+        current.prefix = migrateLegacyPrefix();
         saveLocal();
     }
 
@@ -166,7 +164,6 @@ public final class ConfigManager {
             } catch (Exception ignored) {
                 Files.move(tmp, CONFIG_FILE, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             }
-            writePrefixFile(current.prefix);
         } catch (Exception e) {
             Sakura.LOGGER.error("Failed to save config: {}", e.getMessage());
         }
@@ -174,9 +171,6 @@ public final class ConfigManager {
 
     private void apply(ClientConfig cfg) {
         current = cfg;
-        if (cfg.prefix != null && !cfg.prefix.isBlank()) {
-            writePrefixFile(cfg.prefix);
-        }
 
         for (var entry : cfg.modules.entrySet()) {
             String moduleName = entry.getKey();
@@ -245,7 +239,8 @@ public final class ConfigManager {
     private void updateFromRuntime() {
         ClientConfig cfg = new ClientConfig();
         cfg.version = 1;
-        cfg.prefix = loadPrefix();
+        String prefixValue = current == null ? null : current.prefix;
+        cfg.prefix = prefixValue == null || prefixValue.isBlank() ? "." : prefixValue;
 
         for (Module module : Sakura.MODULES.getAllModules()) {
             ClientConfig.ModuleData data = new ClientConfig.ModuleData();
@@ -268,12 +263,12 @@ public final class ConfigManager {
 
         if (Sakura.CLICKGUI != null) {
             for (CategoryPanel panel : Sakura.CLICKGUI.getPanels()) {
-                ClientConfig.Panel p = new ClientConfig.Panel();
-                p.category = panel.getCategory().name();
-                p.x = panel.getX();
-                p.y = panel.getY();
-                p.opened = panel.isOpened();
-                cfg.gui.panels.add(p);
+                ClientConfig.Panel panelConfig = new ClientConfig.Panel();
+                panelConfig.category = panel.getCategory().name();
+                panelConfig.x = panel.getX();
+                panelConfig.y = panel.getY();
+                panelConfig.opened = panel.isOpened();
+                cfg.gui.panels.add(panelConfig);
             }
         }
 
@@ -461,28 +456,24 @@ public final class ConfigManager {
         }
     }
 
-    private static void writePrefixFile(String prefix) {
+    private static String migrateLegacyPrefix() {
+        Path prefixFile = CONFIG_DIR.resolve("prefix.json");
         try {
-            Files.createDirectories(CONFIG_DIR);
-            JsonObject o = new JsonObject();
-            o.addProperty("prefix", prefix == null || prefix.isEmpty() ? "." : prefix);
-            Files.writeString(PREFIX_FILE, GSON.toJson(o), StandardCharsets.UTF_8);
-        } catch (Exception e) {
-            Sakura.LOGGER.error("Failed to save prefix: {}", e.getMessage());
-        }
-    }
-
-    private static String readPrefixFile() {
-        try {
-            if (!Files.exists(PREFIX_FILE)) {
-                return null;
+            if (!Files.exists(prefixFile)) {
+                return ".";
             }
-            JsonObject o = JsonParser.parseString(Files.readString(PREFIX_FILE, StandardCharsets.UTF_8)).getAsJsonObject();
+            JsonObject o = JsonParser.parseString(Files.readString(prefixFile, StandardCharsets.UTF_8)).getAsJsonObject();
             if (o.has("prefix")) {
-                return o.get("prefix").getAsString();
+                String p = o.get("prefix").getAsString();
+                Files.deleteIfExists(prefixFile);
+                return p == null || p.isBlank() ? "." : p;
             }
         } catch (Exception ignored) {
         }
-        return null;
+        try {
+            Files.deleteIfExists(prefixFile);
+        } catch (Exception ignored) {
+        }
+        return ".";
     }
 }

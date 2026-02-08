@@ -3,29 +3,41 @@ package dev.sakura.client.mixin.network;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.events.packet.PacketEvent;
 import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.utils.player.PacketUtil;
+import io.netty.channel.ChannelFutureListener;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.OffThreadException;
 import net.minecraft.network.listener.PacketListener;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.BundleS2CPacket;
+import org.jspecify.annotations.Nullable;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ClientConnection.class)
-public class MixinClientConnection {
+public abstract class MixinClientConnection {
     @Shadow
     private static <T extends PacketListener> void handlePacket(Packet<T> packet, PacketListener listener) {
     }
 
-    @Inject(method = "send(Lnet/minecraft/network/packet/Packet;)V", at = @At("HEAD"), cancellable = true)
-    private void sendPacketEvent(Packet<?> packet, final CallbackInfo callbackInfo) {
-        final PacketEvent event = new PacketEvent(EventType.SEND, packet);
-        Sakura.EVENT_BUS.post(event);
-        if (event.isCancelled()) {
-            callbackInfo.cancel();
+    @Shadow
+    protected abstract void sendImmediately(Packet<?> packet, @Nullable ChannelFutureListener listener, boolean flush);
+
+    @Redirect(method = {"send(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/network/ClientConnection;sendImmediately(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V"))
+    private void onSend(ClientConnection instance, Packet<?> packet, ChannelFutureListener listener, boolean flush) {
+        if (PacketUtil.passthroughsPackets.contains(packet)) {
+            PacketUtil.passthroughsPackets.remove(packet);
+            this.sendImmediately(packet, listener, flush);
+        } else {
+            PacketEvent event = new PacketEvent(EventType.SEND, packet);
+            Sakura.EVENT_BUS.post(event);
+            if (!event.isCancelled()) {
+                this.sendImmediately(event.getPacket(), listener, flush);
+            }
         }
     }
 

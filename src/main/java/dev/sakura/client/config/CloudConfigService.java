@@ -5,6 +5,9 @@ import dev.sakura.client.verify.AuthState;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.client.IRCHandler;
 import dev.sakura.client.verify.client.IRCTransport;
+import dev.sakura.client.verify.packet.implemention.c2s.CloudConfigC2S;
+import dev.sakura.client.verify.protocol.IRCProtocol;
+import dev.sakura.client.verify.util.AuthUtil;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.List;
@@ -180,6 +183,11 @@ public final class CloudConfigService {
         String n = Objects.requireNonNull(name, "name").trim();
         CompletableFuture<UploadResult> f = new CompletableFuture<>();
         putPending("upload", f);
+        if (!ensurePayloadSizeOk(n, content == null ? "" : content)) {
+            pending.remove("upload");
+            f.complete(new UploadResult(false, "配置内容过大", 0));
+            return f;
+        }
         t.uploadCloudConfig(n, content == null ? "" : content);
         scheduleTimeout("upload", f);
         return f;
@@ -202,12 +210,23 @@ public final class CloudConfigService {
     }
 
     private IRCTransport requireTransport() {
+        if (!AuthState.isAuthed() || AuthState.getExpireAt() <= System.currentTimeMillis()) {
+            AuthState.clear();
+            MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c请先完成验证登录/注册，再使用云配置。"));
+            throw new IllegalStateException("Not authed");
+        }
         IRCTransport t = VerificationClient.getTransport();
         if (t == null) {
-            throw new IllegalStateException("Transport is null");
-        }
-        if (!AuthState.isAuthed()) {
-            throw new IllegalStateException("Not authed");
+            try {
+                t = VerificationClient.connect(null);
+            } catch (Exception e) {
+                MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c验证连接建立失败。"));
+                throw new IllegalStateException("Transport is null");
+            }
+            String user = AuthState.getCurrentUser();
+            if (user != null && !user.isBlank()) {
+                t.connect(user, AuthUtil.authed.get());
+            }
         }
         return t;
     }
@@ -242,5 +261,20 @@ public final class CloudConfigService {
 
     private static String key(String action, String owner, String name) {
         return action + "|" + (owner == null ? "" : owner) + "|" + (name == null ? "" : name);
+    }
+
+    private static boolean ensurePayloadSizeOk(String name, String content) {
+        try {
+            CloudConfigC2S packet = new CloudConfigC2S("upload", "", name, content == null ? "" : content);
+            int size = new IRCProtocol().encode(packet).length;
+            if (size > 8 * 1024 * 1024) {
+                MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c配置内容过大，无法上传（" + (size / (1024 * 1024)) + "MB）。"));
+                return false;
+            }
+            return true;
+        } catch (Exception e) {
+            MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c配置编码失败。"));
+            return false;
+        }
     }
 }

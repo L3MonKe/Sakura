@@ -38,7 +38,7 @@ jar {
     archiveFileName = "Sakura-VerificationServer.jar"
     manifest {
         attributes(
-                'Main-Class': 'dev.sakura.verification.server.IRCServer'
+                'Main-Class': 'dev.sakura.server.impl.IRCServer'
         )
     }
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE

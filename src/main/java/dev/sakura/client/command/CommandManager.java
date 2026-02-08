@@ -88,9 +88,9 @@ public class CommandManager {
 
     @EventHandler(priority = 999)
     public void onChatMessage(SendMessageEvent event) {
-        ExitUtil.ensureVerifiedOrExit();
         final String text = event.getMessage().trim();
         if (text.startsWith(prefix)) {
+            ExitUtil.ensureVerifiedOrExit();
             String literal = text.substring(prefix.length());
             event.setCancelled(true);
             mc.inGameHud.getChatHud().addToMessageHistory(text);
@@ -103,8 +103,8 @@ public class CommandManager {
 
     @EventHandler
     public void onKey(KeyEvent event) {
-        ExitUtil.ensureVerifiedOrExit();
         if (event.getAction() == KeyAction.Press && event.getKey() == prefixKey && mc.currentScreen == null) {
+            ExitUtil.ensureVerifiedOrExit();
             event.setCancelled(true);
             mc.setScreen(new ChatScreen("", true));
         }
@@ -112,6 +112,9 @@ public class CommandManager {
 
     @EventHandler
     public void onChatSuggest(SuggestChatEvent event) {
+        if (!(mc.currentScreen instanceof ChatScreen)) {
+            return;
+        }
         ExitUtil.ensureVerifiedOrExit();
         event.setPrefix(prefix);
         event.setDispatcher(dispatcher);

@@ -79,11 +79,11 @@ public class IRCTransport {
     }
 
     private void processPacket(IRCPacket msg) {
-        if (msg instanceof ClientBoundDisconnectPacket p) {
+        if (msg instanceof DisconnectS2C p) {
             notifyDisconnected(p.getReason());
             return;
         }
-        if (msg instanceof ClientBoundConnectedPacket) {
+        if (msg instanceof ConnectedS2C) {
             disconnectedNotified.set(false);
             IRCHandler h = handler;
             if (h != null) {
@@ -92,7 +92,7 @@ public class IRCTransport {
             startScheduler();
             return;
         }
-        if (msg instanceof ClientBoundUpdateUserListPacket p) {
+        if (msg instanceof UpdateUserListS2C p) {
             userToIgnMap.clear();
             Map<String, String> m = p.getUserMap();
             if (m != null) {
@@ -106,35 +106,35 @@ public class IRCTransport {
             });
             return;
         }
-        if (msg instanceof ClientBoundMessagePacket p) {
+        if (msg instanceof MessageS2C p) {
             IRCHandler h = handler;
             if (h != null) {
                 h.onMessage(p.getSender(), p.getMessage());
             }
             return;
         }
-        if (msg instanceof ClientBoundLoginResultPacket p) {
+        if (msg instanceof LoginResultS2C p) {
             IRCHandler h = handler;
             if (h != null) {
                 h.onLoginResult(p.isSuccess(), p.getExpireAt(), p.getTimeWindow(), p.getMessage());
             }
             return;
         }
-        if (msg instanceof ClientBoundRegisterResultPacket p) {
+        if (msg instanceof RegisterResultS2C p) {
             IRCHandler h = handler;
             if (h != null) {
                 h.onRegisterResult(p.isSuccess(), p.getExpireAt(), p.getTimeWindow(), p.getMessage());
             }
             return;
         }
-        if (msg instanceof ClientBoundRechargeResultPacket p) {
+        if (msg instanceof RechargeResultS2C p) {
             IRCHandler h = handler;
             if (h != null) {
                 h.onRechargeResult(p.isSuccess(), p.getExpireAt(), p.getTimeWindow(), p.getMessage());
             }
             return;
         }
-        if (msg instanceof ClientBoundCloudConfigPacket p) {
+        if (msg instanceof CloudConfigS2C p) {
             IRCHandler h = handler;
             if (h == null) {
                 return;
@@ -220,11 +220,11 @@ public class IRCTransport {
     }
 
     public void sendChat(String message) {
-        sendPacket(new ServerBoundMessagePacket(message));
+        sendPacket(new MessageC2S(message));
     }
 
     public void sendInGameUsername(String username) {
-        sendPacket(new ServerBoundUpdateIgnPacket(username));
+        sendPacket(new UpdateIgnC2S(username));
     }
 
     public void sendInGameUsername() {
@@ -235,35 +235,35 @@ public class IRCTransport {
     }
 
     public void connect(String username, String token) {
-        sendPacket(new ServerBoundHandshakePacket(username, token));
+        sendPacket(new HandshakeC2S(username, token));
     }
 
     public void login(String username, String password, String hwid, Set<String> qqSet, String phone) {
-        sendPacket(new ServerBoundLoginPacket(username, password, hwid, qqSet, phone));
+        sendPacket(new LoginC2S(username, password, hwid, qqSet, phone));
     }
 
     public void register(String username, String password, String hwid, Set<String> qqSet, String phone, String cardKey) {
-        sendPacket(new ServerBoundRegisterPacket(username, password, hwid, qqSet, phone, cardKey));
+        sendPacket(new RegisterC2S(username, password, hwid, qqSet, phone, cardKey));
     }
 
     public void recharge(String username, String cardKey) {
-        sendPacket(new ServerBoundRechargePacket(username, cardKey));
+        sendPacket(new RechargeC2S(username, cardKey));
     }
 
     public void uploadCloudConfig(String name, String content) {
-        sendPacket(new ServerBoundCloudConfigPacket("upload", "", name, content));
+        sendPacket(new CloudConfigC2S("upload", "", name, content));
     }
 
     public void getCloudConfig(String name) {
-        sendPacket(new ServerBoundCloudConfigPacket("get", "", name, ""));
+        sendPacket(new CloudConfigC2S("get", "", name, ""));
     }
 
     public void getCloudConfig(String owner, String name) {
-        sendPacket(new ServerBoundCloudConfigPacket("get", owner, name, ""));
+        sendPacket(new CloudConfigC2S("get", owner, name, ""));
     }
 
     public void listCloudConfigs() {
-        sendPacket(new ServerBoundCloudConfigPacket("list", "", "", ""));
+        sendPacket(new CloudConfigC2S("list", "", "", ""));
     }
 
     public void deleteCloudConfig(String name) {
@@ -271,7 +271,7 @@ public class IRCTransport {
     }
 
     public void deleteCloudConfig(String owner, String name) {
-        sendPacket(new ServerBoundCloudConfigPacket("delete", owner, name, ""));
+        sendPacket(new CloudConfigC2S("delete", owner, name, ""));
     }
 
     public void setHandler(IRCHandler handler) {

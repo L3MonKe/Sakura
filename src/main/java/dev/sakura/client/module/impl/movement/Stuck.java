@@ -4,10 +4,10 @@ import dev.sakura.client.Sakura;
 import dev.sakura.client.events.input.MoveInputEvent;
 import dev.sakura.client.events.packet.PacketEvent;
 import dev.sakura.client.events.player.MotionEvent;
-import dev.sakura.client.events.player.PlayerTickEvent;
 import dev.sakura.client.events.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.utils.player.PacketUtil;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.BowItem;
@@ -34,78 +34,39 @@ public class Stuck extends Module {
     private float lastPitch;
     private boolean tryDisable = false;
     private final Queue<CommonPongC2SPacket> packets = new ConcurrentLinkedQueue<>();
-    private boolean bypassPacketEvent = false;
 
     @Override
     public void onEnable() {
-        this.stage = 0;
-        this.packet = null;
-        this.lastYaw = 0.0f;
-        this.lastPitch = 0.0f;
-        this.tryDisable = false;
-        this.packets.clear();
-        this.bypassPacketEvent = false;
+        stage = 0;
+        packet = null;
+        lastYaw = 0.0f;
+        lastPitch = 0.0f;
+        tryDisable = false;
+        packets.clear();
     }
 
     @Override
     protected void onDisable() {
-        this.stage = 0;
-        this.packet = null;
-        this.lastYaw = 0.0f;
-        this.lastPitch = 0.0f;
-        this.tryDisable = false;
-        this.packets.clear();
-        this.bypassPacketEvent = false;
+        stage = 0;
+        packet = null;
+        lastYaw = 0.0f;
+        lastPitch = 0.0f;
+        tryDisable = false;
+        packets.clear();
     }
 
     @Override
     public void setState(boolean state) {
-        if (mc.player != null) {
+        if (mc.player == null) {
+            super.setState(state);
+        } else {
             if (state) {
                 super.setState(true);
             } else if (this.stage == 3) {
                 super.setState(false);
             } else {
-                this.tryDisable = false;
-                this.disableNow();
+                this.tryDisable = true;
             }
-        } else {
-            super.setState(state);
-        }
-    }
-
-    private void disableNow() {
-        this.sendBypass(new PlayerMoveC2SPacket.PositionAndOnGround(
-                mc.player.getX() + 1337.0,
-                mc.player.getY(),
-                mc.player.getZ() + 1337.0,
-                mc.player.isOnGround(),
-                mc.player.horizontalCollision
-        ));
-        this.flushQueuedPongs();
-
-        super.setState(false);
-    }
-
-    private void sendBypass(Packet<?> toSend) {
-        boolean old = this.bypassPacketEvent;
-        this.bypassPacketEvent = true;
-        try {
-            mc.getNetworkHandler().sendPacket(toSend);
-        } finally {
-            this.bypassPacketEvent = old;
-        }
-    }
-
-    private void flushQueuedPongs() {
-        boolean old = this.bypassPacketEvent;
-        this.bypassPacketEvent = true;
-        try {
-            while (!packets.isEmpty()) {
-                mc.getNetworkHandler().sendPacket(packets.poll());
-            }
-        } finally {
-            this.bypassPacketEvent = old;
         }
     }
 
@@ -119,23 +80,31 @@ public class Stuck extends Module {
         } else {
             if (e.getType() == EventType.PRE) {
                 mc.player.setVelocity(0.0, 0.0, 0.0);
-                if (this.stage == 1) {
-                    this.stage = 2;
+                if (stage == 1) {
+                    stage = 2;
                     float rotationYaw = mc.player.getYaw();
                     float rotationPitch = mc.player.getPitch();
-                    if (this.shouldRotate() && (this.lastYaw != rotationYaw || this.lastPitch != rotationPitch)) {
-                        this.sendBypass(new PlayerMoveC2SPacket.LookAndOnGround(rotationYaw, rotationPitch, mc.player.isOnGround(), mc.player.horizontalCollision));
-                        this.flushQueuedPongs();
+                    if (shouldRotate() && (lastYaw != rotationYaw || lastPitch != rotationPitch)) {
+                        PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.LookAndOnGround(rotationYaw, rotationPitch, mc.player.isOnGround(), mc.player.horizontalCollision));
+
+                        while (!packets.isEmpty()) {
+                            PacketUtil.sendPacketNoEvent(packets.poll());
+                        }
 
                         lastYaw = rotationYaw;
                         lastPitch = rotationPitch;
                     }
 
-                    this.sendBypass(packet);
+                    PacketUtil.sendPacketNoEvent(packet);
                 }
 
                 if (tryDisable) {
-                    this.disableNow();
+                    PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(mc.player.getX() + 1337.0, mc.player.getY(), mc.player.getZ() + 1337.0, mc.player.isOnGround(), mc.player.horizontalCollision));
+
+                    while (!packets.isEmpty()) {
+                        PacketUtil.sendPacketNoEvent(packets.poll());
+                    }
+
                     this.tryDisable = false;
                 }
             }
@@ -143,26 +112,26 @@ public class Stuck extends Module {
     }
 
     private boolean shouldRotate() {
-        if (this.packet instanceof PlayerInteractItemC2SPacket blockPlacement) {
+        if (packet instanceof PlayerInteractItemC2SPacket blockPlacement) {
             ItemStack item = mc.player.getStackInHand(blockPlacement.getHand());
             boolean isBowlFood = item.contains(DataComponentTypes.FOOD) && item.get(DataComponentTypes.USE_REMAINDER) != null && item.get(DataComponentTypes.USE_REMAINDER).convertInto().isOf(Items.BOWL);
             return !isBowlFood && !(item.getItem() instanceof BowItem);
         } else {
-            return this.packet instanceof PlayerActionC2SPacket playerDigging && playerDigging.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM && mc.player.getActiveItem().getItem() instanceof BowItem;
+            return packet instanceof PlayerActionC2SPacket playerDigging && playerDigging.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM && mc.player.getActiveItem().getItem() instanceof BowItem;
         }
     }
 
     @EventHandler
-    public void onMoveInput(MoveInputEvent e) {
-        e.setForward(0.0F);
-        e.setStrafe(0.0F);
-        e.setJump(false);
-        e.setSneak(false);
+    public void onMoveInput(MoveInputEvent event) {
+        event.setForward(0.0F);
+        event.setStrafe(0.0F);
+        event.setJump(false);
+        event.setSneak(false);
     }
 
     @EventHandler
-    public void onRespawn(PlayerTickEvent event) {
-        if (mc.player.age <= 1) {
+    public void onRespawnMotion(MotionEvent event) {
+        if (event.getType() == EventType.PRE && mc.player.age <= 1) {
             stage = 3;
             packet = null;
             toggle();
@@ -170,24 +139,21 @@ public class Stuck extends Module {
     }
 
     @EventHandler
-    public void onPacket(PacketEvent e) {
-        if (bypassPacketEvent) return;
-        if (nullCheck()) {
-            this.packets.clear();
-            return;
-        }
-
-        if (e.getPacket() instanceof PlayerMoveC2SPacket) {
-            e.setCancelled(true);
-        } else if (e.getPacket() instanceof CommonPongC2SPacket) {
-            packets.offer((CommonPongC2SPacket) e.getPacket());
-            e.setCancelled(true);
-        } else if (e.getPacket() instanceof PlayerInteractItemC2SPacket || e.getPacket() instanceof PlayerActionC2SPacket) {
-            packet = e.getPacket();
+    public void onPacket(PacketEvent event) {
+        if (event.getPacket() instanceof PlayerMoveC2SPacket) {
+            event.setCancelled(true);
+        } else if (event.getPacket() instanceof CommonPongC2SPacket) {
+            packets.offer((CommonPongC2SPacket) event.getPacket());
+            event.setCancelled(true);
+        } else if (event.getPacket() instanceof PlayerInteractItemC2SPacket || event.getPacket() instanceof PlayerActionC2SPacket) {
+            packet = event.getPacket();
             stage = 1;
-            e.setCancelled(true);
-        } else if (e.getPacket() instanceof PlayerPositionLookS2CPacket) {
-            this.flushQueuedPongs();
+            event.setCancelled(true);
+        } else if (event.getPacket() instanceof PlayerPositionLookS2CPacket) {
+            while (!packets.isEmpty()) {
+                PacketUtil.sendPacketNoEvent(packets.poll());
+            }
+
             stage = 3;
             toggle();
         }

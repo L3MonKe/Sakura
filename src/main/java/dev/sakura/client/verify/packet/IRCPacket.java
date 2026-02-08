@@ -1,12 +1,10 @@
 package dev.sakura.client.verify.packet;
 
-import by.radioegor146.nativeobfuscator.Native;
 import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
 import dev.sakura.client.verify.packet.annotations.ProtocolField;
-import dev.sakura.niurendeobf.ZKMIndy;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -16,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Native
-@ZKMIndy
 public interface IRCPacket {
     Gson gson = new Gson();
 
