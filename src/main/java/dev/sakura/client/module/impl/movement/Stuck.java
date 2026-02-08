@@ -5,6 +5,7 @@ import dev.sakura.client.events.input.MoveInputEvent;
 import dev.sakura.client.events.packet.PacketEvent;
 import dev.sakura.client.events.player.MotionEvent;
 import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.PacketUtil;
@@ -39,27 +40,14 @@ public class Stuck extends Module {
     public void onEnable() {
         stage = 0;
         packet = null;
-        lastYaw = 0.0f;
-        lastPitch = 0.0f;
+        lastYaw = RotationManager.rotations.yaw;
+        lastPitch = RotationManager.rotations.pitch;
         tryDisable = false;
-        packets.clear();
-    }
-
-    @Override
-    protected void onDisable() {
-        stage = 0;
-        packet = null;
-        lastYaw = 0.0f;
-        lastPitch = 0.0f;
-        tryDisable = false;
-        packets.clear();
     }
 
     @Override
     public void setState(boolean state) {
-        if (mc.player == null) {
-            super.setState(state);
-        } else {
+        if (mc.player != null) {
             if (state) {
                 super.setState(true);
             } else if (this.stage == 3) {

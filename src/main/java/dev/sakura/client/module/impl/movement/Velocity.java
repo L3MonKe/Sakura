@@ -287,7 +287,7 @@ public class Velocity extends Module {
 
     private void debug(String message) {
         if (debug.get()) {
-            ChatUtil.addChatMessage("§7[Velocity] §f" + message);
+            ChatUtil.clientMessage("§7[Velocity] §f" + message);
         }
     }
 

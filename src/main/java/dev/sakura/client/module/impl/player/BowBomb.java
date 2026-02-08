@@ -99,7 +99,7 @@ public class BowBomb extends Module {
             return;
         if (event.getPacket() instanceof PlayerActionC2SPacket packet && packet.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM) {
             send = true;
-            if (message.get()) ChatUtil.addChatMessage("§rBomb");
+            if (message.get()) ChatUtil.clientMessage("§rBomb");
             mc.getNetworkHandler().sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.START_SPRINTING));
 
             if (exploit.is(Exploit.Fast)) {

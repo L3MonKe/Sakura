@@ -51,8 +51,6 @@ public abstract class MixinChatHud {
         return false;
     }
 
-    ;
-
     @Inject(method = "render(Lnet/minecraft/client/gui/DrawContext;Lnet/minecraft/client/font/TextRenderer;IIIZZ)V", at = @At("HEAD"))
     private void onRenderChatBackground(DrawContext context, TextRenderer textRenderer, int currentTick, int mouseX, int mouseY, boolean interactable, boolean bl, CallbackInfo ci) {
         if (this.isChatHidden()) return;

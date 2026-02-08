@@ -3,10 +3,12 @@ package dev.sakura.client.mixin.render;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
+import dev.sakura.client.utils.render.ChatGradientText;
 import net.minecraft.client.font.DrawnTextConsumer;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.MessageIndicator;
+import net.minecraft.text.OrderedText;
 import net.minecraft.util.math.ColorHelper;
 import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fc;
@@ -16,6 +18,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
 
@@ -75,5 +78,14 @@ public class MixinChatHudInteractable {
     private void onFill(int x1, int y1, int x2, int y2, int color, CallbackInfo ci) {
         ci.cancel();
     }
-}
 
+    @Inject(method = "text", at = @At("HEAD"), cancellable = true)
+    private void onText(int y, float opacity, OrderedText text, CallbackInfoReturnable<Boolean> cir) {
+        String rawLine = ChatGradientText.getRawLine(text);
+        if (!ChatGradientText.isGradientLine(rawLine)) return;
+
+        ChatGradientText.drawPulseLine(this.context, this.textRenderer, 0, y, opacity, rawLine);
+        cir.setReturnValue(false);
+        cir.cancel();
+    }
+}

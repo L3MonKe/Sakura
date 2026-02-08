@@ -29,26 +29,26 @@ public class BindCommand extends Command {
 
                                             if (keyName.equalsIgnoreCase("none")) {
                                                 module.setKey(InputUtil.UNKNOWN_KEY.getCode());
-                                                ChatUtil.addChatMessage("Unbound " + module.getEnglishName() + ".");
+                                                ChatUtil.clientMessage("Unbound " + module.getEnglishName() + ".");
                                                 Sakura.CONFIG.saveDefaultConfig();
                                                 return 1;
                                             }
 
                                             InputUtil.Key key = KeyUtil.getKeyFromName(keyName);
                                             if (key == InputUtil.UNKNOWN_KEY || key.getCode() == GLFW.GLFW_KEY_UNKNOWN) {
-                                                ChatUtil.addChatMessage("Invalid key: " + keyName);
+                                                ChatUtil.clientMessage("Invalid key: " + keyName);
                                                 return 0;
                                             }
 
                                             Module.BindMode bindMode = parseBindMode(modeName);
                                             if (bindMode == null) {
-                                                ChatUtil.addChatMessage("Invalid mode: " + modeName + ". Use 'toggle' or 'hold'.");
+                                                ChatUtil.clientMessage("Invalid mode: " + modeName + ". Use 'toggle' or 'hold'.");
                                                 return 0;
                                             }
 
                                             module.setKey(key.getCode());
                                             module.setBindMode(bindMode);
-                                            ChatUtil.addChatMessage("Bound " + module.getEnglishName() + " to " + keyName.toUpperCase() + " (" + bindMode.name() + ").");
+                                            ChatUtil.clientMessage("Bound " + module.getEnglishName() + " to " + keyName.toUpperCase() + " (" + bindMode.name() + ").");
                                             Sakura.CONFIG.saveDefaultConfig();
                                             return 1;
                                         }))
@@ -58,28 +58,28 @@ public class BindCommand extends Command {
 
                                     if (keyName.equalsIgnoreCase("none")) {
                                         module.setKey(InputUtil.UNKNOWN_KEY.getCode());
-                                        ChatUtil.addChatMessage("Unbound " + module.getEnglishName() + ".");
+                                        ChatUtil.clientMessage("Unbound " + module.getEnglishName() + ".");
                                         Sakura.CONFIG.saveDefaultConfig();
                                         return 1;
                                     }
 
                                     InputUtil.Key key = KeyUtil.getKeyFromName(keyName);
                                     if (key == InputUtil.UNKNOWN_KEY || key.getCode() == GLFW.GLFW_KEY_UNKNOWN) {
-                                        ChatUtil.addChatMessage("Invalid key: " + keyName);
+                                        ChatUtil.clientMessage("Invalid key: " + keyName);
                                         return 0;
                                     }
 
                                     module.setKey(key.getCode());
-                                    ChatUtil.addChatMessage("Bound " + module.getEnglishName() + " to " + keyName.toUpperCase() + " (" + module.getBindMode().name() + ").");
+                                    ChatUtil.clientMessage("Bound " + module.getEnglishName() + " to " + keyName.toUpperCase() + " (" + module.getBindMode().name() + ").");
                                     Sakura.CONFIG.saveDefaultConfig();
                                     return 1;
                                 }))
                         .executes(c -> {
-                            ChatUtil.addChatMessage("Usage: .bind <module> <key> [toggle/hold]");
+                            ChatUtil.clientMessage("Usage: .bind <module> <key> [toggle/hold]");
                             return 1;
                         }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("Usage: .bind <module> <key> [toggle/hold]");
+                    ChatUtil.clientMessage("Usage: .bind <module> <key> [toggle/hold]");
                     return 1;
                 });
     }

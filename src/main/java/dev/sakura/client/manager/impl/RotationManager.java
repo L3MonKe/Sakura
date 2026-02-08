@@ -11,7 +11,6 @@ import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.util.AuthUtil;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
@@ -19,10 +18,16 @@ import java.lang.reflect.Method;
 import java.util.Base64;
 import java.util.function.Function;
 
+import static dev.sakura.client.Sakura.mc;
+
 public class RotationManager {
     private static final Rotation offset = new Rotation(0, 0);
-    public static Rotation rotations, lastRotations = new Rotation(0, 0), targetRotations, animationRotation, lastAnimationRotation;
-    private static final MinecraftClient mc = MinecraftClient.getInstance();
+    public static Rotation rotations;
+    public static Rotation lastRotations = new Rotation(0, 0);
+    public static Rotation targetRotations;
+    public static Rotation animationRotation;
+    public static Rotation lastAnimationRotation;
+
     private static boolean active;
     private static boolean smoothed;
     private static double rotationSpeed;
@@ -178,13 +183,23 @@ public class RotationManager {
     }
 
     public float getYaw() {
-        if (active) return rotations.yaw;
-        else return mc.player.getYaw();
+        if (mc.player == null) {
+            return 0.0f;
+        } else if (active) {
+            return rotations.yaw;
+        } else {
+            return mc.player.getYaw();
+        }
     }
 
     public float getPitch() {
-        if (active) return rotations.pitch;
-        else return mc.player.getPitch();
+        if (mc.player == null) {
+            return 0.0f;
+        } else if (active) {
+            return rotations.pitch;
+        } else {
+            return mc.player.getPitch();
+        }
     }
 
     public Rotation getRotation() {

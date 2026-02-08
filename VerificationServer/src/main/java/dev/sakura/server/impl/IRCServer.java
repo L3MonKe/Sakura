@@ -141,7 +141,7 @@ public class IRCServer {
         this.startedAt = System.currentTimeMillis();
         Logger.info("Starting impl...");
 
-        database = new SqliteDatabase(Paths.get(System.getProperty("sakura.impl.db", "impl.sqlite")));
+        database = new SqliteDatabase(Paths.get(System.getProperty("sakura.verify.db", "verify.sqlite")));
         userRepository = new UserRepository();
         cardRepository = new CardRepository();
         authService = new AuthService(database, userRepository, cardRepository);

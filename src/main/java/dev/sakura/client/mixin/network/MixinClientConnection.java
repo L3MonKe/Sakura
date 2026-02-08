@@ -29,8 +29,8 @@ public abstract class MixinClientConnection {
 
     @Redirect(method = {"send(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/network/ClientConnection;sendImmediately(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V"))
     private void onSend(ClientConnection instance, Packet<?> packet, ChannelFutureListener listener, boolean flush) {
-        if (PacketUtil.passthroughsPackets.contains(packet)) {
-            PacketUtil.passthroughsPackets.remove(packet);
+        if (PacketUtil.bypassPackets.contains(packet)) {
+            PacketUtil.bypassPackets.remove(packet);
             this.sendImmediately(packet, listener, flush);
         } else {
             PacketEvent event = new PacketEvent(EventType.SEND, packet);

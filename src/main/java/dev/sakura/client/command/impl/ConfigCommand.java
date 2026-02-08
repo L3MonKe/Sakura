@@ -37,7 +37,7 @@ public final class ConfigCommand extends Command {
                             return 1;
                         })))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("用法: .config load [用户] <配置名>");
+                    ChatUtil.clientMessage("用法: .config load [用户] <配置名>");
                     return 1;
                 }));
 
@@ -48,7 +48,7 @@ public final class ConfigCommand extends Command {
                     return 1;
                 }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("用法: .config save <name>");
+                    ChatUtil.clientMessage("用法: .config save <name>");
                     return 1;
                 }));
 
@@ -59,7 +59,7 @@ public final class ConfigCommand extends Command {
                     return 1;
                 }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("用法: .config save <name>");
+                    ChatUtil.clientMessage("用法: .config save <name>");
                     return 1;
                 }));
 
@@ -69,7 +69,7 @@ public final class ConfigCommand extends Command {
                     return 1;
                 }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("用法: .config delete <name>");
+                    ChatUtil.clientMessage("用法: .config delete <name>");
                     return 1;
                 }));
 
@@ -79,16 +79,16 @@ public final class ConfigCommand extends Command {
                     return 1;
                 }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("用法: .config delete <name>");
+                    ChatUtil.clientMessage("用法: .config delete <name>");
                     return 1;
                 }));
     }
 
     private static void printUsage() {
-        ChatUtil.addChatMessage("§bConfig 命令用法:");
-        ChatUtil.addChatMessage("§7.config list §f- 列出云配置");
-        ChatUtil.addChatMessage("§7.config load [用户] <配置名> §f- 加载云配置");
-        ChatUtil.addChatMessage("§7.config save <name> §f- 保存云配置");
-        ChatUtil.addChatMessage("§7.config delete <name> §f- 删除云配置");
+        ChatUtil.clientMessage("§bConfig 命令用法:");
+        ChatUtil.clientMessage("§7.config list §f- 列出云配置");
+        ChatUtil.clientMessage("§7.config load [用户] <配置名> §f- 加载云配置");
+        ChatUtil.clientMessage("§7.config save <name> §f- 保存云配置");
+        ChatUtil.clientMessage("§7.config delete <name> §f- 删除云配置");
     }
 }

@@ -88,10 +88,10 @@ public class PacketMine extends Module {
             if (blockData != null && !mc.world.isAir(blockData.currentPos())) {
                 if (blockData.currentPos() == event.getBlockPos()) return;
                 blockData2 = blockData;
-                if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] Setting fucking blockData2.");
+                if (debugConfig.get()) ChatUtil.serverMessage("[PacketMine] Setting fucking blockData2.");
             }
             if (canBreak(event.getBlockPos())) {
-                if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] Setting fucking blockData.");
+                if (debugConfig.get()) ChatUtil.serverMessage("[PacketMine] Setting fucking blockData.");
                 blockData = new BlockData(
                         event.getBlockPos(),
                         event.getDirection(),
@@ -106,7 +106,7 @@ public class PacketMine extends Module {
         if (eatingCheck()) return;
         if (blockData == null) return;
         if (mc.player.squaredDistanceTo(blockData.currentPos().toCenterPos()) > Math.pow(rangeConfig.get() + 4, 2)) {
-            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] set blockData = null.");
+            if (debugConfig.get()) ChatUtil.serverMessage("[PacketMine] set blockData = null.");
             blockData = null;
             blockData2 = null;
             return;
@@ -116,7 +116,7 @@ public class PacketMine extends Module {
             return;
         }
         if (isReady(blockData)) {
-            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] BLOCK DATA TASKS IS READY.");
+            if (debugConfig.get()) ChatUtil.serverMessage("[PacketMine] BLOCK DATA TASKS IS READY.");
             int slot = InvUtil.findFastestTool(mc.world.getBlockState(blockData.currentPos()), swapConfig.get() == Swap.SilentAlt).slot();
             performSwap(slot, false);
             mineTask(blockData);
@@ -131,7 +131,7 @@ public class PacketMine extends Module {
                 blockData = null;
         }
         if (blockData2 != null && isReady(blockData2)) {
-            if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] BLOCK DATA2 TASKS IS READY.");
+            if (debugConfig.get()) ChatUtil.serverMessage("[PacketMine] BLOCK DATA2 TASKS IS READY.");
             int slot = InvUtil.findFastestTool(mc.world.getBlockState(blockData2.currentPos()), swapConfig.get() == Swap.SilentAlt).slot();
             performSwap(slot, false);
             mineTask(blockData2);
@@ -221,7 +221,7 @@ public class PacketMine extends Module {
     }
 
     private void stopMiningInternal(BlockData data) {
-        if (debugConfig.get()) ChatUtil.sendMessage("[PacketMine] SENDING MINE PACKET.");
+        if (debugConfig.get()) ChatUtil.serverMessage("[PacketMine] SENDING MINE PACKET.");
         mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(
                 PlayerActionC2SPacket.Action.STOP_DESTROY_BLOCK, data.currentPos(), data.direction()));
         mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(

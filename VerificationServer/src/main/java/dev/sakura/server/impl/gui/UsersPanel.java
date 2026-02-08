@@ -29,7 +29,6 @@ public final class UsersPanel extends JPanel {
     private final JButton kickBtn = new JButton("踢下线");
     private final JButton resetHwidBtn = new JButton("重置HWID");
     private final JButton setPwdBtn = new JButton("改密码");
-    private final JButton setPrefixBtn = new JButton("改Prefix");
     private final JButton setMaxBtn = new JButton("云配置上限");
 
     public UsersPanel(IRCServer server) {
@@ -53,7 +52,6 @@ public final class UsersPanel extends JPanel {
         actions.add(kickBtn);
         actions.add(resetHwidBtn);
         actions.add(setPwdBtn);
-        actions.add(setPrefixBtn);
         actions.add(setMaxBtn);
         add(actions, BorderLayout.SOUTH);
 
@@ -62,7 +60,6 @@ public final class UsersPanel extends JPanel {
         kickBtn.addActionListener(e -> kick());
         resetHwidBtn.addActionListener(e -> resetHwid());
         setPwdBtn.addActionListener(e -> setPassword());
-        setPrefixBtn.addActionListener(e -> setPrefix());
         setMaxBtn.addActionListener(e -> setConfigMax());
 
         table.addMouseListener(new MouseAdapter() {
@@ -73,7 +70,7 @@ public final class UsersPanel extends JPanel {
                 }
                 int viewRow = table.rowAtPoint(e.getPoint());
                 int viewCol = table.columnAtPoint(e.getPoint());
-                if (viewRow < 0 || viewCol != 1) {
+                if (viewRow < 0 || viewCol != 2) {
                     return;
                 }
                 UserRepository.UserRow row = model.getRow(viewRow);
@@ -221,34 +218,6 @@ public final class UsersPanel extends JPanel {
         JOptionPane.showMessageDialog(this, ok ? "OK" : "失败", "结果", ok ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
     }
 
-    private void setPrefix() {
-        String username = getSelectedUsername();
-        if (username == null || username.isEmpty()) {
-            return;
-        }
-        String prefix = JOptionPane.showInputDialog(this, "Prefix（可空）", "改Prefix - " + username, JOptionPane.QUESTION_MESSAGE);
-        if (prefix == null) {
-            return;
-        }
-        new SwingWorker<Boolean, Void>() {
-            @Override
-            protected Boolean doInBackground() throws Exception {
-                return service.setPrefix(username, prefix);
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    boolean ok = get();
-                    JOptionPane.showMessageDialog(UsersPanel.this, ok ? "OK" : "失败", "结果", ok ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.ERROR_MESSAGE);
-                    refresh();
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(UsersPanel.this, "失败: " + e.getMessage(), "错误", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        }.execute();
-    }
-
     private void setConfigMax() {
         String username = getSelectedUsername();
         if (username == null || username.isEmpty()) {
@@ -285,7 +254,7 @@ public final class UsersPanel extends JPanel {
     }
 
     private static final class UsersTableModel extends AbstractTableModel {
-        private static final String[] COLS = new String[]{"用户名", "QQ", "到期时间", "在线", "Prefix", "Phone"};
+        private static final String[] COLS = new String[]{"用户名", "卡密组", "QQ", "到期时间", "在线", "Phone"};
         private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         private final List<UserRepository.UserRow> rows = new ArrayList<>();
 
@@ -325,10 +294,10 @@ public final class UsersPanel extends JPanel {
             String qq = r.qqSet() == null || r.qqSet().isEmpty() ? "" : String.join(",", r.qqSet());
             return switch (columnIndex) {
                 case 0 -> r.username();
-                case 1 -> qq;
-                case 2 -> formatExpireAt(r.expireAt());
-                case 3 -> r.online();
-                case 4 -> r.prefix();
+                case 1 -> r.cardGroup();
+                case 2 -> qq;
+                case 3 -> formatExpireAt(r.expireAt());
+                case 4 -> r.online();
                 case 5 -> r.phone();
                 default -> "";
             };

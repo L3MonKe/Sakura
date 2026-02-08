@@ -39,7 +39,7 @@ public class AutoHeypixel extends Module {
                     }
                 }).thenRun(() -> {
                     mc.execute(() -> {
-                        ScreenshotRecorder.saveScreenshot(ConfigManager.CONFIG_DIR.toFile(), mc.getFramebuffer(), (message) -> ChatUtil.addChatMessage(message.getString()));
+                        ScreenshotRecorder.saveScreenshot(ConfigManager.CONFIG_DIR.toFile(), mc.getFramebuffer(), (message) -> ChatUtil.clientMessage(message.getString()));
                     });
                 });
             }

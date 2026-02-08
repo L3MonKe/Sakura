@@ -14,9 +14,9 @@ public class HelpCommand extends Command {
     @Override
     public void buildCommand(LiteralArgumentBuilder<CommandSource> builder) {
         builder.executes(c -> {
-            ChatUtil.addChatMessage("§7--- §fAvailable Commands §7---");
+            ChatUtil.clientMessage("§7--- §fAvailable Commands §7---");
             for (Command command : Sakura.COMMAND.getCommands()) {
-                ChatUtil.addChatMessage("§7." + command.getName().toLowerCase() + " §f- " + command.getDescription());
+                ChatUtil.clientMessage("§7." + command.getName().toLowerCase() + " §f- " + command.getDescription());
             }
             return 1;
         });

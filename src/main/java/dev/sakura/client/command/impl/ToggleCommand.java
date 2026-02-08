@@ -18,12 +18,12 @@ public class ToggleCommand extends Command {
                         .executes(c -> {
                             Module module = ModuleArgumentType.getModule(c, "module");
                             module.toggle();
-                            ChatUtil.addChatMessage(module.getEnglishName() + " is now " +
+                            ChatUtil.clientMessage(module.getEnglishName() + " is now " +
                                     (module.isEnabled() ? "§aenabled" : "§cdisabled") + "§f.");
                             return 1;
                         }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("Usage: .toggle <module>");
+                    ChatUtil.clientMessage("Usage: .toggle <module>");
                     return 1;
                 });
     }

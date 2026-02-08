@@ -21,7 +21,7 @@ public class ResetCommand extends Command {
                 .then(literal("all").executes(c -> {
                     ExitUtil.ensureVerifiedOrExit();
                     resetAll();
-                    ChatUtil.addChatMessage("§a已重置所有配置为默认值。");
+                    ChatUtil.clientMessage("§a已重置所有配置为默认值。");
                     return 1;
                 }))
                 .then(literal("module")
@@ -30,13 +30,13 @@ public class ResetCommand extends Command {
                                     ExitUtil.ensureVerifiedOrExit();
                                     Module module = ModuleArgumentType.getModule(c, "module");
                                     module.reset();
-                                    ChatUtil.addChatMessage("§a已重置模块 " + module.getEnglishName() + " 为默认值。");
+                                    ChatUtil.clientMessage("§a已重置模块 " + module.getEnglishName() + " 为默认值。");
                                     return 1;
                                 })))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("§e用法:");
-                    ChatUtil.addChatMessage("  §7" + Sakura.COMMAND.getPrefix() + "reset all §f- 重置所有配置");
-                    ChatUtil.addChatMessage("  §7" + Sakura.COMMAND.getPrefix() + "reset module <名称> §f- 重置指定模块");
+                    ChatUtil.clientMessage("§e用法:");
+                    ChatUtil.clientMessage("  §7" + Sakura.COMMAND.getPrefix() + "reset all §f- 重置所有配置");
+                    ChatUtil.clientMessage("  §7" + Sakura.COMMAND.getPrefix() + "reset module <名称> §f- 重置指定模块");
                     return 1;
                 });
     }

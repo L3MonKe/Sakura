@@ -8,11 +8,11 @@ import java.util.Set;
 import static dev.sakura.client.Sakura.mc;
 
 public class PacketUtil {
-    public static Set<Packet<?>> passthroughsPackets = new HashSet<>();
+    public static Set<Packet<?>> bypassPackets = new HashSet<>();
 
     public static void sendPacketNoEvent(Packet<?> packet) {
         if (packet == null) return;
-        passthroughsPackets.add(packet);
+        bypassPackets.add(packet);
         mc.getNetworkHandler().sendPacket(packet);
     }
 }

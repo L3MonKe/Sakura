@@ -17,7 +17,7 @@ public class SaveCommand extends Command {
         builder.executes(c -> {
             ExitUtil.ensureVerifiedOrExit();
             Sakura.CONFIG.saveDefaultConfig();
-            ChatUtil.addChatMessage("All configurations saved.");
+            ChatUtil.clientMessage("All configurations saved.");
             return 1;
         });
     }

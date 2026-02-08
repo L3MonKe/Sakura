@@ -3,9 +3,11 @@ package dev.sakura.client.mixin.render;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.mixin.accessor.IChatInputSuggestor;
 import dev.sakura.client.mixin.accessor.ISuggestionWindow;
+import dev.sakura.client.mixin.accessor.ITextFieldWidget;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
+import dev.sakura.client.utils.render.ChatGradientText;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
@@ -112,6 +114,13 @@ public class MixinChatScreen {
                 }
             }
         });
+
+        int firstIndex = ((ITextFieldWidget) chatField).getFirstCharacterIndex();
+        if (firstIndex != 0) return;
+
+        int textX = ((ITextFieldWidget) chatField).getTextX();
+        int textY = ((ITextFieldWidget) chatField).getTextY();
+        ChatGradientText.drawPulsePlain(context, mc.textRenderer, textX, textY, 1.0f, prefix);
     }
 
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;fill(IIIII)V"))

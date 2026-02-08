@@ -19,6 +19,7 @@ public final class UserRepository {
 
     public record UserRow(
             String username,
+            String cardGroup,
             String passwordSalt,
             String passwordHash,
             String hwid,
@@ -44,8 +45,10 @@ public final class UserRepository {
 
     public UserRow findByUsername(Connection connection, String username) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT username,password_salt,password_hash,hwid,qq_json,phone,prefix,expire_at,online,banned,created_at,updated_at " +
-                        "FROM users WHERE username = ?"
+                "SELECT " +
+                        "u.username,u.password_salt,u.password_hash,u.hwid,u.qq_json,u.phone,u.prefix,u.expire_at,u.online,u.banned,u.created_at,u.updated_at," +
+                        "(SELECT c.grp FROM cards c WHERE c.used_by = u.username ORDER BY c.used_at DESC LIMIT 1) AS card_grp " +
+                        "FROM users u WHERE u.username = ?"
         )) {
             ps.setString(1, username);
             try (ResultSet rs = ps.executeQuery()) {
@@ -59,7 +62,9 @@ public final class UserRepository {
 
     public List<UserRow> findByQq(Connection connection, String qq) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT u.username,u.password_salt,u.password_hash,u.hwid,u.qq_json,u.phone,u.prefix,u.expire_at,u.online,u.banned,u.created_at,u.updated_at " +
+                "SELECT " +
+                        "u.username,u.password_salt,u.password_hash,u.hwid,u.qq_json,u.phone,u.prefix,u.expire_at,u.online,u.banned,u.created_at,u.updated_at," +
+                        "(SELECT c.grp FROM cards c WHERE c.used_by = u.username ORDER BY c.used_at DESC LIMIT 1) AS card_grp " +
                         "FROM users u JOIN user_qq q ON u.username = q.username WHERE q.qq = ?"
         )) {
             ps.setString(1, qq);
@@ -75,7 +80,10 @@ public final class UserRepository {
 
     public List<UserRow> listOnlineUsers(Connection connection) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT username,password_salt,password_hash,hwid,qq_json,phone,prefix,expire_at,online,banned,created_at,updated_at FROM users WHERE online != 0"
+                "SELECT " +
+                        "u.username,u.password_salt,u.password_hash,u.hwid,u.qq_json,u.phone,u.prefix,u.expire_at,u.online,u.banned,u.created_at,u.updated_at," +
+                        "(SELECT c.grp FROM cards c WHERE c.used_by = u.username ORDER BY c.used_at DESC LIMIT 1) AS card_grp " +
+                        "FROM users u WHERE u.online != 0"
         )) {
             try (ResultSet rs = ps.executeQuery()) {
                 List<UserRow> out = new java.util.ArrayList<>();
@@ -89,7 +97,10 @@ public final class UserRepository {
 
     public List<UserRow> listAllUsers(Connection connection) throws SQLException {
         try (PreparedStatement ps = connection.prepareStatement(
-                "SELECT username,password_salt,password_hash,hwid,qq_json,phone,prefix,expire_at,online,banned,created_at,updated_at FROM users"
+                "SELECT " +
+                        "u.username,u.password_salt,u.password_hash,u.hwid,u.qq_json,u.phone,u.prefix,u.expire_at,u.online,u.banned,u.created_at,u.updated_at," +
+                        "(SELECT c.grp FROM cards c WHERE c.used_by = u.username ORDER BY c.used_at DESC LIMIT 1) AS card_grp " +
+                        "FROM users u"
         )) {
             try (ResultSet rs = ps.executeQuery()) {
                 List<UserRow> out = new java.util.ArrayList<>();
@@ -486,8 +497,15 @@ public final class UserRepository {
             qqSet = Collections.emptySet();
         }
 
+        String cardGroup = null;
+        try {
+            cardGroup = rs.getString("card_grp");
+        } catch (SQLException ignored) {
+        }
+
         return new UserRow(
                 rs.getString("username"),
+                cardGroup == null ? "" : cardGroup,
                 rs.getString("password_salt"),
                 rs.getString("password_hash"),
                 rs.getString("hwid"),

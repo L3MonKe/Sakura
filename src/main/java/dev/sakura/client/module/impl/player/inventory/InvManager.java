@@ -234,7 +234,7 @@ public class InvManager extends Module {
         if (nullCheck()) return;
 
         if (!(mc.currentScreen instanceof ClickGuiScreen) && !this.checkConfig()) {
-            ChatUtil.addChatMessage("Duplicate slot config in Inventory Manager! Please check your config!");
+            ChatUtil.clientMessage("Duplicate slot config in Inventory Manager! Please check your config!");
             this.toggle();
             return;
         }

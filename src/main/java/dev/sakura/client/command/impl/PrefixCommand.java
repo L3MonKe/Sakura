@@ -19,19 +19,19 @@ public class PrefixCommand extends Command {
                         .executes(c -> {
                             String newPrefix = StringArgumentType.getString(c, "prefix");
                             if (newPrefix.isEmpty()) {
-                                ChatUtil.addChatMessage("Prefix cannot be empty.");
+                                ChatUtil.clientMessage("Prefix cannot be empty.");
                                 return 0;
                             }
 
                             int prefixKey = getPrefixKey(newPrefix);
                             Sakura.COMMAND.setPrefix(newPrefix, prefixKey);
                             Sakura.CONFIG.savePrefix(newPrefix);
-                            ChatUtil.addChatMessage("Command prefix set to: §a" + newPrefix);
+                            ChatUtil.clientMessage("Command prefix set to: §a" + newPrefix);
                             return 1;
                         }))
                 .executes(c -> {
-                    ChatUtil.addChatMessage("Current prefix: §a" + Sakura.COMMAND.getPrefix());
-                    ChatUtil.addChatMessage("Usage: " + Sakura.COMMAND.getPrefix() + "prefix <new prefix>");
+                    ChatUtil.clientMessage("Current prefix: §a" + Sakura.COMMAND.getPrefix());
+                    ChatUtil.clientMessage("Usage: " + Sakura.COMMAND.getPrefix() + "prefix <new prefix>");
                     return 1;
                 });
     }

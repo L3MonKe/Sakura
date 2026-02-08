@@ -66,9 +66,9 @@ public final class CloudConfigService {
             }
             MinecraftClient.getInstance().execute(() -> {
                 if (success) {
-                    ChatUtil.addChatMessage("§a云配置上传成功！");
+                    ChatUtil.clientMessage("§a云配置上传成功！");
                 } else {
-                    ChatUtil.addChatMessage("§c云配置上传失败: " + (message == null ? "" : message));
+                    ChatUtil.clientMessage("§c云配置上传失败: " + (message == null ? "" : message));
                 }
             });
         }
@@ -93,12 +93,12 @@ public final class CloudConfigService {
                 if (success) {
                     dev.sakura.client.Sakura.CONFIG.loadConfigFromString(content);
                     if (owner != null && !owner.isEmpty()) {
-                        ChatUtil.addChatMessage("§a已加载用户 " + owner + " 的云配置 " + name + "！");
+                        ChatUtil.clientMessage("§a已加载用户 " + owner + " 的云配置 " + name + "！");
                     } else {
-                        ChatUtil.addChatMessage("§a云配置 " + name + " 加载成功！");
+                        ChatUtil.clientMessage("§a云配置 " + name + " 加载成功！");
                     }
                 } else {
-                    ChatUtil.addChatMessage("§c云配置加载失败: " + (message == null ? "" : message));
+                    ChatUtil.clientMessage("§c云配置加载失败: " + (message == null ? "" : message));
                 }
             });
         }
@@ -113,12 +113,12 @@ public final class CloudConfigService {
             MinecraftClient.getInstance().execute(() -> {
                 if (success) {
                     List<String> list = names == null ? List.of() : names;
-                    ChatUtil.addChatMessage("§e云配置列表 (" + list.size() + "/" + max + "):");
+                    ChatUtil.clientMessage("§e云配置列表 (" + list.size() + "/" + max + "):");
                     for (String n : list) {
-                        ChatUtil.addChatMessage("§7 - §f" + n);
+                        ChatUtil.clientMessage("§7 - §f" + n);
                     }
                 } else {
-                    ChatUtil.addChatMessage("§c获取云配置列表失败: " + (message == null ? "" : message));
+                    ChatUtil.clientMessage("§c获取云配置列表失败: " + (message == null ? "" : message));
                 }
             });
         }
@@ -141,9 +141,9 @@ public final class CloudConfigService {
             }
             MinecraftClient.getInstance().execute(() -> {
                 if (success) {
-                    ChatUtil.addChatMessage("§a云配置 " + name + " 删除成功！");
+                    ChatUtil.clientMessage("§a云配置 " + name + " 删除成功！");
                 } else {
-                    ChatUtil.addChatMessage("§c云配置删除失败: " + (message == null ? "" : message));
+                    ChatUtil.clientMessage("§c云配置删除失败: " + (message == null ? "" : message));
                 }
             });
         }
@@ -212,7 +212,7 @@ public final class CloudConfigService {
     private IRCTransport requireTransport() {
         if (!AuthState.isAuthed() || AuthState.getExpireAt() <= System.currentTimeMillis()) {
             AuthState.clear();
-            MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c请先完成验证登录/注册，再使用云配置。"));
+            MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§c请先完成验证登录/注册，再使用云配置。"));
             throw new IllegalStateException("Not authed");
         }
         IRCTransport t = VerificationClient.getTransport();
@@ -220,7 +220,7 @@ public final class CloudConfigService {
             try {
                 t = VerificationClient.connect(null);
             } catch (Exception e) {
-                MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c验证连接建立失败。"));
+                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§c验证连接建立失败。"));
                 throw new IllegalStateException("Transport is null");
             }
             String user = AuthState.getCurrentUser();
@@ -268,12 +268,12 @@ public final class CloudConfigService {
             CloudConfigC2S packet = new CloudConfigC2S("upload", "", name, content == null ? "" : content);
             int size = new IRCProtocol().encode(packet).length;
             if (size > 8 * 1024 * 1024) {
-                MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c配置内容过大，无法上传（" + (size / (1024 * 1024)) + "MB）。"));
+                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§c配置内容过大，无法上传（" + (size / (1024 * 1024)) + "MB）。"));
                 return false;
             }
             return true;
         } catch (Exception e) {
-            MinecraftClient.getInstance().execute(() -> ChatUtil.addChatMessage("§c配置编码失败。"));
+            MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§c配置编码失败。"));
             return false;
         }
     }

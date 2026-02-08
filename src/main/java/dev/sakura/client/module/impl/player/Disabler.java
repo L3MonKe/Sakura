@@ -37,7 +37,7 @@ public class Disabler extends Module {
 
     private void log(String message) {
         if (logging.get()) {
-            ChatUtil.addChatMessage(message);
+            ChatUtil.clientMessage(message);
             //NotificationManager.send(message);
         }
     }
