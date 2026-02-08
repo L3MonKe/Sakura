@@ -1,11 +1,12 @@
 package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.entity.AttackEvent;
+import dev.sakura.client.events.entity.AttackEntityEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.EnchantmentUtil;
 import dev.sakura.client.utils.player.InvUtil;
+import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -24,16 +25,16 @@ import net.minecraft.item.TridentItem;
 import net.minecraft.registry.tag.EntityTypeTags;
 import net.minecraft.registry.tag.ItemTags;
 
-public class AttributeSwap extends Module {
+public class AutoWeapon extends Module {
     private final EnumValue<Page> page = new EnumValue<>("Page", "页面", Page.General);
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Simple, () -> page.get() == Page.General);
     private final NumberValue<Integer> targetSlot = new NumberValue<>("Target Slot", "目标槽位", 1, 1, 9, 1, () -> page.get() == Page.General && mode.get() == Mode.Simple);
     private final BoolValue swapBack = new BoolValue("Swap Back", "交换回原槽位", true, () -> page.get() == Page.General);
-    private final NumberValue<Integer> swapBackDelay = new NumberValue<>("Swap Back Delay", "交换回原槽位延迟", 2, 0, 100, 1, () -> page.get() == Page.General);
+    private final NumberValue<Integer> swapBackDelay = new NumberValue<>("Swap Back Delay", "交换回原槽位延迟", 200, 0, 500, 10, () -> page.get() == Page.General);
 
+    private final BoolValue smartDurability = new BoolValue("Smart Durability Saver", "智能耐久保存", false, () -> page.get() == Page.Swapping && mode.get() == Mode.Smart);
     private final BoolValue smartShieldBreak = new BoolValue("Smart Shield Breaker", "智能护盾破坏", true, () -> page.get() == Page.Swapping && mode.get() == Mode.Smart);
-    private final BoolValue smartDurability = new BoolValue("Smart Durability Saver", "智能耐久保存", true, () -> page.get() == Page.Swapping && mode.get() == Mode.Smart);
     private final BoolValue swordSwapping = new BoolValue("Sword Swapping", "剑附魔交换", true, () -> page.get() == Page.Swapping && mode.get() == Mode.Smart);
     private final BoolValue maceSwapping = new BoolValue("Mace Swapping", "重锤附魔交换", true, () -> page.get() == Page.Swapping && mode.get() == Mode.Smart);
     private final BoolValue otherSwapping = new BoolValue("Other Swapping", "其他附魔交换", true, () -> page.get() == Page.Swapping && mode.get() == Mode.Smart);
@@ -61,23 +62,23 @@ public class AttributeSwap extends Module {
     private final BoolValue mace = new BoolValue("Mace", "仅在重锤上交换", true, () -> page.get() == Page.Weapon && mode.get() == Mode.Smart && onlyOnWeapon.get());
     private final BoolValue trident = new BoolValue("Trident", "仅在三叉戟上交换", true, () -> page.get() == Page.Weapon && mode.get() == Mode.Smart && onlyOnWeapon.get());
 
-    private int backTimer;
+    private final TimerUtil backTimer = new TimerUtil();
     private boolean awaitingBack;
 
-    public AttributeSwap() {
-        super("AttributeSwap", "属性切换", Category.Combat);
+    public AutoWeapon() {
+        super("AutoWeapon", "自动武器", Category.Combat);
     }
 
     @Override
     public void onDisable() {
-        backTimer = 0;
+        backTimer.reset();
         awaitingBack = false;
     }
 
     @EventHandler
-    private void onAttack(AttackEvent event) {
+    private void onAttack(AttackEntityEvent event) {
         if (!canSwapByWeapon()) return;
-        performSwap(event.getTargetEntity());
+        performSwap(event.getEntity());
     }
 
     private void performSwap(Entity target) {
@@ -97,14 +98,15 @@ public class AttributeSwap extends Module {
         if (!InvUtil.swap(slotIndex, swapBack.get())) return;
 
         awaitingBack = swapBack.get();
-        if (awaitingBack) backTimer = swapBackDelay.get();
     }
 
     @EventHandler
-    private void onTick(TickEvent.Post event) {
+    private void onTick(TickEvent.Pre event) {
         if (!awaitingBack) return;
-        if (backTimer-- > 0) return;
-        InvUtil.swapBack();
+        if (backTimer.passedMillise(swapBackDelay.get())) {
+            InvUtil.swapBack();
+            backTimer.reset();
+        }
         awaitingBack = false;
     }
 

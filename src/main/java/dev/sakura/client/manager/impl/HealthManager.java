@@ -6,6 +6,7 @@ import dev.sakura.client.events.type.EventType;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.util.AuthUtil;
 import meteordevelopment.orbit.EventHandler;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 
@@ -21,14 +22,17 @@ public class HealthManager {
         Sakura.EVENT_BUS.subscribe(this);
     }
 
-    public float getHealth(LivingEntity entity) {
+    public float getHealth(Entity entity) {
         if (entity == null) return 0f;
-        String name = entity.getName().getString();
-        Integer scoreHealth = scoreboardHealth.get(name);
-        if (scoreHealth != null && scoreHealth > 0) {
-            return scoreHealth;
+        if (entity instanceof LivingEntity livingEntity) {
+            String name = livingEntity.getName().getString();
+            Integer scoreHealth = scoreboardHealth.get(name);
+            if (scoreHealth != null && scoreHealth > 0) {
+                return scoreHealth;
+            }
+            return livingEntity.getHealth() + livingEntity.getAbsorptionAmount();
         }
-        return entity.getHealth() + entity.getAbsorptionAmount();
+        return 0f;
     }
 
     @EventHandler

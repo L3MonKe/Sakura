@@ -32,7 +32,7 @@ public class ModuleManager {
         // Combat
         add(new AntiBot());
         add(new AttackCrystal());
-        add(new AttributeSwap());
+        add(new AutoWeapon());
         add(new KillAura());
         add(new AttackCrystal());
         add(new AutoCrystal());
@@ -40,7 +40,6 @@ public class ModuleManager {
         add(new AutoTotem());
         add(new LegitCrystal());
         add(new SafeHotbar());
-        add(new MaceSwap());
 
         // Movement
         add(new AutoSprint());

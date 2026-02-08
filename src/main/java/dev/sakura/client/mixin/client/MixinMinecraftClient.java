@@ -2,7 +2,6 @@ package dev.sakura.client.mixin.client;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.entity.AttackEvent;
 import dev.sakura.client.events.input.HandleInputEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
@@ -23,10 +22,6 @@ public class MixinMinecraftClient {
     @Shadow
     public ClientPlayerEntity player;
 
-    @Shadow
-    @Final
-    private Window window;
-
     @Inject(method = "<init>(Lnet/minecraft/client/RunArgs;)V", at = @At("TAIL"))
     private void onInit(RunArgs args, CallbackInfo ci) {
         Sakura.init((MinecraftClient) (Object) this);
@@ -45,13 +40,5 @@ public class MixinMinecraftClient {
     @Inject(method = "handleInputEvents", at = @At(value = "HEAD"))
     private void onHandleInputEvents(CallbackInfo info) {
         Sakura.EVENT_BUS.post(new HandleInputEvent());
-    }
-
-    @Inject(method = "doAttack", at = @At("HEAD"))
-    private void onAttack(CallbackInfoReturnable<Boolean> cir) {
-        if (player != null && ((MinecraftClient) (Object) this).crosshairTarget instanceof EntityHitResult entityHitResult) {
-            Entity entity = entityHitResult.getEntity();
-            Sakura.EVENT_BUS.post(new AttackEvent(entity));
-        }
     }
 }
