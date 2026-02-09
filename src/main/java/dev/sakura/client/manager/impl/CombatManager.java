@@ -58,7 +58,7 @@ public class CombatManager extends Managers {
             case PassiveEntity passiveEntity when targetSetting.targets.isEnabled("Passive") -> true;
             case MobEntity mobEntity when targetSetting.targets.isEnabled("Mobs") -> true;
             case PlayerEntity player when targetSetting.targets.isEnabled("Player") ->
-                    !AntiBot.isBot(player) || !Teams.isSameTeam(player);
+                    !AntiBot.isBot(player) && !Teams.isSameTeam(player);
             default -> false;
         };
     }
