@@ -21,6 +21,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.nanovg.NanoVG;
+
 import java.awt.*;
 import java.net.URI;
 import java.util.ArrayList;
@@ -115,18 +116,9 @@ public class MainMenuScreen extends Screen {
         entries.clear();
         entries.add(new MainMenuEntry("Single Player", "A", () -> mc.setScreen(new SelectWorldScreen(this))));
         entries.add(new MainMenuEntry("Multi Player", "P", () -> mc.setScreen(new MultiplayerScreen(this))));
-        entries.add(new MainMenuEntry("Alt Manager", "C", this::openAccountManager));
+        entries.add(new MainMenuEntry("Alt Manager", "C", null));
         entries.add(new MainMenuEntry("Options", "D", () -> mc.setScreen(new OptionsScreen(this, mc.options))));
         entries.add(new MainMenuEntry("Shut down", "E", mc::scheduleStop));
-    }
-
-    private void openAccountManager() {
-        try {
-            Class<?> clazz = Class.forName("ru.vidtu.ias.screen.AccountScreen", true, MainMenuScreen.class.getClassLoader());
-            Object object = clazz.getConstructor(Screen.class).newInstance(this);
-            mc.setScreen((Screen) object);
-        } catch (Exception ignored) {
-        }
     }
 
     private void setupSocialLinks() {

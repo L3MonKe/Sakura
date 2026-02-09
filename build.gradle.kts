@@ -66,9 +66,6 @@ dependencies {
 
     implementation(include("meteordevelopment:orbit:${property("orbit_version")}")!!)
 
-    implementation(include("net.java.dev.jna:jna:5.17.0")!!)
-    implementation(include("net.java.dev.jna:jna-platform:5.17.0")!!)
-
     // NanoVG 运行库
     val lwjglVersion = property("nanovg_version")
     implementation(include("org.lwjgl:lwjgl-nanovg:$lwjglVersion")!!)
@@ -87,9 +84,6 @@ dependencies {
         runtimeOnly(include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:$platform")!!)
         runtimeOnly(include("org.lwjgl:lwjgl-opengles:$lwjglVersion:$platform")!!)
     }
-
-    // IAS (In-Game Account Switcher) - Alt Manager
-    modImplementation(files("libs/IAS-9.0.6-alpha.2+1.21.11-fabric.jar"))
 
     // native-obfuscator annotations
     implementation(files("libs/annotations.jar"))
