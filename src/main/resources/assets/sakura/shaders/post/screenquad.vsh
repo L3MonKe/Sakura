@@ -1,6 +1,6 @@
 #version 150
 
-layout(std140) uniform ShaderParams {
+layout (std140) uniform ShaderParams {
     vec4 InSize;
     vec4 Resolution;
     vec4 Color;

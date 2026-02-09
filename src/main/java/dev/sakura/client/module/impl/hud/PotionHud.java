@@ -62,7 +62,7 @@ public class PotionHud extends HudModule {
     private final NumberValue<Double> splitOffsetY = new NumberValue<>("SplitOffsetY", "内容Y偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(HudMode.Split));
     private final NumberValue<Double> splitIconScale = new NumberValue<>("SplitIconScale", "图标缩放", 1.0, 0.5, 1.5, 0.1, () -> mode.is(HudMode.Split));
     private final NumberValue<Double> splitItemSpacing = new NumberValue<>("SplitItemSpacing", "行间距", 6.0, 0.0, 20.0, 0.5, () -> mode.is(HudMode.Split));
-    
+
     // Gradient Settings
     private final ColorValue gradientColor1 = new ColorValue("GradientColor1", "渐变颜色1", new Color(0, 255, 255), () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
     private final ColorValue gradientColor2 = new ColorValue("GradientColor2", "渐变颜色2", new Color(255, 0, 255), () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
@@ -302,7 +302,7 @@ public class PotionHud extends HudModule {
         // Add padding if desired, or fit exactly to the items
         // Currently fitting exactly to the union of all item rects
         if (minX < maxX && minY < maxY) {
-             BlurShader.drawRoundedBlur(minX, minY, maxX - minX, maxY - minY, r, blurVal);
+            BlurShader.drawRoundedBlur(minX, minY, maxX - minX, maxY - minY, r, blurVal);
         }
     }
 
