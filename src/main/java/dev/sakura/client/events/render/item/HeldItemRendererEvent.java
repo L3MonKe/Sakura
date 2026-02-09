@@ -7,7 +7,7 @@ import net.minecraft.util.Hand;
 
 public class HeldItemRendererEvent extends Cancellable {
     private final Hand hand;
-    private final ItemStack item;
+    private ItemStack item;
     private final float equipProgress;
     private final MatrixStack matrices;
 
@@ -24,6 +24,10 @@ public class HeldItemRendererEvent extends Cancellable {
 
     public ItemStack getItem() {
         return item;
+    }
+
+    public void setItem(ItemStack item) {
+        this.item = item;
     }
 
     public float getEquipProgress() {

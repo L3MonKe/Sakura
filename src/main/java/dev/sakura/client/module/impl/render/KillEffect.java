@@ -5,6 +5,7 @@ import dev.sakura.client.events.type.EventType;
 import dev.sakura.client.mixin.accessor.IPlayerInteractEntityC2SPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Blocks;
@@ -20,6 +21,9 @@ import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class KillEffect extends Module {
 
     public enum Mode {
@@ -28,12 +32,17 @@ public class KillEffect extends Module {
     }
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Blood);
+    private final BoolValue playersOnly = new BoolValue("PlayersOnly", "仅玩家", true);
 
-    private int lastTargetId = -1;
-    private long lastAttackTime;
+    private final Map<Integer, Long> recentAttacks = new ConcurrentHashMap<>();
 
     public KillEffect() {
         super("KillEffect", "击杀特效", Category.Render);
+    }
+
+    @Override
+    protected void onEnable() {
+        recentAttacks.clear();
     }
 
     @EventHandler
@@ -41,18 +50,26 @@ public class KillEffect extends Module {
         if (mc.world == null || mc.player == null) return;
 
         if (event.getType() == EventType.SEND && event.getPacket() instanceof PlayerInteractEntityC2SPacket packet) {
-            lastTargetId = ((IPlayerInteractEntityC2SPacket) packet).getEntityId();
-            lastAttackTime = System.currentTimeMillis();
+            int entityId = ((IPlayerInteractEntityC2SPacket) packet).getEntityId();
+            recentAttacks.put(entityId, System.currentTimeMillis());
+
+            // Cleanup old entries
+            long now = System.currentTimeMillis();
+            recentAttacks.entrySet().removeIf(entry -> now - entry.getValue() > 5000);
         }
 
         if (event.getType() == EventType.RECEIVE && event.getPacket() instanceof EntityStatusS2CPacket packet) {
             if (packet.getStatus() == 3) { // Death status
                 Entity entity = packet.getEntity(mc.world);
-                if (entity != null && entity.getId() == lastTargetId) {
-                    if (entity instanceof PlayerEntity && entity != mc.player) {
-                        if (System.currentTimeMillis() - lastAttackTime < 5000) { // 增加到5秒
+                if (entity != null) {
+                    if (playersOnly.get() && !(entity instanceof PlayerEntity)) return;
+                    if (entity == mc.player) return;
+
+                    Long time = recentAttacks.get(entity.getId());
+                    if (time != null) {
+                        if (System.currentTimeMillis() - time < 5000) {
                             triggerEffect(entity);
-                            lastTargetId = -1;
+                            recentAttacks.remove(entity.getId());
                         }
                     }
                 }

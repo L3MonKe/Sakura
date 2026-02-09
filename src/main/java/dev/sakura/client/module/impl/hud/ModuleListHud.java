@@ -126,6 +126,11 @@ public class ModuleListHud extends HudModule {
     private final Map<Module, Float> moduleWidthCache = new HashMap<>();
     private final Map<Module, String> moduleTextCache = new HashMap<>();
 
+    private float lastCacheScale = -1;
+    private float lastCacheFontSize = -1;
+    private FontMode lastCacheFontMode = null;
+    private ListMode lastCacheMode = null;
+
     private final List<Module> tmpVisibleModules = new ArrayList<>();
     private final Map<Module, ModuleEntry> moduleEntryCache = new HashMap<>();
 
@@ -275,6 +280,26 @@ public class ModuleListHud extends HudModule {
     }
 
     private void updateModuleList() {
+        float currentScale = hudScale.get().floatValue();
+        float currentFontSize = customFontSize.get().floatValue();
+        FontMode currentFontMode = fontMode.get();
+        ListMode currentMode = mode.get();
+
+        if (currentScale != lastCacheScale ||
+                currentFontSize != lastCacheFontSize ||
+                currentFontMode != lastCacheFontMode ||
+                currentMode != lastCacheMode) {
+
+            moduleWidthCache.clear();
+            moduleTextCache.clear();
+
+            lastCacheScale = currentScale;
+            lastCacheFontSize = currentFontSize;
+            lastCacheFontMode = currentFontMode;
+            lastCacheMode = currentMode;
+            dirty = true;
+        }
+
         boolean rebuildAndSort = dirty || sortTimer.passedMillise(500);
         if (rebuildAndSort) {
             dirty = false;

@@ -38,6 +38,7 @@ public class ModuleManager {
         add(new AutoCrystal());
         add(new AutoAnchor());
         add(new AutoTotem());
+        add(new AutoThrow());
         add(new LegitCrystal());
         add(new SafeHotbar());
 
@@ -82,6 +83,7 @@ public class ModuleManager {
         add(new KillEffect());
 //        add(new MotionBlur());
         add(new NameTags());
+        add(new NoFov());
         add(new NoRender());
         add(new Rainy());
         add(new Shaders());

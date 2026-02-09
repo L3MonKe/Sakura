@@ -11,6 +11,7 @@ import dev.sakura.client.interfaces.ISplashOverlayState;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IGameRenderer;
 import dev.sakura.client.module.impl.render.AspectRatio;
+import dev.sakura.client.module.impl.render.NoFov;
 import dev.sakura.client.module.impl.render.NoRender;
 import dev.sakura.client.module.impl.render.Shaders;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -110,10 +111,19 @@ public abstract class MixinGameRenderer {
 
     @ModifyReturnValue(method = "getBasicProjectionMatrix", at = @At("RETURN"))
     private Matrix4f hookGetBasicProjectionMatrix(Matrix4f original, float fovDegrees) {
+        NoFov noFov = Sakura.MODULES.getModule(NoFov.class);
+        float fov = fovDegrees;
+
+        if (noFov != null && noFov.isEnabled()) {
+            fov = noFov.fov.get().floatValue();
+        }
+
         AspectRatio aspectRatio = Sakura.MODULES.getModule(AspectRatio.class);
-        if (!aspectRatio.isEnabled()) {
+        if (!aspectRatio.isEnabled() && (noFov == null || !noFov.isEnabled())) {
             return original;
         }
-        return new Matrix4f().setPerspective((float) (fovDegrees * 0.01745329238474369), aspectRatio.ratio.get().floatValue(), 0.05f, getFarPlaneDistance());
+
+        float ratio = aspectRatio.isEnabled() ? aspectRatio.ratio.get().floatValue() : (float) mc.getWindow().getFramebufferWidth() / (float) mc.getWindow().getFramebufferHeight();
+        return new Matrix4f().setPerspective((float) (fov * 0.01745329238474369), ratio, 0.05f, getFarPlaneDistance());
     }
 }
