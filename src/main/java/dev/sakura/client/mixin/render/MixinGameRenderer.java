@@ -11,6 +11,7 @@ import dev.sakura.client.interfaces.ISplashOverlayState;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IGameRenderer;
 import dev.sakura.client.module.impl.render.AspectRatio;
+import dev.sakura.client.module.impl.render.NoFov;
 import dev.sakura.client.module.impl.render.NoRender;
 import dev.sakura.client.module.impl.render.Shaders;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -31,8 +32,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static dev.sakura.client.Sakura.mc;
-
-import dev.sakura.client.module.impl.render.NoFov;
 
 @Mixin(GameRenderer.class)
 public abstract class MixinGameRenderer {

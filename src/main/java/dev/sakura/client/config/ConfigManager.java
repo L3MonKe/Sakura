@@ -22,8 +22,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public final class ConfigManager {
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-
     public static final Path CONFIG_DIR = Paths.get("sakura-config");
     private static final Path CONFIG_FILE = CONFIG_DIR.resolve("config.json");
     private static final Path LEGACY_MODULES_DIR = CONFIG_DIR.resolve("modules");
@@ -84,7 +82,7 @@ public final class ConfigManager {
 
     public String saveConfigToString() {
         updateFromRuntime();
-        return GSON.toJson(current);
+        return StableConfigCodec.encode(current);
     }
 
     public void loadConfigFromString(String json) {
@@ -92,7 +90,7 @@ public final class ConfigManager {
             return;
         }
         try {
-            ClientConfig cfg = GSON.fromJson(json, ClientConfig.class);
+            ClientConfig cfg = StableConfigCodec.decode(json);
             if (cfg == null) {
                 return;
             }
@@ -116,7 +114,7 @@ public final class ConfigManager {
         }
         try {
             if (Files.exists(CONFIG_FILE)) {
-                ClientConfig cfg = GSON.fromJson(Files.readString(CONFIG_FILE, StandardCharsets.UTF_8), ClientConfig.class);
+                ClientConfig cfg = StableConfigCodec.decode(Files.readString(CONFIG_FILE, StandardCharsets.UTF_8));
                 if (cfg != null && cfg.prefix != null && !cfg.prefix.isBlank()) {
                     return cfg.prefix;
                 }
@@ -137,7 +135,7 @@ public final class ConfigManager {
     private void loadLocal() {
         if (Files.exists(CONFIG_FILE)) {
             try {
-                ClientConfig cfg = GSON.fromJson(Files.readString(CONFIG_FILE, StandardCharsets.UTF_8), ClientConfig.class);
+                ClientConfig cfg = StableConfigCodec.decode(Files.readString(CONFIG_FILE, StandardCharsets.UTF_8));
                 if (cfg != null) {
                     apply(cfg);
                     return;
@@ -158,7 +156,7 @@ public final class ConfigManager {
             updateFromRuntime();
             Files.createDirectories(CONFIG_DIR);
             Path tmp = CONFIG_DIR.resolve("config.json.tmp");
-            Files.writeString(tmp, GSON.toJson(current), StandardCharsets.UTF_8);
+            Files.writeString(tmp, StableConfigCodec.encode(current), StandardCharsets.UTF_8);
             try {
                 Files.move(tmp, CONFIG_FILE, java.nio.file.StandardCopyOption.REPLACE_EXISTING, java.nio.file.StandardCopyOption.ATOMIC_MOVE);
             } catch (Exception ignored) {
@@ -246,7 +244,7 @@ public final class ConfigManager {
             ClientConfig.ModuleData data = new ClientConfig.ModuleData();
             data.enabled = module.isEnabled();
             data.keybind = module.getKey();
-            data.bindMode = module.getBindMode() == null ? "TOGGLE" : module.getBindMode().name();
+            data.bindMode = module.getBindMode() == null ? "Toggle" : module.getBindMode().name();
             data.suffix = module.getSuffix();
 
             if (module instanceof HudModule hudModule) {

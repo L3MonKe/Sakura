@@ -26,27 +26,14 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static dev.sakura.client.Sakura.mc;
 
-import org.spongepowered.asm.mixin.injection.ModifyVariable;
-
 @Mixin(HeldItemRenderer.class)
 public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
-
-
-    @ModifyVariable(method = "renderFirstPersonItem", at = @At("HEAD"), argsOnly = true)
-    private ItemStack modifyRenderItem(ItemStack stack, AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
-        if (mc.player == null || mc.world == null) return stack;
-
-        HeldItemRendererEvent event = new HeldItemRendererEvent(hand, stack, 0, new MatrixStack()); 
-        Sakura.EVENT_BUS.post(event);
-        
-        return event.getItem();
-    }
-
     @Shadow
     @Final
     private MinecraftClient client;
@@ -91,6 +78,16 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
     @Override
     public void setItemStackOffHand(ItemStack stack) {
         this.offHand = stack;
+    }
+
+    @ModifyVariable(method = "renderFirstPersonItem", at = @At("HEAD"), argsOnly = true)
+    private ItemStack modifyRenderItem(ItemStack stack, AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
+        if (mc.player == null || mc.world == null) return stack;
+
+        HeldItemRendererEvent event = new HeldItemRendererEvent(hand, stack, 0, new MatrixStack());
+        Sakura.EVENT_BUS.post(event);
+
+        return event.getItem();
     }
 
     @Redirect(method = "updateHeldItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getMainHandStack()Lnet/minecraft/item/ItemStack;"))
