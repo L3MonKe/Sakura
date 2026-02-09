@@ -89,7 +89,7 @@ dependencies {
     }
 
     // IAS (In-Game Account Switcher) - Alt Manager
-    modImplementation(files("libs/IAS-9.0.6-alpha.2+1.21.11-fabric.jar"))
+    include(files("libs/IAS-9.0.6-alpha.2+1.21.11-fabric.jar"))?.let { modImplementation(it) }
 
     // native-obfuscator annotations
     implementation(files("libs/annotations.jar"))
