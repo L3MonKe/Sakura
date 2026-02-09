@@ -12,6 +12,7 @@ import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Rotation;
+import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -145,7 +146,7 @@ public class AutoThrow extends Module {
                 }
             }
 
-            Rotation targetRotation = calculateArc(target);
+            Rotation targetRotation = RotationUtil.calculate(target);
 
             Managers.ROTATION.setRotations(targetRotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
         }
@@ -173,7 +174,7 @@ public class AutoThrow extends Module {
         if (mc.player.isUsingItem()) return;
 
         if (target != null && throwTimer.passedMillise(nextDelay)) {
-            Rotation targetRotation = calculateArc(target);
+            Rotation targetRotation = RotationUtil.calculate(target);
 
             if (isRotated(targetRotation)) {
                 FindItemResult result = InvUtil.findInHotbar(itemStack ->
@@ -210,28 +211,6 @@ public class AutoThrow extends Module {
 
         float dist = mc.player.distanceTo(entity);
         return dist > maxRange.get() || dist < minRange.get();
-    }
-
-    private Rotation calculateArc(LivingEntity target) {
-        if (mc.player == null) return new Rotation(0, 0);
-        double posX = target.getX() + (target.getX() - target.lastX) * 2.0 - mc.player.getX();
-        double posY = target.getY() + target.getEyeHeight(target.getPose()) * 0.5 - (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()));
-        double posZ = target.getZ() + (target.getZ() - target.lastZ) * 2.0 - mc.player.getZ();
-
-        double distance = Math.sqrt(posX * posX + posZ * posZ);
-
-        double v = 1.5;
-        double g = 0.03;
-
-        double time = distance / v;
-        double drop = 0.5 * g * time * time;
-
-        posY += drop;
-
-        float pitch = (float) -Math.toDegrees(Math.atan2(posY, distance));
-        float yaw = (float) Math.toDegrees(Math.atan2(posZ, posX)) - 90.0F;
-
-        return new Rotation(yaw, pitch);
     }
 
     private boolean isRotated(Rotation targetRotation) {
