@@ -21,7 +21,6 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.MathHelper;
 import org.lwjgl.nanovg.NanoVG;
-
 import ru.vidtu.ias.screen.AccountScreen;
 
 import java.awt.*;
