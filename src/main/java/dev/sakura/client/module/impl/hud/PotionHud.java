@@ -24,6 +24,17 @@ import java.util.*;
 import java.util.List;
 
 public class PotionHud extends HudModule {
+    public enum HudMode {
+        Panel,
+        Split
+    }
+
+    public enum TextColorMode {
+        Default,
+        Gradient
+    }
+
+    private final EnumValue<HudMode> mode = new EnumValue<>("Mode", "模式", HudMode.Panel);
     private final NumberValue<Double> scale = new NumberValue<>("Scale", "缩放", 1.0, 0.5, 2.0, 0.05);
     private final NumberValue<Double> radius = new NumberValue<>("Radius", "圆角半径", 6.0, 0.0, 16.0, 1.0);
     private final BoolValue showBackground = new BoolValue("Background", "背景", false);
@@ -40,6 +51,23 @@ public class PotionHud extends HudModule {
     private final ColorValue itemColor = new ColorValue("ItemBackground", "条目背景", new Color(20, 20, 20, 140));
     private final ColorValue textColor = new ColorValue("Text", "文字颜色", new Color(255, 255, 255, 230));
     private final ColorValue secondaryTextColor = new ColorValue("SecondaryText", "次级文字颜色", new Color(200, 200, 200, 200));
+
+    // Split Mode Settings
+    private final EnumValue<TextColorMode> splitTextColorMode = new EnumValue<>("SplitTextColorMode", "文字颜色模式", TextColorMode.Default, () -> mode.is(HudMode.Split));
+    private final BoolValue splitTextGlow = new BoolValue("SplitTextGlow", "文字发光", true, () -> mode.is(HudMode.Split));
+    private final NumberValue<Double> splitGlowRadius = new NumberValue<>("SplitGlowRadius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(HudMode.Split) && splitTextGlow.get());
+    private final NumberValue<Integer> splitGlowIntensity = new NumberValue<>("SplitGlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(HudMode.Split) && splitTextGlow.get());
+    private final NumberValue<Double> splitLineWidth = new NumberValue<>("SplitLineWidth", "线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(HudMode.Split));
+    private final NumberValue<Double> splitOffsetX = new NumberValue<>("SplitOffsetX", "内容X偏移", 0.0, -20.0, 20.0, 0.5, () -> mode.is(HudMode.Split));
+    private final NumberValue<Double> splitOffsetY = new NumberValue<>("SplitOffsetY", "内容Y偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(HudMode.Split));
+    private final NumberValue<Double> splitIconScale = new NumberValue<>("SplitIconScale", "图标缩放", 1.0, 0.5, 1.5, 0.1, () -> mode.is(HudMode.Split));
+    private final NumberValue<Double> splitItemSpacing = new NumberValue<>("SplitItemSpacing", "行间距", 6.0, 0.0, 20.0, 0.5, () -> mode.is(HudMode.Split));
+    
+    // Gradient Settings
+    private final ColorValue gradientColor1 = new ColorValue("GradientColor1", "渐变颜色1", new Color(0, 255, 255), () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
+    private final ColorValue gradientColor2 = new ColorValue("GradientColor2", "渐变颜色2", new Color(255, 0, 255), () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
+    private final NumberValue<Double> gradientSpeed = new NumberValue<>("GradientSpeed", "渐变速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
+    private final NumberValue<Double> colorStep = new NumberValue<>("ColorStep", "颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
 
     private final Map<StatusEffect, EffectEntry> entries = new LinkedHashMap<>();
     private float animWidth = 0f;
@@ -92,12 +120,16 @@ public class PotionHud extends HudModule {
         animWidth = smooth(animWidth == 0 ? targetWidth : animWidth, targetWidth, 0.2f);
         animHeight = smooth(animHeight == 0 ? targetHeight : animHeight, targetHeight, 0.2f);
 
-        if (showBackground.get() && backgroundBlur.get()) {
-            BlurShader.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, blurStrength.get().floatValue());
+        if (backgroundBlur.get()) {
+            if (mode.is(HudMode.Panel) && showBackground.get()) {
+                BlurShader.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, blurStrength.get().floatValue());
+            } else if (mode.is(HudMode.Split)) {
+                renderSplitBlurBackgrounds(renderEntries, layout, s);
+            }
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
-            if (showBackground.get()) {
+            if (mode.is(HudMode.Panel) && showBackground.get()) {
                 if (bloom.get()) {
                     NanoVGHelper.drawRoundRectBloom(x, y, animWidth, animHeight, layout.panelRadius, backgroundColor.get());
                 } else {
@@ -105,7 +137,7 @@ public class PotionHud extends HudModule {
                 }
             }
 
-            if (layout.showHeader) {
+            if (layout.showHeader && mode.is(HudMode.Panel)) {
                 int headerFont = FontLoader.bold();
                 float headerFontSize = 12 * s;
                 float headerTextY = y + layout.paddingY + headerFontSize;
@@ -115,8 +147,38 @@ public class PotionHud extends HudModule {
                 NanoVGHelper.drawGradientRRect2(x + layout.paddingX, lineY, animWidth - layout.paddingX * 2, 1.2f * s, 0, ClickGui.color(0), ClickGui.color2(0));
             }
 
+            if (mode.is(HudMode.Split) && !renderEntries.isEmpty()) {
+                // Calculate total bounds for the unified background and line
+                float minX = Float.MAX_VALUE;
+                float minY = Float.MAX_VALUE;
+                float maxX = Float.MIN_VALUE;
+                float maxY = Float.MIN_VALUE;
+
+                for (EffectEntry entry : renderEntries) {
+                    minX = Math.min(minX, entry.x);
+                    minY = Math.min(minY, entry.y);
+                    maxX = Math.max(maxX, entry.x + entry.width);
+                    maxY = Math.max(maxY, entry.y + layout.itemHeight);
+                }
+
+                if (minX < maxX && minY < maxY) {
+                    // Draw unified background (color)
+                    NanoVGHelper.drawRoundRect(minX, minY, maxX - minX, maxY - minY, layout.panelRadius, backgroundColor.get());
+
+                    // Draw unified top line
+                    Color c1 = ClickGui.color(0);
+                    Color c2 = ClickGui.color2(0);
+                    float lineHeight = splitLineWidth.get().floatValue() * s;
+                    NanoVGHelper.drawGradientRRect2(minX, minY, maxX - minX, lineHeight, 0, c1, c2);
+                }
+            }
+
             for (EffectEntry entry : renderEntries) {
-                drawEntry(context, entry, layout, s);
+                if (mode.is(HudMode.Split)) {
+                    drawSplitEntry(context, entry, layout, s);
+                } else {
+                    drawEntry(context, entry, layout, s);
+                }
             }
         });
 
@@ -173,7 +235,7 @@ public class PotionHud extends HudModule {
         float headerFontSize = 12 * s;
         float headerHeight = (showBackground.get() && showHeader.get()) ? headerFontSize + 6f * s : 0f;
         float itemHeight = 20f * s;
-        float itemGap = 6f * s;
+        float itemGap = mode.is(HudMode.Split) ? splitItemSpacing.get().floatValue() * s : 6f * s;
         float iconBox = showIcon.get() ? 20f * s : 0f;
         float iconGap = showIcon.get() ? 4f * s : 0f;
         float infoPadding = 6f * s;
@@ -216,6 +278,86 @@ public class PotionHud extends HudModule {
             entry.y = smooth(entry.y == 0 ? targetY : entry.y, targetY, 0.2f);
             entry.progress = smooth(entry.progress, entry.infinite ? 1f : MathHelper.clamp(entry.duration / (float) Math.max(1, entry.maxDuration), 0f, 1f), 0.25f);
             entry.offscreen = entry.x < x - entry.width - 40f * s;
+        }
+    }
+
+    private void renderSplitBlurBackgrounds(List<EffectEntry> entries, Layout layout, float s) {
+        if (entries.isEmpty()) return;
+        float blurVal = blurStrength.get().floatValue();
+        float r = radius.get().floatValue() * s;
+
+        // Calculate total bounds for the unified background
+        float minX = Float.MAX_VALUE;
+        float minY = Float.MAX_VALUE;
+        float maxX = Float.MIN_VALUE;
+        float maxY = Float.MIN_VALUE;
+
+        for (EffectEntry entry : entries) {
+            minX = Math.min(minX, entry.x);
+            minY = Math.min(minY, entry.y);
+            maxX = Math.max(maxX, entry.x + entry.width);
+            maxY = Math.max(maxY, entry.y + layout.itemHeight);
+        }
+
+        // Add padding if desired, or fit exactly to the items
+        // Currently fitting exactly to the union of all item rects
+        if (minX < maxX && minY < maxY) {
+             BlurShader.drawRoundedBlur(minX, minY, maxX - minX, maxY - minY, r, blurVal);
+        }
+    }
+
+    private void drawSplitEntry(DrawContext context, EffectEntry entry, Layout layout, float s) {
+        float itemX = entry.x + splitOffsetX.get().floatValue() * s;
+        float itemY = entry.y + splitOffsetY.get().floatValue() * s;
+        float itemW = entry.width;
+        float itemH = layout.itemHeight;
+
+        // Icon
+        float iconBox = layout.iconBox;
+        float iconGap = layout.iconGap;
+        float contentStartX = itemX + (showIcon.get() ? iconBox + iconGap : 6f * s);
+
+        if (showIcon.get() && entry.effectInstance != null) {
+            float iconSize = 16f * s * splitIconScale.get().floatValue();
+            float iconX = itemX + 4f * s;
+            float iconY = itemY + (itemH - iconSize) / 2f;
+
+            // Removed drawIconGlow as requested
+            drawEffectIcon(context, entry.effectInstance, iconX, iconY, iconSize);
+        }
+
+        // Text
+        int nameFont = FontLoader.medium();
+        int timeFont = FontLoader.medium();
+        float nameFontSize = 11f * s;
+        float timeFontSize = 9f * s;
+
+        float nameX = contentStartX;
+        float timeX = itemX + itemW - 6f * s - NanoVGHelper.getTextWidth(entry.durationText, timeFont, timeFontSize);
+        float textY = itemY + itemH / 2f + nameFontSize / 2.8f;
+        float timeY = itemY + itemH / 2f + timeFontSize / 2.8f;
+
+        Color nameColor = textColor.get();
+        if (splitTextColorMode.is(TextColorMode.Gradient)) {
+            Color c1 = gradientColor1.get();
+            Color c2 = gradientColor2.get();
+            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+            double currentOffset = offset + (entry.order * colorStep.get());
+            double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
+            nameColor = ColorUtil.interpolateColorC(c1, c2, (float) factor);
+        } else if (coloredName.get() && entry.effectInstance != null) {
+            Color effectColor = new Color(entry.effectInstance.getEffectType().value().getColor());
+            nameColor = ColorUtil.interpolateColorC(effectColor, textColor.get(), 0.35f);
+        }
+
+        if (splitTextGlow.get()) {
+            float glowR = splitGlowRadius.get().floatValue() * s;
+            int glowI = splitGlowIntensity.get();
+            NanoVGHelper.drawGlowingString(entry.name, nameX, textY, nameFont, nameFontSize, nameColor, glowR, glowI);
+            NanoVGHelper.drawGlowingString(entry.durationText, timeX, timeY, timeFont, timeFontSize, secondaryTextColor.get(), glowR, glowI);
+        } else {
+            NanoVGHelper.drawString(entry.name, nameX, textY, nameFont, nameFontSize, nameColor);
+            NanoVGHelper.drawString(entry.durationText, timeX, timeY, timeFont, timeFontSize, secondaryTextColor.get());
         }
     }
 
