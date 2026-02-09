@@ -31,8 +31,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import static dev.sakura.client.Sakura.mc;
 
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+
 @Mixin(HeldItemRenderer.class)
 public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
+
+
+    @ModifyVariable(method = "renderFirstPersonItem", at = @At("HEAD"), argsOnly = true)
+    private ItemStack modifyRenderItem(ItemStack stack, AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
+        if (mc.player == null || mc.world == null) return stack;
+
+        HeldItemRendererEvent event = new HeldItemRendererEvent(hand, stack, 0, new MatrixStack()); 
+        Sakura.EVENT_BUS.post(event);
+        
+        return event.getItem();
+    }
 
     @Shadow
     @Final
@@ -104,6 +117,9 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
         HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
         Sakura.EVENT_BUS.post(event);
         if (event.isCancelled()) ci.cancel();
+
+        if (event.getItem() != item) {
+        }
     }
 
     @Inject(method = "renderFirstPersonItem", at = @At(value = "RETURN"))
