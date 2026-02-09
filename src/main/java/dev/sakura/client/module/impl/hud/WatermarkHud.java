@@ -164,7 +164,7 @@ public class WatermarkHud extends HudModule {
             int font = FontLoader.bold();
             float fontW = NanoVGHelper.getTextWidth(text, font, fontSize);
             float fontH = NanoVGHelper.getFontHeight(font, fontSize);
-
+            
             float paddingX = sakuraPaddingX.get().floatValue() * s;
             float textOffsetX = sakuraTextOffsetX.get().floatValue() * s;
             float textOffsetY = sakuraTextOffsetY.get().floatValue() * s;
@@ -178,13 +178,13 @@ public class WatermarkHud extends HudModule {
             double offset = (System.currentTimeMillis() * sakuraGradientSpeed.get()) / 20.0;
             float factor1 = (float) (Math.sin(Math.toRadians(offset)) + 1) / 2;
             float factor2 = (float) (Math.sin(Math.toRadians(offset + 180)) + 1) / 2;
-
+            
             Color c1_base = sakuraTextColor1.get();
             Color c2_base = sakuraTextColor2.get();
-
+            
             Color c1 = interpolateColor(c1_base, c2_base, factor1);
             Color c2 = interpolateColor(c1_base, c2_base, factor2);
-
+            
             // Create gradient across the text width
             NVGPaint paint = NVGPaint.create();
             nvgLinearGradient(vg, currentX, currentY, currentX + fontW, currentY, NanoVGHelper.nvgColor(c1), NanoVGHelper.nvgColor(c2), paint);
@@ -372,7 +372,7 @@ public class WatermarkHud extends HudModule {
 
         float paddingX = sakuraPaddingX.get().floatValue() * s;
         float paddingY = sakuraPaddingY.get().floatValue() * s;
-
+        
         float bgX = x - paddingX;
         float bgY = y - paddingY;
         float bgW = fontW + (paddingX * 2);
@@ -383,7 +383,7 @@ public class WatermarkHud extends HudModule {
         if (sakuraBlur.get()) {
             BlurShader.drawRoundedBlur(bgX, bgY, bgW, bgH, radius, 10);
         }
-
+        
         // Draw background color
         nvgBeginPath(vg);
         nvgRoundedRect(vg, bgX, bgY, bgW, bgH, radius);
@@ -404,20 +404,20 @@ public class WatermarkHud extends HudModule {
         double offset = (System.currentTimeMillis() * sakuraGradientSpeed.get()) / 20.0;
         float factor1 = (float) (Math.sin(Math.toRadians(offset)) + 1) / 2;
         float factor2 = (float) (Math.sin(Math.toRadians(offset + 180)) + 1) / 2;
-
+        
         Color c1_base = sakuraLineColor1.get();
         Color c2_base = sakuraLineColor2.get();
-
+        
         Color c1 = interpolateColor(c1_base, c2_base, factor1);
         Color c2 = interpolateColor(c1_base, c2_base, factor2);
 
         NVGPaint paint = NVGPaint.create();
         nvgLinearGradient(vg, x, y, x + w, y, NanoVGHelper.nvgColor(c1), NanoVGHelper.nvgColor(c2), paint);
-
+        
         nvgBeginPath(vg);
         // Draw custom rounded rect: Top-Left and Top-Right rounded, Bottom flat (if line height is small, or just follow shape)
         // To be safe and look good, let's draw a path that follows the top curve
-
+        
         // Start from bottom-left of the line rect
         nvgMoveTo(vg, x, y + h);
         // Line to top-left start of arc
@@ -432,12 +432,12 @@ public class WatermarkHud extends HudModule {
         nvgLineTo(vg, x + w, y + h);
         // Close shape
         nvgLineTo(vg, x, y + h);
-
+        
         nvgClosePath(vg);
         nvgFillPaint(vg, paint);
         nvgFill(vg);
     }
-
+    
     private Color interpolateColor(Color c1, Color c2, float t) {
         t = Math.max(0, Math.min(1, t));
         int r = (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * t);

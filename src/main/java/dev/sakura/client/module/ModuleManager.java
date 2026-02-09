@@ -38,6 +38,7 @@ public class ModuleManager {
         add(new AutoCrystal());
         add(new AutoAnchor());
         add(new AutoTotem());
+        add(new AutoThrow());
         add(new LegitCrystal());
         add(new SafeHotbar());
 
