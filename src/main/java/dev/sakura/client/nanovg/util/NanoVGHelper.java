@@ -160,6 +160,21 @@ public class NanoVGHelper {
     }
 
     /**
+     * 绘制自定义圆角矩形 (每个角单独控制)
+     * 顺序: Top-Left, Top-Right, Bottom-Right, Bottom-Left
+     */
+    public static void drawCustomRoundRect(float x, float y, float w, float h, float rTopLeft, float rTopRight, float rBottomRight, float rBottomLeft, Color color) {
+        long vg = getContext();
+
+        nvgBeginPath(vg);
+        nvgRoundedRectVarying(vg, x, y, w, h, rTopLeft, rTopRight, rBottomRight, rBottomLeft);
+
+        NVGColor nvgColor = nvgColor(color);
+        nvgFillColor(vg, nvgColor);
+        nvgFill(vg);
+    }
+
+    /**
      * 绘制圆角矩形
      */
     public static void drawRoundRect(float x, float y, float w, float h, float radius, Color color) {

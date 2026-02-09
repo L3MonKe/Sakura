@@ -739,6 +739,8 @@ public class ModuleListHud extends HudModule {
         float maxItemWidth = 0;
         float startY = currentY;
 
+        int visibleCount = 0;
+
         for (ModuleEntry entry : moduleEntries) {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
             double animationValue = animation != null ? animation.getOutput() : 1.0;
@@ -746,6 +748,7 @@ public class ModuleListHud extends HudModule {
             float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
 
             if (animationValue > 0.01) {
+                visibleCount++;
                 totalListHeight += (float) (itemFullHeight * animationValue);
 
                 String moduleName = entry.module.getEnglishName();
@@ -800,7 +803,17 @@ public class ModuleListHud extends HudModule {
                     c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
                 }
 
-                NanoVGHelper.drawRoundRect(itemBgX - (4 * scale), bgY, bgWidth, bgH, backgroundRadius.get().floatValue() * scale, backgroundColor.get());
+                float r = backgroundRadius.get().floatValue() * scale;
+                boolean isFirst = (bgIndex == 0);
+                boolean isLast = (bgIndex == visibleCount - 1);
+                boolean line = showGradientLine.get();
+
+                float rTopLeft = isFirst ? r : 0;
+                float rTopRight = (isFirst && !line) ? r : 0;
+                float rBottomRight = (isLast && !line) ? r : 0;
+                float rBottomLeft = r;
+
+                NanoVGHelper.drawCustomRoundRect(itemBgX - (4 * scale), bgY, bgWidth, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, backgroundColor.get());
 
                 if (showGradientLine.get()) {
                     float lineW = lineWidth.get().floatValue() * scale;
@@ -809,7 +822,7 @@ public class ModuleListHud extends HudModule {
 
                     if (lineMode.is(LineMode.Left)) {
                         float lineX = alignRight.get() ? (itemBgX - (4 * scale) + bgWidth - lineW) : (itemBgX - (4 * scale));
-                        NanoVGHelper.drawRoundRect(lineX, bgY, lineW, bgH, backgroundRadius.get().floatValue() * scale, lineColor);
+                        NanoVGHelper.drawCustomRoundRect(lineX, bgY, lineW, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, lineColor);
                     } else if (lineMode.is(LineMode.Box)) {
                         NanoVGHelper.drawRoundRectOutline(itemBgX - (4 * scale), bgY, bgWidth, bgH, backgroundRadius.get().floatValue() * scale, lineW, lineColor);
                     }
@@ -859,7 +872,17 @@ public class ModuleListHud extends HudModule {
                     c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
                 }
 
-                NanoVGHelper.drawRoundRect(itemBgX - (4 * scale), bgY, bgWidth, bgH, backgroundRadius.get().floatValue() * scale, backgroundColor.get());
+                float r = backgroundRadius.get().floatValue() * scale;
+                boolean isFirst = (bgIndex == 0);
+                boolean isLast = (bgIndex == visibleCount - 1);
+                boolean line = showGradientLine.get();
+
+                float rTopLeft = isFirst ? r : 0;
+                float rTopRight = (isFirst && !line) ? r : 0;
+                float rBottomRight = (isLast && !line) ? r : 0;
+                float rBottomLeft = r;
+
+                NanoVGHelper.drawCustomRoundRect(itemBgX - (4 * scale), bgY, bgWidth, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, backgroundColor.get());
 
                 if (showGradientLine.get()) {
                     float lineW = lineWidth.get().floatValue() * scale;
@@ -869,7 +892,7 @@ public class ModuleListHud extends HudModule {
                     if (lineMode.is(LineMode.Left)) {
                         float lineX = alignRight.get() ? (itemBgX - (4 * scale) + bgWidth - lineW) : (itemBgX - (4 * scale));
 
-                        NanoVGHelper.drawRoundRect(lineX, bgY, lineW, bgH, backgroundRadius.get().floatValue() * scale, lineColor);
+                        NanoVGHelper.drawCustomRoundRect(lineX, bgY, lineW, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, lineColor);
                     } else if (lineMode.is(LineMode.Box)) {
                         NanoVGHelper.drawRoundRectOutline(itemBgX - (4 * scale), bgY, bgWidth, bgH, backgroundRadius.get().floatValue() * scale, lineW, lineColor);
                     }
