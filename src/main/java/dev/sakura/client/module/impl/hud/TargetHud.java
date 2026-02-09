@@ -92,6 +92,7 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> MahiroNameX = new NumberValue<>("NameX", "名字X偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroAvatarPos.get() == AvatarPosEn.OnBar);
+    private final ColorValue MahiroBgColor = new ColorValue("BgColor", "背景颜色", new Color(0, 0, 0, 80), () -> style.get() == StyleEn.Sakura);
 
     // Sakura Delay Settings
     private final BoolValue MahiroDelay = new BoolValue("DelayBar", "延迟血条", true, () -> style.get() == StyleEn.Sakura);
@@ -123,8 +124,9 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> colorLength = new NumberValue<>("ColorLength", "颜色长度", 1.0, 0.1, 5.0, 0.1, () -> healthGradient.get() || espEnabled.get());
 
     // Glow Settings
-    private final BoolValue glow = new BoolValue("Glow", "发光效果", true);
-    private final NumberValue<Double> glowStrength = new NumberValue<>("GlowStrength", "发光强度", 5.0, 1.0, 20.0, 1.0, glow::get);
+    private final BoolValue nameGlow = new BoolValue("NameGlow", "名字发光", true);
+    private final BoolValue hpGlow = new BoolValue("HpGlow", "血条发光", true);
+    private final NumberValue<Double> glowStrength = new NumberValue<>("GlowStrength", "发光强度", 5.0, 1.0, 20.0, 1.0, () -> nameGlow.get() || hpGlow.get());
     private final BoolValue showArmor = new BoolValue("Armor", "显示装备", true);
 
     private final ColorValue color = new ColorValue("Color1", "颜色1", new Color(4, 59, 95));
@@ -435,7 +437,7 @@ public class TargetHud extends HudModule {
         }
 
         // Health Bar Glow
-        if (glow.get()) {
+        if (hpGlow.get()) {
             float strength = glowStrength.get().floatValue();
 
             // Optimization: Increase step size from 0.5f to 1.0f to reduce draw calls
@@ -476,7 +478,7 @@ public class TargetHud extends HudModule {
         NanoVGHelper.drawCenteredString(hpText, x + 95, y + 29f + yOffset, FontLoader.bold(), 10, Color.WHITE);
 
         // Name
-        if (glow.get()) {
+        if (nameGlow.get()) {
             float strength = glowStrength.get().floatValue();
             NanoVGHelper.drawGlowingString(target.getName().getString(), x + 50, y + 15 + yOffset, FontLoader.bold(), 14, Color.WHITE, strength, 2);
         } else {
@@ -554,7 +556,7 @@ public class TargetHud extends HudModule {
         }
 
         // Health Bar Glow
-        if (glow.get()) {
+        if (hpGlow.get()) {
             // Draw manual bloom for stronger effect
             float strength = glowStrength.get().floatValue();
 
@@ -596,7 +598,7 @@ public class TargetHud extends HudModule {
         NanoVGHelper.drawCenteredString(hpText, x + 102, y + 24f + 3 + yOffset, FontLoader.bold(), 10, Color.WHITE);
 
         // Name Glow
-        if (glow.get()) {
+        if (nameGlow.get()) {
             float strength = glowStrength.get().floatValue();
             NanoVGHelper.drawGlowingString(target.getName().getString(), x + 55, y + 14 + yOffset, FontLoader.bold(), 12, Color.WHITE, strength, 2);
         } else {
@@ -807,6 +809,10 @@ public class TargetHud extends HudModule {
         AvatarPosEn avatarPos = MahiroAvatarPos.get();
         float heightIncrease = 0;
 
+        if (avatarPos == AvatarPosEn.OnBar) {
+            heightIncrease = MahiroOnBarHeight.get().floatValue();
+        }
+
         this.width = baseW * globalScale;
         this.height = (baseH + heightIncrease) * globalScale;
 
@@ -856,7 +862,7 @@ public class TargetHud extends HudModule {
         float totalH = baseH + heightIncrease;
 
         // Background Rect
-        NanoVGHelper.drawRoundRect(x, y, baseW, totalH, radius, new Color(0, 0, 0, 80));
+        NanoVGHelper.drawRoundRect(x, y, baseW, totalH, radius, MahiroBgColor.get());
 
         float contentX = x + padding + avatarSize + padding;
         float contentW = baseW - (padding + avatarSize + padding + padding);
@@ -879,7 +885,7 @@ public class TargetHud extends HudModule {
             textX = x + padding + 2 + nameXOffset;
         }
 
-        if (glow.get()) {
+        if (nameGlow.get()) {
             NanoVGHelper.drawGlowingString(target.getName().getString(), textX, nameY, FontLoader.bold(), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
         } else {
             NanoVGHelper.drawString(target.getName().getString(), textX, nameY, FontLoader.bold(), nameSize, Color.WHITE);
@@ -923,7 +929,7 @@ public class TargetHud extends HudModule {
         }
 
         // Bar Glow
-        if (glow.get()) {
+        if (hpGlow.get()) {
             float strength = glowStrength.get().floatValue();
             for (float i = 1.0f; i <= strength; i += 1.0f) {
                 float normalizedDist = i / (strength + 2);

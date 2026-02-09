@@ -46,9 +46,11 @@ public class TimeChargeHud extends HudModule {
     private final NumberValue<Double> bloomRadius = new NumberValue<>("Bloom Radius", "发光半径", 5.0, 1.0, 20.0, 1.0, bloom::get);
     private final ColorValue bloomColor = new ColorValue("Bloom Color", "外发光颜色", new Color(0, 0, 0, 100), bloom::get);
 
-    private final NumberValue<Double> padding = new NumberValue<>("Padding", "背景边距", 5.0, 0.0, 20.0, 0.5);
+    private final NumberValue<Double> scale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 3.0, 0.1);
+    private final NumberValue<Double> paddingX = new NumberValue<>("PaddingX", "水平边距", 5.0, 0.0, 50.0, 0.5);
+    private final NumberValue<Double> paddingY = new NumberValue<>("PaddingY", "垂直边距", 5.0, 0.0, 50.0, 0.5);
 
-    private static final Color BACKGROUND_COLOR = new Color(18, 18, 18, 70);
+    private final ColorValue bgColor = new ColorValue("Background Color", "背景颜色", new Color(18, 18, 18, 70));
 
     public TimeChargeHud() {
         super("TimeCharge", "Timer蓄力条", 200, 200);
@@ -66,27 +68,32 @@ public class TimeChargeHud extends HudModule {
         if (!timerModule.isEnabled()) return;
 
         // 更新尺寸
-        this.width = widthValue.get().floatValue();
+        float s = scale.get().floatValue();
+        float baseW = widthValue.get().floatValue();
+        float baseH = heightValue.get().floatValue();
+        float extraH = mode.is(Mode.New) ? 25 : 15;
 
-        // New 模式下增加高度以容纳下方的百分比文本
-        float extraHeight = mode.is(Mode.New) ? 25 : 15;
-        this.height = heightValue.get().floatValue() + extraHeight;
+        // 拖拽区域尺寸 (不包含背景 Padding)
+        this.width = baseW * s;
+        this.height = (baseH + extraH) * s;
 
-        float r = radiusValue.get().floatValue();
-        float pad = padding.get().floatValue();
+        float r = radiusValue.get().floatValue() * s;
+        float padX = paddingX.get().floatValue() * s;
+        float padY = paddingY.get().floatValue() * s;
 
-        float bgX = x - pad;
-        float bgY = y - 5 - pad;
-        float bgW = width + pad * 2;
-        float bgH = height + 4 + pad * 2;
-        float bgR = r + pad;
+        // 背景区域 (相对于 x, y)
+        float bgX = x - padX;
+        float bgY = y - 5 * s - padY;
+        float bgW = this.width + padX * 2;
+        float bgH = this.height + 4 * s + padY * 2;
+        float bgR = r + (Math.min(padX, padY)); // 圆角简单适配
 
         double progress = timerModule.getProgress();
         boolean active = timerModule.isActive();
 
         // 1. 绘制模糊背景 (如果启用)
         if (blur.get()) {
-            BlurShader.drawRoundedBlur(bgX, bgY, bgW, bgH, bgR, blurRadius.get().floatValue());
+            BlurShader.drawRoundedBlur(bgX, bgY, bgW, bgH, bgR, blurRadius.get().floatValue() * s);
         }
 
         // 2. 绘制 NanoVG 内容
@@ -95,31 +102,33 @@ public class TimeChargeHud extends HudModule {
 
             // 整个模块的背景
             if (bloom.get()) {
-                NanoVGHelper.drawRoundRectBloom(bgX, bgY, bgW, bgH, bgR, bloomRadius.get().floatValue(), BACKGROUND_COLOR);
+                NanoVGHelper.drawRoundRectBloom(bgX, bgY, bgW, bgH, bgR, bloomRadius.get().floatValue() * s, bgColor.get());
             } else {
-                NanoVGHelper.drawRoundRect(bgX, bgY, bgW, bgH, bgR, BACKGROUND_COLOR);
+                NanoVGHelper.drawRoundRect(bgX, bgY, bgW, bgH, bgR, bgColor.get());
             }
 
             // 标题 "Timer"
             int font = FontLoader.medium();
-            NanoVGHelper.drawCenteredString("Timer", x + width / 2f, y + 2, font, 12, Color.WHITE);
+            NanoVGHelper.drawCenteredString("Timer", x + this.width / 2f, y + 2 * s, font, 12 * s, Color.WHITE);
 
             // 进度条区域 Y 偏移
-            float barY = y + 15;
-            float barH = heightValue.get().floatValue();
+            float barY = y + 15 * s;
+            float barH = baseH * s;
+            float barW = this.width - 10 * s;
+            float barX = x + 5 * s;
 
             // 进度条背景
             Color bg = new Color(35, 35, 38, 160);
-            NanoVGHelper.drawRoundRect(x + 5, barY, width - 10, barH, r, bg);
+            NanoVGHelper.drawRoundRect(barX, barY, barW, barH, r, bg);
 
             // 边框 (仅 Old 模式显示)
             if (mode.is(Mode.Old)) {
                 Color outline = new Color(20, 20, 22, 220);
-                NanoVGHelper.drawRoundRectOutline(x + 5, barY, width - 10, barH, r, 1.2f, outline);
+                NanoVGHelper.drawRoundRectOutline(barX, barY, barW, barH, r, 1.2f * s, outline);
             }
 
             // 进度条
-            float pw = (float) ((width - 10) * Math.max(0.0, Math.min(1.0, progress)));
+            float pw = (float) (barW * Math.max(0.0, Math.min(1.0, progress)));
 
             if (pw > 0f) {
                 Color c1, c2;
@@ -146,6 +155,7 @@ public class TimeChargeHud extends HudModule {
                 if (glow.get()) {
                     float strength = glowStrength.get().floatValue();
                     for (float i = 0.5f; i <= strength; i += 0.5f) {
+                        float iS = i * s;
                         float normalizedDist = i / (strength + 2);
                         float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
                         float alpha = alphaFactor * 0.15f;
@@ -154,13 +164,13 @@ public class TimeChargeHud extends HudModule {
                         if (alphaInt > 0) {
                             Color gc1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt);
                             Color gc2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alphaInt);
-                            NanoVGHelper.drawGradientRRect2(x + 5 - i, barY - i, pw + i * 2, barH + i * 2, r + i, gc1, gc2);
+                            NanoVGHelper.drawGradientRRect2(barX - iS, barY - iS, pw + iS * 2, barH + iS * 2, r + iS, gc1, gc2);
                         }
                     }
                 }
 
                 // 绘制进度条
-                NanoVGHelper.drawGradientRRect2(x + 5, barY, pw, barH, r, c1, c2);
+                NanoVGHelper.drawGradientRRect2(barX, barY, pw, barH, r, c1, c2);
             }
 
             // 百分比文本
@@ -169,11 +179,11 @@ public class TimeChargeHud extends HudModule {
 
             if (mode.is(Mode.Old)) {
                 // Old: 居中显示
-                NanoVGHelper.drawCenteredString(percentText, x + width / 2f, barY + barH / 2f + 1, smallFont, 10, Color.WHITE);
+                NanoVGHelper.drawCenteredString(percentText, x + this.width / 2f, barY + barH / 2f + 1 * s, smallFont, 10 * s, Color.WHITE);
             } else {
                 // New: 下方显示
                 // barY + barH 是进度条底部，再加一点间距
-                NanoVGHelper.drawCenteredString(percentText, x + width / 2f, barY + barH + 8, smallFont, 10, Color.WHITE);
+                NanoVGHelper.drawCenteredString(percentText, x + this.width / 2f, barY + barH + 8 * s, smallFont, 10 * s, Color.WHITE);
             }
 
             NanoVGHelper.restore();
