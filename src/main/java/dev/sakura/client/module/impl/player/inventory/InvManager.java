@@ -49,8 +49,8 @@ public class InvManager extends Module {
         PunchBow
     }
 
-    private final NumberValue<Double> minDelay = new NumberValue<>("Min Delay", "最小延迟", 90.0, 0.0, 150.0, 5.0);
-    private final NumberValue<Double> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110.0, 0.0, 150.0, 5.0);
+    private final NumberValue<Double> minDelay = new NumberValue<>("Min Delay", "最小延迟", 90.0, 0.0, 500.0, 5.0);
+    private final NumberValue<Double> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110.0, 0.0, 500.0, 5.0);
     private final EnumValue<OffhandItemMode> offhandItems = new EnumValue<>("Offhand Items", "副手物品", OffhandItemMode.Projectile);
     private final BoolValue autoArmor = new BoolValue("Auto Armor", "自动穿甲", true);
     private final BoolValue inventoryOnly = new BoolValue("Inventory Only", "仅背包界面", true);

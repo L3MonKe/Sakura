@@ -28,8 +28,8 @@ public class Stealer extends Module {
     }
 
     private final BoolValue pickEnderChest = new BoolValue("Ender Chest", "末影箱", false);
-    private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟", 90, 0, 150, 5);
-    private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110, 0, 150, 5);
+    private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟", 90, 0, 500, 5);
+    private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110, 0, 500, 5);
 
     private Screen lastTickScreen;
     private final TimerUtil timer = new TimerUtil();
