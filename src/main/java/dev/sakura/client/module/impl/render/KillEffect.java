@@ -52,7 +52,7 @@ public class KillEffect extends Module {
         if (event.getType() == EventType.SEND && event.getPacket() instanceof PlayerInteractEntityC2SPacket packet) {
             int entityId = ((IPlayerInteractEntityC2SPacket) packet).getEntityId();
             recentAttacks.put(entityId, System.currentTimeMillis());
-            
+
             // Cleanup old entries
             long now = System.currentTimeMillis();
             recentAttacks.entrySet().removeIf(entry -> now - entry.getValue() > 5000);

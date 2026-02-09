@@ -1,27 +1,26 @@
 package dev.sakura.client.module.impl.combat;
 
+import dev.sakura.client.Sakura;
 import dev.sakura.client.events.client.TickEvent;
+import dev.sakura.client.events.render.item.HeldItemRendererEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Rotation;
+import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
 import meteordevelopment.orbit.EventHandler;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.util.Hand;
-
-import dev.sakura.client.Sakura;
-import dev.sakura.client.module.impl.movement.Scaffold;
-import dev.sakura.client.utils.time.TimerUtil;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import dev.sakura.client.events.render.item.HeldItemRendererEvent;
-import net.minecraft.item.ItemStack;
 
 public class AutoThrow extends Module {
 
@@ -39,15 +38,15 @@ public class AutoThrow extends Module {
     private LivingEntity target;
     private final TimerUtil throwTimer = new TimerUtil();
     private long nextDelay = 0;
-    
+
     private boolean shouldSwapBack;
-    
+
     private boolean isThrowing = false;
     private int oldSlot = -1;
 
     public AutoThrow() {
         super("AutoThrow", "自动投掷", Category.Combat);
-        
+
         ClientTickEvents.START_CLIENT_TICK.register(minecraftClient -> {
             if (minecraftClient.player == null || minecraftClient.world == null) return;
             if (!shouldSwapBack) return;
@@ -72,42 +71,40 @@ public class AutoThrow extends Module {
     }
 
     @EventHandler
-    @SuppressWarnings("unused")
     public void onHeldItemRender(HeldItemRendererEvent event) {
         if (!silentSwitch.get()) return;
         if (mc.player == null) return;
 
         if (isThrowing && oldSlot != -1 && event.getHand() == Hand.MAIN_HAND) {
-             event.setItem(mc.player.getInventory().getStack(oldSlot));
-             return;
+            event.setItem(mc.player.getInventory().getStack(oldSlot));
+            return;
         }
 
         int currentSlot = mc.player.getInventory().getSelectedSlot();
         ItemStack currentStack = mc.player.getInventory().getStack(currentSlot);
 
         if (event.getHand() == Hand.MAIN_HAND && (currentStack.getItem() == Items.SNOWBALL || currentStack.getItem() == Items.EGG)) {
-             int bestSlot = -1;
-             for (int i = 0; i < 9; i++) {
-                 ItemStack s = mc.player.getInventory().getStack(i);
-                 if (!s.isEmpty() && s.getItem() != Items.SNOWBALL && s.getItem() != Items.EGG) {
-                     bestSlot = i;
-                     break; 
-                 }
-             }
-             
-             if (bestSlot != -1) {
-                 event.setItem(mc.player.getInventory().getStack(bestSlot));
-             }
+            int bestSlot = -1;
+            for (int i = 0; i < 9; i++) {
+                ItemStack s = mc.player.getInventory().getStack(i);
+                if (!s.isEmpty() && s.getItem() != Items.SNOWBALL && s.getItem() != Items.EGG) {
+                    bestSlot = i;
+                    break;
+                }
+            }
+
+            if (bestSlot != -1) {
+                event.setItem(mc.player.getInventory().getStack(bestSlot));
+            }
         }
     }
 
     @EventHandler
-    @SuppressWarnings("unused")
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
         if (Sakura.MODULES.getModule(Scaffold.class).isEnabled()) return;
-        
+
         KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
         if (pauseInAura.get() && killAura.isEnabled() && killAura.getCurrentTarget() != null) {
             return;
@@ -124,8 +121,8 @@ public class AutoThrow extends Module {
             return;
         }
 
-        FindItemResult result = InvUtil.findInHotbar(itemStack -> 
-            itemStack.getItem() == Items.SNOWBALL || itemStack.getItem() == Items.EGG
+        FindItemResult result = InvUtil.findInHotbar(itemStack ->
+                itemStack.getItem() == Items.SNOWBALL || itemStack.getItem() == Items.EGG
         );
 
         if (!result.found()) {
@@ -138,36 +135,35 @@ public class AutoThrow extends Module {
         if (target != null) {
             if (mc.player == null) return;
             if (inCombat.get() && mc.player.distanceTo(target) <= 3.0) {
-                 if (killAura.isEnabled() && killAura.getCurrentTarget() != null) {
-                     float cooldown = mc.player.getAttackCooldownProgress(0.0f);
-                     
-                     if (cooldown > 0.6f) {
-                         target = null; 
-                         return;
-                     }
-                 }
+                if (killAura.isEnabled() && killAura.getCurrentTarget() != null) {
+                    float cooldown = mc.player.getAttackCooldownProgress(0.0f);
+
+                    if (cooldown > 0.6f) {
+                        target = null;
+                        return;
+                    }
+                }
             }
 
             Rotation targetRotation = calculateArc(target);
-            
+
             Managers.ROTATION.setRotations(targetRotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
         }
     }
 
     @EventHandler
-    @SuppressWarnings("unused")
     public void onPostTick(TickEvent.Post event) {
         if (nullCheck()) return;
-        
+
         if (isThrowing) {
             mc.options.useKey.setPressed(false);
             isThrowing = false;
-            
+
             if (oldSlot != -1 && autoSwitch.get()) {
                 if (mc.player != null) mc.player.getInventory().setSelectedSlot(oldSlot);
             }
             oldSlot = -1;
-            
+
             throwTimer.reset();
             updateNextDelay();
             return;
@@ -180,8 +176,8 @@ public class AutoThrow extends Module {
             Rotation targetRotation = calculateArc(target);
 
             if (isRotated(targetRotation)) {
-                FindItemResult result = InvUtil.findInHotbar(itemStack -> 
-                    itemStack.getItem() == Items.SNOWBALL || itemStack.getItem() == Items.EGG
+                FindItemResult result = InvUtil.findInHotbar(itemStack ->
+                        itemStack.getItem() == Items.SNOWBALL || itemStack.getItem() == Items.EGG
                 );
 
                 if (result.found()) {
@@ -197,21 +193,21 @@ public class AutoThrow extends Module {
                 return;
             }
         }
-        
+
         target = null;
         for (LivingEntity entity : Managers.COMBAT.getEntities(maxRange.get())) {
             if (isInvalid(entity)) continue;
             target = entity;
-            break; 
+            break;
         }
     }
 
     private boolean isInvalid(LivingEntity entity) {
         if (entity == null || !entity.isAlive()) return true;
         if (mc.player == null) return true;
-        
+
         if (wallCheck.get() && !mc.player.canSee(entity)) return true;
-        
+
         float dist = mc.player.distanceTo(entity);
         return dist > maxRange.get() || dist < minRange.get();
     }
@@ -221,17 +217,17 @@ public class AutoThrow extends Module {
         double posX = target.getX() + (target.getX() - target.lastX) * 2.0 - mc.player.getX();
         double posY = target.getY() + target.getEyeHeight(target.getPose()) * 0.5 - (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()));
         double posZ = target.getZ() + (target.getZ() - target.lastZ) * 2.0 - mc.player.getZ();
-        
+
         double distance = Math.sqrt(posX * posX + posZ * posZ);
-        
+
         double v = 1.5;
         double g = 0.03;
-        
+
         double time = distance / v;
         double drop = 0.5 * g * time * time;
-        
+
         posY += drop;
-        
+
         float pitch = (float) -Math.toDegrees(Math.atan2(posY, distance));
         float yaw = (float) Math.toDegrees(Math.atan2(posZ, posX)) - 90.0F;
 
@@ -249,10 +245,10 @@ public class AutoThrow extends Module {
         if (mc.player == null) return;
         int currentSlot = mc.player.getInventory().getSelectedSlot();
         if (currentSlot != slot) {
-             oldSlot = currentSlot;
-             mc.player.getInventory().setSelectedSlot(slot);
+            oldSlot = currentSlot;
+            mc.player.getInventory().setSelectedSlot(slot);
         } else {
-             oldSlot = -1;
+            oldSlot = -1;
         }
 
         mc.options.useKey.setPressed(true);
