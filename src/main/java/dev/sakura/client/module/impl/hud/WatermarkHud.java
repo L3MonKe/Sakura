@@ -6,6 +6,7 @@ import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
+import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
@@ -23,7 +24,8 @@ public class WatermarkHud extends HudModule {
 
     public enum ListMode {
         Normal,
-        Gradient
+        Gradient,
+        Sakura
     }
 
     private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Normal);
@@ -52,6 +54,26 @@ public class WatermarkHud extends HudModule {
     private final NumberValue<Double> gradientGlowRadius = new NumberValue<>("GradientGlowRadius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && gradientTextGlow.get());
     private final NumberValue<Integer> gradientGlowIntensity = new NumberValue<>("GradientGlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && gradientTextGlow.get());
 
+    // Sakura Mode Settings
+    private final NumberValue<Double> sakuraSize = new NumberValue<>("SakuraSize", "Sakura-大小", 40.0, 5.0, 100.0, 1.0, () -> mode.is(ListMode.Sakura));
+    private final ColorValue sakuraTextColor1 = new ColorValue("SakuraTextColor1", "Sakura-文本色1", new Color(255, 192, 203), () -> mode.is(ListMode.Sakura));
+    private final ColorValue sakuraTextColor2 = new ColorValue("SakuraTextColor2", "Sakura-文本色2", new Color(255, 105, 180), () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraGradientSpeed = new NumberValue<>("SakuraAnimSpeed", "Sakura-渐变速度", 2.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Sakura));
+    private final BoolValue sakuraTextGlow = new BoolValue("SakuraTextGlow", "Sakura-发光", true, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraGlowRadius = new NumberValue<>("SakuraGlowRadius", "Sakura-发光半径", 5.0, 1.0, 20.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraTextGlow.get());
+    private final NumberValue<Integer> sakuraGlowIntensity = new NumberValue<>("SakuraGlowIntensity", "Sakura-发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Sakura) && sakuraTextGlow.get());
+    private final BoolValue sakuraBlur = new BoolValue("SakuraBlur", "Sakura-背景模糊", true, () -> mode.is(ListMode.Sakura));
+    private final ColorValue sakuraBackgroundColor = new ColorValue("SakuraBgColor", "Sakura-背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraBackgroundRadius = new NumberValue<>("SakuraBgRadius", "Sakura-背景圆角", 5.0, 0.0, 20.0, 1.0, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraPaddingX = new NumberValue<>("SakuraPaddingX", "Sakura-宽(间距)", 5.0, 0.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraPaddingY = new NumberValue<>("SakuraPaddingY", "Sakura-高(间距)", 2.0, 0.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraTextOffsetX = new NumberValue<>("SakuraTextOffsetX", "Sakura-文字X偏移", 0.0, -50.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraTextOffsetY = new NumberValue<>("SakuraTextOffsetY", "Sakura-文字Y偏移", 0.0, -50.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
+    private final BoolValue sakuraTopLine = new BoolValue("SakuraTopLine", "Sakura-顶部线条", false, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraLineHeight = new NumberValue<>("SakuraLineHeight", "Sakura-线条高度", 2.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
+    private final ColorValue sakuraLineColor1 = new ColorValue("SakuraLineColor1", "Sakura-线条色1", new Color(0, 255, 255), () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
+    private final ColorValue sakuraLineColor2 = new ColorValue("SakuraLineColor2", "Sakura-线条色2", new Color(255, 0, 255), () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
+
     private int iconImage = -1;
     private float rotationAngle = 0.0f;
     private long lastUpdateTime = 0;
@@ -65,6 +87,9 @@ public class WatermarkHud extends HudModule {
     @Override
     public void onRender(DrawContext context) {
         update();
+        if (mode.is(ListMode.Sakura) && sakuraBlur.get()) {
+            renderSakuraBlur();
+        }
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
     }
 
@@ -132,6 +157,65 @@ public class WatermarkHud extends HudModule {
     private void renderContent() {
         long vg = NanoVGRenderer.INSTANCE.getContext();
         float s = hudScale.get().floatValue();
+
+        if (mode.is(ListMode.Sakura)) {
+            String text = "Sakura";
+            float fontSize = sakuraSize.get().floatValue() * s;
+            int font = FontLoader.bold();
+            float fontW = NanoVGHelper.getTextWidth(text, font, fontSize);
+            float fontH = NanoVGHelper.getFontHeight(font, fontSize);
+            
+            float paddingX = sakuraPaddingX.get().floatValue() * s;
+            float textOffsetX = sakuraTextOffsetX.get().floatValue() * s;
+            float textOffsetY = sakuraTextOffsetY.get().floatValue() * s;
+
+            float currentX = x + textOffsetX;
+            float currentY = y + textOffsetY;
+            float textY = currentY + fontH;
+
+            // Gradient Paint Logic for Sakura
+            // Calculate dynamic colors
+            double offset = (System.currentTimeMillis() * sakuraGradientSpeed.get()) / 20.0;
+            float factor1 = (float) (Math.sin(Math.toRadians(offset)) + 1) / 2;
+            float factor2 = (float) (Math.sin(Math.toRadians(offset + 180)) + 1) / 2;
+            
+            Color c1_base = sakuraTextColor1.get();
+            Color c2_base = sakuraTextColor2.get();
+            
+            Color c1 = interpolateColor(c1_base, c2_base, factor1);
+            Color c2 = interpolateColor(c1_base, c2_base, factor2);
+            
+            // Create gradient across the text width
+            NVGPaint paint = NVGPaint.create();
+            nvgLinearGradient(vg, currentX, currentY, currentX + fontW, currentY, NanoVGHelper.nvgColor(c1), NanoVGHelper.nvgColor(c2), paint);
+
+            if (sakuraTextGlow.get()) {
+                float radius = sakuraGlowRadius.get().floatValue() * s;
+                int intensity = sakuraGlowIntensity.get();
+
+                nvgFontFaceId(vg, font);
+                nvgFontSize(vg, fontSize);
+                nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
+
+                nvgFontBlur(vg, radius);
+                nvgFillPaint(vg, paint);
+                for (int i = 0; i < intensity; i++) {
+                    nvgText(vg, currentX, textY, text);
+                }
+                nvgFontBlur(vg, 0);
+            }
+
+            nvgFontFaceId(vg, font);
+            nvgFontSize(vg, fontSize);
+            nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE);
+            nvgFillPaint(vg, paint);
+            nvgText(vg, currentX, textY, text);
+
+            this.width = fontW + (paddingX * 2); // Include padding in total width for drag
+            this.height = fontH;
+            return;
+        }
+
         String text = Sakura.MOD_NAME + " " + Sakura.MOD_VER;
         float fontSize = 30 * s;
         int font = FontLoader.bold();
@@ -276,6 +360,91 @@ public class WatermarkHud extends HudModule {
             NanoVGHelper.deleteTexture(iconImage);
             iconImage = -1;
         }
+    }
+
+    private void renderSakuraBlur() {
+        float s = hudScale.get().floatValue();
+        float fontSize = sakuraSize.get().floatValue() * s;
+        String text = "Sakura";
+        int font = FontLoader.bold();
+        float fontW = NanoVGHelper.getTextWidth(text, font, fontSize);
+        float fontH = NanoVGHelper.getFontHeight(font, fontSize);
+
+        float paddingX = sakuraPaddingX.get().floatValue() * s;
+        float paddingY = sakuraPaddingY.get().floatValue() * s;
+        
+        float bgX = x - paddingX;
+        float bgY = y - paddingY;
+        float bgW = fontW + (paddingX * 2);
+        float bgH = fontH + (paddingY * 2);
+        float radius = sakuraBackgroundRadius.get().floatValue() * s;
+        long vg = NanoVGRenderer.INSTANCE.getContext();
+
+        if (sakuraBlur.get()) {
+            BlurShader.drawRoundedBlur(bgX, bgY, bgW, bgH, radius, 10);
+        }
+        
+        // Draw background color
+        nvgBeginPath(vg);
+        nvgRoundedRect(vg, bgX, bgY, bgW, bgH, radius);
+        nvgFillColor(vg, NanoVGHelper.nvgColor(sakuraBackgroundColor.get()));
+        nvgFill(vg);
+
+        if (sakuraTopLine.get()) {
+            renderSakuraGradientLine(bgX, bgY, bgW, radius);
+        }
+    }
+
+    private void renderSakuraGradientLine(float x, float y, float w, float radius) {
+        float s = hudScale.get().floatValue();
+        float h = sakuraLineHeight.get().floatValue() * s;
+        long vg = NanoVGRenderer.INSTANCE.getContext();
+
+        // Calculate dynamic colors
+        double offset = (System.currentTimeMillis() * sakuraGradientSpeed.get()) / 20.0;
+        float factor1 = (float) (Math.sin(Math.toRadians(offset)) + 1) / 2;
+        float factor2 = (float) (Math.sin(Math.toRadians(offset + 180)) + 1) / 2;
+        
+        Color c1_base = sakuraLineColor1.get();
+        Color c2_base = sakuraLineColor2.get();
+        
+        Color c1 = interpolateColor(c1_base, c2_base, factor1);
+        Color c2 = interpolateColor(c1_base, c2_base, factor2);
+
+        NVGPaint paint = NVGPaint.create();
+        nvgLinearGradient(vg, x, y, x + w, y, NanoVGHelper.nvgColor(c1), NanoVGHelper.nvgColor(c2), paint);
+        
+        nvgBeginPath(vg);
+        // Draw custom rounded rect: Top-Left and Top-Right rounded, Bottom flat (if line height is small, or just follow shape)
+        // To be safe and look good, let's draw a path that follows the top curve
+        
+        // Start from bottom-left of the line rect
+        nvgMoveTo(vg, x, y + h);
+        // Line to top-left start of arc
+        nvgLineTo(vg, x, y + radius);
+        // Arc top-left
+        nvgArcTo(vg, x, y, x + radius, y, radius);
+        // Line to top-right start of arc
+        nvgLineTo(vg, x + w - radius, y);
+        // Arc top-right
+        nvgArcTo(vg, x + w, y, x + w, y + radius, radius);
+        // Line to bottom-right of the line rect
+        nvgLineTo(vg, x + w, y + h);
+        // Close shape
+        nvgLineTo(vg, x, y + h);
+        
+        nvgClosePath(vg);
+        nvgFillPaint(vg, paint);
+        nvgFill(vg);
+    }
+    
+    private Color interpolateColor(Color c1, Color c2, float t) {
+        t = Math.max(0, Math.min(1, t));
+        int r = (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * t);
+        int g = (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * t);
+        int b = (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * t);
+        int a = (int) (c1.getAlpha() + (c2.getAlpha() - c1.getAlpha()) * t);
+        return new Color(r, g, b, a);
     }
 
     private static class Particle {
