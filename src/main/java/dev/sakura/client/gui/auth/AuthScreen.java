@@ -23,8 +23,6 @@ import java.awt.*;
 
 @ZKMIndy
 public class AuthScreen extends Screen {
-    private final Screen parent;
-
     private enum Mode {
         Login,
         Register
@@ -51,7 +49,6 @@ public class AuthScreen extends Screen {
 
     public AuthScreen(Screen parent) {
         super(Text.of("Auth"));
-        this.parent = parent;
     }
 
     @Override
