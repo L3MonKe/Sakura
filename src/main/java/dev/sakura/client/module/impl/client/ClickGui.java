@@ -11,7 +11,6 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import dev.sakura.client.verify.util.ExitUtil;
 import net.minecraft.sound.SoundEvent;
 
 import java.awt.*;
@@ -62,7 +61,6 @@ public class ClickGui extends Module {
 
     @Override
     protected void onEnable() {
-        ExitUtil.ensureVerifiedOrExit();
         if (mc.currentScreen == null && mc.mouse == null) {
             this.toggle();
             return;
