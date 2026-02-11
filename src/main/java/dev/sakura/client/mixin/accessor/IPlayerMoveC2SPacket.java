@@ -7,9 +7,37 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(PlayerMoveC2SPacket.class)
 public interface IPlayerMoveC2SPacket {
+    @Accessor("x")
+    double getX();
+
+    @Mutable
+    @Accessor("x")
+    void setX(double x);
+
+    @Accessor("y")
+    double getY();
+
+    @Mutable
+    @Accessor("y")
+    void setY(double y);
+
+    @Accessor("z")
+    double getZ();
+
+    @Mutable
+    @Accessor("z")
+    void setZ(double z);
+
     @Mutable
     @Accessor("onGround")
     void setOnGround(boolean onGround);
+
+    @Accessor("horizontalCollision")
+    boolean getHorizontalCollision();
+
+    @Mutable
+    @Accessor("horizontalCollision")
+    void setHorizontalCollision(boolean horizontalCollision);
 
     @Accessor("pitch")
     float getPitch();
@@ -24,4 +52,11 @@ public interface IPlayerMoveC2SPacket {
     @Mutable
     @Accessor("yaw")
     void setYaw(float yaw);
+
+    @Accessor("changePosition")
+    boolean getChangePosition();
+
+    @Mutable
+    @Accessor("changePosition")
+    void setChangePosition(boolean changePosition);
 }

@@ -3,6 +3,7 @@ package dev.sakura.client.manager.impl;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.events.client.TickEvent;
 import meteordevelopment.orbit.EventHandler;
+import meteordevelopment.orbit.EventPriority;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -24,7 +25,7 @@ public class ExtrapolationManager {
         Sakura.EVENT_BUS.subscribe(this);
     }
 
-    @EventHandler(priority = 1000000)
+    @EventHandler(priority = EventPriority.HIGHEST)
     private void onTick(TickEvent.Post event) {
         if (mc.player == null || mc.world == null || mc.world.getPlayers().isEmpty()) return;
 
@@ -41,7 +42,7 @@ public class ExtrapolationManager {
             }
 
             List<Vec3d> v = motions.get(player);
-            v.add(0, vec);
+            v.addFirst(vec);
 
             if (v.size() > 20) {
                 v.subList(20, v.size()).clear();
@@ -120,7 +121,7 @@ public class ExtrapolationManager {
     }
 
     private Vec3d getMotion(List<Vec3d> vecs, int max) {
-        Vec3d avg = new Vec3d(0, (vecs.get(0).y - 0.08) * 0.98, 0);
+        Vec3d avg = new Vec3d(0, (vecs.getFirst().y - 0.08) * 0.98, 0);
 
         int s = Math.min(vecs.size(), max);
         for (int i = 0; i < s; i++) {

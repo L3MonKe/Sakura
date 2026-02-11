@@ -34,6 +34,7 @@ public class ModuleManager {
         add(new AttackCrystal());
         add(new AutoWeapon());
         add(new KillAura());
+        add(new TpAura());
         add(new AttackCrystal());
         add(new AutoCrystal());
         add(new AutoAnchor());

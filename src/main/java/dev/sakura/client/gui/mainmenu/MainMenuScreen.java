@@ -99,9 +99,12 @@ public class MainMenuScreen extends Screen {
 
         long now = Util.getMeasuringTimeMs();
 
-        postAuthIntroActive = false;
-        postAuthIntroStartTime = -1L;
-        suppressFadeOverlay = false;
+        if (!postAuthIntroActive) {
+            postAuthIntroStartTime = -1L;
+            suppressFadeOverlay = false;
+        } else if (postAuthIntroStartTime <= 0L) {
+            postAuthIntroStartTime = now;
+        }
 
         if (externalEntranceTarget >= 0f) {
             localEntranceStartTime = -1L;
@@ -163,9 +166,7 @@ public class MainMenuScreen extends Screen {
     }
 
     public void startIntro() {
-        // TODO: 对接验证动画
-        // 当 AuthScreen 验证通过后，调用此方法播放进入主界面的动画
-        // 此动画 (postAuthIntroActive) 会在 MainMenuShader 中渲染过渡效果
+        MainMenuShader.getSharedInstance().switchShaderType(MainMenuShader.MainMenuShaderType.SAKURA);
         long now = Util.getMeasuringTimeMs();
         postAuthIntroActive = true;
         postAuthIntroStartTime = now;

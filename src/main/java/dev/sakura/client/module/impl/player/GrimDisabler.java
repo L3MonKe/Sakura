@@ -51,12 +51,12 @@ public class GrimDisabler extends Module {
     public void onEnable() {
         transQueue.clear();
         transID = 0;
-        ChatUtil.serverMessage("[Disabler] Module enabled");
+        ChatUtil.clientMessage("[Disabler] Module enabled");
     }
 
     @Override
     public void onDisable() {
-        ChatUtil.serverMessage("[Disabler] Module disabled, releasing queued packets");
+        ChatUtil.clientMessage("[Disabler] Module disabled, releasing queued packets");
         while (!transQueue.isEmpty()) {
             PacketUtil.sendPacketNoEvent(transQueue.poll());
         }
@@ -84,7 +84,7 @@ public class GrimDisabler extends Module {
                 if (packet != null) {
                     PacketUtil.sendPacketNoEvent(packet);
                     if (debug.get()) {
-                        ChatUtil.serverMessage("[Disabler] Released trans: " + packet.getParameter());
+                        ChatUtil.clientMessage("[Disabler] Released trans: " + packet.getParameter());
                     }
                 }
             }
@@ -97,7 +97,7 @@ public class GrimDisabler extends Module {
         int id = packet.getParameter();
 
         if (debug.get()) {
-            ChatUtil.serverMessage("[Disabler] Received ClientboundPingPacket ID: " + id);
+            ChatUtil.clientMessage("[Disabler] Received ClientboundPingPacket ID: " + id);
         }
 
         switch (transMode.get()) {
@@ -106,14 +106,14 @@ public class GrimDisabler extends Module {
                 transQueue.offer(new CommonPongC2SPacket(id));
 
                 if (debug.get()) {
-                    ChatUtil.serverMessage("[Disabler] Queued trans for delay: " + id);
+                    ChatUtil.clientMessage("[Disabler] Queued trans for delay: " + id);
                 }
             }
             case Drop -> {
                 if (id % 2 != 0) {
                     e.setCancelled(true);
                     if (debug.get()) {
-                        ChatUtil.serverMessage("[Disabler] Dropped trans: " + id);
+                        ChatUtil.clientMessage("[Disabler] Dropped trans: " + id);
                     }
                 }
             }
@@ -124,7 +124,7 @@ public class GrimDisabler extends Module {
                 PacketUtil.sendPacketNoEvent(new CommonPongC2SPacket(id));
 
                 if (debug.get()) {
-                    ChatUtil.serverMessage("[Disabler] Spammed trans: " + id);
+                    ChatUtil.clientMessage("[Disabler] Spammed trans: " + id);
                 }
             }
         }
@@ -134,7 +134,7 @@ public class GrimDisabler extends Module {
         if (!mode.is(Mode.S08) && !mode.is(Mode.Full)) return;
 
         if (debug.get()) {
-            ChatUtil.serverMessage("[Disabler] Received ClientboundPlayerPositionPacket ID: " + packet.teleportId());
+            ChatUtil.clientMessage("[Disabler] Received ClientboundPlayerPositionPacket ID: " + packet.teleportId());
         }
 
         switch (s08Mode.get()) {
@@ -143,7 +143,7 @@ public class GrimDisabler extends Module {
                 PacketUtil.sendPacketNoEvent(new TeleportConfirmC2SPacket(packet.teleportId()));
 
                 if (debug.get()) {
-                    ChatUtil.serverMessage("[Disabler] Cancelled S08 packet: " + packet.teleportId());
+                    ChatUtil.clientMessage("[Disabler] Cancelled S08 packet: " + packet.teleportId());
                 }
             }
             case Fake -> {
@@ -159,7 +159,7 @@ public class GrimDisabler extends Module {
                 mc.player.setVelocity(0, 0, 0);
 
                 if (debug.get()) {
-                    ChatUtil.serverMessage("[Disabler] Faked S08 packet: " + packet.teleportId());
+                    ChatUtil.clientMessage("[Disabler] Faked S08 packet: " + packet.teleportId());
                 }
             }
         }

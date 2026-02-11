@@ -97,7 +97,11 @@ public final class AuthUtil {
                             authed.set(AUTH_OK_TOKEN);
                             AuthState.setAuthed(username, expireAt);
                             if (finished.compareAndSet(false, true)) {
-                                MinecraftClient.getInstance().execute(() -> MinecraftClient.getInstance().setScreen(new MainMenuScreen()));
+                                MinecraftClient.getInstance().execute(() -> {
+                                    MainMenuScreen screen = new MainMenuScreen();
+                                    screen.startIntro();
+                                    MinecraftClient.getInstance().setScreen(screen);
+                                });
                             }
                         } else {
                             authed.set("");
@@ -126,7 +130,11 @@ public final class AuthUtil {
                             authed.set(AUTH_OK_TOKEN);
                             AuthState.setAuthed(username, expireAt);
                             if (finished.compareAndSet(false, true)) {
-                                MinecraftClient.getInstance().execute(() -> MinecraftClient.getInstance().setScreen(new MainMenuScreen()));
+                                MinecraftClient.getInstance().execute(() -> {
+                                    MainMenuScreen screen = new MainMenuScreen();
+                                    screen.startIntro();
+                                    MinecraftClient.getInstance().setScreen(screen);
+                                });
                             }
                             return;
                         }
