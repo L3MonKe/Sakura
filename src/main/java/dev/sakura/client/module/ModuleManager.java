@@ -49,7 +49,7 @@ public class ModuleManager {
         add(new FastWeb());
         add(new JumpCooldown());
         add(new KeepSprint());
-//        add(new NoFall());
+        add(new NoFall());
         add(new NoSlow());
         add(new Scaffold());
         add(new Stuck());
@@ -65,7 +65,6 @@ public class ModuleManager {
         add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());
-        add(new GrimDisabler());
 //        add(new PacketMine());
         add(new Stealer());
         add(new TimerModule());

@@ -8,6 +8,7 @@ import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
+import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.animations.Direction;
 import dev.sakura.client.utils.animations.impl.EaseInOutQuad;
 import dev.sakura.client.utils.time.TimerUtil;
@@ -16,11 +17,15 @@ import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
+import org.lwjgl.nanovg.NVGColor;
+import org.lwjgl.nanovg.NVGPaint;
 import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+
+import static org.lwjgl.nanovg.NanoVG.*;
 
 public class ModuleListHud extends HudModule {
     public ModuleListHud() {
@@ -84,6 +89,12 @@ public class ModuleListHud extends HudModule {
     private final ColorValue backgroundColor = new ColorValue("Background Color", "渐变-背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
     private final NumberValue<Double> backgroundRadius = new NumberValue<>("Background Radius", "渐变-背景圆角", 0.0, 0.0, 10.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get());
     private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("Background Offset Y", "渐变-背景Y偏移", -3.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && background.get());
+
+    private final BoolValue backgroundShadow = new BoolValue("Background Shadow", "渐变-背景阴影", false, () -> mode.is(ListMode.Gradient) && background.get());
+    private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "渐变-阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+    private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "渐变-阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+    public enum ShadowMode {Solid, Gradient}
+    private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "渐变-阴影模式", ShadowMode.Solid, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
 
     // 4. 线条设置 (Lines)
     private final BoolValue showGradientLine = new BoolValue("Show Line", "渐变-显示线条", false, () -> mode.is(ListMode.Gradient));
@@ -156,8 +167,12 @@ public class ModuleListHud extends HudModule {
         update();
         ensureWithinScreenBounds();
 
+        if (mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get()) {
+            renderBackgroundShadow();
+        }
+
         if (mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur)) {
-            renderBlurBackgrounds();
+            //renderBlurBackgrounds();
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
@@ -686,44 +701,142 @@ public class ModuleListHud extends HudModule {
         float scale = hudScale.get().floatValue();
         float fontSize = customFontSize.get().floatValue();
 
-        float startX = x;
-        float startY = y;
-
-        startY -= (scrollOffset * scale);
-        startY += (PADDING_Y * scale);
-
-        for (ModuleEntry entry : moduleEntries) {
-            EaseInOutQuad animation = moduleAnimations.get(entry.module);
-            double animationValue = animation != null ? animation.getOutput() : 1.0;
-
-            if (animationValue <= 0.01) continue;
-
-            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
-
-            // We use the stored renderY from update() logic
-            Float renderYObj = moduleYPositions.get(entry.module);
-            if (renderYObj == null) continue;
-            float renderY = renderYObj;
-
-            String moduleName = entry.module.getEnglishName();
-            String suffix = entry.module.getSuffix();
-            String formattedSuffix = getFormattedSuffix(suffix);
-            float moduleNameWidth = getModuleTextWidth(moduleName);
-            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + (2 * scale)) + (PADDING_X * 2 * scale);
-
-            float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
-            float itemBgX = alignRight.get() ?
-                    (startX + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
-                    (startX + (PADDING_X * scale));
-
-            float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
-            float bgOffset = backgroundOffsetY.get().floatValue() * scale;
-            float bgY = renderY + bgOffset - heightAdjustment;
-            float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
-
-
-            BlurShader.drawRoundedBlur(itemBgX - (4 * scale), bgY, bgWidth, bgH, backgroundRadius.get().floatValue() * scale, 10);
+        float startY = y + (PADDING_Y * scale) - (scrollOffset * scale);
+        List<BackgroundSegment> segments = buildGradientBackgroundSegments(scale, fontSize, startY);
+        if (segments.isEmpty()) {
+            return;
         }
+
+        float r = backgroundRadius.get().floatValue() * scale;
+        float overlap = Math.max(0.5f, 0.5f * scale);
+        float minX = Float.POSITIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+        for (BackgroundSegment segment : segments) {
+            float segY = segment.y - overlap;
+            float segH = segment.h + overlap * 2.0f;
+            minX = Math.min(minX, segment.x);
+            minY = Math.min(minY, segY);
+            maxX = Math.max(maxX, segment.x + segment.w);
+            maxY = Math.max(maxY, segY + segH);
+        }
+
+        float blurX = minX;
+        float blurY = minY;
+        float blurW = Math.max(0.0f, maxX - minX);
+        float blurH = Math.max(0.0f, maxY - minY);
+
+        if (blurW <= 0.0f || blurH <= 0.0f) {
+            return;
+        }
+
+        int count = Math.min(64, segments.size());
+        float[] rects = new float[count * 4];
+        float[] radii = new float[count];
+        for (int i = 0; i < count; i++) {
+            BackgroundSegment segment = segments.get(i);
+            int base = i * 4;
+            rects[base] = segment.x;
+            rects[base + 1] = segment.y;
+            rects[base + 2] = segment.w;
+            rects[base + 3] = segment.h;
+            radii[i] = 0.0f;
+        }
+        if (count > 0) {
+            radii[0] = r;
+            radii[count - 1] = r;
+        }
+
+        BlurShader.drawSegmentedBlur(blurX, blurY, blurW, blurH, 0.0f, new Color(0, 0, 0, 0), 10, 1.0f, rects, radii, count);
+    }
+
+    private void renderBackgroundShadow() {
+        float scale = hudScale.get().floatValue();
+        float fontSize = customFontSize.get().floatValue();
+
+        float startY = y + (PADDING_Y * scale) - (scrollOffset * scale);
+        List<BackgroundSegment> segments = buildGradientBackgroundSegments(scale, fontSize, startY);
+        if (segments.isEmpty()) {
+            return;
+        }
+
+        float overlap = Math.max(0.5f, 0.5f * scale);
+        float minX = Float.POSITIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+        for (BackgroundSegment segment : segments) {
+            minX = Math.min(minX, segment.x);
+            minY = Math.min(minY, segment.y - overlap);
+            maxX = Math.max(maxX, segment.x + segment.w);
+            maxY = Math.max(maxY, segment.y + segment.h + overlap);
+        }
+
+        float shadowX = minX;
+        float shadowY = minY;
+        float shadowW = Math.max(0.0f, maxX - minX);
+        float shadowH = Math.max(0.0f, maxY - minY);
+        if (shadowW <= 0.0f || shadowH <= 0.0f) {
+            return;
+        }
+
+        int count = Math.min(64, segments.size());
+        float[] rects = new float[count * 4];
+        float[] radii = new float[count];
+        for (int i = 0; i < count; i++) {
+            BackgroundSegment segment = segments.get(i);
+            int base = i * 4;
+            rects[base] = segment.x;
+            rects[base + 1] = segment.y - overlap;
+            rects[base + 2] = segment.w;
+            rects[base + 3] = segment.h + overlap * 2.0f;
+            radii[i] = 0.0f;
+        }
+        float r = backgroundRadius.get().floatValue() * scale;
+        if (count > 0) {
+            radii[0] = r;
+            radii[count - 1] = r;
+        }
+
+        if (shadowMode.is(ShadowMode.Gradient)) {
+            Color c1 = gradientColor1.get();
+            Color c2 = gradientColor2.get();
+            if (autoColor.get()) {
+                float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
+                c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
+                c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
+            }
+
+            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+            int lastIndex = Math.max(0, count - 1);
+            double topOffset = offset;
+            double bottomOffset = offset + (lastIndex * colorStep.get());
+            double topFactor = (Math.sin(Math.toRadians(topOffset)) + 1) / 2;
+            double bottomFactor = (Math.sin(Math.toRadians(bottomOffset)) + 1) / 2;
+
+            Color start = interpolateColor(c1, c2, (float) topFactor);
+            Color end = interpolateColor(c1, c2, (float) bottomFactor);
+            start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
+            end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
+
+            ShadowShader.drawStairShadowGradient(
+                    shadowX,
+                    shadowY,
+                    shadowW,
+                    shadowH,
+                    shadowRange.get().floatValue(),
+                    shadowStrength.get().floatValue(),
+                    start,
+                    end,
+                    rects,
+                    radii,
+                    count
+            );
+            return;
+        }
+
+        ShadowShader.drawStairShadow(shadowX, shadowY, shadowW, shadowH, shadowRange.get().floatValue(), shadowStrength.get().floatValue(), new Color(0, 0, 0), rects, radii, count);
     }
 
     private void renderGradientContent() {
@@ -733,176 +846,16 @@ public class ModuleListHud extends HudModule {
         float currentY = y + (PADDING_Y * scale) - (scrollOffset * scale);
 
         int font = getFontId();
-        int index = 0;
-
-        float totalListHeight = 0;
-        float maxItemWidth = 0;
         float startY = currentY;
-
-        int visibleCount = 0;
-
-        for (ModuleEntry entry : moduleEntries) {
-            EaseInOutQuad animation = moduleAnimations.get(entry.module);
-            double animationValue = animation != null ? animation.getOutput() : 1.0;
-
-            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
-
-            if (animationValue > 0.01) {
-                visibleCount++;
-                totalListHeight += (float) (itemFullHeight * animationValue);
-
-                String moduleName = entry.module.getEnglishName();
-                String suffix = entry.module.getSuffix();
-                String formattedSuffix = getFormattedSuffix(suffix);
-                float moduleNameWidth = getModuleTextWidth(moduleName);
-                float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + (2 * scale)) + (PADDING_X * 2 * scale);
-
-                // Use current module's width directly, not maxItemWidth
-                maxItemWidth = itemWidth;
+        List<BackgroundSegment> backgroundSegments = buildGradientBackgroundSegments(scale, fontSize, startY);
+        if (background.get() && !backgroundSegments.isEmpty()) {
+            drawMergedGradientBackground(backgroundSegments, scale);
+            if (showGradientLine.get()) {
+                drawGradientLines(backgroundSegments, scale);
             }
         }
 
-        if (background.get() && totalListHeight > 0 && !backgroundMode.is(BackgroundMode.Blur)) {
-            float currentBgY = startY;
-            int bgIndex = 0;
-            for (ModuleEntry entry : moduleEntries) {
-                EaseInOutQuad animation = moduleAnimations.get(entry.module);
-                double animationValue = animation != null ? animation.getOutput() : 1.0;
-                if (animationValue <= 0.01) continue;
-
-                double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
-                double currentOffset = offset + (bgIndex * colorStep.get());
-                double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
-
-                float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
-                float renderY = moduleYPositions.getOrDefault(entry.module, currentBgY);
-
-                String moduleName = entry.module.getEnglishName();
-                String suffix = entry.module.getSuffix();
-                String formattedSuffix = getFormattedSuffix(suffix);
-                float moduleNameWidth = getModuleTextWidth(moduleName);
-                float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + (2 * scale)) + (PADDING_X * 2 * scale);
-
-                float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
-                float itemBgX = alignRight.get() ?
-                        (x + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) :
-                        (x + (PADDING_X * scale));
-
-                // If spacing is 0, add a tiny bit of height overlap to prevent gaps
-                float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
-                float bgOffset = backgroundOffsetY.get().floatValue() * scale;
-                float bgY = renderY + bgOffset - heightAdjustment;
-                float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
-
-                Color c1 = gradientColor1.get();
-                Color c2 = gradientColor2.get();
-
-                if (autoColor.get()) {
-                    float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
-                    c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
-                    c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
-                }
-
-                float r = backgroundRadius.get().floatValue() * scale;
-                boolean isFirst = (bgIndex == 0);
-                boolean isLast = (bgIndex == visibleCount - 1);
-                boolean line = showGradientLine.get();
-
-                float rTopLeft = isFirst ? r : 0;
-                float rTopRight = (isFirst && !line) ? r : 0;
-                float rBottomRight = (isLast && !line) ? r : 0;
-                float rBottomLeft = r;
-
-                NanoVGHelper.drawCustomRoundRect(itemBgX - (4 * scale), bgY, bgWidth, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, backgroundColor.get());
-
-                if (showGradientLine.get()) {
-                    float lineW = lineWidth.get().floatValue() * scale;
-                    Color lineColor = interpolateColor(c1, c2, (float) factor);
-                    lineColor = new Color(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), (int) (lineColor.getAlpha() * animationValue));
-
-                    if (lineMode.is(LineMode.Left)) {
-                        float lineX = alignRight.get() ? (itemBgX - (4 * scale) + bgWidth - lineW) : (itemBgX - (4 * scale));
-                        NanoVGHelper.drawCustomRoundRect(lineX, bgY, lineW, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, lineColor);
-                    } else if (lineMode.is(LineMode.Box)) {
-                        NanoVGHelper.drawRoundRectOutline(itemBgX - (4 * scale), bgY, bgWidth, bgH, backgroundRadius.get().floatValue() * scale, lineW, lineColor);
-                    }
-                }
-
-                currentBgY += (float) (itemFullHeight * animationValue);
-                bgIndex++;
-            }
-        }
-
-        if (background.get() && totalListHeight > 0 && backgroundMode.is(BackgroundMode.Blur)) {
-            float currentBgY = startY;
-            int bgIndex = 0;
-            for (ModuleEntry entry : moduleEntries) {
-                EaseInOutQuad animation = moduleAnimations.get(entry.module);
-                double animationValue = animation != null ? animation.getOutput() : 1.0;
-
-                if (animationValue <= 0.01) continue;
-
-                double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
-                double currentOffset = offset + (bgIndex * colorStep.get());
-                double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
-
-                float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
-                float renderY = moduleYPositions.getOrDefault(entry.module, currentBgY);
-
-                String moduleName = entry.module.getEnglishName();
-                String suffix = entry.module.getSuffix();
-                String formattedSuffix = getFormattedSuffix(suffix);
-                float moduleNameWidth = getModuleTextWidth(moduleName);
-                float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + (2 * scale)) + (PADDING_X * 2 * scale);
-
-                float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
-                float itemBgX = alignRight.get() ? (x + (currentWidth * scale) - itemWidth + (PADDING_X * scale)) : (x + (PADDING_X * scale));
-
-                float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
-                float bgOffset = backgroundOffsetY.get().floatValue() * scale;
-                float bgY = renderY + bgOffset - heightAdjustment;
-                float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
-
-                Color c1 = gradientColor1.get();
-                Color c2 = gradientColor2.get();
-
-                if (autoColor.get()) {
-                    float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
-                    c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
-                    c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
-                }
-
-                float r = backgroundRadius.get().floatValue() * scale;
-                boolean isFirst = (bgIndex == 0);
-                boolean isLast = (bgIndex == visibleCount - 1);
-                boolean line = showGradientLine.get();
-
-                float rTopLeft = isFirst ? r : 0;
-                float rTopRight = (isFirst && !line) ? r : 0;
-                float rBottomRight = (isLast && !line) ? r : 0;
-                float rBottomLeft = r;
-
-                NanoVGHelper.drawCustomRoundRect(itemBgX - (4 * scale), bgY, bgWidth, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, backgroundColor.get());
-
-                if (showGradientLine.get()) {
-                    float lineW = lineWidth.get().floatValue() * scale;
-                    Color lineColor = interpolateColor(c1, c2, (float) factor);
-                    lineColor = new Color(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), (int) (lineColor.getAlpha() * animationValue));
-
-                    if (lineMode.is(LineMode.Left)) {
-                        float lineX = alignRight.get() ? (itemBgX - (4 * scale) + bgWidth - lineW) : (itemBgX - (4 * scale));
-
-                        NanoVGHelper.drawCustomRoundRect(lineX, bgY, lineW, bgH, rTopLeft, rTopRight, rBottomRight, rBottomLeft, lineColor);
-                    } else if (lineMode.is(LineMode.Box)) {
-                        NanoVGHelper.drawRoundRectOutline(itemBgX - (4 * scale), bgY, bgWidth, bgH, backgroundRadius.get().floatValue() * scale, lineW, lineColor);
-                    }
-                }
-
-                currentBgY += (float) (itemFullHeight * animationValue);
-                bgIndex++;
-            }
-        }
-
+        int index = 0;
         currentY = startY;
         for (ModuleEntry entry : moduleEntries) {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
@@ -988,6 +941,205 @@ public class ModuleListHud extends HudModule {
                 }
             }
         }
+    }
+
+    private List<BackgroundSegment> buildGradientBackgroundSegments(float scale, float fontSize, float startY) {
+        float currentBgY = startY;
+        List<BackgroundSegment> segments = new ArrayList<>();
+        int index = 0;
+
+        for (ModuleEntry entry : moduleEntries) {
+            EaseInOutQuad animation = moduleAnimations.get(entry.module);
+            double animationValue = animation != null ? animation.getOutput() : 1.0;
+            if (animationValue <= 0.01) continue;
+
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
+            float renderY = moduleYPositions.getOrDefault(entry.module, currentBgY);
+
+            String moduleName = entry.module.getEnglishName();
+            String suffix = entry.module.getSuffix();
+            String formattedSuffix = getFormattedSuffix(suffix);
+            float moduleNameWidth = getModuleTextWidth(moduleName);
+            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + (2 * scale)) + (PADDING_X * 2 * scale);
+
+            float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
+            float itemBgX = alignRight.get()
+                    ? (x + (currentWidth * scale) - itemWidth + (PADDING_X * scale))
+                    : (x + (PADDING_X * scale));
+
+            float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
+            float bgOffset = backgroundOffsetY.get().floatValue() * scale;
+            float bgY = renderY + bgOffset - heightAdjustment;
+            float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
+
+            segments.add(new BackgroundSegment(index, itemBgX - (4 * scale), bgY, bgWidth, bgH, (float) animationValue));
+
+            currentBgY += (float) (itemFullHeight * animationValue);
+            index++;
+        }
+
+        return segments;
+    }
+
+    private void drawMergedGradientBackground(List<BackgroundSegment> segments, float scale) {
+        float r = backgroundRadius.get().floatValue() * scale;
+        boolean line = showGradientLine.get() && !lineMode.is(LineMode.Box);
+
+        long vg = NanoVGRenderer.INSTANCE.getContext();
+        NVGColor nvgColor = NanoVGHelper.nvgColor(backgroundColor.get());
+
+        nvgBeginPath(vg);
+        buildMergedBackgroundPath(vg, segments, r, line);
+        nvgFillColor(vg, nvgColor);
+        nvgFill(vg);
+    }
+
+    private void buildMergedBackgroundPath(long vg, List<BackgroundSegment> segments, float r, boolean line) {
+        int lastIndex = segments.size() - 1;
+        for (BackgroundSegment segment : segments) {
+            boolean isFirst = segment.index == 0;
+            boolean isLast = segment.index == lastIndex;
+
+            float rTopLeft = isFirst ? r : 0;
+            float rTopRight = (isFirst && !line) ? r : 0;
+            float rBottomRight = (isLast && !line) ? r : 0;
+            float rBottomLeft = isLast ? r : 0;
+
+            nvgRoundedRectVarying(vg, segment.x, segment.y, segment.w, segment.h, rTopLeft, rTopRight, rBottomRight, rBottomLeft);
+        }
+    }
+
+    private void drawGradientLines(List<BackgroundSegment> segments, float scale) {
+        Color c1 = gradientColor1.get();
+        Color c2 = gradientColor2.get();
+        if (autoColor.get()) {
+            float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
+            c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
+            c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
+        }
+
+        float r = backgroundRadius.get().floatValue() * scale;
+        float lineW = lineWidth.get().floatValue() * scale;
+
+        double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+        if (lineMode.is(LineMode.Box)) {
+            long vg = NanoVGRenderer.INSTANCE.getContext();
+            int lastIndex = segments.size() - 1;
+
+            float topY = segments.getFirst().y;
+            float bottomY = topY;
+            float alphaFactor = 0f;
+            for (BackgroundSegment segment : segments) {
+                bottomY = Math.max(bottomY, segment.y + segment.h);
+                alphaFactor = Math.max(alphaFactor, segment.alphaFactor);
+            }
+
+            double topOffset = offset;
+            double bottomOffset = offset + (lastIndex * colorStep.get());
+            double topFactor = (Math.sin(Math.toRadians(topOffset)) + 1) / 2;
+            double bottomFactor = (Math.sin(Math.toRadians(bottomOffset)) + 1) / 2;
+
+            Color start = interpolateColor(c1, c2, (float) topFactor);
+            Color end = interpolateColor(c1, c2, (float) bottomFactor);
+            start = new Color(start.getRed(), start.getGreen(), start.getBlue(), (int) (start.getAlpha() * alphaFactor));
+            end = new Color(end.getRed(), end.getGreen(), end.getBlue(), (int) (end.getAlpha() * alphaFactor));
+
+            if (Math.abs(bottomY - topY) < 1e-3f) {
+                bottomY = topY + 1f;
+            }
+
+            NVGPaint paint = NVGPaint.create();
+            NVGColor nvgStart = NanoVGHelper.nvgColor(start);
+            NVGColor nvgEnd = NanoVGHelper.nvgColor(end);
+            nvgLinearGradient(vg, 0, topY, 0, bottomY, nvgStart, nvgEnd, paint);
+
+            nvgBeginPath(vg);
+            buildStaircaseOutlinePath(vg, segments);
+            nvgLineJoin(vg, NVG_ROUND);
+            nvgStrokeWidth(vg, lineW);
+            nvgStrokePaint(vg, paint);
+            nvgStroke(vg);
+            return;
+        }
+
+        int lastIndex = segments.size() - 1;
+        for (BackgroundSegment segment : segments) {
+            double currentOffset = offset + (segment.index * colorStep.get());
+            double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
+
+            Color lineColor = interpolateColor(c1, c2, (float) factor);
+            lineColor = new Color(lineColor.getRed(), lineColor.getGreen(), lineColor.getBlue(), (int) (lineColor.getAlpha() * segment.alphaFactor));
+
+            boolean isFirst = segment.index == 0;
+            boolean isLast = segment.index == lastIndex;
+
+            float rTopLeft = isFirst ? r : 0;
+            float rTopRight = 0;
+            float rBottomRight = 0;
+            float rBottomLeft = isLast ? r : 0;
+
+            float lineX = alignRight.get() ? (segment.x + segment.w - lineW) : segment.x;
+            NanoVGHelper.drawCustomRoundRect(lineX, segment.y, lineW, segment.h, rTopLeft, rTopRight, rBottomRight, rBottomLeft, lineColor);
+        }
+    }
+
+    private void buildStaircaseOutlinePath(long vg, List<BackgroundSegment> segments) {
+        if (segments.isEmpty()) {
+            return;
+        }
+
+        BackgroundSegment first = segments.getFirst();
+        BackgroundSegment last = segments.getLast();
+
+        float topY = first.y;
+        float bottomY = last.y + last.h;
+
+        if (!alignRight.get()) {
+            float leftX = first.x;
+            float currentRight = first.x + first.w;
+
+            nvgMoveTo(vg, leftX, topY);
+            nvgLineTo(vg, currentRight, topY);
+
+            for (int i = 0; i < segments.size(); i++) {
+                BackgroundSegment seg = segments.get(i);
+                float right = seg.x + seg.w;
+                float yBottom = seg.y + seg.h;
+
+                nvgLineTo(vg, right, yBottom);
+                if (i + 1 < segments.size()) {
+                    BackgroundSegment next = segments.get(i + 1);
+                    float nextRight = next.x + next.w;
+                    nvgLineTo(vg, nextRight, yBottom);
+                }
+            }
+
+            nvgLineTo(vg, leftX, bottomY);
+            nvgClosePath(vg);
+            return;
+        }
+
+        float rightX = first.x + first.w;
+        float currentLeft = first.x;
+
+        nvgMoveTo(vg, rightX, topY);
+        nvgLineTo(vg, currentLeft, topY);
+
+        for (int i = 0; i < segments.size(); i++) {
+            BackgroundSegment seg = segments.get(i);
+            float left = seg.x;
+            float yBottom = seg.y + seg.h;
+
+            nvgLineTo(vg, left, yBottom);
+            if (i + 1 < segments.size()) {
+                BackgroundSegment next = segments.get(i + 1);
+                float nextLeft = next.x;
+                nvgLineTo(vg, nextLeft, yBottom);
+            }
+        }
+
+        nvgLineTo(vg, rightX, bottomY);
+        nvgClosePath(vg);
     }
 
     private void renderGradientTextVanilla(DrawContext context) {
@@ -1086,6 +1238,9 @@ public class ModuleListHud extends HudModule {
         int b = (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * t);
         int a = (int) (c1.getAlpha() + (c2.getAlpha() - c1.getAlpha()) * t);
         return new Color(r, g, b, a);
+    }
+
+    private record BackgroundSegment(int index, float x, float y, float w, float h, float alphaFactor) {
     }
 
     private record ModuleEntry(Module module) {

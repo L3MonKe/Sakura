@@ -95,6 +95,15 @@ public class NanoVGRenderer {
         drawImmediate(drawingLogic);
     }
 
+    public void drawToFramebuffer(Framebuffer target, Consumer<Long> drawingLogic) {
+        if (!initialized) initNanoVG();
+        if (inFrame) {
+            drawingLogic.accept(vg);
+            return;
+        }
+        drawImmediateToFramebuffer(target, drawingLogic, false);
+    }
+
     public void drawImmediate(Consumer<Long> drawingLogic) {
         if (!initialized) initNanoVG();
 
@@ -103,6 +112,10 @@ public class NanoVGRenderer {
             return;
         }
 
+        drawImmediateToFramebuffer(MinecraftClient.getInstance().getFramebuffer(), drawingLogic, false);
+    }
+
+    private void drawImmediateToFramebuffer(Framebuffer framebuffer, Consumer<Long> drawingLogic, boolean attachDepth) {
         MinecraftClient mc = MinecraftClient.getInstance();
         States.INSTANCE.push();
 
@@ -113,9 +126,8 @@ public class NanoVGRenderer {
 
         drawingLogic.accept(vg);
 
-        Framebuffer framebuffer = mc.getFramebuffer();
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-        try (RenderPass renderPass = encoder.createRenderPass(() -> "NanoVG", framebuffer.getColorAttachmentView(), OptionalInt.empty(), null, OptionalDouble.empty())) {
+        try (RenderPass renderPass = encoder.createRenderPass(() -> "NanoVG", framebuffer.getColorAttachmentView(), OptionalInt.empty(), attachDepth && framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null, OptionalDouble.empty())) {
             renderPass.setPipeline(RenderPipelines.GUI);
             nvgEndFrame(vg);
         }

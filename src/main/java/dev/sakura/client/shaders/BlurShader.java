@@ -23,4 +23,9 @@ public class BlurShader {
         blurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
         BLUR_PROGRAM.render(x, y, width, height, radius, c1, blurStrenth, blurOpacity);
     }
+
+    public static void drawSegmentedBlur(float x, float y, float width, float height, float radius, Color c1, float blurStrenth, float blurOpacity, float[] segmentRects, float[] segmentRadii, int segmentCount) {
+        blurOpacity = Math.max(0f, Math.min(1f, blurOpacity));
+        BLUR_PROGRAM.renderWithSegments(x, y, width, height, radius, c1, blurStrenth, blurOpacity, segmentRects, segmentRadii, segmentCount);
+    }
 }

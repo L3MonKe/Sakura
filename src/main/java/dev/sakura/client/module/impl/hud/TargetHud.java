@@ -15,6 +15,7 @@ import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
+import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.animations.Animation;
 import dev.sakura.client.utils.animations.Direction;
 import dev.sakura.client.utils.animations.impl.EaseOutSine;
@@ -93,6 +94,11 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> MahiroNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroAvatarPos.get() == AvatarPosEn.OnBar);
     private final ColorValue MahiroBgColor = new ColorValue("BgColor", "背景颜色", new Color(0, 0, 0, 80), () -> style.get() == StyleEn.Sakura);
+    private final BoolValue MahiroShadow = new BoolValue("Shadow", "背景阴影", false, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroShadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
+    private final NumberValue<Double> MahiroShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
+    public enum MahiroShadowModeEn {Solid, Gradient}
+    private final EnumValue<MahiroShadowModeEn> MahiroShadowMode = new EnumValue<>("ShadowMode", "阴影模式", MahiroShadowModeEn.Solid, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
 
     // Sakura Delay Settings
     private final BoolValue MahiroDelay = new BoolValue("DelayBar", "延迟血条", true, () -> style.get() == StyleEn.Sakura);
@@ -826,6 +832,31 @@ public class TargetHud extends HudModule {
 
         float r = MahiroRadius.get().floatValue() * globalScale * animValue;
         float blur = MahiroBlurRadius.get().floatValue() * globalScale;
+
+        if (MahiroShadow.get() && w > 0.0f && h > 0.0f && animValue > 0.01f) {
+            float[] rects = new float[]{rx, ry, w, h};
+            float[] radii = new float[]{r};
+
+            if (MahiroShadowMode.is(MahiroShadowModeEn.Gradient)) {
+                Color c1 = healthColor.get();
+                Color c2 = healthGradient.get() ? healthColor2.get() : healthColor.get().darker();
+
+                double speed = gradientSpeed.get();
+                double t = (System.currentTimeMillis() / 1000.0) * speed;
+                double len = Math.max(0.001, colorLength.get());
+                float t1 = (float) ((Math.sin(t) + 1) / 2);
+                float t2 = (float) ((Math.sin(t + len) + 1) / 2);
+
+                Color start = ColorUtil.interpolateColor(c1, c2, t1);
+                Color end = ColorUtil.interpolateColor(c1, c2, t2);
+                start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
+                end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
+
+                ShadowShader.drawStairShadowGradient(rx, ry, w, h, MahiroShadowRange.get().floatValue() * globalScale, MahiroShadowStrength.get().floatValue(), start, end, rects, radii, 1);
+            } else {
+                ShadowShader.drawStairShadow(rx, ry, w, h, MahiroShadowRange.get().floatValue() * globalScale, MahiroShadowStrength.get().floatValue(), new Color(0, 0, 0), rects, radii, 1);
+            }
+        }
 
         BlurShader.drawRoundedBlur(rx, ry, w, h, r, blur);
     }
