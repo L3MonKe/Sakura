@@ -7,6 +7,7 @@ import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
+import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.color.ColorUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
@@ -41,6 +42,12 @@ public class TimeChargeHud extends HudModule {
 
     private final BoolValue blur = new BoolValue("Blur", "背景模糊", true);
     private final NumberValue<Double> blurRadius = new NumberValue<>("Blur Radius", "模糊半径", 10.0, 1.0, 20.0, 1.0, blur::get);
+
+    private final BoolValue shadow = new BoolValue("Shadow", "背景阴影", false);
+    private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "阴影范围", 8.0, 0.0, 30.0, 1.0, shadow::get);
+    private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "阴影强度", 0.6, 0.0, 1.0, 0.05, shadow::get);
+    public enum ShadowMode {Solid, Gradient}
+    private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "阴影模式", ShadowMode.Solid, shadow::get);
 
     private final BoolValue bloom = new BoolValue("Bloom", "外发光", true);
     private final NumberValue<Double> bloomRadius = new NumberValue<>("Bloom Radius", "发光半径", 5.0, 1.0, 20.0, 1.0, bloom::get);
@@ -90,6 +97,36 @@ public class TimeChargeHud extends HudModule {
 
         double progress = timerModule.getProgress();
         boolean active = timerModule.isActive();
+
+        if (shadow.get()) {
+            float[] rects = new float[]{bgX, bgY, bgW, bgH};
+            float[] radii = new float[]{bgR};
+
+            if (shadowMode.is(ShadowMode.Gradient)) {
+                Color c1;
+                Color c2;
+                if (mode.is(Mode.Old)) {
+                    if (active) {
+                        c1 = activeColor1.get();
+                        c2 = activeColor2.get();
+                    } else {
+                        c1 = chargeColor1.get();
+                        c2 = chargeColor2.get();
+                    }
+                } else {
+                    float factor = (float) (Math.sin(System.currentTimeMillis() / 500.0) * 0.5 + 0.5);
+                    c1 = ColorUtil.interpolateColor(chargeColor1.get(), chargeColor2.get(), factor);
+                    float factor2 = (float) (Math.sin(System.currentTimeMillis() / 500.0 + 1.0) * 0.5 + 0.5);
+                    c2 = ColorUtil.interpolateColor(chargeColor1.get(), chargeColor2.get(), factor2);
+                }
+
+                c1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), 255);
+                c2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), 255);
+                ShadowShader.drawStairShadowGradient(bgX, bgY, bgW, bgH, shadowRange.get().floatValue() * s, shadowStrength.get().floatValue(), c1, c2, rects, radii, 1);
+            } else {
+                ShadowShader.drawStairShadow(bgX, bgY, bgW, bgH, shadowRange.get().floatValue() * s, shadowStrength.get().floatValue(), new Color(0, 0, 0), rects, radii, 1);
+            }
+        }
 
         // 1. 绘制模糊背景 (如果启用)
         if (blur.get()) {

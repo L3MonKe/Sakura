@@ -89,6 +89,7 @@ public class ModuleListHud extends HudModule {
     private final ColorValue backgroundColor = new ColorValue("Background Color", "渐变-背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
     private final NumberValue<Double> backgroundRadius = new NumberValue<>("Background Radius", "渐变-背景圆角", 0.0, 0.0, 10.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get());
     private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("Background Offset Y", "渐变-背景Y偏移", -3.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && background.get());
+    private final NumberValue<Double> blurStrength = new NumberValue<>("Blur Strength", "渐变-模糊强度", 10.0, 0.0, 50.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur));
 
     private final BoolValue backgroundShadow = new BoolValue("Background Shadow", "渐变-背景阴影", false, () -> mode.is(ListMode.Gradient) && background.get());
     private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "渐变-阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
@@ -172,7 +173,7 @@ public class ModuleListHud extends HudModule {
         }
 
         if (mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur)) {
-            //renderBlurBackgrounds();
+            renderBlurBackgrounds();
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
@@ -748,7 +749,7 @@ public class ModuleListHud extends HudModule {
             radii[count - 1] = r;
         }
 
-        BlurShader.drawSegmentedBlur(blurX, blurY, blurW, blurH, 0.0f, new Color(0, 0, 0, 0), 10, 1.0f, rects, radii, count);
+        BlurShader.drawSegmentedBlur(blurX, blurY, blurW, blurH, 0.0f, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 1.0f, rects, radii, count);
     }
 
     private void renderBackgroundShadow() {
