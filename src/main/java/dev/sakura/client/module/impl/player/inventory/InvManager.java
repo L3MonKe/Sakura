@@ -21,7 +21,8 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
-import net.minecraft.network.packet.c2s.play.*;
+import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
+import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.screen.slot.SlotActionType;
 import org.apache.commons.lang3.tuple.Pair;
@@ -529,17 +530,17 @@ public class InvManager extends Module {
         if (this.inventoryOpen) {
             // 如果所有任务都已完成（或者这个tick没有进行操作），关闭背包
             // 这里我们简单地在每次Tick末尾尝试关闭，如果有操作，timer会被reset，下一次tick可能就不会进入操作逻辑
-            
+
             // 更好的逻辑：检查是否还有需要整理的物品？
             // 简化版：如果这个Tick没有进行任何操作（即背包已经整理好了），且之前打开了背包，则关闭
-            
+
             // 但我们需要一个标志位来表示"本Tick是否进行了操作"
             // 由于代码结构分散，我们可以在onTick最后检查timer
-            
+
             // 如果距离上次操作已经过了一小段时间（说明整理完毕），发送关闭包
             if (timer.passedMillise(150)) { // 给一点缓冲时间
-                 if (grimBypass.get()) sendClosePackets();
-                 this.inventoryOpen = false;
+                if (grimBypass.get()) sendClosePackets();
+                this.inventoryOpen = false;
             }
         }
     }
@@ -554,14 +555,14 @@ public class InvManager extends Module {
             if (wasSprinting) {
                 mc.player.networkHandler.sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.STOP_SPRINTING));
                 // 强制客户端停止疾跑
-                mc.player.setSprinting(false); 
+                mc.player.setSprinting(false);
             }
         }
     }
 
     private void sendClosePackets() {
         // ... (注释省略)
-        
+
         // 恢复疾跑
         // 只有当玩家仍然按着前进键且之前是疾跑状态时才恢复
         if (wasSprinting) {

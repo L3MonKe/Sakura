@@ -17,6 +17,7 @@ import net.minecraft.util.math.ColorHelper;
 import java.awt.*;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
+
 import static dev.sakura.client.Sakura.mc;
 
 public class BlurProgram {

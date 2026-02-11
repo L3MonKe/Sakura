@@ -97,7 +97,9 @@ public class TargetHud extends HudModule {
     private final BoolValue MahiroShadow = new BoolValue("Shadow", "背景阴影", false, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroShadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
     private final NumberValue<Double> MahiroShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
+
     public enum MahiroShadowModeEn {Solid, Gradient}
+
     private final EnumValue<MahiroShadowModeEn> MahiroShadowMode = new EnumValue<>("ShadowMode", "阴影模式", MahiroShadowModeEn.Solid, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
 
     // Sakura Delay Settings
