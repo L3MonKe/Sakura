@@ -127,7 +127,7 @@ public class Animations extends Module {
         if (blocking) {
             applyBlockingAnimation(matrices, arm, equipProgress, swingProgress);
         } else {
-            applySwingOffset(matrices, arm, swingProgress);
+            applyVanillaSwingOffset(matrices, arm, swingProgress);
         }
 
         HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
@@ -194,6 +194,14 @@ public class Animations extends Module {
         matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * g * -20.0F));
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(g * -80.0F));
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * -45.0F));
+    }
+
+    private void applyVanillaSwingOffset(MatrixStack matrices, Arm arm, float swingProgress) {
+        float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(f * -20.0F));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(g * -20.0F));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(g * -80.0F));
     }
 
     private void applyBlockingAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
