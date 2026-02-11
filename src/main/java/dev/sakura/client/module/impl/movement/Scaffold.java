@@ -58,13 +58,10 @@ public class Scaffold extends Module {
     private final ColorValue lineColor = new ColorValue("Line Color", "线条颜色", new Color(255, 105, 180), render::get);
 
     private int yLevel;
-    private int airTicks;
     private BlockCache blockCache;
-
-    private FindItemResult result;
+    private int airTicks;
     private boolean shouldSwapBack;
-
-    private final BlockPos.Mutable mutablePos = new BlockPos.Mutable();
+    private FindItemResult findItemResult;
 
     public Scaffold() {
         super("Scaffold", "自动搭路", Category.Movement);
@@ -80,6 +77,11 @@ public class Scaffold extends Module {
     }
 
     @Override
+    public String getSuffix() {
+        return telly.get() ? "Telly" : "GodBridge";
+    }
+
+    @Override
     protected void onEnable() {
         blockCache = null;
         shouldSwapBack = false;
@@ -91,12 +93,7 @@ public class Scaffold extends Module {
             shouldSwapBack = true;
         }
         blockCache = null;
-        result = null;
-    }
-
-    @Override
-    public String getSuffix() {
-        return telly.get() ? "Telly" : "GodBridge";
+        findItemResult = null;
     }
 
     @EventHandler
@@ -121,16 +118,6 @@ public class Scaffold extends Module {
         }
 
         getBlockInfo();
-
-        if (blockCache != null) {
-            if (swapMode.is(SwapMode.InvSwitch)) {
-                result = InvUtil.find(itemStack -> validItem(itemStack, blockCache.position), 0, 35);
-            } else {
-                result = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
-            }
-        }
-
-        if (result == null || !result.found()) return;
 
         MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
         if (telly.get()) {
@@ -215,32 +202,20 @@ public class Scaffold extends Module {
         BlockPos targetPos = blockCache.position.offset(blockCache.facing);
         if (!BlockUtil.canPlaceAt(targetPos)) return;
 
-        Hand hand;
         boolean invSwapped = false;
-        if (swapMode.is(SwapMode.None)) {
-            if (validItem(mc.player.getOffHandStack(), blockCache.position)) {
-                hand = Hand.OFF_HAND;
-            } else if (validItem(mc.player.getMainHandStack(), blockCache.position)) {
-                hand = Hand.MAIN_HAND;
-            } else {
-                return;
-            }
+        if (swapMode.is(SwapMode.InvSwitch)) {
+            findItemResult = InvUtil.find(itemStack -> validItem(itemStack, blockCache.position), 0, 35);
+            if (!findItemResult.found()) return;
+            invSwapped = InvUtil.invSwap(findItemResult.slot());
         } else {
-            if (swapMode.is(SwapMode.InvSwitch)) {
-                if (validItem(mc.player.getOffHandStack(), blockCache.position)) {
-                    hand = Hand.OFF_HAND;
-                } else if (validItem(mc.player.getMainHandStack(), blockCache.position)) {
-                    hand = Hand.MAIN_HAND;
-                } else {
-                    invSwapped = InvUtil.invSwap(result.slot());
-                    hand = Hand.MAIN_HAND;
-                }
-            } else {
-                boolean remember = swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get());
-                InvUtil.swap(result.isOffhand() ? mc.player.getInventory().getSelectedSlot() : result.slot(), remember);
-                hand = result.getHand();
-            }
+            findItemResult = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
+            if (!findItemResult.found()) return;
+
+            boolean remember = swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get());
+            InvUtil.swap(findItemResult.isOffhand() ? mc.player.getInventory().getSelectedSlot() : findItemResult.slot(), remember);
         }
+
+        Hand hand = findItemResult.getHand();
 
         ActionResult result = mc.interactionManager.interactBlock(mc.player, hand, new BlockHitResult(blockCache.hitVec, blockCache.facing, blockCache.position, false));
 
@@ -262,21 +237,18 @@ public class Scaffold extends Module {
         Vec3d baseVec = mc.player.getEyePos();
         BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
         int baseX = base.getX();
-        int baseY = getYLevel();
         int baseZ = base.getZ();
 
-        mutablePos.set(baseX, baseY, baseZ);
-        if (mc.world.getBlockState(mutablePos).hasSolidTopSurface(mc.world, mutablePos, mc.player)) {
+        if (mc.world.getBlockState(base).hasSolidTopSurface(mc.world, base, mc.player)) {
             return;
         }
 
-        if (checkBlock(baseVec, mutablePos)) {
+        if (checkBlock(baseVec, base)) {
             return;
         }
 
         for (int d = 1; d <= 6; d++) {
-            mutablePos.set(baseX, baseY - d, baseZ);
-            if (checkBlock(baseVec, mutablePos)) {
+            if (checkBlock(baseVec, new BlockPos(baseX, getYLevel() - d, baseZ))) {
                 return;
             }
 
@@ -285,9 +257,9 @@ public class Scaffold extends Module {
                     int y = d - x - z;
                     for (int rev1 = 0; rev1 <= 1; rev1++) {
                         for (int rev2 = 0; rev2 <= 1; rev2++) {
-                            mutablePos.set(baseX + (rev1 == 0 ? x : -x), baseY - y, baseZ + (rev2 == 0 ? z : -z));
-                            if (checkBlock(baseVec, mutablePos))
+                            if (checkBlock(baseVec, new BlockPos(baseX + (rev1 == 0 ? x : -x), getYLevel() - y, baseZ + (rev2 == 0 ? z : -z)))) {
                                 return;
+                            }
                         }
                     }
                 }
@@ -298,35 +270,21 @@ public class Scaffold extends Module {
     private boolean checkBlock(Vec3d baseVec, BlockPos pos) {
         if (BlockUtil.solid(mc.world.getBlockState(pos))) return false;
 
-        double centerX = pos.getX() + 0.5;
-        double centerY = pos.getY();
-        double centerZ = pos.getZ() + 0.5;
-
+        Vec3d center = new Vec3d(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         for (Direction dir : Direction.values()) {
-            double dirX = dir.getOffsetX();
-            double dirY = dir.getOffsetY();
-            double dirZ = dir.getOffsetZ();
-
-            double hitX = centerX + dirX * 0.5;
-            double hitY = centerY + dirY * 0.5;
-            double hitZ = centerZ + dirZ * 0.5;
-
+            Vec3d hit = center.add(new Vec3d(dir.getVector()).multiply(0.5));
             BlockPos baseBlockPos = pos.offset(dir);
 
             if (!mc.world.getBlockState(baseBlockPos).hasSolidTopSurface(mc.world, baseBlockPos, mc.player)) continue;
 
-            double relX = hitX - baseVec.x;
-            double relY = hitY - baseVec.y;
-            double relZ = hitZ - baseVec.z;
-
-            if (relX * relX + relY * relY + relZ * relZ <= 4.5 * 4.5) {
-                if (relX * dirX + relY * dirY + relZ * dirZ >= 0) {
-                    if (dir.getOpposite() == Direction.UP && !telly.get() && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
-                        continue;
-                    }
-                    blockCache = new BlockCache(baseBlockPos, dir.getOpposite(), getVec3(baseBlockPos, dir.getOpposite()));
-                    return true;
+            Vec3d relevant = hit.subtract(baseVec);
+            if (relevant.lengthSquared() <= 4.5 * 4.5 && relevant.dotProduct(new Vec3d(dir.getVector())) >= 0) {
+                if (dir.getOpposite() == Direction.UP && !telly.get() && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+                    continue;
                 }
+
+                blockCache = new BlockCache(baseBlockPos, dir.getOpposite(), getVec3(baseBlockPos, dir.getOpposite()));
+                return true;
             }
         }
         return false;

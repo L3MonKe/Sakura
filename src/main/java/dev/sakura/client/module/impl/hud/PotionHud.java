@@ -1,8 +1,8 @@
 package dev.sakura.client.module.impl.hud;
 
-import dev.sakura.client.gui.panelgui.SmoothAnimationTimer;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.hud.HudEditorScreen;
+import dev.sakura.client.gui.panelgui.SmoothAnimationTimer;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -20,13 +20,8 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.registry.entry.RegistryEntry;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_LEFT;
 import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_MIDDLE;
