@@ -95,15 +95,6 @@ public class NanoVGRenderer {
         drawImmediate(drawingLogic);
     }
 
-    public void drawToFramebuffer(Framebuffer target, Consumer<Long> drawingLogic) {
-        if (!initialized) initNanoVG();
-        if (inFrame) {
-            drawingLogic.accept(vg);
-            return;
-        }
-        drawImmediateToFramebuffer(target, drawingLogic, false);
-    }
-
     public void drawImmediate(Consumer<Long> drawingLogic) {
         if (!initialized) initNanoVG();
 

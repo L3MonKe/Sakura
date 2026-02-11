@@ -3,6 +3,10 @@ package dev.sakura.client.event.impl.player;
 public class SlowdownEvent {
     private boolean slowdown;
 
+    public SlowdownEvent(boolean slowdown) {
+        this.slowdown = slowdown;
+    }
+
     public boolean isSlowdown() {
         return this.slowdown;
     }
@@ -36,9 +40,5 @@ public class SlowdownEvent {
     @Override
     public String toString() {
         return "EventSlowdown(slowdown=" + this.isSlowdown() + ")";
-    }
-
-    public SlowdownEvent(boolean slowdown) {
-        this.slowdown = slowdown;
     }
 }

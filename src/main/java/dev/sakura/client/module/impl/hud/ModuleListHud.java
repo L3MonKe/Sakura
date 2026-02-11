@@ -17,9 +17,9 @@ import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.client.gui.DrawContext;
+import org.joml.Matrix3x2fStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
-import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 import java.util.*;
@@ -93,7 +93,9 @@ public class ModuleListHud extends HudModule {
     private final BoolValue backgroundShadow = new BoolValue("Background Shadow", "渐变-背景阴影", false, () -> mode.is(ListMode.Gradient) && background.get());
     private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "渐变-阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
     private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "渐变-阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+
     public enum ShadowMode {Solid, Gradient}
+
     private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "渐变-阴影模式", ShadowMode.Solid, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
 
     // 4. 线条设置 (Lines)
