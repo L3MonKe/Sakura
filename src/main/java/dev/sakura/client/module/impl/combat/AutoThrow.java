@@ -2,14 +2,17 @@ package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.events.client.TickEvent;
+import dev.sakura.client.events.input.MoveInputEvent;
 import dev.sakura.client.events.render.item.HeldItemRendererEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
+import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
+import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
@@ -30,6 +33,7 @@ public class AutoThrow extends Module {
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 100, 1, 180, 1);
     private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟(ms)", 100, 0, 1000, 10);
     private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟(ms)", 300, 0, 1000, 10);
+    private final NumberValue<Integer> switchDelay = new NumberValue<>("Switch Delay", "切换延迟(ms)", 0, 0, 1000, 10);
     private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
     private final BoolValue silentSwitch = new BoolValue("Silent Switch", "静默切换", false, autoSwitch::get);
     private final BoolValue inCombat = new BoolValue("In Combat", "战斗穿插", false);
@@ -38,6 +42,7 @@ public class AutoThrow extends Module {
 
     private LivingEntity target;
     private final TimerUtil throwTimer = new TimerUtil();
+    private final TimerUtil switchTimer = new TimerUtil();
     private long nextDelay = 0;
 
     private boolean shouldSwapBack;
@@ -45,11 +50,35 @@ public class AutoThrow extends Module {
     private boolean isThrowing = false;
     private int oldSlot = -1;
 
+    private Rotation targetRotation;
+    private float realYaw, realPitch;
+    private float realLastYaw, realLastPitch;
+    private float realBodyYaw, realHeadYaw;
+
     public AutoThrow() {
         super("AutoThrow", "自动投掷", Category.Combat);
 
         ClientTickEvents.START_CLIENT_TICK.register(minecraftClient -> {
             if (minecraftClient.player == null || minecraftClient.world == null) return;
+
+            if (isEnabled() && isThrowing && targetRotation != null) {
+                realYaw = minecraftClient.player.getYaw();
+                realPitch = minecraftClient.player.getPitch();
+                realLastYaw = minecraftClient.player.lastYaw;
+                realLastPitch = minecraftClient.player.lastPitch;
+                realBodyYaw = minecraftClient.player.bodyYaw;
+                realHeadYaw = minecraftClient.player.headYaw;
+
+                minecraftClient.player.setYaw(targetRotation.yaw);
+                minecraftClient.player.setPitch(targetRotation.pitch);
+
+                minecraftClient.player.lastYaw = targetRotation.yaw;
+                minecraftClient.player.lastPitch = targetRotation.pitch;
+
+                minecraftClient.player.bodyYaw = targetRotation.yaw;
+                minecraftClient.player.headYaw = targetRotation.yaw;
+            }
+
             if (!shouldSwapBack) return;
 
             shouldSwapBack = false;
@@ -76,7 +105,7 @@ public class AutoThrow extends Module {
         if (!silentSwitch.get()) return;
         if (mc.player == null) return;
 
-        if (isThrowing && oldSlot != -1 && event.getHand() == Hand.MAIN_HAND) {
+        if (oldSlot != -1 && event.getHand() == Hand.MAIN_HAND) {
             event.setItem(mc.player.getInventory().getStack(oldSlot));
             return;
         }
@@ -97,6 +126,40 @@ public class AutoThrow extends Module {
             if (bestSlot != -1) {
                 event.setItem(mc.player.getInventory().getStack(bestSlot));
             }
+        }
+    }
+
+    @EventHandler
+    public void onMoveInput(MoveInputEvent event) {
+        if (isThrowing) {
+            float forward = event.getForward();
+            float strafe = event.getStrafe();
+
+            if (forward == 0 && strafe == 0) return;
+
+            double angle = net.minecraft.util.math.MathHelper.wrapDegrees(Math.toDegrees(MoveUtil.getDirection(realYaw, forward, strafe)));
+
+            float closestForward = 0, closestStrafe = 0, closestDifference = Float.MAX_VALUE;
+
+            float currentYaw = mc.player.getYaw();
+
+            for (float predictedForward = -1F; predictedForward <= 1F; predictedForward += 1F) {
+                for (float predictedStrafe = -1F; predictedStrafe <= 1F; predictedStrafe += 1F) {
+                    if (predictedStrafe == 0 && predictedForward == 0) continue;
+
+                    double predictedAngle = net.minecraft.util.math.MathHelper.wrapDegrees(Math.toDegrees(MoveUtil.getDirection(currentYaw, predictedForward, predictedStrafe)));
+                    double difference = MathUtil.wrappedDifference(angle, predictedAngle);
+
+                    if (difference < closestDifference) {
+                        closestDifference = (float) difference;
+                        closestForward = predictedForward;
+                        closestStrafe = predictedStrafe;
+                    }
+                }
+            }
+
+            event.setForward(closestForward);
+            event.setStrafe(closestStrafe);
         }
     }
 
@@ -157,26 +220,49 @@ public class AutoThrow extends Module {
         if (nullCheck()) return;
 
         if (isThrowing) {
+            float currentYaw = mc.player.getYaw();
+            float currentPitch = mc.player.getPitch();
+
+            float deltaYaw = currentYaw - targetRotation.yaw;
+            float deltaPitch = currentPitch - targetRotation.pitch;
+
+            mc.player.setYaw(realYaw + deltaYaw);
+            mc.player.setPitch(realPitch + deltaPitch);
+
+            mc.player.lastYaw = realLastYaw;
+            mc.player.lastPitch = realLastPitch;
+
+            mc.player.bodyYaw = realBodyYaw;
+            mc.player.headYaw = realHeadYaw;
+
             mc.options.useKey.setPressed(false);
             isThrowing = false;
+            
+            switchTimer.reset();
 
-            if (oldSlot != -1 && autoSwitch.get()) {
-                if (mc.player != null) mc.player.getInventory().setSelectedSlot(oldSlot);
+            if (switchDelay.get() == 0) {
+                resetThrowState();
             }
-            oldSlot = -1;
+            return;
+        }
 
-            throwTimer.reset();
-            updateNextDelay();
+        if (oldSlot != -1) {
+            if (switchTimer.passedMillise(switchDelay.get())) {
+                resetThrowState();
+            }
             return;
         }
 
         if (mc.player == null) return;
         if (mc.player.isUsingItem()) return;
 
-        if (target != null && throwTimer.passedMillise(nextDelay)) {
-            Rotation targetRotation = RotationUtil.calculate(target);
+        if (target != null) {
+            Rotation targetRotation = calculateArc(target);
+            this.targetRotation = targetRotation;
 
-            if (isRotated(targetRotation)) {
+            Managers.ROTATION.setRotations(targetRotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
+
+            if (throwTimer.passedMillise(nextDelay) && isRotated(targetRotation)) {
                 FindItemResult result = InvUtil.findInHotbar(itemStack ->
                         itemStack.getItem() == Items.SNOWBALL || itemStack.getItem() == Items.EGG
                 );
@@ -186,6 +272,15 @@ public class AutoThrow extends Module {
                 }
             }
         }
+    }
+
+    private void resetThrowState() {
+        if (oldSlot != -1 && autoSwitch.get()) {
+            if (mc.player != null) mc.player.getInventory().setSelectedSlot(oldSlot);
+        }
+        oldSlot = -1;
+        throwTimer.reset();
+        updateNextDelay();
     }
 
     private void findTarget() {
@@ -217,7 +312,29 @@ public class AutoThrow extends Module {
         Rotation current = Managers.ROTATION.getRotation();
         float yawDiff = Math.abs(current.yaw - targetRotation.yaw) % 360;
         if (yawDiff > 180) yawDiff = 360 - yawDiff;
-        return yawDiff < 10 && Math.abs(current.pitch - targetRotation.pitch) < 10;
+        return yawDiff < 1 && Math.abs(current.pitch - targetRotation.pitch) < 1;
+    }
+
+    private Rotation calculateArc(LivingEntity target) {
+        if (mc.player == null) return new Rotation(0, 0);
+        double posX = target.getX() + (target.getX() - target.lastX) * 2.0 - mc.player.getX();
+        double posY = target.getY() + target.getEyeHeight(target.getPose()) * 0.5 - (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()));
+        double posZ = target.getZ() + (target.getZ() - target.lastZ) * 2.0 - mc.player.getZ();
+
+        double distance = Math.sqrt(posX * posX + posZ * posZ);
+
+        double v = 1.5;
+        double g = 0.03;
+
+        double time = distance / v;
+        double drop = 0.5 * g * time * time;
+
+        posY += drop;
+
+        float pitch = (float) -Math.toDegrees(Math.atan2(posY, distance));
+        float yaw = (float) Math.toDegrees(Math.atan2(posZ, posX)) - 90.0F;
+
+        return new Rotation(yaw, pitch);
     }
 
     private void throwItem(int slot) {
