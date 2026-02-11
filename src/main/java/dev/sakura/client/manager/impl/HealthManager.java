@@ -1,11 +1,11 @@
 package dev.sakura.client.manager.impl;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.util.AuthUtil;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;

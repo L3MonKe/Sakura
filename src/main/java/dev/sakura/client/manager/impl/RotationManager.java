@@ -1,16 +1,16 @@
 package dev.sakura.client.manager.impl;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.input.MoveInputEvent;
-import dev.sakura.client.events.player.*;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.input.MoveInputEvent;
+import dev.sakura.client.event.impl.player.*;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.util.AuthUtil;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 

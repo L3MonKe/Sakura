@@ -1,9 +1,10 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.input.MouseButtonEvent;
-import dev.sakura.client.events.player.StrafeEvent;
-import dev.sakura.client.events.type.KeyAction;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.input.MouseButtonEvent;
+import dev.sakura.client.event.impl.player.StrafeEvent;
+import dev.sakura.client.event.type.KeyAction;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
@@ -23,7 +24,6 @@ import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.util.AuthUtil;
-import meteordevelopment.orbit.EventHandler;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;

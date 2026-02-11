@@ -1,8 +1,9 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.render.Render2DEvent;
+import dev.sakura.client.event.impl.render.Render2DEvent;
 import dev.sakura.client.module.impl.hud.HotbarHud;
+import dev.sakura.client.module.impl.hud.PotionHud;
 import dev.sakura.client.module.impl.hud.ScoreBoardHud;
 import dev.sakura.client.module.impl.render.NoRender;
 import net.minecraft.client.gui.DrawContext;
@@ -35,7 +36,10 @@ public class MixinInGameHud {
     @Inject(method = "renderStatusEffectOverlay", at = @At("HEAD"), cancellable = true)
     private void onRenderStatusEffectOverlay(CallbackInfo ci) {
         NoRender noRender = Sakura.MODULES.getModule(NoRender.class);
-        if (noRender.noPotionIcons()) ci.cancel();
+        PotionHud potionHud = Sakura.MODULES.getModule(PotionHud.class);
+        if (noRender.noPotionIcons() || potionHud.shouldHideVanilla()) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)

@@ -2,7 +2,7 @@ package dev.sakura.client.mixin.render;
 
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.entity.EntitySpawnEvent;
+import dev.sakura.client.event.impl.entity.EntitySpawnEvent;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,8 +1,8 @@
 package dev.sakura.client.mixin.network;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.utils.player.PacketUtil;
 import io.netty.channel.ChannelFutureListener;
 import net.minecraft.network.ClientConnection;

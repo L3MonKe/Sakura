@@ -1,9 +1,10 @@
 package dev.sakura.client.module.impl.player.inventory;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -15,7 +16,6 @@ import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;

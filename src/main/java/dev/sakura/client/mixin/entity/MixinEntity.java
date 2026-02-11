@@ -1,11 +1,11 @@
 package dev.sakura.client.mixin.entity;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.entity.EntityPushEvent;
-import dev.sakura.client.events.player.MoveEvent;
-import dev.sakura.client.events.player.RayTraceEvent;
-import dev.sakura.client.events.player.StrafeEvent;
-import dev.sakura.client.events.player.UpdateVelocityEvent;
+import dev.sakura.client.event.impl.entity.EntityPushEvent;
+import dev.sakura.client.event.impl.player.MoveEvent;
+import dev.sakura.client.event.impl.player.RayTraceEvent;
+import dev.sakura.client.event.impl.player.StrafeEvent;
+import dev.sakura.client.event.impl.player.UpdateVelocityEvent;
 import dev.sakura.client.module.impl.render.Shaders;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;

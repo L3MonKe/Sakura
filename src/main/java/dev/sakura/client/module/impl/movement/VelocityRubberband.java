@@ -1,9 +1,11 @@
 package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.EventPriority;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.mixin.accessor.IExplosionS2CPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -11,8 +13,6 @@ import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
-import meteordevelopment.orbit.EventPriority;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;

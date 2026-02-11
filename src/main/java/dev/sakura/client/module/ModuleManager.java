@@ -1,10 +1,12 @@
 package dev.sakura.client.module;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.input.MouseButtonEvent;
-import dev.sakura.client.events.key.KeyEvent;
-import dev.sakura.client.events.render.Render2DEvent;
-import dev.sakura.client.events.type.KeyAction;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.EventPriority;
+import dev.sakura.client.event.impl.input.MouseButtonEvent;
+import dev.sakura.client.event.impl.key.KeyEvent;
+import dev.sakura.client.event.impl.render.Render2DEvent;
+import dev.sakura.client.event.type.KeyAction;
 import dev.sakura.client.manager.impl.NotificationManager;
 import dev.sakura.client.module.impl.client.*;
 import dev.sakura.client.module.impl.combat.*;
@@ -15,8 +17,6 @@ import dev.sakura.client.module.impl.player.inventory.InvManager;
 import dev.sakura.client.module.impl.player.inventory.Stealer;
 import dev.sakura.client.module.impl.render.*;
 import dev.sakura.client.values.Value;
-import meteordevelopment.orbit.EventHandler;
-import meteordevelopment.orbit.EventPriority;
 import org.lwjgl.glfw.GLFW;
 
 import java.lang.reflect.Field;
@@ -36,7 +36,6 @@ public class ModuleManager {
         add(new KillAura());
         add(new TpAura());
         add(new AttackCrystal());
-        add(new AutoCrystal());
         add(new AutoAnchor());
         add(new AutoTotem());
         add(new AutoThrow());
@@ -45,6 +44,7 @@ public class ModuleManager {
 
         // Movement
         add(new AutoSprint());
+        add(new AutoStuck());
         add(new BlinkNoSlow());
         add(new FastWeb());
         add(new JumpCooldown());
@@ -98,6 +98,7 @@ public class ModuleManager {
         add(new Capes());
 //        add(new Chat());
         add(new ClickGui());
+        add(new PanelGui());
         add(new HudEditor());
         add(new Targets());
         add(new Teams());

@@ -1,8 +1,8 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.render.item.HeldItemRendererEvent;
-import dev.sakura.client.events.render.item.UpdateHeldItemEvent;
+import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
+import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
 import dev.sakura.client.interfaces.IHeldItemRenderer;
 import dev.sakura.client.module.impl.render.Animations;
 import dev.sakura.client.module.impl.render.Chams;

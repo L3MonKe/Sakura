@@ -1,9 +1,10 @@
 package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.input.MoveInputEvent;
-import dev.sakura.client.events.render.item.HeldItemRendererEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.input.MoveInputEvent;
+import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
@@ -19,7 +20,6 @@ import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
@@ -237,7 +237,7 @@ public class AutoThrow extends Module {
 
             mc.options.useKey.setPressed(false);
             isThrowing = false;
-            
+
             switchTimer.reset();
 
             if (switchDelay.get() == 0) {

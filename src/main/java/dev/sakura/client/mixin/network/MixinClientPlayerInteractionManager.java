@@ -1,8 +1,8 @@
 package dev.sakura.client.mixin.network;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.entity.AttackBlockEvent;
-import dev.sakura.client.events.entity.AttackEntityEvent;
+import dev.sakura.client.event.impl.entity.AttackBlockEvent;
+import dev.sakura.client.event.impl.entity.AttackEntityEvent;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;

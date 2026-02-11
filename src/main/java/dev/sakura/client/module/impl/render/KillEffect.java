@@ -1,13 +1,13 @@
 package dev.sakura.client.module.impl.render;
 
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.mixin.accessor.IPlayerInteractEntityC2SPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;

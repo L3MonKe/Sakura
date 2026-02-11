@@ -1,13 +1,13 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.mixin.accessor.IPlayerMoveC2SPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.EnumValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.Items;
@@ -30,7 +30,7 @@ public class NoFall extends Module {
         if (nullCheck()) return;
         if (!isFalling()) return;
 
-        if (mode.is(Mode.Grim)) {
+        if (mode.is(Mode.BBTT)) {
             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(mc.player.getX(), mc.player.getY() + 0.000000001, mc.player.getZ(), mc.player.getYaw(), mc.player.getPitch(), false, mc.player.horizontalCollision));
             mc.player.onLanding();
         }
@@ -38,7 +38,7 @@ public class NoFall extends Module {
 
     @EventHandler
     public void onPacketSend(PacketEvent event) {
-        if (mc.world == null || mc.player == null || event.getType() != EventType.SEND) return;
+        if (nullCheck() || event.getType() != EventType.SEND) return;
 
         for (EquipmentSlot slot : AttributeModifierSlot.ARMOR) {
             if (mc.player.getEquippedStack(slot).getItem() == Items.ELYTRA) {
@@ -57,7 +57,7 @@ public class NoFall extends Module {
     }
 
     private enum Mode {
-        Grim,
+        BBTT,
         Packet
     }
 }

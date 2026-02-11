@@ -1,6 +1,7 @@
 package dev.sakura.client.module.impl.combat;
 
-import dev.sakura.client.events.client.TickEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
@@ -16,7 +17,6 @@ import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.world.BlockUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.RespawnAnchorBlock;
 import net.minecraft.entity.Entity;

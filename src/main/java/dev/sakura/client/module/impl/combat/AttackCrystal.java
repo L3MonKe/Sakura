@@ -1,6 +1,7 @@
 package dev.sakura.client.module.impl.combat;
 
-import dev.sakura.client.events.client.TickEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
@@ -8,7 +9,6 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.util.Hand;

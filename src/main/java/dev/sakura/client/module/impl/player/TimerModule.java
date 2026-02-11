@@ -1,14 +1,14 @@
 package dev.sakura.client.module.impl.player;
 
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.client.TimerEvent;
-import dev.sakura.client.events.key.KeyEvent;
-import dev.sakura.client.events.type.KeyAction;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.client.TimerEvent;
+import dev.sakura.client.event.impl.key.KeyEvent;
+import dev.sakura.client.event.type.KeyAction;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import meteordevelopment.orbit.EventHandler;
 import org.lwjgl.glfw.GLFW;
 
 public class TimerModule extends Module {

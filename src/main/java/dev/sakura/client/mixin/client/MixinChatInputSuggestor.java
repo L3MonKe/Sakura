@@ -4,7 +4,7 @@ import com.mojang.brigadier.ParseResults;
 import com.mojang.brigadier.StringReader;
 import com.mojang.brigadier.suggestion.Suggestions;
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.SuggestChatEvent;
+import dev.sakura.client.event.impl.client.SuggestChatEvent;
 import net.minecraft.client.gui.screen.ChatInputSuggestor;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.command.CommandSource;

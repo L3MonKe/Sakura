@@ -449,7 +449,20 @@ public class NanoVGHelper {
         nvgBoxGradient(vg, x + offsetX, y + offsetY, w, h, radius, blur, innerColor, outerColor, shadowPaint);
 
         nvgBeginPath(vg);
-        nvgRoundedRect(vg, x + offsetX - blur, y + offsetY - blur, w + blur * 2, h + blur * 2, radius + blur);
+        float ox = x + offsetX - blur;
+        float oy = y + offsetY - blur;
+        float ow = w + blur * 2;
+        float oh = h + blur * 2;
+
+        if (radius > 0.0f) {
+            nvgRoundedRect(vg, ox, oy, ow, oh, radius + blur);
+            nvgPathWinding(vg, NVG_HOLE);
+            nvgRoundedRect(vg, x + offsetX, y + offsetY, w, h, radius);
+        } else {
+            nvgRect(vg, ox, oy, ow, oh);
+            nvgPathWinding(vg, NVG_HOLE);
+            nvgRect(vg, x + offsetX, y + offsetY, w, h);
+        }
         nvgFillPaint(vg, shadowPaint);
         nvgFill(vg);
     }

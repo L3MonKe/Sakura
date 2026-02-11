@@ -8,16 +8,16 @@ Package: dev.sakura.client	NameNotChanged
 Package: dev.sakura.client.command	=>	dev.sakura.client
 Package: dev.sakura.client.command.impl	=>	dev.sakura.client
 Package: dev.sakura.client.config	=>	dev.sakura.client
-Package: dev.sakura.client.events	=>	dev.sakura.client
-Package: dev.sakura.client.events.client	=>	dev.sakura.client
-Package: dev.sakura.client.events.entity	=>	dev.sakura.client
-Package: dev.sakura.client.events.input	=>	dev.sakura.client
-Package: dev.sakura.client.events.key	=>	dev.sakura.client
-Package: dev.sakura.client.events.packet	=>	dev.sakura.client
-Package: dev.sakura.client.events.player	=>	dev.sakura.client
-Package: dev.sakura.client.events.render	=>	dev.sakura.client
-Package: dev.sakura.client.events.render.item	=>	dev.sakura.client
-Package: dev.sakura.client.events.type	=>	dev.sakura.client
+Package: dev.sakura.client.event	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.client	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.entity	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.input	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.key	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.packet	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.player	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.render	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.render.item	=>	dev.sakura.client
+Package: dev.sakura.client.event.impl.type	=>	dev.sakura.client
 Package: dev.sakura.client.gui	=>	dev.sakura.client
 Package: dev.sakura.client.gui.auth	=>	dev.sakura.client
 Package: dev.sakura.client.gui.clickgui	=>	dev.sakura.client
@@ -98,7 +98,7 @@ Class: public dev.sakura.client.Sakura	=>	dev.sakura.client.Mahiro_i
 		public static dev.sakura.client.gui.clickgui.ClickGuiScreen CLICKGUI	=>	Mahiro_J
 		public static dev.sakura.client.command.CommandManager COMMAND	=>	Mahiro_i
 		public static dev.sakura.client.config.ConfigManager CONFIG	=>	Mahiro_U
-		public static final meteordevelopment.orbit.IEventBus EVENT_BUS	=>	Mahiro_m
+		public static final dev.sakura.client.event.IEventBus EVENT_BUS	=>	Mahiro_m
 		public static java.util.concurrent.Executor EXECUTOR	=>	Mahiro_l
 		public static dev.sakura.client.gui.hud.HudEditorScreen HUDEDITOR	=>	Mahiro_o
 		public static final org.apache.logging.log4j.Logger LOGGER	=>	Mahiro_t
@@ -165,9 +165,9 @@ Class: public dev.sakura.client.command.CommandManager	=>	dev.sakura.client.Mahi
 		public java.util.List getCommands()	=>	Mahiro_K(java.lang.Object[])* :IuhWc-W_V8kZNv
 		public java.lang.String getPrefix()	=>	Mahiro_M(java.lang.Object[])* :BTODEL7eV8kZNv
 		private int getPrefixKey(java.lang.String)	=>	Mahiro_C(long, java.lang.String)	=>	Mahiro_C(java.lang.Object[])* :ujF1bQcEVyta6S
-		public void onChatMessage(dev.sakura.client.events.client.SendMessageEvent)	=>	Mahiro_J(dev.sakura.client.Mahiro_SM) :Ab9EpHlGV8kZNv
-		public void onChatSuggest(dev.sakura.client.events.client.SuggestChatEvent)	=>	Mahiro_V(dev.sakura.client.Mahiro_tp) :A-YZC$SNV8kZNv
-		public void onKey(dev.sakura.client.events.key.KeyEvent)	=>	Mahiro_F(dev.sakura.client.Mahiro_Sp) :X5g8yQAcV8kZNv
+		public void onChatMessage(dev.sakura.client.event.impl.client.SendMessageEvent)	=>	Mahiro_J(dev.sakura.client.Mahiro_SM) :Ab9EpHlGV8kZNv
+		public void onChatSuggest(dev.sakura.client.event.impl.client.SuggestChatEvent)	=>	Mahiro_V(dev.sakura.client.Mahiro_tp) :A-YZC$SNV8kZNv
+		public void onKey(dev.sakura.client.event.impl.key.KeyEvent)	=>	Mahiro_F(dev.sakura.client.Mahiro_Sp) :X5g8yQAcV8kZNv
 		private void register(dev.sakura.client.command.Command[])	=>	Mahiro_s(java.lang.Object[])* :AQlj9DpIV8kZNv
 		public void setPrefix(java.lang.String, int)	=>	Mahiro_g(java.lang.Object[])* :E8gDFna8V8kZNv
 
@@ -587,12 +587,12 @@ Class: public final dev.sakura.client.config.StableConfigCodec	=>	dev.sakura.cli
 		private static java.lang.Float safeGetFloatObj(com.google.gson.JsonElement)	=>	Mahiro_X(java.lang.Object[])* :BS-ih8JfV8kZNv
 		private static int safeGetInt(com.google.gson.JsonElement)	=>	Mahiro_i(java.lang.Object[])* :AAjgw_v3V8kZNv
 
-Class: public dev.sakura.client.events.Cancellable	=>	dev.sakura.client.Mahiro_ST
+Class: public dev.sakura.client.event.Cancellable	=>	dev.sakura.client.Mahiro_ST
 	Source: "Cancellable.java"
-	FieldsOf: dev.sakura.client.events.Cancellable
+	FieldsOf: dev.sakura.client.event.Cancellable
 		private static java.lang.String[] a	=>	Mahiro_O Manufactured:
 		private boolean cancelled	=>	Mahiro_y
-	MethodsOf: dev.sakura.client.events.Cancellable
+	MethodsOf: dev.sakura.client.event.Cancellable
 		static void <clinit>()	=>	<clinit>() :qX0yP9QvV8kZNv Manufactured:
 		public void <init>()	=>	<init>() :sPAJAU72V8kZNv
 		public static java.lang.String[] a()	=>	Mahiro_g() Manufactured:
@@ -600,27 +600,27 @@ Class: public dev.sakura.client.events.Cancellable	=>	dev.sakura.client.Mahiro_S
 		public boolean isCancelled()	=>	isCancelled() :slPhMTKiV8kZNv
 		public void setCancelled(boolean)	=>	setCancelled(boolean) :8yrY24aJV8kZNv
 
-Class: public dev.sakura.client.events.client.GameJoinEvent	=>	dev.sakura.client.Mahiro_yt
+Class: public dev.sakura.client.event.impl.client.GameJoinEvent	=>	dev.sakura.client.Mahiro_yt
 	Source: "GameJoinEvent.java"
-	FieldsOf: dev.sakura.client.events.client.GameJoinEvent
-	MethodsOf: dev.sakura.client.events.client.GameJoinEvent
+	FieldsOf: dev.sakura.client.event.impl.client.GameJoinEvent
+	MethodsOf: dev.sakura.client.event.impl.client.GameJoinEvent
 		public void <init>()	=>	<init>() :wyc73xEHV8kZNv
 
-Class: public dev.sakura.client.events.client.SendMessageEvent	=>	dev.sakura.client.Mahiro_SM
+Class: public dev.sakura.client.event.impl.client.SendMessageEvent	=>	dev.sakura.client.Mahiro_SM
 	Source: "SendMessageEvent.java"
-	FieldsOf: dev.sakura.client.events.client.SendMessageEvent
+	FieldsOf: dev.sakura.client.event.impl.client.SendMessageEvent
 		private final java.lang.String message	=>	Mahiro_i
-	MethodsOf: dev.sakura.client.events.client.SendMessageEvent
+	MethodsOf: dev.sakura.client.event.impl.client.SendMessageEvent
 		public void <init>(java.lang.String)	=>	<init>(java.lang.String) :oNrdOxPRV8kZNv
 		public java.lang.String getMessage()	=>	Mahiro_N(java.lang.Object[])* :zst6bFY$V8kZNv
 
-Class: public dev.sakura.client.events.client.SuggestChatEvent	=>	dev.sakura.client.Mahiro_tp
+Class: public dev.sakura.client.event.impl.client.SuggestChatEvent	=>	dev.sakura.client.Mahiro_tp
 	Source: "SuggestChatEvent.java"
-	FieldsOf: dev.sakura.client.events.client.SuggestChatEvent
+	FieldsOf: dev.sakura.client.event.impl.client.SuggestChatEvent
 		private com.mojang.brigadier.CommandDispatcher dispatcher	=>	Mahiro_e
 		private java.lang.String prefix	=>	Mahiro_f
 		private net.minecraft.class_2172 source	=>	Mahiro_h
-	MethodsOf: dev.sakura.client.events.client.SuggestChatEvent
+	MethodsOf: dev.sakura.client.event.impl.client.SuggestChatEvent
 		public void <init>()	=>	<init>() :NMZXZdgzV8kZNv
 		public com.mojang.brigadier.CommandDispatcher getDispatcher()	=>	Mahiro_z(java.lang.Object[])* :89pNTX8pV8kZNv
 		public java.lang.String getPrefix()	=>	Mahiro_K(java.lang.Object[])* :tFiKkTFXV8kZNv
@@ -629,111 +629,111 @@ Class: public dev.sakura.client.events.client.SuggestChatEvent	=>	dev.sakura.cli
 		public void setPrefix(java.lang.String)	=>	Mahiro_K(java.lang.Object[])* :ofMRyx87V8kZNv
 		public void setSource(net.minecraft.class_2172)	=>	Mahiro_a(java.lang.Object[])* :SUdD$36UV8kZNv
 
-Class: public dev.sakura.client.events.client.TickEvent	=>	dev.sakura.client.Mahiro_J
+Class: public dev.sakura.client.event.impl.client.TickEvent	=>	dev.sakura.client.Mahiro_J
 	Source: "TickEvent.java"
-	FieldsOf: dev.sakura.client.events.client.TickEvent
+	FieldsOf: dev.sakura.client.event.impl.client.TickEvent
 		private static int[] a	=>	Mahiro_c Manufactured:
-	MethodsOf: dev.sakura.client.events.client.TickEvent
+	MethodsOf: dev.sakura.client.event.impl.client.TickEvent
 		static void <clinit>()	=>	<clinit>() :QAjAhNBaV8kZNv Manufactured:
 		public void <init>()	=>	<init>() :AW7kJhIcV8kZNv
 		public static int[] a()	=>	Mahiro_U() Manufactured:
 		public static void a(int[])	=>	Mahiro_X(int[]) Manufactured:
 
-Class: public dev.sakura.client.events.client.TickEvent$Post	=>	dev.sakura.client.Mahiro_W
+Class: public dev.sakura.client.event.impl.client.TickEvent$Post	=>	dev.sakura.client.Mahiro_W
 	Source: "TickEvent.java"
-	FieldsOf: dev.sakura.client.events.client.TickEvent$Post
+	FieldsOf: dev.sakura.client.event.impl.client.TickEvent$Post
 		private static boolean b	=>	Mahiro_L Manufactured:
-	MethodsOf: dev.sakura.client.events.client.TickEvent$Post
+	MethodsOf: dev.sakura.client.event.impl.client.TickEvent$Post
 		static void <clinit>()	=>	<clinit>() :WanvZYeqV8kZNv Manufactured:
 		public void <init>()	=>	<init>() :GOpD2CSNV8kZNv
 		public static void a(boolean)	=>	Mahiro_m(boolean) Manufactured:
 		public static boolean b()	=>	Mahiro_p() Manufactured:
 		public static boolean c()	=>	Mahiro_z() Manufactured:
 
-Class: public dev.sakura.client.events.client.TickEvent$Pre	=>	dev.sakura.client.Mahiro_m
+Class: public dev.sakura.client.event.impl.client.TickEvent$Pre	=>	dev.sakura.client.Mahiro_m
 	Source: "TickEvent.java"
-	FieldsOf: dev.sakura.client.events.client.TickEvent$Pre
+	FieldsOf: dev.sakura.client.event.impl.client.TickEvent$Pre
 		private static int b	=>	Mahiro_h Manufactured:
-	MethodsOf: dev.sakura.client.events.client.TickEvent$Pre
+	MethodsOf: dev.sakura.client.event.impl.client.TickEvent$Pre
 		static void <clinit>()	=>	<clinit>() :S_MC96SDV8kZNv Manufactured:
 		public void <init>()	=>	<init>() :qFoKTenhV8kZNv
 		public static void a(int)	=>	Mahiro_w(int) Manufactured:
 		public static int b()	=>	Mahiro_m() Manufactured:
 		public static int c()	=>	Mahiro_n() Manufactured:
 
-Class: public dev.sakura.client.events.client.TimerEvent	=>	dev.sakura.client.Mahiro_Se
+Class: public dev.sakura.client.event.impl.client.TimerEvent	=>	dev.sakura.client.Mahiro_Se
 	Source: "TimerEvent.java"
-	FieldsOf: dev.sakura.client.events.client.TimerEvent
+	FieldsOf: dev.sakura.client.event.impl.client.TimerEvent
 		private boolean modified	=>	Mahiro_x
 		private float timer	=>	Mahiro_b
-	MethodsOf: dev.sakura.client.events.client.TimerEvent
+	MethodsOf: dev.sakura.client.event.impl.client.TimerEvent
 		static void <clinit>()	SignatureNotChanged: Manufactured:
 		public void <init>()	=>	<init>(long) :A4Z7_dtXVyta6S
 		public float get()	=>	Mahiro_A(java.lang.Object[])* :uWIQkdMmV8kZNv
 		public boolean isModified()	=>	Mahiro_a(java.lang.Object[])* :Y88tX9DvV8kZNv
 		public void set(float)	=>	Mahiro_l(float, long)	=>	Mahiro_l(java.lang.Object[])* :ECQ2e7URVyIj9W
 
-Class: public dev.sakura.client.events.entity.AttackBlockEvent	=>	dev.sakura.client.Mahiro_SF
+Class: public dev.sakura.client.event.impl.entity.AttackBlockEvent	=>	dev.sakura.client.Mahiro_SF
 	Source: "AttackBlockEvent.java"
-	FieldsOf: dev.sakura.client.events.entity.AttackBlockEvent
+	FieldsOf: dev.sakura.client.event.impl.entity.AttackBlockEvent
 		private final net.minecraft.class_2350 direction	=>	Mahiro_W
 		private final net.minecraft.class_2338 pos	=>	Mahiro_A
-	MethodsOf: dev.sakura.client.events.entity.AttackBlockEvent
+	MethodsOf: dev.sakura.client.event.impl.entity.AttackBlockEvent
 		public void <init>(net.minecraft.class_2338, net.minecraft.class_2350)	=>	<init>(net.minecraft.class_2338, net.minecraft.class_2350) :VywxDepIV8kZNv
 		public net.minecraft.class_2350 getDirection()	=>	Mahiro_K(java.lang.Object[])* :yCHmDhLxV8kZNv
 		public net.minecraft.class_2338 getPos()	=>	Mahiro_o(java.lang.Object[])* :o0iLMKr-V8kZNv
 
-Class: public dev.sakura.client.events.entity.AttackEntityEvent	=>	dev.sakura.client.Mahiro_St
+Class: public dev.sakura.client.event.impl.entity.AttackEntityEvent	=>	dev.sakura.client.Mahiro_St
 	Source: "AttackEntityEvent.java"
-	FieldsOf: dev.sakura.client.events.entity.AttackEntityEvent
+	FieldsOf: dev.sakura.client.event.impl.entity.AttackEntityEvent
 		private final net.minecraft.class_1297 entity	=>	Mahiro_S
 		private final net.minecraft.class_1657 player	=>	Mahiro__
-	MethodsOf: dev.sakura.client.events.entity.AttackEntityEvent
+	MethodsOf: dev.sakura.client.event.impl.entity.AttackEntityEvent
 		static void <clinit>()	SignatureNotChanged: Manufactured:
 		public void <init>(net.minecraft.class_1657, net.minecraft.class_1297)	=>	<init>(long, net.minecraft.class_1657, net.minecraft.class_1297) :QYFYO9B-Vyta6S
 		public net.minecraft.class_1297 getEntity()	=>	Mahiro_H(java.lang.Object[])* :Sqcd66vGV8kZNv
 		public net.minecraft.class_1657 getPlayer()	=>	Mahiro_y(java.lang.Object[])* :na0W5oSWV8kZNv
 
-Class: public dev.sakura.client.events.entity.BlockPushEvent	=>	dev.sakura.client.Mahiro_S7
+Class: public dev.sakura.client.event.impl.entity.BlockPushEvent	=>	dev.sakura.client.Mahiro_S7
 	Source: "BlockPushEvent.java"
-	FieldsOf: dev.sakura.client.events.entity.BlockPushEvent
+	FieldsOf: dev.sakura.client.event.impl.entity.BlockPushEvent
 		private final net.minecraft.class_1297 entity	=>	Mahiro_E
-	MethodsOf: dev.sakura.client.events.entity.BlockPushEvent
+	MethodsOf: dev.sakura.client.event.impl.entity.BlockPushEvent
 		public void <init>(net.minecraft.class_1297)	=>	<init>(net.minecraft.class_1297) :NB$NL5hqV8kZNv
 		public net.minecraft.class_1297 getEntity()	=>	Mahiro_N(java.lang.Object[])* :wuhYlHbaV8kZNv
 
-Class: public dev.sakura.client.events.entity.EntityPushEvent	=>	dev.sakura.client.Mahiro_SN
+Class: public dev.sakura.client.event.impl.entity.EntityPushEvent	=>	dev.sakura.client.Mahiro_SN
 	Source: "EntityPushEvent.java"
-	FieldsOf: dev.sakura.client.events.entity.EntityPushEvent
+	FieldsOf: dev.sakura.client.event.impl.entity.EntityPushEvent
 		private final net.minecraft.class_1297 entity	=>	Mahiro_X
 		private final net.minecraft.class_1297 pushedBy	=>	Mahiro_P
-	MethodsOf: dev.sakura.client.events.entity.EntityPushEvent
+	MethodsOf: dev.sakura.client.event.impl.entity.EntityPushEvent
 		static void <clinit>()	SignatureNotChanged: Manufactured:
 		public void <init>(net.minecraft.class_1297, net.minecraft.class_1297)	=>	<init>(net.minecraft.class_1297, char, int, net.minecraft.class_1297, char) :kVt30h5iVyAGez
 		public net.minecraft.class_1297 getEntity()	=>	Mahiro__(java.lang.Object[])* :QgIpfFMmV8kZNv
 		public net.minecraft.class_1297 getPushedBy()	=>	Mahiro_Q(java.lang.Object[])* :QRCZQuY2V8kZNv
 
-Class: public dev.sakura.client.events.entity.EntitySpawnEvent	=>	dev.sakura.client.Mahiro_Sx
+Class: public dev.sakura.client.event.impl.entity.EntitySpawnEvent	=>	dev.sakura.client.Mahiro_Sx
 	Source: "EntitySpawnEvent.java"
-	FieldsOf: dev.sakura.client.events.entity.EntitySpawnEvent
+	FieldsOf: dev.sakura.client.event.impl.entity.EntitySpawnEvent
 		private final net.minecraft.class_1297 entity	=>	Mahiro_x
-	MethodsOf: dev.sakura.client.events.entity.EntitySpawnEvent
+	MethodsOf: dev.sakura.client.event.impl.entity.EntitySpawnEvent
 		public void <init>(net.minecraft.class_1297)	=>	<init>(net.minecraft.class_1297) :YSbF3pymV8kZNv
 		public net.minecraft.class_1297 getEntity()	=>	Mahiro_V(java.lang.Object[])* :e0KSlMcFV8kZNv
 
-Class: public dev.sakura.client.events.entity.EntityVelocityUpdateEvent	=>	dev.sakura.client.Mahiro_Sh
+Class: public dev.sakura.client.event.impl.entity.EntityVelocityUpdateEvent	=>	dev.sakura.client.Mahiro_Sh
 	Source: "EntityVelocityUpdateEvent.java"
-	FieldsOf: dev.sakura.client.events.entity.EntityVelocityUpdateEvent
-	MethodsOf: dev.sakura.client.events.entity.EntityVelocityUpdateEvent
+	FieldsOf: dev.sakura.client.event.impl.entity.EntityVelocityUpdateEvent
+	MethodsOf: dev.sakura.client.event.impl.entity.EntityVelocityUpdateEvent
 		public void <init>()	=>	<init>() :QAa9C-3-V8kZNv
 
-Class: public final dev.sakura.client.events.entity.SwingSpeedEvent	=>	dev.sakura.client.Mahiro_Sr
+Class: public final dev.sakura.client.event.impl.entity.SwingSpeedEvent	=>	dev.sakura.client.Mahiro_Sr
 	Source: "SwingSpeedEvent.java"
-	FieldsOf: dev.sakura.client.events.entity.SwingSpeedEvent
+	FieldsOf: dev.sakura.client.event.impl.entity.SwingSpeedEvent
 		private static java.lang.String b	=>	Mahiro_d Manufactured:
 		boolean selfOnly	=>	Mahiro_l
 		int swingSpeed	=>	Mahiro_u
-	MethodsOf: dev.sakura.client.events.entity.SwingSpeedEvent
+	MethodsOf: dev.sakura.client.event.impl.entity.SwingSpeedEvent
 		static void <clinit>()	=>	<clinit>() :z-EXvoMKV8kZNv Manufactured:
 		public void <init>()	=>	<init>() :SabAOi80V8kZNv
 		public static void a(java.lang.String)	=>	Mahiro_s(java.lang.String) Manufactured:
@@ -743,32 +743,32 @@ Class: public final dev.sakura.client.events.entity.SwingSpeedEvent	=>	dev.sakur
 		public void setSelfOnly(boolean)	=>	Mahiro_P(java.lang.Object[])* :g$OfDEduV8kZNv
 		public void setSwingSpeed(int)	=>	Mahiro_t(java.lang.Object[])* :urLSX4u-V8kZNv
 
-Class: public dev.sakura.client.events.input.HandleInputEvent	=>	dev.sakura.client.Mahiro_S5
+Class: public dev.sakura.client.event.impl.input.HandleInputEvent	=>	dev.sakura.client.Mahiro_S5
 	Source: "HandleInputEvent.java"
-	FieldsOf: dev.sakura.client.events.input.HandleInputEvent
-	MethodsOf: dev.sakura.client.events.input.HandleInputEvent
+	FieldsOf: dev.sakura.client.event.impl.input.HandleInputEvent
+	MethodsOf: dev.sakura.client.event.impl.input.HandleInputEvent
 		public void <init>()	=>	<init>() :njuY-uPoV8kZNv
 
-Class: public dev.sakura.client.events.input.MouseButtonEvent	=>	dev.sakura.client.Mahiro_Sj
+Class: public dev.sakura.client.event.impl.input.MouseButtonEvent	=>	dev.sakura.client.Mahiro_Sj
 	Source: "MouseButtonEvent.java"
-	FieldsOf: dev.sakura.client.events.input.MouseButtonEvent
-		private final dev.sakura.client.events.type.KeyAction action	=>	Mahiro_l
+	FieldsOf: dev.sakura.client.event.impl.input.MouseButtonEvent
+		private final dev.sakura.client.event.type.KeyAction action	=>	Mahiro_l
 		private final int button	=>	Mahiro_g
-	MethodsOf: dev.sakura.client.events.input.MouseButtonEvent
-		public void <init>(int, dev.sakura.client.events.type.KeyAction)	=>	<init>(int, dev.sakura.client.Mahiro_tG) :XUxm3vhnV8kZNv
-		public dev.sakura.client.events.type.KeyAction getAction()	=>	Mahiro_J(java.lang.Object[])* :GrlJCAx$V8kZNv
+	MethodsOf: dev.sakura.client.event.impl.input.MouseButtonEvent
+		public void <init>(int, dev.sakura.client.event.type.KeyAction)	=>	<init>(int, dev.sakura.client.Mahiro_tG) :XUxm3vhnV8kZNv
+		public dev.sakura.client.event.type.KeyAction getAction()	=>	Mahiro_J(java.lang.Object[])* :GrlJCAx$V8kZNv
 		public int getButton()	=>	Mahiro_t(java.lang.Object[])* :nVHIoVloV8kZNv
 
-Class: public dev.sakura.client.events.input.MoveInputEvent	=>	dev.sakura.client.Mahiro_S4
+Class: public dev.sakura.client.event.impl.input.MoveInputEvent	=>	dev.sakura.client.Mahiro_S4
 	Source: "MoveInputEvent.java"
-	FieldsOf: dev.sakura.client.events.input.MoveInputEvent
+	FieldsOf: dev.sakura.client.event.impl.input.MoveInputEvent
 		private static boolean b	=>	Mahiro_o Manufactured:
 		private float forward	=>	Mahiro_K
 		private boolean jump	=>	Mahiro_I
 		private boolean sneak	=>	Mahiro_M
 		private boolean sprint	=>	Mahiro_v
 		private float strafe	=>	Mahiro_W
-	MethodsOf: dev.sakura.client.events.input.MoveInputEvent
+	MethodsOf: dev.sakura.client.event.impl.input.MoveInputEvent
 		static void <clinit>()	=>	<clinit>() :QHWcLcYQV8kZNv Manufactured:
 		public void <init>(boolean, boolean, boolean, boolean, boolean, boolean, boolean)	=>	<init>(boolean, boolean, boolean, boolean, boolean, long, boolean, boolean) :YQ0Ztnt2VyE5c5
 		public static void a(boolean)	=>	Mahiro_H(boolean) Manufactured:
@@ -786,84 +786,84 @@ Class: public dev.sakura.client.events.input.MoveInputEvent	=>	dev.sakura.client
 		public void setStrafe(float)	=>	Mahiro_Y(java.lang.Object[])* :ni9HA8bVV8kZNv
 		public net.minecraft.class_10185 toPlayerInput()	=>	Mahiro_k(long)	=>	Mahiro_k(java.lang.Object[])* :SPv9cpjEVyta6S
 
-Class: public dev.sakura.client.events.key.KeyEvent	=>	dev.sakura.client.Mahiro_Sp
+Class: public dev.sakura.client.event.impl.key.KeyEvent	=>	dev.sakura.client.Mahiro_Sp
 	Source: "KeyEvent.java"
-	FieldsOf: dev.sakura.client.events.key.KeyEvent
-		private final dev.sakura.client.events.type.KeyAction action	=>	Mahiro_K
+	FieldsOf: dev.sakura.client.event.impl.key.KeyEvent
+		private final dev.sakura.client.event.type.KeyAction action	=>	Mahiro_K
 		private static java.lang.String[] b	=>	Mahiro_k Manufactured:
 		private final int key	=>	Mahiro_A
 		private final int modifiers	=>	Mahiro_C
-	MethodsOf: dev.sakura.client.events.key.KeyEvent
+	MethodsOf: dev.sakura.client.event.impl.key.KeyEvent
 		static void <clinit>()	=>	<clinit>() :Sw9R6GKjV8kZNv Manufactured:
-		public void <init>(int, int, dev.sakura.client.events.type.KeyAction)	=>	<init>(int, int, long, dev.sakura.client.Mahiro_tG) :q6h-oWqAVyAC_8
+		public void <init>(int, int, dev.sakura.client.event.type.KeyAction)	=>	<init>(int, int, long, dev.sakura.client.Mahiro_tG) :q6h-oWqAVyAC_8
 		public static java.lang.String[] b()	=>	Mahiro_n() Manufactured:
 		public static void b(java.lang.String[])	=>	Mahiro_d(java.lang.String[]) Manufactured:
-		public dev.sakura.client.events.type.KeyAction getAction()	=>	Mahiro_G(java.lang.Object[])* :AO0C4aMAV8kZNv
+		public dev.sakura.client.event.type.KeyAction getAction()	=>	Mahiro_G(java.lang.Object[])* :AO0C4aMAV8kZNv
 		public int getKey()	=>	Mahiro_P(java.lang.Object[])* :5-U8ttvkV8kZNv
 		public int getModifiers()	=>	Mahiro_h(java.lang.Object[])* :em5V1GPeV8kZNv
 
-Class: public dev.sakura.client.events.packet.PacketEvent	=>	dev.sakura.client.Mahiro_S6
+Class: public dev.sakura.client.event.impl.packet.PacketEvent	=>	dev.sakura.client.Mahiro_S6
 	Source: "PacketEvent.java"
-	FieldsOf: dev.sakura.client.events.packet.PacketEvent
+	FieldsOf: dev.sakura.client.event.impl.packet.PacketEvent
 		private static int b	=>	Mahiro_a Manufactured:
 		private net.minecraft.class_2596 packet	=>	Mahiro_G
-		private final dev.sakura.client.events.type.EventType type	=>	Mahiro_b
-	MethodsOf: dev.sakura.client.events.packet.PacketEvent
+		private final dev.sakura.client.event.type.EventType type	=>	Mahiro_b
+	MethodsOf: dev.sakura.client.event.impl.packet.PacketEvent
 		static void <clinit>()	=>	<clinit>() :sLhJ07I2V8kZNv Manufactured:
-		public void <init>(dev.sakura.client.events.type.EventType, net.minecraft.class_2596)	=>	<init>(long, dev.sakura.client.Mahiro_A, net.minecraft.class_2596) :XX-OY3sZVyta6S
+		public void <init>(dev.sakura.client.event.type.EventType, net.minecraft.class_2596)	=>	<init>(long, dev.sakura.client.Mahiro_A, net.minecraft.class_2596) :XX-OY3sZVyta6S
 		public static void a(int)	=>	Mahiro_t(int) Manufactured:
 		public static int b()	=>	Mahiro_b() Manufactured:
 		public static int c()	=>	Mahiro_c() Manufactured:
 		public net.minecraft.class_2596 getPacket()	=>	Mahiro_W(java.lang.Object[])* :-h6$IK7sV8kZNv
-		public dev.sakura.client.events.type.EventType getType()	=>	Mahiro_n(java.lang.Object[])* :XSNnq3uMV8kZNv
+		public dev.sakura.client.event.type.EventType getType()	=>	Mahiro_n(java.lang.Object[])* :XSNnq3uMV8kZNv
 		public void setPacket(net.minecraft.class_2596)	=>	Mahiro_d(java.lang.Object[])* :zNzjb-7vV8kZNv
 
-Class: public dev.sakura.client.events.player.BlockEvent	=>	dev.sakura.client.Mahiro_tE
+Class: public dev.sakura.client.event.impl.player.BlockEvent	=>	dev.sakura.client.Mahiro_tE
 	Source: "BlockEvent.java"
-	FieldsOf: dev.sakura.client.events.player.BlockEvent
+	FieldsOf: dev.sakura.client.event.impl.player.BlockEvent
 		private net.minecraft.class_2338 blockPos	=>	Mahiro_c
 		private net.minecraft.class_2350 direction	=>	Mahiro__
-	MethodsOf: dev.sakura.client.events.player.BlockEvent
+	MethodsOf: dev.sakura.client.event.impl.player.BlockEvent
 		public void <init>(net.minecraft.class_2338, net.minecraft.class_2350)	=>	<init>(net.minecraft.class_2338, net.minecraft.class_2350) :kxELsZNYV8kZNv
 		public net.minecraft.class_2338 getBlockPos()	=>	Mahiro_U(java.lang.Object[])* :SGzZCG1IV8kZNv
 		public net.minecraft.class_2350 getDirection()	=>	Mahiro_Y(java.lang.Object[])* :J15sJwnCV8kZNv
 
-Class: public dev.sakura.client.events.player.JumpEvent	=>	dev.sakura.client.Mahiro_SQ
+Class: public dev.sakura.client.event.impl.player.JumpEvent	=>	dev.sakura.client.Mahiro_SQ
 	Source: "JumpEvent.java"
-	FieldsOf: dev.sakura.client.events.player.JumpEvent
-		private final dev.sakura.client.events.type.EventType type	=>	Mahiro_w
-	MethodsOf: dev.sakura.client.events.player.JumpEvent
-		public void <init>(dev.sakura.client.events.type.EventType)	=>	<init>(dev.sakura.client.Mahiro_A) :XaiidXJeV8kZNv
-		public dev.sakura.client.events.type.EventType getType()	=>	Mahiro_C(java.lang.Object[])* :GVTlHabwV8kZNv
+	FieldsOf: dev.sakura.client.event.impl.player.JumpEvent
+		private final dev.sakura.client.event.type.EventType type	=>	Mahiro_w
+	MethodsOf: dev.sakura.client.event.impl.player.JumpEvent
+		public void <init>(dev.sakura.client.event.type.EventType)	=>	<init>(dev.sakura.client.Mahiro_A) :XaiidXJeV8kZNv
+		public dev.sakura.client.event.type.EventType getType()	=>	Mahiro_C(java.lang.Object[])* :GVTlHabwV8kZNv
 
-Class: public dev.sakura.client.events.player.JumpRotationEvent	=>	dev.sakura.client.Mahiro_SB
+Class: public dev.sakura.client.event.impl.player.JumpRotationEvent	=>	dev.sakura.client.Mahiro_SB
 	Source: "JumpRotationEvent.java"
-	FieldsOf: dev.sakura.client.events.player.JumpRotationEvent
+	FieldsOf: dev.sakura.client.event.impl.player.JumpRotationEvent
 		private float yaw	=>	Mahiro__
-	MethodsOf: dev.sakura.client.events.player.JumpRotationEvent
+	MethodsOf: dev.sakura.client.event.impl.player.JumpRotationEvent
 		public void <init>(float)	=>	<init>(float) :NKxzYmMmV8kZNv
 		public float getYaw()	=>	Mahiro_U(java.lang.Object[])* :si08S79vV8kZNv
 		public void setYaw(float)	=>	Mahiro_R(java.lang.Object[])* :gzGg082VV8kZNv
 
-Class: public dev.sakura.client.events.player.MotionEvent	=>	dev.sakura.client.Mahiro_Sv
+Class: public dev.sakura.client.event.impl.player.MotionEvent	=>	dev.sakura.client.Mahiro_Sv
 	Source: "MotionEvent.java"
-	FieldsOf: dev.sakura.client.events.player.MotionEvent
+	FieldsOf: dev.sakura.client.event.impl.player.MotionEvent
 		private static int[] b	=>	Mahiro_D Manufactured:
 		private boolean onGround	=>	Mahiro_C
 		private float pitch	=>	Mahiro_N
-		private final dev.sakura.client.events.type.EventType type	=>	Mahiro_m
+		private final dev.sakura.client.event.type.EventType type	=>	Mahiro_m
 		private double x	=>	Mahiro_g
 		private double y	=>	Mahiro_d
 		private float yaw	=>	Mahiro_c
 		private double z	=>	Mahiro_A
-	MethodsOf: dev.sakura.client.events.player.MotionEvent
+	MethodsOf: dev.sakura.client.event.impl.player.MotionEvent
 		static void <clinit>()	=>	<clinit>() :8p3Hk1CuV8kZNv Manufactured:
-		public void <init>(dev.sakura.client.events.type.EventType, double, double, double, float, float, boolean)	=>	<init>(long, dev.sakura.client.Mahiro_A, double, double, double, float, float, boolean) :zexennZ8Vyta6S
-		public void <init>(dev.sakura.client.events.type.EventType, float, float)	=>	<init>(dev.sakura.client.Mahiro_A, float, float) :uBzzCNIIV8kZNv
+		public void <init>(dev.sakura.client.event.type.EventType, double, double, double, float, float, boolean)	=>	<init>(long, dev.sakura.client.Mahiro_A, double, double, double, float, float, boolean) :zexennZ8Vyta6S
+		public void <init>(dev.sakura.client.event.type.EventType, float, float)	=>	<init>(dev.sakura.client.Mahiro_A, float, float) :uBzzCNIIV8kZNv
 		public static void a(int[])	=>	Mahiro_D(int[]) Manufactured:
 		public static int[] b()	=>	Mahiro_E() Manufactured:
 		public float getPitch()	=>	Mahiro_b(java.lang.Object[])* :BVK-b2eOV8kZNv
-		public dev.sakura.client.events.type.EventType getType()	=>	Mahiro_j(java.lang.Object[])* :GnpX5NWrV8kZNv
+		public dev.sakura.client.event.type.EventType getType()	=>	Mahiro_j(java.lang.Object[])* :GnpX5NWrV8kZNv
 		public double getX()	=>	Mahiro_n(java.lang.Object[])* :eTUNDw17V8kZNv
 		public double getY()	=>	Mahiro_F(java.lang.Object[])* :wuK$tngaV8kZNv
 		public float getYaw()	=>	Mahiro_k(java.lang.Object[])* :zkY8uG9AV8kZNv
@@ -876,13 +876,13 @@ Class: public dev.sakura.client.events.player.MotionEvent	=>	dev.sakura.client.M
 		public void setYaw(float)	=>	Mahiro_V(java.lang.Object[])* :w1cFH4yQV8kZNv
 		public void setZ(double)	=>	Mahiro_P(java.lang.Object[])* :epP7z08HV8kZNv
 
-Class: public dev.sakura.client.events.player.MoveEvent	=>	dev.sakura.client.Mahiro_SW
+Class: public dev.sakura.client.event.impl.player.MoveEvent	=>	dev.sakura.client.Mahiro_SW
 	Source: "MoveEvent.java"
-	FieldsOf: dev.sakura.client.events.player.MoveEvent
+	FieldsOf: dev.sakura.client.event.impl.player.MoveEvent
 		private double x	=>	Mahiro_Q
 		private double y	=>	Mahiro_w
 		private double z	=>	Mahiro_l
-	MethodsOf: dev.sakura.client.events.player.MoveEvent
+	MethodsOf: dev.sakura.client.event.impl.player.MoveEvent
 		public void <init>(double, double, double)	=>	<init>(double, double, double) :N76wMPvsV8kZNv
 		public void <init>(net.minecraft.class_243)	=>	<init>(net.minecraft.class_243) :5O9y-LsdV8kZNv
 		public net.minecraft.class_243 getVec()	=>	Mahiro_r(java.lang.Object[])* :QFleX4qmV8kZNv
@@ -894,19 +894,19 @@ Class: public dev.sakura.client.events.player.MoveEvent	=>	dev.sakura.client.Mah
 		public void setY(double)	=>	Mahiro_L(java.lang.Object[])* :EZAYdxT1V8kZNv
 		public void setZ(double)	=>	Mahiro_F(java.lang.Object[])* :NaNc1xxkV8kZNv
 
-Class: public dev.sakura.client.events.player.PlayerTickEvent	=>	dev.sakura.client.Mahiro_SG
+Class: public dev.sakura.client.event.impl.player.PlayerTickEvent	=>	dev.sakura.client.Mahiro_SG
 	Source: "PlayerTickEvent.java"
-	FieldsOf: dev.sakura.client.events.player.PlayerTickEvent
-	MethodsOf: dev.sakura.client.events.player.PlayerTickEvent
+	FieldsOf: dev.sakura.client.event.impl.player.PlayerTickEvent
+	MethodsOf: dev.sakura.client.event.impl.player.PlayerTickEvent
 		public void <init>()	=>	<init>() :IThCOGgBV8kZNv
 
-Class: public dev.sakura.client.events.player.RayTraceEvent	=>	dev.sakura.client.Mahiro_tU
+Class: public dev.sakura.client.event.impl.player.RayTraceEvent	=>	dev.sakura.client.Mahiro_tU
 	Source: "RayTraceEvent.java"
-	FieldsOf: dev.sakura.client.events.player.RayTraceEvent
+	FieldsOf: dev.sakura.client.event.impl.player.RayTraceEvent
 		public net.minecraft.class_1297 entity	=>	Mahiro_Q
 		public float pitch	=>	Mahiro__
 		public float yaw	=>	Mahiro_h
-	MethodsOf: dev.sakura.client.events.player.RayTraceEvent
+	MethodsOf: dev.sakura.client.event.impl.player.RayTraceEvent
 		public void <init>(net.minecraft.class_1297, float, float)	=>	<init>(net.minecraft.class_1297, float, float) :VHBuR6YrV8kZNv
 		public net.minecraft.class_1297 getEntity()	=>	Mahiro_E(java.lang.Object[])* :EdqaLzgLV8kZNv
 		public float getPitch()	=>	Mahiro_t(java.lang.Object[])* :By1tDGA2V8kZNv
@@ -915,11 +915,11 @@ Class: public dev.sakura.client.events.player.RayTraceEvent	=>	dev.sakura.client
 		public void setPitch(float)	=>	Mahiro_W(java.lang.Object[])* :own0j9QKV8kZNv
 		public void setYaw(float)	=>	Mahiro_N(java.lang.Object[])* :VaNCx54oV8kZNv
 
-Class: public dev.sakura.client.events.player.SlowdownEvent	=>	dev.sakura.client.Mahiro_y4
+Class: public dev.sakura.client.event.impl.player.SlowdownEvent	=>	dev.sakura.client.Mahiro_y4
 	Source: "SlowdownEvent.java"
-	FieldsOf: dev.sakura.client.events.player.SlowdownEvent
+	FieldsOf: dev.sakura.client.event.impl.player.SlowdownEvent
 		private boolean slowdown	=>	Mahiro_r
-	MethodsOf: dev.sakura.client.events.player.SlowdownEvent
+	MethodsOf: dev.sakura.client.event.impl.player.SlowdownEvent
 		static void <clinit>()	=>	<clinit>() :tvQ5qbIOV8kZNv Manufactured:
 		public void <init>(boolean)	=>	<init>(boolean) :YLA1iBt3V8kZNv
 		private static java.lang.String a(byte[])	SignatureNotChanged: Manufactured:
@@ -933,46 +933,46 @@ Class: public dev.sakura.client.events.player.SlowdownEvent	=>	dev.sakura.client
 		public void setSlowdown(boolean)	=>	Mahiro_G(java.lang.Object[])* :NbqUyCz_V8kZNv
 		public java.lang.String toString()	=>	toString() :IL1_Pv-DV8kZNv
 
-Class: public dev.sakura.client.events.player.SprintEvent	=>	dev.sakura.client.Mahiro_tw
+Class: public dev.sakura.client.event.impl.player.SprintEvent	=>	dev.sakura.client.Mahiro_tw
 	Source: "SprintEvent.java"
-	FieldsOf: dev.sakura.client.events.player.SprintEvent
+	FieldsOf: dev.sakura.client.event.impl.player.SprintEvent
 		private boolean sprint	=>	Mahiro_K
-	MethodsOf: dev.sakura.client.events.player.SprintEvent
+	MethodsOf: dev.sakura.client.event.impl.player.SprintEvent
 		public void <init>()	=>	<init>() :Sqd5ElM_V8kZNv
 		public boolean isSprint()	=>	Mahiro_s(java.lang.Object[])* :-Uius4BpV8kZNv
 		public void setSprint(boolean)	=>	Mahiro_h(java.lang.Object[])* :QlpKv5XMV8kZNv
 
-Class: public dev.sakura.client.events.player.StrafeEvent	=>	dev.sakura.client.Mahiro_tg
+Class: public dev.sakura.client.event.impl.player.StrafeEvent	=>	dev.sakura.client.Mahiro_tg
 	Source: "StrafeEvent.java"
-	FieldsOf: dev.sakura.client.events.player.StrafeEvent
+	FieldsOf: dev.sakura.client.event.impl.player.StrafeEvent
 		private float yaw	=>	Mahiro_w
-	MethodsOf: dev.sakura.client.events.player.StrafeEvent
+	MethodsOf: dev.sakura.client.event.impl.player.StrafeEvent
 		public void <init>(float)	=>	<init>(float) :q_1bRo5-V8kZNv
 		public float getYaw()	=>	Mahiro_V(java.lang.Object[])* :q9X8QQbBV8kZNv
 		public void setYaw(float)	=>	Mahiro_h(java.lang.Object[])* :-5MbBTj_V8kZNv
 
-Class: public dev.sakura.client.events.player.TravelEvent	=>	dev.sakura.client.Mahiro_tV
+Class: public dev.sakura.client.event.impl.player.TravelEvent	=>	dev.sakura.client.Mahiro_tV
 	Source: "TravelEvent.java"
-	FieldsOf: dev.sakura.client.events.player.TravelEvent
+	FieldsOf: dev.sakura.client.event.impl.player.TravelEvent
 		private net.minecraft.class_243 movementInput	=>	Mahiro_g
-		private final dev.sakura.client.events.type.EventType type	=>	Mahiro_L
-	MethodsOf: dev.sakura.client.events.player.TravelEvent
+		private final dev.sakura.client.event.type.EventType type	=>	Mahiro_L
+	MethodsOf: dev.sakura.client.event.impl.player.TravelEvent
 		static void <clinit>()	SignatureNotChanged: Manufactured:
-		public void <init>(dev.sakura.client.events.type.EventType, net.minecraft.class_243)	=>	<init>(dev.sakura.client.Mahiro_A, net.minecraft.class_243) :zgi9ovU9V8kZNv
+		public void <init>(dev.sakura.client.event.type.EventType, net.minecraft.class_243)	=>	<init>(dev.sakura.client.Mahiro_A, net.minecraft.class_243) :zgi9ovU9V8kZNv
 		public net.minecraft.class_243 getMovementInput()	=>	Mahiro_W(java.lang.Object[])* :t9k$I_0PV8kZNv
-		public dev.sakura.client.events.type.EventType getType()	=>	Mahiro_G(java.lang.Object[])* :WJ9ZjFk0V8kZNv
+		public dev.sakura.client.event.type.EventType getType()	=>	Mahiro_G(java.lang.Object[])* :WJ9ZjFk0V8kZNv
 		public boolean isPost()	=>	Mahiro_p(long)	=>	Mahiro_p(java.lang.Object[])* :kX2MsDHUVyta6S
 		public boolean isPre()	=>	Mahiro_D(long)	=>	Mahiro_D(java.lang.Object[])* :sju0CEdCVyta6S
 		public void setMovementInput(net.minecraft.class_243)	=>	Mahiro_M(java.lang.Object[])* :XCyUg1z8V8kZNv
 
-Class: public dev.sakura.client.events.player.UpdateVelocityEvent	=>	dev.sakura.client.Mahiro_tP
+Class: public dev.sakura.client.event.impl.player.UpdateVelocityEvent	=>	dev.sakura.client.Mahiro_tP
 	Source: "UpdateVelocityEvent.java"
-	FieldsOf: dev.sakura.client.events.player.UpdateVelocityEvent
+	FieldsOf: dev.sakura.client.event.impl.player.UpdateVelocityEvent
 		net.minecraft.class_243 movementInput	=>	Mahiro_a
 		float speed	=>	Mahiro_S
 		net.minecraft.class_243 velocity	=>	Mahiro_c
 		float yaw	=>	Mahiro_Q
-	MethodsOf: dev.sakura.client.events.player.UpdateVelocityEvent
+	MethodsOf: dev.sakura.client.event.impl.player.UpdateVelocityEvent
 		static void <clinit>()	SignatureNotChanged: Manufactured:
 		public void <init>(net.minecraft.class_243, float, float, net.minecraft.class_243)	=>	<init>(net.minecraft.class_243, int, float, float, net.minecraft.class_243, long) :-4tZ$gHdVyAkut
 		public net.minecraft.class_243 getMovementInput()	=>	Mahiro__(java.lang.Object[])* :5FN2nL0rV8kZNv
@@ -980,24 +980,24 @@ Class: public dev.sakura.client.events.player.UpdateVelocityEvent	=>	dev.sakura.
 		public net.minecraft.class_243 getVelocity()	=>	Mahiro_n(java.lang.Object[])* :Vh4x5hdmV8kZNv
 		public void setVelocity(net.minecraft.class_243)	=>	Mahiro_g(java.lang.Object[])* :obRneI9lV8kZNv
 
-Class: public final dev.sakura.client.events.render.Render2DEvent	=>	dev.sakura.client.Mahiro_sY
+Class: public final dev.sakura.client.event.impl.render.Render2DEvent	=>	dev.sakura.client.Mahiro_sY
 	Source: "Render2DEvent.java"
-	FieldsOf: dev.sakura.client.events.render.Render2DEvent
+	FieldsOf: dev.sakura.client.event.impl.render.Render2DEvent
 		private final net.minecraft.class_332 getContext	=>	mahiro_e
-	MethodsOf: dev.sakura.client.events.render.Render2DEvent
+	MethodsOf: dev.sakura.client.event.impl.render.Render2DEvent
 		public void <init>(net.minecraft.class_332)	=>	<init>(net.minecraft.class_332) :rZGk_iU0V8kZNv
 		public final boolean equals(java.lang.Object)	=>	equals(java.lang.Object) :5uGVq7zGV8kZNv
 		public net.minecraft.class_332 getContext()	=>	Mahiro_e() :IJ1pZRTeV8kZNv
 		public final int hashCode()	=>	hashCode() :oXyhnYQ0V8kZNv
 		public final java.lang.String toString()	=>	toString() :JGW5QITmV8kZNv
 
-Class: public final dev.sakura.client.events.render.Render3DEvent	=>	dev.sakura.client.Mahiro_yg
+Class: public final dev.sakura.client.event.impl.render.Render3DEvent	=>	dev.sakura.client.Mahiro_yg
 	Source: "Render3DEvent.java"
-	FieldsOf: dev.sakura.client.events.render.Render3DEvent
+	FieldsOf: dev.sakura.client.event.impl.render.Render3DEvent
 		private static int a	=>	Mahiro_i Manufactured:
 		private final net.minecraft.class_4587 getMatrices	=>	mahiro_P
 		private final float getTickDelta	=>	mahiro_v
-	MethodsOf: dev.sakura.client.events.render.Render3DEvent
+	MethodsOf: dev.sakura.client.event.impl.render.Render3DEvent
 		static void <clinit>()	=>	<clinit>() :WxxPtHoOV8kZNv Manufactured:
 		public void <init>(net.minecraft.class_4587, float)	=>	<init>(net.minecraft.class_4587, float) :Y9yBGXGgV8kZNv
 		public static int a()	=>	Mahiro_i() Manufactured:
@@ -1009,38 +1009,38 @@ Class: public final dev.sakura.client.events.render.Render3DEvent	=>	dev.sakura.
 		public final int hashCode()	=>	hashCode() :EhVcDmWzV8kZNv
 		public final java.lang.String toString()	=>	toString() :EI2sRCpmV8kZNv
 
-Class: public dev.sakura.client.events.render.WorldLoadEvent	=>	dev.sakura.client.Mahiro_te
+Class: public dev.sakura.client.event.impl.render.WorldLoadEvent	=>	dev.sakura.client.Mahiro_te
 	Source: "WorldLoadEvent.java"
-	FieldsOf: dev.sakura.client.events.render.WorldLoadEvent
-	MethodsOf: dev.sakura.client.events.render.WorldLoadEvent
+	FieldsOf: dev.sakura.client.event.impl.render.WorldLoadEvent
+	MethodsOf: dev.sakura.client.event.impl.render.WorldLoadEvent
 		public void <init>()	=>	<init>() :eJfiUFnAV8kZNv
 
-Class: public dev.sakura.client.events.render.item.ApplyTransformationEvent	=>	dev.sakura.client.Mahiro_t9
+Class: public dev.sakura.client.event.impl.render.item.ApplyTransformationEvent	=>	dev.sakura.client.Mahiro_t9
 	Source: "ApplyTransformationEvent.java"
-	FieldsOf: dev.sakura.client.events.render.item.ApplyTransformationEvent
+	FieldsOf: dev.sakura.client.event.impl.render.item.ApplyTransformationEvent
 		public boolean leftHanded	=>	Mahiro_T
 		public net.minecraft.class_804 transformation	=>	Mahiro_J
-	MethodsOf: dev.sakura.client.events.render.item.ApplyTransformationEvent
+	MethodsOf: dev.sakura.client.event.impl.render.item.ApplyTransformationEvent
 		public void <init>(net.minecraft.class_804, boolean)	=>	<init>(net.minecraft.class_804, boolean) :JhRT6qExV8kZNv
 
-Class: public dev.sakura.client.events.render.item.EatTransformationEvent	=>	dev.sakura.client.Mahiro_tf
+Class: public dev.sakura.client.event.impl.render.item.EatTransformationEvent	=>	dev.sakura.client.Mahiro_tf
 	Source: "EatTransformationEvent.java"
-	FieldsOf: dev.sakura.client.events.render.item.EatTransformationEvent
+	FieldsOf: dev.sakura.client.event.impl.render.item.EatTransformationEvent
 		private float factor	=>	Mahiro_W
-	MethodsOf: dev.sakura.client.events.render.item.EatTransformationEvent
+	MethodsOf: dev.sakura.client.event.impl.render.item.EatTransformationEvent
 		public void <init>()	=>	<init>() :EmDMf_LlV8kZNv
 		public float getFactor()	=>	Mahiro_C(java.lang.Object[])* :r0jLqWMXV8kZNv
 		public void setFactor(float)	=>	Mahiro_q(java.lang.Object[])* :QT2-mN-_V8kZNv
 
-Class: public dev.sakura.client.events.render.item.HeldItemRendererEvent	=>	dev.sakura.client.Mahiro_tJ
+Class: public dev.sakura.client.event.impl.render.item.HeldItemRendererEvent	=>	dev.sakura.client.Mahiro_tJ
 	Source: "HeldItemRendererEvent.java"
-	FieldsOf: dev.sakura.client.events.render.item.HeldItemRendererEvent
+	FieldsOf: dev.sakura.client.event.impl.render.item.HeldItemRendererEvent
 		private static dev.sakura.client.module.Module[] b	=>	Mahiro_w Manufactured:
 		private final float equipProgress	=>	Mahiro_h
 		private final net.minecraft.class_1268 hand	=>	Mahiro_Y
 		private net.minecraft.class_1799 item	=>	Mahiro_s
 		private final net.minecraft.class_4587 matrices	=>	Mahiro_S
-	MethodsOf: dev.sakura.client.events.render.item.HeldItemRendererEvent
+	MethodsOf: dev.sakura.client.event.impl.render.item.HeldItemRendererEvent
 		static void <clinit>()	=>	<clinit>() :A_0Hc-QeV8kZNv Manufactured:
 		public void <init>(net.minecraft.class_1268, net.minecraft.class_1799, float, net.minecraft.class_4587)	=>	<init>(net.minecraft.class_1268, net.minecraft.class_1799, float, net.minecraft.class_4587) :wX_RMA$aV8kZNv
 		public static void a(dev.sakura.client.module.Module[])	=>	Mahiro_g(dev.sakura.client.Mahiro_j[]) Manufactured:
@@ -1051,9 +1051,9 @@ Class: public dev.sakura.client.events.render.item.HeldItemRendererEvent	=>	dev.
 		public net.minecraft.class_4587 getMatrices()	=>	Mahiro_G(java.lang.Object[])* :Yb207-0XV8kZNv
 		public void setItem(net.minecraft.class_1799)	=>	Mahiro_D(java.lang.Object[])* :sj2NxyEjV8kZNv
 
-Class: public dev.sakura.client.events.render.item.RenderItemEntityEvent	=>	dev.sakura.client.Mahiro_t2
+Class: public dev.sakura.client.event.impl.render.item.RenderItemEntityEvent	=>	dev.sakura.client.Mahiro_t2
 	Source: "RenderItemEntityEvent.java"
-	FieldsOf: dev.sakura.client.events.render.item.RenderItemEntityEvent
+	FieldsOf: dev.sakura.client.event.impl.render.item.RenderItemEntityEvent
 		public net.minecraft.class_1542 itemEntity	=>	Mahiro_B
 		public net.minecraft.class_10442 itemModelManager	=>	Mahiro_s
 		public int light	=>	Mahiro_Z
@@ -1062,22 +1062,22 @@ Class: public dev.sakura.client.events.render.item.RenderItemEntityEvent	=>	dev.
 		public net.minecraft.class_10039 renderState	=>	Mahiro_S
 		public float tickDelta	=>	Mahiro_u
 		public net.minecraft.class_4597 vertexConsumerProvider	=>	Mahiro_f
-	MethodsOf: dev.sakura.client.events.render.item.RenderItemEntityEvent
+	MethodsOf: dev.sakura.client.event.impl.render.item.RenderItemEntityEvent
 		static void <clinit>()	SignatureNotChanged: Manufactured:
 		public void <init>(net.minecraft.class_10039, float, net.minecraft.class_4587, net.minecraft.class_4597, int, net.minecraft.class_10442, net.minecraft.class_11659)	=>	<init>(net.minecraft.class_10039, float, long, net.minecraft.class_4587, net.minecraft.class_4597, int, net.minecraft.class_10442, net.minecraft.class_11659) :uhYuJ7oJVyAC_8
 
-Class: public dev.sakura.client.events.render.item.RenderSwingAnimationEvent	=>	dev.sakura.client.Mahiro_ta
+Class: public dev.sakura.client.event.impl.render.item.RenderSwingAnimationEvent	=>	dev.sakura.client.Mahiro_ta
 	Source: "RenderSwingAnimationEvent.java"
-	FieldsOf: dev.sakura.client.events.render.item.RenderSwingAnimationEvent
-	MethodsOf: dev.sakura.client.events.render.item.RenderSwingAnimationEvent
+	FieldsOf: dev.sakura.client.event.impl.render.item.RenderSwingAnimationEvent
+	MethodsOf: dev.sakura.client.event.impl.render.item.RenderSwingAnimationEvent
 		public void <init>()	=>	<init>() :AUnoycrrV8kZNv
 
-Class: public dev.sakura.client.events.render.item.UpdateHeldItemEvent	=>	dev.sakura.client.Mahiro_Tx
+Class: public dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent	=>	dev.sakura.client.Mahiro_Tx
 	Source: "UpdateHeldItemEvent.java"
-	FieldsOf: dev.sakura.client.events.render.item.UpdateHeldItemEvent
+	FieldsOf: dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent
 		private final net.minecraft.class_1268 hand	=>	Mahiro_R
 		private net.minecraft.class_1799 item	=>	Mahiro_k
-	MethodsOf: dev.sakura.client.events.render.item.UpdateHeldItemEvent
+	MethodsOf: dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent
 		static void <clinit>()	=>	<clinit>() :sJWowMCAV8kZNv Manufactured:
 		public void <init>(net.minecraft.class_1268, net.minecraft.class_1799)	=>	<init>(net.minecraft.class_1268, net.minecraft.class_1799) :wZeNjWmfV8kZNv
 		private static java.lang.String a(byte[])	SignatureNotChanged: Manufactured:
@@ -1095,40 +1095,40 @@ Class: public dev.sakura.client.events.render.item.UpdateHeldItemEvent	=>	dev.sa
 		public void setItem(net.minecraft.class_1799)	=>	Mahiro_E(java.lang.Object[])* :krWPRODlV8kZNv
 		public java.lang.String toString()	=>	toString() :gwOZSCpAV8kZNv
 
-Class: public final enum dev.sakura.client.events.type.EventType	=>	dev.sakura.client.Mahiro_A
+Class: public final enum dev.sakura.client.event.type.EventType	=>	dev.sakura.client.Mahiro_A
 	Source: "EventType.java"
-	FieldsOf: dev.sakura.client.events.type.EventType
-		private static final synthetic dev.sakura.client.events.type.EventType[] $VALUES	=>	Mahiro_O
-		public static final enum dev.sakura.client.events.type.EventType POST	NameNotChanged
-		public static final enum dev.sakura.client.events.type.EventType PRE	NameNotChanged
-		public static final enum dev.sakura.client.events.type.EventType RECEIVE	NameNotChanged
-		public static final enum dev.sakura.client.events.type.EventType SEND	NameNotChanged
+	FieldsOf: dev.sakura.client.event.type.EventType
+		private static final synthetic dev.sakura.client.event.type.EventType[] $VALUES	=>	Mahiro_O
+		public static final enum dev.sakura.client.event.type.EventType POST	NameNotChanged
+		public static final enum dev.sakura.client.event.type.EventType PRE	NameNotChanged
+		public static final enum dev.sakura.client.event.type.EventType RECEIVE	NameNotChanged
+		public static final enum dev.sakura.client.event.type.EventType SEND	NameNotChanged
 		private static java.lang.String a	=>	Mahiro_z Manufactured:
-	MethodsOf: dev.sakura.client.events.type.EventType
-		private static synthetic dev.sakura.client.events.type.EventType[] $values()	=>	Mahiro_X(java.lang.Object[])* :QU$bShrBV8kZNv
+	MethodsOf: dev.sakura.client.event.type.EventType
+		private static synthetic dev.sakura.client.event.type.EventType[] $values()	=>	Mahiro_X(java.lang.Object[])* :QU$bShrBV8kZNv
 		static void <clinit>()	=>	<clinit>() :Ebo-j41DV8kZNv
 		private void <init>(java.lang.String, int)	=>	<init>(java.lang.String, int) :ArkNgFTpV8kZNv
 		public static java.lang.String a()	=>	Mahiro_D() Manufactured:
 		private static java.lang.String a(byte[])	SignatureNotChanged: Manufactured:
 		public static void a(java.lang.String)	=>	Mahiro_T(java.lang.String) Manufactured:
-		public static dev.sakura.client.events.type.EventType valueOf(java.lang.String)	=>	valueOf(java.lang.String) :sQnqOuZ6V8kZNv
-		public static dev.sakura.client.events.type.EventType[] values()	=>	values() :qH$_CD-rV8kZNv
+		public static dev.sakura.client.event.type.EventType valueOf(java.lang.String)	=>	valueOf(java.lang.String) :sQnqOuZ6V8kZNv
+		public static dev.sakura.client.event.type.EventType[] values()	=>	values() :qH$_CD-rV8kZNv
 
-Class: public final enum dev.sakura.client.events.type.KeyAction	=>	dev.sakura.client.Mahiro_tG
+Class: public final enum dev.sakura.client.event.type.KeyAction	=>	dev.sakura.client.Mahiro_tG
 	Source: "KeyAction.java"
-	FieldsOf: dev.sakura.client.events.type.KeyAction
-		private static final synthetic dev.sakura.client.events.type.KeyAction[] $VALUES	=>	Mahiro_r
-		public static final enum dev.sakura.client.events.type.KeyAction Press	NameNotChanged
-		public static final enum dev.sakura.client.events.type.KeyAction Release	NameNotChanged
-		public static final enum dev.sakura.client.events.type.KeyAction Repeat	NameNotChanged
-	MethodsOf: dev.sakura.client.events.type.KeyAction
-		private static synthetic dev.sakura.client.events.type.KeyAction[] $values()	=>	Mahiro_d(java.lang.Object[])* :kJKJ7fdRV8kZNv
+	FieldsOf: dev.sakura.client.event.type.KeyAction
+		private static final synthetic dev.sakura.client.event.type.KeyAction[] $VALUES	=>	Mahiro_r
+		public static final enum dev.sakura.client.event.type.KeyAction Press	NameNotChanged
+		public static final enum dev.sakura.client.event.type.KeyAction Release	NameNotChanged
+		public static final enum dev.sakura.client.event.type.KeyAction Repeat	NameNotChanged
+	MethodsOf: dev.sakura.client.event.type.KeyAction
+		private static synthetic dev.sakura.client.event.type.KeyAction[] $values()	=>	Mahiro_d(java.lang.Object[])* :kJKJ7fdRV8kZNv
 		static void <clinit>()	=>	<clinit>() :eQBxo6ohV8kZNv
 		private void <init>(java.lang.String, int)	=>	<init>(java.lang.String, int) :J9EiOSlpV8kZNv
 		private static java.lang.String a(byte[])	SignatureNotChanged: Manufactured:
-		public static dev.sakura.client.events.type.KeyAction from(int)	=>	Mahiro_I(long, int)	=>	Mahiro_I(java.lang.Object[])* :XygMAy5wVyta6S
-		public static dev.sakura.client.events.type.KeyAction valueOf(java.lang.String)	=>	valueOf(java.lang.String) :ETUnFOJpV8kZNv
-		public static dev.sakura.client.events.type.KeyAction[] values()	=>	values() :wEH_Q1ttV8kZNv
+		public static dev.sakura.client.event.type.KeyAction from(int)	=>	Mahiro_I(long, int)	=>	Mahiro_I(java.lang.Object[])* :XygMAy5wVyta6S
+		public static dev.sakura.client.event.type.KeyAction valueOf(java.lang.String)	=>	valueOf(java.lang.String) :ETUnFOJpV8kZNv
+		public static dev.sakura.client.event.type.KeyAction[] values()	=>	values() :wEH_Q1ttV8kZNv
 
 Class: public dev.sakura.client.gui.Component	=>	dev.sakura.client.Mahiro_MX
 	Source: "Component.java"
@@ -2252,7 +2252,7 @@ Class: public dev.sakura.client.manager.impl.ExtrapolationManager	=>	dev.sakura.
 		private net.minecraft.class_243 getMotion(java.util.List, int)	=>	Mahiro_L(java.util.List, long, int)	=>	Mahiro_L(java.lang.Object[])* :oUKAbjSpVyIj9W
 		private boolean inside(net.minecraft.class_1657, net.minecraft.class_238)	=>	Mahiro_G(java.lang.Object[])* :VzaBYynfV8kZNv
 		private void lambda$extrapolateMap$0(java.util.Map, dev.sakura.client.manager.impl.ExtrapolationManager$EpicInterface, dev.sakura.client.manager.impl.ExtrapolationManager$EpicInterface, net.minecraft.class_742, java.util.List)	=>	lambda$extrapolateMap$0(java.util.Map, dev.sakura.client.Mahiro_yu, dev.sakura.client.Mahiro_yu, net.minecraft.class_742, java.util.List) :uAIHeiyFV8kZNv
-		private void onTick(dev.sakura.client.events.client.TickEvent$Post)	=>	Mahiro_q(dev.sakura.client.Mahiro_W) :z3u8PR0jV8kZNv
+		private void onTick(dev.sakura.client.event.impl.client.TickEvent$Post)	=>	Mahiro_q(dev.sakura.client.Mahiro_W) :z3u8PR0jV8kZNv
 
 Class: public abstract dev.sakura.client.manager.impl.ExtrapolationManager$EpicInterface	=>	dev.sakura.client.Mahiro_yu
 	Source: "ExtrapolationManager.java"
@@ -2273,7 +2273,7 @@ Class: public dev.sakura.client.manager.impl.HealthManager	=>	dev.sakura.client.
 		private static java.lang.Object a(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		public float getHealth(net.minecraft.class_1297)	=>	Mahiro_L(net.minecraft.class_1297, long)	=>	Mahiro_L(java.lang.Object[])* :VFqW52vWVyIj9W
 		private boolean isHealthObjective(java.lang.String)	=>	Mahiro_B(long, java.lang.String)	=>	Mahiro_B(java.lang.Object[])* :y7MUKz--Vyta6S
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_c(dev.sakura.client.Mahiro_S6) :nxgb892rV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_c(dev.sakura.client.Mahiro_S6) :nxgb892rV8kZNv
 
 Class: public dev.sakura.client.manager.impl.NotificationManager	=>	dev.sakura.client.Mahiro_SP
 	Source: "NotificationManager.java"
@@ -2343,7 +2343,7 @@ Class: public dev.sakura.client.manager.impl.RenderManager	=>	dev.sakura.client.
 		public void add(net.minecraft.class_2338, java.awt.Color, java.awt.Color, int, boolean)	=>	Mahiro_I(net.minecraft.class_2338, java.awt.Color, java.awt.Color, int, long, boolean)	=>	Mahiro_I(java.lang.Object[])* :gRxbXc1bVy5tRE
 		public void add(net.minecraft.class_238, java.awt.Color, java.awt.Color, int, boolean)	=>	Mahiro_h(net.minecraft.class_238, java.awt.Color, java.awt.Color, int, boolean, long)	=>	Mahiro_h(java.lang.Object[])* :W8It7HptVyE5c5
 		private static boolean lambda$onRender3D$0(long, dev.sakura.client.manager.impl.RenderManager$Renderer)	=>	lambda$onRender3D$0(long, dev.sakura.client.Mahiro_tt) :qGY81hLfV8kZNv
-		private void onRender3D(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_H(dev.sakura.client.Mahiro_yg) :B8rZEnSBV8kZNv
+		private void onRender3D(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_H(dev.sakura.client.Mahiro_yg) :B8rZEnSBV8kZNv
 
 Class: final dev.sakura.client.manager.impl.RenderManager$Renderer	=>	dev.sakura.client.Mahiro_tt
 	Source: "RenderManager.java"
@@ -2407,12 +2407,12 @@ Class: public dev.sakura.client.manager.impl.RotationManager	=>	dev.sakura.clien
 		public boolean isSmoothed()	=>	Mahiro_V(java.lang.Object[])* :qa7sSRnJV8kZNv
 		public void lookAt(net.minecraft.class_243, double)	=>	Mahiro_W(long, net.minecraft.class_243, double)	=>	Mahiro_W(java.lang.Object[])* :wC8mP$w$Vyta6S
 		public void lookAt(net.minecraft.class_243, double, dev.sakura.client.manager.impl.RotationManager$Priority)	=>	Mahiro_K(net.minecraft.class_243, double, long, dev.sakura.client.Mahiro_yD)	=>	Mahiro_K(java.lang.Object[])* :SpEkSBx_VyAC_8
-		private void onJump(dev.sakura.client.events.player.JumpRotationEvent)	=>	Mahiro_V(dev.sakura.client.Mahiro_SB) :zW3Cl3eoV8kZNv
-		private void onMotion(dev.sakura.client.events.player.MotionEvent)	=>	Mahiro_k(dev.sakura.client.Mahiro_Sv) :z1uiAvQGV8kZNv
-		private void onMoveInput(dev.sakura.client.events.input.MoveInputEvent)	=>	Mahiro_V(dev.sakura.client.Mahiro_S4) :gg8itC$WV8kZNv
-		private void onPlayerTick(dev.sakura.client.events.player.PlayerTickEvent)	=>	Mahiro_y(dev.sakura.client.Mahiro_SG) :W3KIuyVBV8kZNv
-		private void onRaytrace(dev.sakura.client.events.player.RayTraceEvent)	=>	Mahiro_j(dev.sakura.client.Mahiro_tU) :yzTZUqEsV8kZNv
-		private void onStrafe(dev.sakura.client.events.player.StrafeEvent)	=>	Mahiro_e(dev.sakura.client.Mahiro_tg) :QQqyMw5-V8kZNv
+		private void onJump(dev.sakura.client.event.impl.player.JumpRotationEvent)	=>	Mahiro_V(dev.sakura.client.Mahiro_SB) :zW3Cl3eoV8kZNv
+		private void onMotion(dev.sakura.client.event.impl.player.MotionEvent)	=>	Mahiro_k(dev.sakura.client.Mahiro_Sv) :z1uiAvQGV8kZNv
+		private void onMoveInput(dev.sakura.client.event.impl.input.MoveInputEvent)	=>	Mahiro_V(dev.sakura.client.Mahiro_S4) :gg8itC$WV8kZNv
+		private void onPlayerTick(dev.sakura.client.event.impl.player.PlayerTickEvent)	=>	Mahiro_y(dev.sakura.client.Mahiro_SG) :W3KIuyVBV8kZNv
+		private void onRaytrace(dev.sakura.client.event.impl.player.RayTraceEvent)	=>	Mahiro_j(dev.sakura.client.Mahiro_tU) :yzTZUqEsV8kZNv
+		private void onStrafe(dev.sakura.client.event.impl.player.StrafeEvent)	=>	Mahiro_e(dev.sakura.client.Mahiro_tg) :QQqyMw5-V8kZNv
 		public void setActive(boolean)	=>	Mahiro_e(java.lang.Object[])* :eIEkrDSyV8kZNv
 		public void setRotations(dev.sakura.client.utils.rotation.Rotation, double)	=>	Mahiro_t(dev.sakura.client.Mahiro_sM, double, long)	=>	Mahiro_t(java.lang.Object[])* :BJbMAEoFVyAC_8
 		public void setRotations(dev.sakura.client.utils.rotation.Rotation, double, dev.sakura.client.utils.rotation.MovementFix)	=>	Mahiro_s(dev.sakura.client.Mahiro_sM, double, long, dev.sakura.client.Mahiro_yT)	=>	Mahiro_s(java.lang.Object[])* :zMeQvOlqVyAC_8
@@ -2773,7 +2773,7 @@ Class: public dev.sakura.client.mixin.client.MixinPlayerListHud	NameNotChanged
 Class: public dev.sakura.client.mixin.entity.MixinClientPlayerEntity	NameNotChanged
 	Source: "MixinClientPlayerEntity.java"
 	FieldsOf: dev.sakura.client.mixin.entity.MixinClientPlayerEntity
-		private dev.sakura.client.events.player.MotionEvent motionEvent	NameNotChanged
+		private dev.sakura.client.event.impl.player.MotionEvent motionEvent	NameNotChanged
 	MethodsOf: dev.sakura.client.mixin.entity.MixinClientPlayerEntity
 		static void <clinit>()	SignatureNotChanged: Manufactured:
 		public void <init>()	=>	<init>() :Ip67QU-TV8kZNv
@@ -3431,9 +3431,9 @@ Class: public dev.sakura.client.module.ModuleManager	=>	dev.sakura.client.Mahiro
 		public dev.sakura.client.module.Module getModuleByString(java.lang.String)	=>	Mahiro_D(long, java.lang.String)	=>	Mahiro_D(java.lang.Object[])* :tI4qCsXtVyta6S
 		private void init()	=>	Mahiro_K(long)	=>	Mahiro_K(java.lang.Object[])* :nlK3iybjVyta6S
 		private static boolean lambda$getModsByCategory$0(dev.sakura.client.module.Category, dev.sakura.client.module.Module)	=>	lambda$getModsByCategory$0(dev.sakura.client.Mahiro_SR, dev.sakura.client.Mahiro_j) :Jc61swkYV8kZNv
-		public void onKey(dev.sakura.client.events.input.MouseButtonEvent)	=>	Mahiro_T(dev.sakura.client.Mahiro_Sj) :IHlwNMbaV8kZNv
-		public void onKey(dev.sakura.client.events.key.KeyEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_Sp) :kmHdTKiyV8kZNv
-		public void onRender2D(dev.sakura.client.events.render.Render2DEvent)	=>	Mahiro_n(dev.sakura.client.Mahiro_sY) :n-uJhe_0V8kZNv
+		public void onKey(dev.sakura.client.event.impl.input.MouseButtonEvent)	=>	Mahiro_T(dev.sakura.client.Mahiro_Sj) :IHlwNMbaV8kZNv
+		public void onKey(dev.sakura.client.event.impl.key.KeyEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_Sp) :kmHdTKiyV8kZNv
+		public void onRender2D(dev.sakura.client.event.impl.render.Render2DEvent)	=>	Mahiro_n(dev.sakura.client.Mahiro_sY) :n-uJhe_0V8kZNv
 		private void sendToggleNotification(dev.sakura.client.module.Module, boolean, java.lang.String)	=>	Mahiro_W(long, dev.sakura.client.Mahiro_j, boolean, java.lang.String)	=>	Mahiro_W(java.lang.Object[])* :qxIzT60iVyta6S
 
 Class: public dev.sakura.client.module.impl.client.AutoHeypixel	=>	dev.sakura.client.Mahiro_l
@@ -3451,7 +3451,7 @@ Class: public dev.sakura.client.module.impl.client.AutoHeypixel	=>	dev.sakura.cl
 		private static void lambda$onPacket$1(net.minecraft.class_2561)	=>	lambda$onPacket$1(net.minecraft.class_2561) :X7xc80$xV8kZNv
 		private void lambda$onPacket$2()	=>	lambda$onPacket$2() :Q2o0AEfxV8kZNv
 		private void lambda$onPacket$3()	=>	lambda$onPacket$3() :sI0-md9mV8kZNv
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_M(dev.sakura.client.Mahiro_S6) :5iCieGiyV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_M(dev.sakura.client.Mahiro_S6) :5iCieGiyV8kZNv
 
 Class: public dev.sakura.client.module.impl.client.Capes	=>	dev.sakura.client.Mahiro_D
 	Source: "Capes.java"
@@ -3724,12 +3724,12 @@ Class: public dev.sakura.client.module.impl.combat.AntiBot	=>	dev.sakura.client.
 		private static java.lang.String b(int, long)	SignatureNotChanged: Manufactured:
 		private static java.lang.invoke.CallSite b(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
-		public void bedWarsBot(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_T(dev.sakura.client.Mahiro_S6) :XpXP_MZQV8kZNv
+		public void bedWarsBot(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_T(dev.sakura.client.Mahiro_S6) :XpXP_MZQV8kZNv
 		public static boolean isBedWarsBot(net.minecraft.class_1297)	=>	Mahiro_R(net.minecraft.class_1297, long)	=>	Mahiro_R(java.lang.Object[])* :WDzyTGteVyIj9W
 		public static boolean isBot(net.minecraft.class_1297)	=>	Mahiro_u(net.minecraft.class_1297, long)	=>	Mahiro_u(java.lang.Object[])* :VUy0VHGVVyIj9W
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_Z(dev.sakura.client.Mahiro_S6) :ubbASI8iV8kZNv
-		public void onRespawn(dev.sakura.client.events.player.PlayerTickEvent)	=>	Mahiro_y(dev.sakura.client.Mahiro_SG) :yt7JEio1V8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_I(dev.sakura.client.Mahiro_m) :ki2OAIdrV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_Z(dev.sakura.client.Mahiro_S6) :ubbASI8iV8kZNv
+		public void onRespawn(dev.sakura.client.event.impl.player.PlayerTickEvent)	=>	Mahiro_y(dev.sakura.client.Mahiro_SG) :yt7JEio1V8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_I(dev.sakura.client.Mahiro_m) :ki2OAIdrV8kZNv
 
 Class: public dev.sakura.client.module.impl.combat.AttackCrystal	=>	dev.sakura.client.Mahiro_z
 	Source: "AttackCrystal.java"
@@ -3749,7 +3749,7 @@ Class: public dev.sakura.client.module.impl.combat.AttackCrystal	=>	dev.sakura.c
 		public net.minecraft.class_1297 getCurrentTarget()	=>	Mahiro_B(java.lang.Object[])* :Nk-lWG4xV8kZNv
 		private static boolean lambda$findTarget$0(net.minecraft.class_1511)	=>	lambda$findTarget$0(net.minecraft.class_1511) :n0mXnCn2V8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
-		public void onPreTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_U(dev.sakura.client.Mahiro_m) :NwEaqhUIV8kZNv
+		public void onPreTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_U(dev.sakura.client.Mahiro_m) :NwEaqhUIV8kZNv
 
 Class: public dev.sakura.client.module.impl.combat.AutoAnchor	=>	dev.sakura.client.Mahiro_E
 	Source: "AutoAnchor.java"
@@ -3797,7 +3797,7 @@ Class: public dev.sakura.client.module.impl.combat.AutoAnchor	=>	dev.sakura.clie
 		private void lambda$explodeAnchor$3()	=>	lambda$explodeAnchor$3() :ncMy$5i3V8kZNv
 		private void lambda$placeSafety$0(net.minecraft.class_2350)	=>	lambda$placeSafety$0(net.minecraft.class_2350) :yNqI4aC5V8kZNv
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_l(dev.sakura.client.Mahiro_m) :oOwDCbBLV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_l(dev.sakura.client.Mahiro_m) :oOwDCbBLV8kZNv
 		private void placeSafety()	=>	Mahiro_R(long)	=>	Mahiro_R(java.lang.Object[])* :gnnEQKJwVyta6S
 		public void reset()	=>	Mahiro_v(long)	=>	Mahiro_v(java.lang.Object[])* :uXw1wupTVyta6S
 		private void resetTimer()	=>	Mahiro_e(java.lang.Object[])* :NhzUj6-cV8kZNv
@@ -3850,7 +3850,7 @@ Class: public dev.sakura.client.module.impl.combat.AutoCrystal	=>	dev.sakura.cli
 		private boolean isPreciousItem(net.minecraft.class_1792)	=>	Mahiro_U(long, net.minecraft.class_1792)	=>	Mahiro_U(java.lang.Object[])* :sDHWQujEVyta6S
 		private boolean itemNearby(net.minecraft.class_1297, double)	=>	Mahiro_l(net.minecraft.class_1297, long, double)	=>	Mahiro_l(java.lang.Object[])* :nczo8e0vVyIj9W
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_K(dev.sakura.client.Mahiro_m) :EtCvOzj0V8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_K(dev.sakura.client.Mahiro_m) :EtCvOzj0V8kZNv
 		private void placeBlock()	=>	Mahiro_e(long)	=>	Mahiro_e(java.lang.Object[])* :k3hJ5objVyta6S
 		private void placeCrystal()	=>	Mahiro_C(long)	=>	Mahiro_C(java.lang.Object[])* :Q8wVlUczVyta6S
 		private net.minecraft.class_1297 raycastEndCrystal(double)	=>	Mahiro_E(double, long)	=>	Mahiro_E(java.lang.Object[])* :IIqtHcKwVyIj9W
@@ -3924,9 +3924,9 @@ Class: public dev.sakura.client.module.impl.combat.AutoThrow	=>	dev.sakura.clien
 		private static boolean lambda$onPreTick$1(net.minecraft.class_1799)	=>	lambda$onPreTick$1(net.minecraft.class_1799) :IDwvwyHWV8kZNv
 		public void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onHeldItemRender(dev.sakura.client.events.render.item.HeldItemRendererEvent)	=>	Mahiro_m(dev.sakura.client.Mahiro_tJ) :qgwr4ucsV8kZNv
-		public void onPostTick(dev.sakura.client.events.client.TickEvent$Post)	=>	Mahiro_h(dev.sakura.client.Mahiro_W) :wKGbP8cKV8kZNv
-		public void onPreTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_q(dev.sakura.client.Mahiro_m) :Vc-b0nvCV8kZNv
+		public void onHeldItemRender(dev.sakura.client.event.impl.render.item.HeldItemRendererEvent)	=>	Mahiro_m(dev.sakura.client.Mahiro_tJ) :qgwr4ucsV8kZNv
+		public void onPostTick(dev.sakura.client.event.impl.client.TickEvent$Post)	=>	Mahiro_h(dev.sakura.client.Mahiro_W) :wKGbP8cKV8kZNv
+		public void onPreTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_q(dev.sakura.client.Mahiro_m) :Vc-b0nvCV8kZNv
 		private void throwItem(int)	=>	Mahiro_N(int, long)	=>	Mahiro_N(java.lang.Object[])* :gB1LukJsVyIj9W
 		private void updateNextDelay()	=>	Mahiro_G(long)	=>	Mahiro_G(java.lang.Object[])* :tKDY1AfgVyta6S
 
@@ -3947,7 +3947,7 @@ Class: public dev.sakura.client.module.impl.combat.AutoTotem	=>	dev.sakura.clien
 		private static java.lang.invoke.CallSite c(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static int c(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		private void moveTotem(int)	=>	Mahiro_p(int, long)	=>	Mahiro_p(java.lang.Object[])* :njQy3tS2VyIj9W
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_a(dev.sakura.client.Mahiro_m) :eN8s9wfRV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_a(dev.sakura.client.Mahiro_m) :eN8s9wfRV8kZNv
 		private boolean shouldHoldingTotem()	=>	Mahiro_v(long)	=>	Mahiro_v(java.lang.Object[])* :5tzau24IVyta6S
 
 Class: public dev.sakura.client.module.impl.combat.AutoWeapon	=>	dev.sakura.client.Mahiro_Tg
@@ -4041,9 +4041,9 @@ Class: public dev.sakura.client.module.impl.combat.AutoWeapon	=>	dev.sakura.clie
 		private boolean lambda$new$7()	=>	lambda$new$7() :tBGmfBnyV8kZNv
 		private boolean lambda$new$8()	=>	lambda$new$8() :BeF8iagsV8kZNv
 		private boolean lambda$new$9()	=>	lambda$new$9() :-kpnceFPV8kZNv
-		private void onAttack(dev.sakura.client.events.entity.AttackEntityEvent)	=>	Mahiro_g(dev.sakura.client.Mahiro_St) :qZMsCBuqV8kZNv
+		private void onAttack(dev.sakura.client.event.impl.entity.AttackEntityEvent)	=>	Mahiro_g(dev.sakura.client.Mahiro_St) :qZMsCBuqV8kZNv
 		public void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
-		private void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_d(dev.sakura.client.Mahiro_m) :5O1X2jhwV8kZNv
+		private void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_d(dev.sakura.client.Mahiro_m) :5O1X2jhwV8kZNv
 		private void performSwap(net.minecraft.class_1297)	=>	Mahiro_B(net.minecraft.class_1297, long)	=>	Mahiro_B(java.lang.Object[])* :EWtCq6QuVyIj9W
 
 Class: public final enum dev.sakura.client.module.impl.combat.AutoWeapon$Mode	=>	dev.sakura.client.Mahiro_t7
@@ -4110,8 +4110,8 @@ Class: public dev.sakura.client.module.impl.combat.KillAura	=>	dev.sakura.client
 		public net.minecraft.class_1309 getCurrentTarget()	=>	Mahiro_c(java.lang.Object[])* :5LHbDlMRV8kZNv
 		public boolean isAutoBlock()	=>	Mahiro_J(java.lang.Object[])* :8Iw1nRYFV8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
-		public void onPreTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_V(dev.sakura.client.Mahiro_m) :etVGU3O6V8kZNv
-		public void onRender(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_W(dev.sakura.client.Mahiro_yg) :gp1Ovo6FV8kZNv
+		public void onPreTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_V(dev.sakura.client.Mahiro_m) :etVGU3O6V8kZNv
+		public void onRender(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_W(dev.sakura.client.Mahiro_yg) :gp1Ovo6FV8kZNv
 
 Class: public final enum dev.sakura.client.module.impl.combat.KillAura$AutoBlockMode	=>	dev.sakura.client.Mahiro_S2
 	Source: "KillAura.java"
@@ -4148,8 +4148,8 @@ Class: public dev.sakura.client.module.impl.combat.LegitCrystal	=>	dev.sakura.cl
 		private boolean isBlockInCrosshair()	=>	Mahiro_Z(java.lang.Object[])* :YeAG1vrBV8kZNv
 		private boolean isObsidianInCrosshair()	=>	Mahiro_h(long)	=>	Mahiro_h(java.lang.Object[])* :uL5$rMjoVyta6S
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_S6) :YUZy26GNV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_D(dev.sakura.client.Mahiro_m) :NwwyX$6VV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_S6) :YUZy26GNV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_D(dev.sakura.client.Mahiro_m) :NwwyX$6VV8kZNv
 		private void placeBlock()	=>	Mahiro_l(long)	=>	Mahiro_l(java.lang.Object[])* :-SBOIFmsVyta6S
 
 Class: public dev.sakura.client.module.impl.combat.SafeHotbar	=>	dev.sakura.client.Mahiro_T9
@@ -4181,7 +4181,7 @@ Class: public dev.sakura.client.module.impl.combat.SafeHotbar	=>	dev.sakura.clie
 		private void checkOffhandPop()	=>	Mahiro_D(long)	=>	Mahiro_D(java.lang.Object[])* :W$TJu3c8Vyta6S
 		private boolean isProtectedByObsidian(net.minecraft.class_2338)	=>	Mahiro_h(java.lang.Object[])* :GAQj_NO4V8kZNv
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_n(dev.sakura.client.Mahiro_m) :-$O7vJxjV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_n(dev.sakura.client.Mahiro_m) :-$O7vJxjV8kZNv
 		private void switchToTotem()	=>	Mahiro_U(long)	=>	Mahiro_U(java.lang.Object[])* :-YDD_fG8Vyta6S
 
 Class: public dev.sakura.client.module.impl.hud.DynamicIslandHud	=>	dev.sakura.client.Mahiro_U
@@ -4833,9 +4833,9 @@ Class: public dev.sakura.client.module.impl.hud.NotifyHud	=>	dev.sakura.client.M
 		private void lambda$onRender$0(dev.sakura.client.module.impl.hud.NotifyHud$NotifyEntry, float, float, float, java.lang.Long)	=>	lambda$onRender$0(dev.sakura.client.Mahiro_yL, float, float, float, java.lang.Long) :GyHkQVU6V8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_i(dev.sakura.client.Mahiro_S6) :Ng5BvFRyV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_i(dev.sakura.client.Mahiro_S6) :Ng5BvFRyV8kZNv
 		public void onRender(net.minecraft.class_332)	=>	Mahiro_T(net.minecraft.class_332, long)	=>	Mahiro_T(java.lang.Object[])* :S-AzZr4AVyIj9W
-		public void onWorldLoad(dev.sakura.client.events.render.WorldLoadEvent)	=>	Mahiro_c(dev.sakura.client.Mahiro_te) :JgQK4gA9V8kZNv
+		public void onWorldLoad(dev.sakura.client.event.impl.render.WorldLoadEvent)	=>	Mahiro_c(dev.sakura.client.Mahiro_te) :JgQK4gA9V8kZNv
 		private void renderContent(dev.sakura.client.module.impl.hud.NotifyHud$NotifyEntry, float, float, float)	=>	Mahiro_O(dev.sakura.client.Mahiro_yL, float, long, float, float)	=>	Mahiro_O(java.lang.Object[])* :kIE8bBvSVyAC_8
 		public void updateBlockWarning(int)	=>	Mahiro_H(int, long)	=>	Mahiro_H(java.lang.Object[])* :ICpH8I9jVyIj9W
 
@@ -5163,7 +5163,7 @@ Class: public dev.sakura.client.module.impl.hud.TargetHud	=>	dev.sakura.client.M
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
 		public void onRender(net.minecraft.class_332)	=>	Mahiro_T(net.minecraft.class_332, long)	=>	Mahiro_T(java.lang.Object[])* :S-AzZr4AVyIj9W
-		public void onRender3D(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_yg) :8Fn3IKE0V8kZNv
+		public void onRender3D(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_yg) :8Fn3IKE0V8kZNv
 		private void renderEsp(net.minecraft.class_4587, float)	=>	Mahiro_H(net.minecraft.class_4587, float, long)	=>	Mahiro_H(java.lang.Object[])* :eZ_0rV9qVyAC_8
 		private void renderMahiro(long, net.minecraft.class_1309, float, float, float, float)	=>	Mahiro_M(int, long, net.minecraft.class_1309, float, float, short, char, float, float)	=>	Mahiro_M(java.lang.Object[])* :kEB5Gt1nVyIJqr
 		private void renderMahiroBackground(float)	=>	Mahiro_R(float, long)	=>	Mahiro_R(java.lang.Object[])* :SugiJyNlVyIj9W
@@ -5400,7 +5400,7 @@ Class: public dev.sakura.client.module.impl.movement.AutoSprint	=>	dev.sakura.cl
 		private static java.lang.invoke.CallSite b(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		public void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_g(dev.sakura.client.Mahiro_m) :-tanZ6T3V8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_g(dev.sakura.client.Mahiro_m) :-tanZ6T3V8kZNv
 
 Class: public dev.sakura.client.module.impl.movement.BlinkNoSlow	=>	dev.sakura.client.Mahiro_TJ
 	Source: "BlinkNoSlow.java"
@@ -5422,10 +5422,10 @@ Class: public dev.sakura.client.module.impl.movement.BlinkNoSlow	=>	dev.sakura.c
 		private static boolean lambda$flush$0(net.minecraft.class_2596)	=>	lambda$flush$0(net.minecraft.class_2596) :zI_uq7mSV8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onMotion(dev.sakura.client.events.player.MotionEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_Sv) :AVvPp_fIV8kZNv
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_N(dev.sakura.client.Mahiro_S6) :GPEhpNdxV8kZNv
-		public void onSlowdown(dev.sakura.client.events.player.SlowdownEvent)	=>	Mahiro_D(dev.sakura.client.Mahiro_y4) :XoiFVAD5V8kZNv
-		public void onSprint(dev.sakura.client.events.player.SprintEvent)	=>	Mahiro_f(dev.sakura.client.Mahiro_tw) :orOQXDa8V8kZNv
+		public void onMotion(dev.sakura.client.event.impl.player.MotionEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_Sv) :AVvPp_fIV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_N(dev.sakura.client.Mahiro_S6) :GPEhpNdxV8kZNv
+		public void onSlowdown(dev.sakura.client.event.impl.player.SlowdownEvent)	=>	Mahiro_D(dev.sakura.client.Mahiro_y4) :XoiFVAD5V8kZNv
+		public void onSprint(dev.sakura.client.event.impl.player.SprintEvent)	=>	Mahiro_f(dev.sakura.client.Mahiro_tw) :orOQXDa8V8kZNv
 
 Class: public dev.sakura.client.module.impl.movement.FastWeb	=>	dev.sakura.client.Mahiro_T2
 	Source: "FastWeb.java"
@@ -5443,7 +5443,7 @@ Class: public dev.sakura.client.module.impl.movement.FastWeb	=>	dev.sakura.clien
 		private boolean isInWeb()	=>	Mahiro_a(long)	=>	Mahiro_a(java.lang.Object[])* :yCkZc6rJVyta6S
 		private boolean lambda$new$0()	=>	lambda$new$0() :XaYK-BrnV8kZNv
 		private boolean lambda$new$1()	=>	lambda$new$1() :YEux4ehMV8kZNv
-		public void onMotion(dev.sakura.client.events.player.MotionEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_Sv) :-HV8x0gBV8kZNv
+		public void onMotion(dev.sakura.client.event.impl.player.MotionEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_Sv) :-HV8x0gBV8kZNv
 
 Class: public final enum dev.sakura.client.module.impl.movement.FastWeb$Mode	=>	dev.sakura.client.Mahiro_tK
 	Source: "FastWeb.java"
@@ -5494,8 +5494,8 @@ Class: public dev.sakura.client.module.impl.movement.NoFall	=>	dev.sakura.client
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		public java.lang.String getSuffix()	=>	Mahiro_h(long)	=>	Mahiro_h(java.lang.Object[])* :XFu-0WqDVyta6S
 		private boolean isFalling()	=>	Mahiro_t(long)	=>	Mahiro_t(java.lang.Object[])* :NEJeXNGaVyta6S
-		public void onPacketSend(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_p(dev.sakura.client.Mahiro_S6) :wP8GytxMV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_A(dev.sakura.client.Mahiro_m) :saI$VaJvV8kZNv
+		public void onPacketSend(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_p(dev.sakura.client.Mahiro_S6) :wP8GytxMV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_A(dev.sakura.client.Mahiro_m) :saI$VaJvV8kZNv
 
 Class: final enum dev.sakura.client.module.impl.movement.NoFall$Mode	=>	dev.sakura.client.Mahiro_yV
 	Source: "NoFall.java"
@@ -5541,10 +5541,10 @@ Class: public dev.sakura.client.module.impl.movement.NoSlow	=>	dev.sakura.client
 		private boolean isBjdMode()	=>	Mahiro_g() :gSs1A$6SV8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onMoveInput(dev.sakura.client.events.input.MoveInputEvent)	=>	Mahiro_g(dev.sakura.client.Mahiro_S4) :rdyPKZP$V8kZNv
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_S6) :WFDvPVAJV8kZNv
-		public void onSlowdown(dev.sakura.client.events.player.SlowdownEvent)	=>	Mahiro_t(dev.sakura.client.Mahiro_y4) :JsgS1NK$V8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_k(dev.sakura.client.Mahiro_m) :N0ycfOPbV8kZNv
+		public void onMoveInput(dev.sakura.client.event.impl.input.MoveInputEvent)	=>	Mahiro_g(dev.sakura.client.Mahiro_S4) :rdyPKZP$V8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_S6) :WFDvPVAJV8kZNv
+		public void onSlowdown(dev.sakura.client.event.impl.player.SlowdownEvent)	=>	Mahiro_t(dev.sakura.client.Mahiro_y4) :JsgS1NK$V8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_k(dev.sakura.client.Mahiro_m) :N0ycfOPbV8kZNv
 
 Class: public final enum dev.sakura.client.module.impl.movement.NoSlow$Mode	=>	dev.sakura.client.Mahiro_sA
 	Source: "NoSlow.java"
@@ -5618,9 +5618,9 @@ Class: public dev.sakura.client.module.impl.movement.Scaffold	=>	dev.sakura.clie
 		private boolean onAir()	=>	Mahiro_s(long)	=>	Mahiro_s(java.lang.Object[])* :kJJ0G1xHVyta6S
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onMouseButton(dev.sakura.client.events.input.MouseButtonEvent)	=>	Mahiro_W(dev.sakura.client.Mahiro_Sj) :zMo_sVe6V8kZNv
-		public void onStrafe(dev.sakura.client.events.player.StrafeEvent)	=>	Mahiro_T(dev.sakura.client.Mahiro_tg) :osVE0BVbV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_t(dev.sakura.client.Mahiro_m) :5AXOreWEV8kZNv
+		public void onMouseButton(dev.sakura.client.event.impl.input.MouseButtonEvent)	=>	Mahiro_W(dev.sakura.client.Mahiro_Sj) :zMo_sVe6V8kZNv
+		public void onStrafe(dev.sakura.client.event.impl.player.StrafeEvent)	=>	Mahiro_T(dev.sakura.client.Mahiro_tg) :osVE0BVbV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_t(dev.sakura.client.Mahiro_m) :5AXOreWEV8kZNv
 		public void place()	=>	Mahiro_T(long)	=>	Mahiro_T(java.lang.Object[])* :WYCEXMEPVyta6S
 		private boolean validItem(net.minecraft.class_1799, net.minecraft.class_2338)	=>	Mahiro_q(int, net.minecraft.class_1799, int, net.minecraft.class_2338, short)	=>	Mahiro_q(java.lang.Object[])* :yziNftDwVyIgIu
 
@@ -5675,10 +5675,10 @@ Class: public dev.sakura.client.module.impl.movement.Stuck	=>	dev.sakura.client.
 		private static java.lang.invoke.CallSite c(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static int c(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onMotion(dev.sakura.client.events.player.MotionEvent)	=>	Mahiro_w(dev.sakura.client.Mahiro_Sv) :gkTxvHjuV8kZNv
-		public void onMoveInput(dev.sakura.client.events.input.MoveInputEvent)	=>	Mahiro_Y(dev.sakura.client.Mahiro_S4) :zILP1sTwV8kZNv
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_M(dev.sakura.client.Mahiro_S6) :oEzanRJDV8kZNv
-		public void onRespawnMotion(dev.sakura.client.events.player.MotionEvent)	=>	Mahiro_Z(dev.sakura.client.Mahiro_Sv) :y7rTjHr6V8kZNv
+		public void onMotion(dev.sakura.client.event.impl.player.MotionEvent)	=>	Mahiro_w(dev.sakura.client.Mahiro_Sv) :gkTxvHjuV8kZNv
+		public void onMoveInput(dev.sakura.client.event.impl.input.MoveInputEvent)	=>	Mahiro_Y(dev.sakura.client.Mahiro_S4) :zILP1sTwV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_M(dev.sakura.client.Mahiro_S6) :oEzanRJDV8kZNv
+		public void onRespawnMotion(dev.sakura.client.event.impl.player.MotionEvent)	=>	Mahiro_Z(dev.sakura.client.Mahiro_Sv) :y7rTjHr6V8kZNv
 		public void setState(boolean)	=>	Mahiro_L(boolean, long)	=>	Mahiro_L(java.lang.Object[])* :sAqrEkHfVyIj9W
 		private boolean shouldRotate()	=>	Mahiro_q(long)	=>	Mahiro_q(java.lang.Object[])* :Ek3JhyX0Vyta6S
 
@@ -5715,11 +5715,11 @@ Class: public dev.sakura.client.module.impl.movement.Velocity	=>	dev.sakura.clie
 		private boolean lambda$new$1()	=>	lambda$new$1() :k6flx8nLV8kZNv
 		public void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onMoveInput(dev.sakura.client.events.input.MoveInputEvent)	=>	Mahiro_e(dev.sakura.client.Mahiro_S4) :sVHMly7GV8kZNv
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro__(dev.sakura.client.Mahiro_S6) :Gop0IByPV8kZNv
-		private void onPostTick(dev.sakura.client.events.client.TickEvent$Post)	=>	Mahiro_k(dev.sakura.client.Mahiro_W) :VCWAIm53V8kZNv
-		private void onPreTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_k(dev.sakura.client.Mahiro_m) :rvIEF1xlV8kZNv
-		public void onRender(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_t(dev.sakura.client.Mahiro_yg) :n-OHfX8gV8kZNv
+		public void onMoveInput(dev.sakura.client.event.impl.input.MoveInputEvent)	=>	Mahiro_e(dev.sakura.client.Mahiro_S4) :sVHMly7GV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro__(dev.sakura.client.Mahiro_S6) :Gop0IByPV8kZNv
+		private void onPostTick(dev.sakura.client.event.impl.client.TickEvent$Post)	=>	Mahiro_k(dev.sakura.client.Mahiro_W) :VCWAIm53V8kZNv
+		private void onPreTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_k(dev.sakura.client.Mahiro_m) :rvIEF1xlV8kZNv
+		public void onRender(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_t(dev.sakura.client.Mahiro_yg) :n-OHfX8gV8kZNv
 
 Class: final enum dev.sakura.client.module.impl.movement.Velocity$Mode	=>	dev.sakura.client.Mahiro_tv
 	Source: "Velocity.java"
@@ -5787,9 +5787,9 @@ Class: public dev.sakura.client.module.impl.movement.VelocityRubberband	=>	dev.s
 		public boolean isFreezing()	=>	Mahiro_F(java.lang.Object[])* :ywKXX-5HV8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onPacketReceive(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_O(dev.sakura.client.Mahiro_S6) :JFJ-kEANV8kZNv
-		public void onPacketSend(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_a(dev.sakura.client.Mahiro_S6) :ghPT4Qo-V8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_x(dev.sakura.client.Mahiro_m) :G4$wPx7xV8kZNv
+		public void onPacketReceive(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_O(dev.sakura.client.Mahiro_S6) :JFJ-kEANV8kZNv
+		public void onPacketSend(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_a(dev.sakura.client.Mahiro_S6) :ghPT4Qo-V8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_x(dev.sakura.client.Mahiro_m) :G4$wPx7xV8kZNv
 		private void releasePackets()	=>	Mahiro_C(long)	=>	Mahiro_C(java.lang.Object[])* :gFSu8PSSVyta6S
 		private void sendDirectPackets(net.minecraft.class_243, double, double)	=>	Mahiro_b(long, net.minecraft.class_243, double, double)	=>	Mahiro_b(java.lang.Object[])* :yzsID1n_Vyta6S
 		private void sendReversePackets(net.minecraft.class_243, double, double)	=>	Mahiro_c(long, net.minecraft.class_243, double, double)	=>	Mahiro_c(java.lang.Object[])* :WckivLcsVyta6S
@@ -5823,7 +5823,7 @@ Class: public dev.sakura.client.module.impl.player.AntiHunger	=>	dev.sakura.clie
 		private static java.lang.String b(int, long)	SignatureNotChanged: Manufactured:
 		private static java.lang.invoke.CallSite b(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
-		public void onPacketSend(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_N(dev.sakura.client.Mahiro_S6) :W5v7Tt3wV8kZNv
+		public void onPacketSend(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_N(dev.sakura.client.Mahiro_S6) :W5v7Tt3wV8kZNv
 
 Class: public dev.sakura.client.module.impl.player.AutoDick	=>	dev.sakura.client.Mahiro_Td
 	Source: "AutoDick.java"
@@ -5872,8 +5872,8 @@ Class: public dev.sakura.client.module.impl.player.AutoDick	=>	dev.sakura.client
 		private boolean lambda$onTick$3(net.minecraft.class_2338, net.minecraft.class_1799)	=>	lambda$onTick$3(net.minecraft.class_2338, net.minecraft.class_1799) :rbM1nnS8V8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		private void onRender(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_L(dev.sakura.client.Mahiro_yg) :5yoIEoxUV8kZNv
-		private void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_m(dev.sakura.client.Mahiro_m) :5gVi2LoZV8kZNv
+		private void onRender(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_L(dev.sakura.client.Mahiro_yg) :5yoIEoxUV8kZNv
+		private void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_m(dev.sakura.client.Mahiro_m) :5gVi2LoZV8kZNv
 		private boolean placeBlock(dev.sakura.client.module.impl.player.AutoDick$PlaceData, net.minecraft.class_3965)	=>	Mahiro_Y(dev.sakura.client.Mahiro_t, net.minecraft.class_3965, long)	=>	Mahiro_Y(java.lang.Object[])* :rAGJ2aUkVyAC_8
 		private void updateBlock()	=>	Mahiro_o(long)	=>	Mahiro_o(java.lang.Object[])* :Bn18ysZlVyta6S
 		private boolean validItem(net.minecraft.class_1799, net.minecraft.class_2338)	=>	Mahiro_w(net.minecraft.class_1799, net.minecraft.class_2338, long)	=>	Mahiro_w(java.lang.Object[])* :w$q2Y0OyVyAC_8
@@ -5939,9 +5939,9 @@ Class: public dev.sakura.client.module.impl.player.AutoTool	=>	dev.sakura.client
 		private static java.lang.invoke.CallSite b(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		private int getBestTool(net.minecraft.class_2338)	=>	Mahiro_s(long, net.minecraft.class_2338)	=>	Mahiro_s(java.lang.Object[])* :--0KI2xoVyta6S
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_O(dev.sakura.client.Mahiro_m) :wjWWPELDV8kZNv
-		private void onTickPost(dev.sakura.client.events.client.TickEvent$Post)	=>	Mahiro_m(dev.sakura.client.Mahiro_W) :5jm73gcWV8kZNv
-		public void onUpdateHeldItem(dev.sakura.client.events.render.item.UpdateHeldItemEvent)	=>	Mahiro_m(dev.sakura.client.Mahiro_Tx) :S$rjA9FlV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_O(dev.sakura.client.Mahiro_m) :wjWWPELDV8kZNv
+		private void onTickPost(dev.sakura.client.event.impl.client.TickEvent$Post)	=>	Mahiro_m(dev.sakura.client.Mahiro_W) :5jm73gcWV8kZNv
+		public void onUpdateHeldItem(dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent)	=>	Mahiro_m(dev.sakura.client.Mahiro_Tx) :S$rjA9FlV8kZNv
 
 Class: public dev.sakura.client.module.impl.player.BowBomb	=>	dev.sakura.client.Mahiro_Tb
 	Source: "BowBomb.java"
@@ -5975,8 +5975,8 @@ Class: public dev.sakura.client.module.impl.player.BowBomb	=>	dev.sakura.client.
 		private net.minecraft.class_1657 getTarget()	=>	Mahiro_S(long)	=>	Mahiro_S(java.lang.Object[])* :er7ggMImVyta6S
 		private boolean isValid(net.minecraft.class_1297, double)	=>	Mahiro_u(net.minecraft.class_1297, double, long)	=>	Mahiro_u(java.lang.Object[])* :gzGwNrmoVyAC_8
 		public void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
-		protected void onPacketSend(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_n(dev.sakura.client.Mahiro_S6) :guv2TePXV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_x(dev.sakura.client.Mahiro_m) :SAXFTchTV8kZNv
+		protected void onPacketSend(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_n(dev.sakura.client.Mahiro_S6) :guv2TePXV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_x(dev.sakura.client.Mahiro_m) :SAXFTchTV8kZNv
 		private void spoof(double, double, double, boolean)	=>	Mahiro_H(double, long, double, double, boolean)	=>	Mahiro_H(java.lang.Object[])* :uyBXX40DVyIj9W
 
 Class: final enum dev.sakura.client.module.impl.player.BowBomb$Exploit	=>	dev.sakura.client.Mahiro_a
@@ -6008,7 +6008,7 @@ Class: public dev.sakura.client.module.impl.player.Disabler	=>	dev.sakura.client
 		private static java.lang.invoke.CallSite b(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		private void log(java.lang.String)	=>	Mahiro_q(java.lang.String, long)	=>	Mahiro_q(java.lang.Object[])* :wvvXiwRTVyIj9W
-		private void onPacketSend(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_k(dev.sakura.client.Mahiro_S6) :k8F$3WyMV8kZNv
+		private void onPacketSend(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_k(dev.sakura.client.Mahiro_S6) :k8F$3WyMV8kZNv
 
 Class: public dev.sakura.client.module.impl.player.FakePlayer	=>	dev.sakura.client.Mahiro_TS
 	Source: "FakePlayer.java"
@@ -6035,8 +6035,8 @@ Class: public dev.sakura.client.module.impl.player.FakePlayer	=>	dev.sakura.clie
 		private float calculateSimpleDamage(double)	=>	Mahiro_L(double, long)	=>	Mahiro_L(java.lang.Object[])* :Nxf6-TaTVyIj9W
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		private void onMotion(dev.sakura.client.events.player.MotionEvent)	=>	Mahiro_H(dev.sakura.client.Mahiro_Sv) :BApcUUhNV8kZNv
-		private void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_i(dev.sakura.client.Mahiro_S6) :N460rvcpV8kZNv
+		private void onMotion(dev.sakura.client.event.impl.player.MotionEvent)	=>	Mahiro_H(dev.sakura.client.Mahiro_Sv) :BApcUUhNV8kZNv
+		private void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_i(dev.sakura.client.Mahiro_S6) :N460rvcpV8kZNv
 
 Class: dev.sakura.client.module.impl.player.FakePlayer$1	=>	dev.sakura.client.Mahiro_u
 	Source: "FakePlayer.java"
@@ -6085,7 +6085,7 @@ Class: public dev.sakura.client.module.impl.player.GhostHand	=>	dev.sakura.clien
 		private boolean interact()	=>	Mahiro_z(long)	=>	Mahiro_z(java.lang.Object[])* :S5hIJwfJVyta6S
 		private boolean isAllowed(net.minecraft.class_2680)	=>	Mahiro_R(long, net.minecraft.class_2680)	=>	Mahiro_R(java.lang.Object[])* :Ee1ENa_QVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_t(dev.sakura.client.Mahiro_m) :slS_jvglV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_t(dev.sakura.client.Mahiro_m) :slS_jvglV8kZNv
 
 Class: public dev.sakura.client.module.impl.player.MCP	=>	dev.sakura.client.Mahiro_Tc
 	Source: "MCP.java"
@@ -6104,7 +6104,7 @@ Class: public dev.sakura.client.module.impl.player.MCP	=>	dev.sakura.client.Mahi
 		private static int c(int, long)	SignatureNotChanged: Manufactured:
 		private static java.lang.invoke.CallSite c(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static int c(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_H(dev.sakura.client.Mahiro_m) :sMpJGR5aV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_H(dev.sakura.client.Mahiro_m) :sMpJGR5aV8kZNv
 
 Class: public dev.sakura.client.module.impl.player.PacketMine	=>	dev.sakura.client.Mahiro_TD
 	Source: "PacketMine.java"
@@ -6159,10 +6159,10 @@ Class: public dev.sakura.client.module.impl.player.PacketMine	=>	dev.sakura.clie
 		private boolean lambda$new$0()	=>	lambda$new$0() :gIxKlcJ8V8kZNv
 		public static int lerp(int, int, double)	=>	Mahiro_o(java.lang.Object[])* :5ISeSC4aV8kZNv
 		private void mineTask(dev.sakura.client.module.impl.player.PacketMine$BlockData)	=>	Mahiro_n(dev.sakura.client.Mahiro_s3, long)	=>	Mahiro_n(java.lang.Object[])* :kdARF_DiVyIj9W
-		public void onClickBlock(dev.sakura.client.events.player.BlockEvent)	=>	Mahiro_a(dev.sakura.client.Mahiro_tE) :J8z_D2CpV8kZNv
+		public void onClickBlock(dev.sakura.client.event.impl.player.BlockEvent)	=>	Mahiro_a(dev.sakura.client.Mahiro_tE) :J8z_D2CpV8kZNv
 		private boolean onEating()	=>	Mahiro_k(long)	=>	Mahiro_k(java.lang.Object[])* :Y1bv0pK3Vyta6S
-		private void onRender3D(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_A(dev.sakura.client.Mahiro_yg) :8WwemkTuV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Post)	=>	Mahiro_r(dev.sakura.client.Mahiro_W) :Bz0S5CkSV8kZNv
+		private void onRender3D(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_A(dev.sakura.client.Mahiro_yg) :8WwemkTuV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Post)	=>	Mahiro_r(dev.sakura.client.Mahiro_W) :Bz0S5CkSV8kZNv
 		private void performSwap(int, boolean)	=>	Mahiro_A(int, long, boolean)	=>	Mahiro_A(java.lang.Object[])* :kefwgSW8VyIj9W
 		private void renderTask(dev.sakura.client.module.impl.player.PacketMine$BlockData, net.minecraft.class_4587)	=>	Mahiro_e(dev.sakura.client.Mahiro_s3, long, net.minecraft.class_4587)	=>	Mahiro_e(java.lang.Object[])* :VPrRR9AhVyIj9W
 		private void stopMiningInternal(dev.sakura.client.module.impl.player.PacketMine$BlockData)	=>	Mahiro_D(long, dev.sakura.client.Mahiro_s3)	=>	Mahiro_D(java.lang.Object[])* :Q4KRKCa5Vyta6S
@@ -6238,9 +6238,9 @@ Class: public dev.sakura.client.module.impl.player.TimerModule	=>	dev.sakura.cli
 		public boolean isActive()	=>	Mahiro_J(java.lang.Object[])* :WlQJdwcFV8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onKey(dev.sakura.client.events.key.KeyEvent)	=>	Mahiro_E(dev.sakura.client.Mahiro_Sp) :QxaccbnPV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Post)	=>	Mahiro_e(dev.sakura.client.Mahiro_W) :VEoG9Ry-V8kZNv
-		public void onTimerEvent(dev.sakura.client.events.client.TimerEvent)	=>	Mahiro_q(dev.sakura.client.Mahiro_Se) :gZCviCT0V8kZNv
+		public void onKey(dev.sakura.client.event.impl.key.KeyEvent)	=>	Mahiro_E(dev.sakura.client.Mahiro_Sp) :QxaccbnPV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Post)	=>	Mahiro_e(dev.sakura.client.Mahiro_W) :VEoG9Ry-V8kZNv
+		public void onTimerEvent(dev.sakura.client.event.impl.client.TimerEvent)	=>	Mahiro_q(dev.sakura.client.Mahiro_Se) :gZCviCT0V8kZNv
 
 Class: public dev.sakura.client.module.impl.player.inventory.InvHelper	=>	dev.sakura.client.Mahiro_tq
 	Source: "InvHelper.java"
@@ -6407,8 +6407,8 @@ Class: public dev.sakura.client.module.impl.player.inventory.InvManager	=>	dev.s
 		private boolean lambda$new$5()	=>	lambda$new$5() :rsqmHupgV8kZNv
 		private boolean lambda$new$6()	=>	lambda$new$6() :-9I7NAUlV8kZNv
 		private boolean lambda$new$7()	=>	lambda$new$7() :No9hN_inV8kZNv
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_S6) :tB9riYSJV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_I(dev.sakura.client.Mahiro_m) :Jnu-tXIPV8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_S6) :tB9riYSJV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_I(dev.sakura.client.Mahiro_m) :Jnu-tXIPV8kZNv
 		public static boolean shouldKeepProjectile()	=>	Mahiro_m(java.lang.Object[])* :YS8ERIhsV8kZNv
 		private void swapItem(int, net.minecraft.class_1792)	=>	Mahiro_C(int, long, net.minecraft.class_1792)	=>	Mahiro_C(java.lang.Object[])* :wCDFJy6lVyIj9W
 		private void swapItem(int, net.minecraft.class_1799)	=>	Mahiro_x(long, int, net.minecraft.class_1799)	=>	Mahiro_x(java.lang.Object[])* :V1NHR$vtVyta6S
@@ -6469,7 +6469,7 @@ Class: public dev.sakura.client.module.impl.player.inventory.Stealer	=>	dev.saku
 		private boolean isChestEmpty(net.minecraft.class_1707)	=>	Mahiro_K(net.minecraft.class_1707, long)	=>	Mahiro_K(java.lang.Object[])* :XO0Mv0U1VyIj9W
 		public static boolean isItemUseful(net.minecraft.class_1799)	=>	Mahiro_P(net.minecraft.class_1799, long)	=>	Mahiro_P(java.lang.Object[])* :w6AOqYKuVyIj9W
 		public boolean isWorking()	=>	Mahiro_X(long)	=>	Mahiro_X(java.lang.Object[])* :tEw4GAh8Vyta6S
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_Z(dev.sakura.client.Mahiro_m) :GS8nTPrHV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_Z(dev.sakura.client.Mahiro_m) :GS8nTPrHV8kZNv
 
 Class: public dev.sakura.client.module.impl.render.Animations	=>	dev.sakura.client.Mahiro_T3
 	Source: "Animations.java"
@@ -6505,12 +6505,12 @@ Class: public dev.sakura.client.module.impl.render.Animations	=>	dev.sakura.clie
 		private dev.sakura.client.module.impl.combat.KillAura getKillAura()	=>	Mahiro_z(long)	=>	Mahiro_z(java.lang.Object[])* :wJFbEyjXVyta6S
 		private dev.sakura.client.module.impl.render.ViewModel getViewModel()	=>	Mahiro_c(long)	=>	Mahiro_c(java.lang.Object[])* :zgzbtTwrVyta6S
 		private static boolean lambda$new$0()	=>	lambda$new$0() :S_xc_9hiV8kZNv
-		public void onEatTransformation(dev.sakura.client.events.render.item.EatTransformationEvent)	=>	Mahiro_b(dev.sakura.client.Mahiro_tf) :8v2jsuP5V8kZNv
-		public void onPacketInbound(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_S6) :Y4SoixavV8kZNv
-		public void onPacketSend(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_Y(dev.sakura.client.Mahiro_S6) :AWyC4kuOV8kZNv
-		public void onRenderSwing(dev.sakura.client.events.render.item.RenderSwingAnimationEvent)	=>	Mahiro_W(dev.sakura.client.Mahiro_ta) :BNuTgnNgV8kZNv
-		public void onSwingSpeed(dev.sakura.client.events.entity.SwingSpeedEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_Sr) :XqR7EcgmV8kZNv
-		public void onTick(dev.sakura.client.events.player.PlayerTickEvent)	=>	Mahiro_g(dev.sakura.client.Mahiro_SG) :wYI2aMJ$V8kZNv
+		public void onEatTransformation(dev.sakura.client.event.impl.render.item.EatTransformationEvent)	=>	Mahiro_b(dev.sakura.client.Mahiro_tf) :8v2jsuP5V8kZNv
+		public void onPacketInbound(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_S6) :Y4SoixavV8kZNv
+		public void onPacketSend(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_Y(dev.sakura.client.Mahiro_S6) :AWyC4kuOV8kZNv
+		public void onRenderSwing(dev.sakura.client.event.impl.render.item.RenderSwingAnimationEvent)	=>	Mahiro_W(dev.sakura.client.Mahiro_ta) :BNuTgnNgV8kZNv
+		public void onSwingSpeed(dev.sakura.client.event.impl.entity.SwingSpeedEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_Sr) :XqR7EcgmV8kZNv
+		public void onTick(dev.sakura.client.event.impl.player.PlayerTickEvent)	=>	Mahiro_g(dev.sakura.client.Mahiro_SG) :wYI2aMJ$V8kZNv
 		public void renderFirstPersonItemCustom(net.minecraft.class_742, float, float, net.minecraft.class_1268, float, net.minecraft.class_1799, float, net.minecraft.class_4587, net.minecraft.class_11659, int)	=>	Mahiro_j(net.minecraft.class_742, float, float, net.minecraft.class_1268, float, long, net.minecraft.class_1799, float, net.minecraft.class_4587, net.minecraft.class_11659, int)	=>	Mahiro_j(java.lang.Object[])* :gTCA49eeVyE5c5
 		public void renderItem(net.minecraft.class_1309, net.minecraft.class_1799, net.minecraft.class_811, net.minecraft.class_4587, net.minecraft.class_11659, int)	=>	Mahiro_f(long, net.minecraft.class_1309, net.minecraft.class_1799, net.minecraft.class_811, net.minecraft.class_4587, net.minecraft.class_11659, int)	=>	Mahiro_f(java.lang.Object[])* :BfkHzdnmVyta6S
 		private void renderSwordAnimation(net.minecraft.class_4587, float, float, float, net.minecraft.class_1306)	=>	Mahiro_C(net.minecraft.class_4587, float, float, float, long, net.minecraft.class_1306)	=>	Mahiro_C(java.lang.Object[])* :5RYjrnmbVy5tRE
@@ -6609,7 +6609,7 @@ Class: public dev.sakura.client.module.impl.render.CameraClip	=>	dev.sakura.clie
 		private boolean lambda$new$5()	=>	lambda$new$5() :u_ONP_KfV8kZNv
 		private boolean lambda$new$6()	=>	lambda$new$6() :tJ7TmnYxV8kZNv
 		public void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
-		public void onRender(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_R(dev.sakura.client.Mahiro_yg) :uPQV9fm5V8kZNv
+		public void onRender(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_R(dev.sakura.client.Mahiro_yg) :uPQV9fm5V8kZNv
 		public boolean shouldModifyCamera()	=>	Mahiro_P(long)	=>	Mahiro_P(java.lang.Object[])* :8e5D6uk9Vyta6S
 		public void update(net.minecraft.class_243, float, net.minecraft.class_1297)	=>	Mahiro_q(net.minecraft.class_243, float, long, net.minecraft.class_1297)	=>	Mahiro_q(java.lang.Object[])* :QCnpnZw8VyAC_8
 
@@ -6683,8 +6683,8 @@ Class: public dev.sakura.client.module.impl.render.ChestESP	=>	dev.sakura.client
 		private boolean isTarget(net.minecraft.class_2586, net.minecraft.class_2680)	=>	Mahiro_u(long, net.minecraft.class_2586, net.minecraft.class_2680)	=>	Mahiro_u(java.lang.Object[])* :NLts58h4Vyta6S
 		public boolean isThroughWalls()	=>	Mahiro_e(java.lang.Object[])* :rdocB0hAV8kZNv
 		private static net.minecraft.class_1921 lambda$static$0(net.minecraft.class_2960)	=>	lambda$static$0(net.minecraft.class_2960) :e3rRqpG6V8kZNv
-		public void onRender3D(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_w(dev.sakura.client.Mahiro_yg) :S-AxzbhVV8kZNv
-		private void renderBox(dev.sakura.client.events.render.Render3DEvent, net.minecraft.class_238)	=>	Mahiro_T(long, dev.sakura.client.Mahiro_yg, net.minecraft.class_238)	=>	Mahiro_T(java.lang.Object[])* :nWgcz38iVyta6S
+		public void onRender3D(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_w(dev.sakura.client.Mahiro_yg) :S-AxzbhVV8kZNv
+		private void renderBox(dev.sakura.client.event.impl.render.Render3DEvent, net.minecraft.class_238)	=>	Mahiro_T(long, dev.sakura.client.Mahiro_yg, net.minecraft.class_238)	=>	Mahiro_T(java.lang.Object[])* :nWgcz38iVyta6S
 
 Class: public dev.sakura.client.module.impl.render.Fullbright	=>	dev.sakura.client.Mahiro_TE
 	Source: "Fullbright.java"
@@ -6700,8 +6700,8 @@ Class: public dev.sakura.client.module.impl.render.Fullbright	=>	dev.sakura.clie
 		public boolean isGamma()	=>	Mahiro_F(long)	=>	Mahiro_F(java.lang.Object[])* :GCRvqQ9LVyta6S
 		public void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		public void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onGameJoin(dev.sakura.client.events.client.GameJoinEvent)	=>	Mahiro_b(dev.sakura.client.Mahiro_yt) :5M1c8Mo1V8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Post)	=>	Mahiro_l(dev.sakura.client.Mahiro_W) :52w51C7eV8kZNv
+		public void onGameJoin(dev.sakura.client.event.impl.client.GameJoinEvent)	=>	Mahiro_b(dev.sakura.client.Mahiro_yt) :5M1c8Mo1V8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Post)	=>	Mahiro_l(dev.sakura.client.Mahiro_W) :52w51C7eV8kZNv
 
 Class: public final enum dev.sakura.client.module.impl.render.Fullbright$Mode	=>	dev.sakura.client.Mahiro_MP
 	Source: "Fullbright.java"
@@ -6749,7 +6749,7 @@ Class: public dev.sakura.client.module.impl.render.Hat	=>	dev.sakura.client.Mahi
 		public java.awt.Color gradient(java.awt.Color, java.awt.Color, double)	=>	Mahiro_A(java.lang.Object[])* :5K_EP2vzV8kZNv
 		private boolean lambda$new$0()	=>	lambda$new$0() :VtLt5zlCV8kZNv
 		private boolean lambda$new$1()	=>	lambda$new$1() :qiRXj8d5V8kZNv
-		public void onRender3D(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_F(dev.sakura.client.Mahiro_yg) :rTES7doHV8kZNv
+		public void onRender3D(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_F(dev.sakura.client.Mahiro_yg) :rTES7doHV8kZNv
 
 Class: public final enum dev.sakura.client.module.impl.render.Hat$Mode	=>	dev.sakura.client.Mahiro_yl
 	Source: "Hat.java"
@@ -6785,9 +6785,9 @@ Class: public dev.sakura.client.module.impl.render.ItemPhysics	=>	dev.sakura.cli
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		private dev.sakura.client.module.impl.render.ItemPhysics$ModelInfo getInfo(java.util.List)	=>	Mahiro_s(java.util.List, long)	=>	Mahiro_s(java.lang.Object[])* :q$r9hmuWVyIj9W
 		private void offsetInWater(net.minecraft.class_4587, net.minecraft.class_1542)	=>	Mahiro_g(long, net.minecraft.class_4587, net.minecraft.class_1542)	=>	Mahiro_g(java.lang.Object[])* :rPB3C5gYVyta6S
-		private void onApplyTransformation(dev.sakura.client.events.render.item.ApplyTransformationEvent)	=>	Mahiro_b(dev.sakura.client.Mahiro_t9) :NoS5A72TV8kZNv
-		private void onRenderItemEntity(dev.sakura.client.events.render.item.RenderItemEntityEvent)	=>	Mahiro_j(dev.sakura.client.Mahiro_t2) :Yb5Cuo0dV8kZNv
-		private void renderLayer(dev.sakura.client.events.render.item.RenderItemEntityEvent, dev.sakura.client.module.impl.render.ItemPhysics$ModelInfo)	=>	Mahiro_c(dev.sakura.client.Mahiro_t2, long, dev.sakura.client.Mahiro_SA)	=>	Mahiro_c(java.lang.Object[])* :N6ES0t4CVyIj9W
+		private void onApplyTransformation(dev.sakura.client.event.impl.render.item.ApplyTransformationEvent)	=>	Mahiro_b(dev.sakura.client.Mahiro_t9) :NoS5A72TV8kZNv
+		private void onRenderItemEntity(dev.sakura.client.event.impl.render.item.RenderItemEntityEvent)	=>	Mahiro_j(dev.sakura.client.Mahiro_t2) :Yb5Cuo0dV8kZNv
+		private void renderLayer(dev.sakura.client.event.impl.render.item.RenderItemEntityEvent, dev.sakura.client.module.impl.render.ItemPhysics$ModelInfo)	=>	Mahiro_c(dev.sakura.client.Mahiro_t2, long, dev.sakura.client.Mahiro_SA)	=>	Mahiro_c(java.lang.Object[])* :N6ES0t4CVyIj9W
 		private void translate(net.minecraft.class_4587, dev.sakura.client.module.impl.render.ItemPhysics$ModelInfo, float, float, float)	=>	Mahiro_k(net.minecraft.class_4587, dev.sakura.client.Mahiro_SA, long, float, float, float)	=>	Mahiro_k(java.lang.Object[])* :VY4TMj8yVyAC_8
 
 Class: final dev.sakura.client.module.impl.render.ItemPhysics$ModelInfo	=>	dev.sakura.client.Mahiro_SA
@@ -6845,9 +6845,9 @@ Class: public dev.sakura.client.module.impl.render.JumpCircles	=>	dev.sakura.cli
 		private static boolean lambda$onRender3D$1(dev.sakura.client.module.impl.render.JumpCircles$JumpCircle)	=>	lambda$onRender3D$1(dev.sakura.client.Mahiro_sF) :wrMYPOV7V8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onRender3D(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_G(dev.sakura.client.Mahiro_yg) :qOv3Y$BIV8kZNv
-		public void onTick(dev.sakura.client.events.client.TickEvent$Pre)	=>	Mahiro_l(dev.sakura.client.Mahiro_m) :XjhMFNF1V8kZNv
-		public void onWorldLoad(dev.sakura.client.events.render.WorldLoadEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_te) :5BxDvincV8kZNv
+		public void onRender3D(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_G(dev.sakura.client.Mahiro_yg) :qOv3Y$BIV8kZNv
+		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	Mahiro_l(dev.sakura.client.Mahiro_m) :XjhMFNF1V8kZNv
+		public void onWorldLoad(dev.sakura.client.event.impl.render.WorldLoadEvent)	=>	Mahiro_u(dev.sakura.client.Mahiro_te) :5BxDvincV8kZNv
 		private void renderCircle(net.minecraft.class_4587, dev.sakura.client.module.impl.render.JumpCircles$JumpCircle, float)	=>	Mahiro_E(net.minecraft.class_4587, dev.sakura.client.Mahiro_sF, long, float)	=>	Mahiro_E(java.lang.Object[])* :QW1M-Z0qVyAC_8
 		private void updateCircleCache(int)	=>	Mahiro_Z(int, long)	=>	Mahiro_Z(java.lang.Object[])* :JdK3ONt7VyIj9W
 
@@ -6912,7 +6912,7 @@ Class: public dev.sakura.client.module.impl.render.KillEffect	=>	dev.sakura.clie
 		private static long c(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		private static boolean lambda$onPacket$0(long, java.util.Map$Entry)	=>	lambda$onPacket$0(long, java.util.Map$Entry) :BsnQ6jgJV8kZNv
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_S6) :SO3bf207V8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_S6) :SO3bf207V8kZNv
 		private void triggerEffect(net.minecraft.class_1297)	=>	Mahiro_G(long, net.minecraft.class_1297)	=>	Mahiro_G(java.lang.Object[])* :V2yBW$X3Vyta6S
 
 Class: public final enum dev.sakura.client.module.impl.render.KillEffect$Mode	=>	dev.sakura.client.Mahiro_MJ
@@ -7009,8 +7009,8 @@ Class: public dev.sakura.client.module.impl.render.NameTags	=>	dev.sakura.client
 		private void lambda$renderSimple$2(float, float, float, float, java.lang.String, float, java.lang.String, float, java.lang.Long)	=>	lambda$renderSimple$2(float, float, float, float, java.lang.String, float, java.lang.String, float, java.lang.Long) :V0SMg1gSV8kZNv
 		protected void onDisable()	=>	Mahiro_Y(long)	=>	Mahiro_Y(java.lang.Object[])* :ErN1fDrdVyta6S
 		protected void onEnable()	=>	Mahiro_W(int, int, int)	=>	Mahiro_W(java.lang.Object[])* :GvLIO7DnVyIJdT
-		public void onPacket(dev.sakura.client.events.packet.PacketEvent)	=>	Mahiro_w(dev.sakura.client.Mahiro_S6) :G5T5IC9MV8kZNv
-		public void onRender2D(dev.sakura.client.events.render.Render2DEvent)	=>	Mahiro_S(dev.sakura.client.Mahiro_sY) :yApXQBQ2V8kZNv
+		public void onPacket(dev.sakura.client.event.impl.packet.PacketEvent)	=>	Mahiro_w(dev.sakura.client.Mahiro_S6) :G5T5IC9MV8kZNv
+		public void onRender2D(dev.sakura.client.event.impl.render.Render2DEvent)	=>	Mahiro_S(dev.sakura.client.Mahiro_sY) :yApXQBQ2V8kZNv
 		private void render(net.minecraft.class_332, net.minecraft.class_1657, float, float, float)	=>	Mahiro_m(net.minecraft.class_332, net.minecraft.class_1657, float, long, float, float)	=>	Mahiro_m(java.lang.Object[])* :AkP2knJiVyrOal
 		private void renderSimple(net.minecraft.class_332, net.minecraft.class_1657, float, float, float)	=>	Mahiro_z(long, net.minecraft.class_332, net.minecraft.class_1657, float, float, float)	=>	Mahiro_z(java.lang.Object[])* :5mfyA_fWVyta6S
 
@@ -7285,11 +7285,11 @@ Class: public dev.sakura.client.module.impl.render.Trajectories	=>	dev.sakura.cl
 		private boolean lambda$new$1()	=>	lambda$new$1() :q56FWqpKV8kZNv
 		private dev.sakura.client.module.impl.render.Trajectories$Trail lambda$renderFiredProjectiles$2(net.minecraft.class_1297)	=>	lambda$renderFiredProjectiles$2(net.minecraft.class_1297) :NFRQW3lNV8kZNv
 		private static boolean lambda$renderFiredProjectiles$3(java.util.Map$Entry)	=>	lambda$renderFiredProjectiles$3(java.util.Map$Entry) :gXaeP4FEV8kZNv
-		public void onRender3D(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_yg) :Aqqbe$XFV8kZNv
+		public void onRender3D(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_x(dev.sakura.client.Mahiro_yg) :Aqqbe$XFV8kZNv
 		private java.awt.Color rainbowColor(int)	=>	Mahiro_f(java.lang.Object[])* :Xx-4dmR-V8kZNv
-		private void renderFiredProjectiles(dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_F(long, dev.sakura.client.Mahiro_yg)	=>	Mahiro_F(java.lang.Object[])* :eWrxbfPpVyta6S
-		private void renderForwardPrediction(net.minecraft.class_1676, dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_B(net.minecraft.class_1676, long, dev.sakura.client.Mahiro_yg)	=>	Mahiro_B(java.lang.Object[])* :WRBL_BdBVyIj9W
-		private void renderTrajectory(net.minecraft.class_1799, net.minecraft.class_1268, float, dev.sakura.client.events.render.Render3DEvent)	=>	Mahiro_m(net.minecraft.class_1799, long, net.minecraft.class_1268, float, dev.sakura.client.Mahiro_yg)	=>	Mahiro_m(java.lang.Object[])* :r_dU$9tCVyIj9W
+		private void renderFiredProjectiles(dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_F(long, dev.sakura.client.Mahiro_yg)	=>	Mahiro_F(java.lang.Object[])* :eWrxbfPpVyta6S
+		private void renderForwardPrediction(net.minecraft.class_1676, dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_B(net.minecraft.class_1676, long, dev.sakura.client.Mahiro_yg)	=>	Mahiro_B(java.lang.Object[])* :WRBL_BdBVyIj9W
+		private void renderTrajectory(net.minecraft.class_1799, net.minecraft.class_1268, float, dev.sakura.client.event.impl.render.Render3DEvent)	=>	Mahiro_m(net.minecraft.class_1799, long, net.minecraft.class_1268, float, dev.sakura.client.Mahiro_yg)	=>	Mahiro_m(java.lang.Object[])* :r_dU$9tCVyIj9W
 		private java.awt.Color withAlpha(java.awt.Color, int)	=>	Mahiro_Q(long, java.awt.Color, int)	=>	Mahiro_Q(java.lang.Object[])* :SpbZngMHVyta6S
 
 Class: public final enum dev.sakura.client.module.impl.render.Trajectories$ColorMode	=>	dev.sakura.client.Mahiro_Sf
@@ -7342,7 +7342,7 @@ Class: public dev.sakura.client.module.impl.render.ViewModel	=>	dev.sakura.clien
 		private static java.lang.String b(int, long)	SignatureNotChanged: Manufactured:
 		private static java.lang.invoke.CallSite b(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static java.lang.Object b(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
-		private void onHeldItemRender(dev.sakura.client.events.render.item.HeldItemRendererEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_tJ) :S7p8eRX2V8kZNv
+		private void onHeldItemRender(dev.sakura.client.event.impl.render.item.HeldItemRendererEvent)	=>	Mahiro_v(dev.sakura.client.Mahiro_tJ) :S7p8eRX2V8kZNv
 
 Class: public dev.sakura.client.module.impl.render.WorldTweaks	=>	dev.sakura.client.Mahiro_T7
 	Source: "WorldTweaks.java"
@@ -8472,7 +8472,7 @@ Class: public dev.sakura.client.utils.player.MoveUtil	=>	dev.sakura.client.Mahir
 		private static int a(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		public static double[] directionSpeed(double)	=>	Mahiro_a(long, double)	=>	Mahiro_a(java.lang.Object[])* :gcUUeRrvVyta6S
 		public static double[] directionSpeedKey(double)	=>	Mahiro_T(double, long)	=>	Mahiro_T(java.lang.Object[])* :oJej$vR5VyIj9W
-		public static void fixMovement(dev.sakura.client.events.input.MoveInputEvent, float)	=>	Mahiro_P(dev.sakura.client.Mahiro_S4, float, long)	=>	Mahiro_P(java.lang.Object[])* :wZ4F3K1oVyAC_8
+		public static void fixMovement(dev.sakura.client.event.impl.input.MoveInputEvent, float)	=>	Mahiro_P(dev.sakura.client.Mahiro_S4, float, long)	=>	Mahiro_P(java.lang.Object[])* :wZ4F3K1oVyAC_8
 		public static double getBaseSpeed(boolean)	=>	Mahiro_Z(long, boolean)	=>	Mahiro_Z(java.lang.Object[])* :tpIka53hVyta6S
 		public static double getBaseSpeed(boolean, double)	=>	Mahiro_m(boolean, long, double)	=>	Mahiro_m(java.lang.Object[])* :oGIA7geWVyIj9W
 		public static double getDirection()	=>	Mahiro_W(long)	=>	Mahiro_W(java.lang.Object[])* :SxP7oRONVyta6S
@@ -9565,18 +9565,18 @@ ForwardClass: dev.sakura.client.Sakura Package: dev.sakura.client	Data: 32695 a2
 ForwardClass: dev.sakura.client.command.Command Package: dev.sakura.client.command	Data: 42783 a2783 b2783 c
 ForwardClass: dev.sakura.client.command.impl.ToggleCommand Package: dev.sakura.client.command.impl	Data: M2818 a2817 b2818 z
 ForwardClass: dev.sakura.client.config.ConfigManager Package: dev.sakura.client.config	Data: 32757 a2757 b2757 U
-ForwardClass: dev.sakura.client.events.Cancellable Package: dev.sakura.client.events	Data: 52757 a2757 b2757 O
-ForwardClass: dev.sakura.client.events.client.TickEvent Package: dev.sakura.client.events.client	Data: 42664 a2664 b2664 m
-ForwardClass: dev.sakura.client.events.client.TickEvent$Post Package: dev.sakura.client.verify.packet.annotations	Data: 12678 a2677 b2678 c2679 U
-ForwardClass: dev.sakura.client.events.client.TickEvent$Pre Package: dev.sakura.client.mixin.network	Data: 22700 a2699 b2700 c2701 I
-ForwardClass: dev.sakura.client.events.entity.SwingSpeedEvent Package: dev.sakura.client.events.entity	Data: 32788 a2787 b2788 Y
-ForwardClass: dev.sakura.client.events.input.MoveInputEvent Package: dev.sakura.client.events.input	Data: 12726 a2725 b2726 c2727 R
-ForwardClass: dev.sakura.client.events.key.KeyEvent Package: dev.sakura.client.events.key	Data: 52786 a2786 b2786 Z
-ForwardClass: dev.sakura.client.events.packet.PacketEvent Package: dev.sakura.client.events.packet	Data: 22728 a2727 b2728 c2729 G
-ForwardClass: dev.sakura.client.events.player.MotionEvent Package: dev.sakura.client.events.player	Data: 42792 a2791 b2792 P
-ForwardClass: dev.sakura.client.events.render.Render3DEvent Package: dev.sakura.client.events.render	Data: 22814 a2814 b2814 c2815 K
-ForwardClass: dev.sakura.client.events.render.item.HeldItemRendererEvent Package: dev.sakura.client.events.render.item	Data: M2781 a2780 b2781 x
-ForwardClass: dev.sakura.client.events.type.EventType Package: dev.sakura.client.events.type	Data: 32655 a2655 b2655 U
+ForwardClass: dev.sakura.client.event.Cancellable Package: dev.sakura.client.event	Data: 52757 a2757 b2757 O
+ForwardClass: dev.sakura.client.event.impl.client.TickEvent Package: dev.sakura.client.event.impl.client	Data: 42664 a2664 b2664 m
+ForwardClass: dev.sakura.client.event.impl.client.TickEvent$Post Package: dev.sakura.client.verify.packet.annotations	Data: 12678 a2677 b2678 c2679 U
+ForwardClass: dev.sakura.client.event.impl.client.TickEvent$Pre Package: dev.sakura.client.mixin.network	Data: 22700 a2699 b2700 c2701 I
+ForwardClass: dev.sakura.client.event.impl.entity.SwingSpeedEvent Package: dev.sakura.client.event.impl.entity	Data: 32788 a2787 b2788 Y
+ForwardClass: dev.sakura.client.event.impl.input.MoveInputEvent Package: dev.sakura.client.event.impl.input	Data: 12726 a2725 b2726 c2727 R
+ForwardClass: dev.sakura.client.event.impl.key.KeyEvent Package: dev.sakura.client.event.impl.key	Data: 52786 a2786 b2786 Z
+ForwardClass: dev.sakura.client.event.impl.packet.PacketEvent Package: dev.sakura.client.event.impl.packet	Data: 22728 a2727 b2728 c2729 G
+ForwardClass: dev.sakura.client.event.impl.player.MotionEvent Package: dev.sakura.client.event.impl.player	Data: 42792 a2791 b2792 P
+ForwardClass: dev.sakura.client.event.impl.render.Render3DEvent Package: dev.sakura.client.event.impl.render	Data: 22814 a2814 b2814 c2815 K
+ForwardClass: dev.sakura.client.event.impl.render.item.HeldItemRendererEvent Package: dev.sakura.client.event.impl.render.item	Data: M2781 a2780 b2781 x
+ForwardClass: dev.sakura.client.event.type.EventType Package: dev.sakura.client.event.impl.type	Data: 32655 a2655 b2655 U
 ForwardClass: dev.sakura.client.gui.Component Package: dev.sakura.client.gui	Data: 42755 a2755 b2755 G
 ForwardClass: dev.sakura.client.gui.auth.AuthScreen Package: dev.sakura.client.gui.auth	Data: 22781 a2781 b2781 c2782 u
 ForwardClass: dev.sakura.client.gui.clickgui.ClickGuiScreen Package: dev.sakura.client.gui.clickgui	Data: 52831 a2831 b2831 y
@@ -9662,49 +9662,49 @@ MemberClass: dev.sakura.client.config.CloudConfigService$UploadResult	Data: 2649
 MemberClass: dev.sakura.client.config.ConfigManager	Data: 2620
 MemberClass: dev.sakura.client.config.ConfigManager$1	Data: 2642
 MemberClass: dev.sakura.client.config.StableConfigCodec	Data: 2606 D
-MemberClass: dev.sakura.client.events.Cancellable	Data: 2621
-MemberClass: dev.sakura.client.events.client.GameJoinEvent	Data: 2692
-MemberClass: dev.sakura.client.events.client.SendMessageEvent	Data: 2615
-MemberClass: dev.sakura.client.events.client.SuggestChatEvent	Data: 2683
-MemberClass: dev.sakura.client.events.client.TickEvent	Data: 2529
-MemberClass: dev.sakura.client.events.client.TickEvent$Post	Data: 2542
-MemberClass: dev.sakura.client.events.client.TickEvent$Pre	Data: 2564
-MemberClass: dev.sakura.client.events.client.TimerEvent	Data: 2639 Zz
-MemberClass: dev.sakura.client.events.entity.AttackBlockEvent	Data: 2613
-MemberClass: dev.sakura.client.events.entity.AttackEntityEvent	Data: 2659 F
-MemberClass: dev.sakura.client.events.entity.BlockPushEvent	Data: 2598
-MemberClass: dev.sakura.client.events.entity.EntityPushEvent	Data: 2621 g
-MemberClass: dev.sakura.client.events.entity.EntitySpawnEvent	Data: 2663
-MemberClass: dev.sakura.client.events.entity.EntityVelocityUpdateEvent	Data: 2647
-MemberClass: dev.sakura.client.events.entity.SwingSpeedEvent	Data: 2657
-MemberClass: dev.sakura.client.events.input.HandleInputEvent	Data: 2597
-MemberClass: dev.sakura.client.events.input.MouseButtonEvent	Data: 2650
-MemberClass: dev.sakura.client.events.input.MoveInputEvent	Data: 2596 Rd
-MemberClass: dev.sakura.client.events.key.KeyEvent	Data: 2657 B
-MemberClass: dev.sakura.client.events.packet.PacketEvent	Data: 2600 C
-MemberClass: dev.sakura.client.events.player.BlockEvent	Data: 2649
-MemberClass: dev.sakura.client.events.player.JumpEvent	Data: 2628
-MemberClass: dev.sakura.client.events.player.JumpRotationEvent	Data: 2613
-MemberClass: dev.sakura.client.events.player.MotionEvent	Data: 2665 X
-MemberClass: dev.sakura.client.events.player.MoveEvent	Data: 2634
-MemberClass: dev.sakura.client.events.player.PlayerTickEvent	Data: 2618
-MemberClass: dev.sakura.client.events.player.RayTraceEvent	Data: 2665
-MemberClass: dev.sakura.client.events.player.SlowdownEvent	Data: 2637
-MemberClass: dev.sakura.client.events.player.SprintEvent	Data: 2699
-MemberClass: dev.sakura.client.events.player.StrafeEvent	Data: 2683
-MemberClass: dev.sakura.client.events.player.TravelEvent	Data: 2666
-MemberClass: dev.sakura.client.events.player.UpdateVelocityEvent	Data: 2660 s
-MemberClass: dev.sakura.client.events.render.Render2DEvent	Data: 2669
-MemberClass: dev.sakura.client.events.render.Render3DEvent	Data: 2689 Z
-MemberClass: dev.sakura.client.events.render.WorldLoadEvent	Data: 2682
-MemberClass: dev.sakura.client.events.render.item.ApplyTransformationEvent	Data: 2639
-MemberClass: dev.sakura.client.events.render.item.EatTransformationEvent	Data: 2684
-MemberClass: dev.sakura.client.events.render.item.HeldItemRendererEvent	Data: 2656
-MemberClass: dev.sakura.client.events.render.item.RenderItemEntityEvent	Data: 2632 I
-MemberClass: dev.sakura.client.events.render.item.RenderSwingAnimationEvent	Data: 2679
-MemberClass: dev.sakura.client.events.render.item.UpdateHeldItemEvent	Data: 2670 c
-MemberClass: dev.sakura.client.events.type.EventType	Data: 2534
-MemberClass: dev.sakura.client.events.type.KeyAction	Data: 2656
+MemberClass: dev.sakura.client.event.Cancellable	Data: 2621
+MemberClass: dev.sakura.client.event.impl.client.GameJoinEvent	Data: 2692
+MemberClass: dev.sakura.client.event.impl.client.SendMessageEvent	Data: 2615
+MemberClass: dev.sakura.client.event.impl.client.SuggestChatEvent	Data: 2683
+MemberClass: dev.sakura.client.event.impl.client.TickEvent	Data: 2529
+MemberClass: dev.sakura.client.event.impl.client.TickEvent$Post	Data: 2542
+MemberClass: dev.sakura.client.event.impl.client.TickEvent$Pre	Data: 2564
+MemberClass: dev.sakura.client.event.impl.client.TimerEvent	Data: 2639 Zz
+MemberClass: dev.sakura.client.event.impl.entity.AttackBlockEvent	Data: 2613
+MemberClass: dev.sakura.client.event.impl.entity.AttackEntityEvent	Data: 2659 F
+MemberClass: dev.sakura.client.event.impl.entity.BlockPushEvent	Data: 2598
+MemberClass: dev.sakura.client.event.impl.entity.EntityPushEvent	Data: 2621 g
+MemberClass: dev.sakura.client.event.impl.entity.EntitySpawnEvent	Data: 2663
+MemberClass: dev.sakura.client.event.impl.entity.EntityVelocityUpdateEvent	Data: 2647
+MemberClass: dev.sakura.client.event.impl.entity.SwingSpeedEvent	Data: 2657
+MemberClass: dev.sakura.client.event.impl.input.HandleInputEvent	Data: 2597
+MemberClass: dev.sakura.client.event.impl.input.MouseButtonEvent	Data: 2650
+MemberClass: dev.sakura.client.event.impl.input.MoveInputEvent	Data: 2596 Rd
+MemberClass: dev.sakura.client.event.impl.key.KeyEvent	Data: 2657 B
+MemberClass: dev.sakura.client.event.impl.packet.PacketEvent	Data: 2600 C
+MemberClass: dev.sakura.client.event.impl.player.BlockEvent	Data: 2649
+MemberClass: dev.sakura.client.event.impl.player.JumpEvent	Data: 2628
+MemberClass: dev.sakura.client.event.impl.player.JumpRotationEvent	Data: 2613
+MemberClass: dev.sakura.client.event.impl.player.MotionEvent	Data: 2665 X
+MemberClass: dev.sakura.client.event.impl.player.MoveEvent	Data: 2634
+MemberClass: dev.sakura.client.event.impl.player.PlayerTickEvent	Data: 2618
+MemberClass: dev.sakura.client.event.impl.player.RayTraceEvent	Data: 2665
+MemberClass: dev.sakura.client.event.impl.player.SlowdownEvent	Data: 2637
+MemberClass: dev.sakura.client.event.impl.player.SprintEvent	Data: 2699
+MemberClass: dev.sakura.client.event.impl.player.StrafeEvent	Data: 2683
+MemberClass: dev.sakura.client.event.impl.player.TravelEvent	Data: 2666
+MemberClass: dev.sakura.client.event.impl.player.UpdateVelocityEvent	Data: 2660 s
+MemberClass: dev.sakura.client.event.impl.render.Render2DEvent	Data: 2669
+MemberClass: dev.sakura.client.event.impl.render.Render3DEvent	Data: 2689 Z
+MemberClass: dev.sakura.client.event.impl.render.WorldLoadEvent	Data: 2682
+MemberClass: dev.sakura.client.event.impl.render.item.ApplyTransformationEvent	Data: 2639
+MemberClass: dev.sakura.client.event.impl.render.item.EatTransformationEvent	Data: 2684
+MemberClass: dev.sakura.client.event.impl.render.item.HeldItemRendererEvent	Data: 2656
+MemberClass: dev.sakura.client.event.impl.render.item.RenderItemEntityEvent	Data: 2632 I
+MemberClass: dev.sakura.client.event.impl.render.item.RenderSwingAnimationEvent	Data: 2679
+MemberClass: dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent	Data: 2670 c
+MemberClass: dev.sakura.client.event.type.EventType	Data: 2534
+MemberClass: dev.sakura.client.event.type.KeyAction	Data: 2656
 MemberClass: dev.sakura.client.gui.Component	Data: 2635 Bp
 MemberClass: dev.sakura.client.gui.IComponent	Data: 2696
 MemberClass: dev.sakura.client.gui.auth.AuthScreen	Data: 2662 I

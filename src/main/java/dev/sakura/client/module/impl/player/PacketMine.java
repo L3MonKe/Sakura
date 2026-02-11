@@ -1,9 +1,10 @@
 package dev.sakura.client.module.impl.player;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.player.BlockEvent;
-import dev.sakura.client.events.render.Render3DEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.player.BlockEvent;
+import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
@@ -18,7 +19,6 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;

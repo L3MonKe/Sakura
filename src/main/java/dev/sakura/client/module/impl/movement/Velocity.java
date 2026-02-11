@@ -1,10 +1,11 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.input.MoveInputEvent;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.render.Render3DEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.input.MoveInputEvent;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.render.Render3DEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.AntiBot;
@@ -15,7 +16,6 @@ import dev.sakura.client.utils.vector.Vector3d;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;

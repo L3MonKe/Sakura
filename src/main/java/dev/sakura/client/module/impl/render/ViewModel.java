@@ -1,10 +1,10 @@
 package dev.sakura.client.module.impl.render;
 
-import dev.sakura.client.events.render.item.HeldItemRendererEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Hand;
 

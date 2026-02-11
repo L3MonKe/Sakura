@@ -1,15 +1,15 @@
 package dev.sakura.client.module.impl.player;
 
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.player.PlayerTickEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.player.PlayerTickEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.network.packet.c2s.common.CommonPongC2SPacket;
 import net.minecraft.network.packet.c2s.play.TeleportConfirmC2SPacket;
 import net.minecraft.network.packet.s2c.common.CommonPingS2CPacket;

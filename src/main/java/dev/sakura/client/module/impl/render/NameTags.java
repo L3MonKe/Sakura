@@ -1,8 +1,10 @@
 package dev.sakura.client.module.impl.render;
 
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.render.Render2DEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.EventPriority;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.render.Render2DEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -15,8 +17,6 @@ import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
-import meteordevelopment.orbit.EventPriority;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.network.PlayerListEntry;

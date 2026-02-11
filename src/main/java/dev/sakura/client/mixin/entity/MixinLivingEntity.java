@@ -1,12 +1,12 @@
 package dev.sakura.client.mixin.entity;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.entity.SwingSpeedEvent;
-import dev.sakura.client.events.player.JumpEvent;
-import dev.sakura.client.events.player.JumpRotationEvent;
-import dev.sakura.client.events.player.SprintEvent;
-import dev.sakura.client.events.player.TravelEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.impl.entity.SwingSpeedEvent;
+import dev.sakura.client.event.impl.player.JumpEvent;
+import dev.sakura.client.event.impl.player.JumpRotationEvent;
+import dev.sakura.client.event.impl.player.SprintEvent;
+import dev.sakura.client.event.impl.player.TravelEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.impl.movement.JumpCooldown;
 import dev.sakura.client.utils.rotation.Rotation;

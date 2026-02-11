@@ -6,7 +6,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.ProjectionType;
 import com.mojang.blaze3d.systems.RenderSystem;
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.render.Render3DEvent;
+import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.interfaces.ISplashOverlayState;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IGameRenderer;

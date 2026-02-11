@@ -1,9 +1,10 @@
 package dev.sakura.client.module.impl.combat;
 
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.render.Render3DEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.render.Render3DEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IPlayerMoveC2SPacket;
 import dev.sakura.client.module.Category;
@@ -15,7 +16,6 @@ import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
@@ -31,6 +31,10 @@ import java.util.Comparator;
 import java.util.List;
 
 public class TpAura extends Module {
+    public TpAura() {
+        super("TpAura", "TP光环", Category.Combat);
+    }
+
     public enum Mode {
         AStar,
         Immediate
@@ -67,10 +71,6 @@ public class TpAura extends Module {
     private BlockPos aStarStart;
     private List<BlockPos> aStarPath;
     private int aStarWaitTicks;
-
-    public TpAura() {
-        super("TpAura", "TP光环", Category.Combat);
-    }
 
     @Override
     public String getSuffix() {
@@ -117,7 +117,6 @@ public class TpAura extends Module {
     private void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-
         boolean clickTick = isClickTick();
         if (desyncPlayerPosition != null && clickTick) {
             tryAttack();
@@ -132,9 +131,7 @@ public class TpAura extends Module {
 
     @EventHandler
     private void onPacket(PacketEvent event) {
-        if (nullCheck()) {
-            return;
-        }
+        if (nullCheck()) return;
 
         if (event.getType() == EventType.SEND) {
             if (desyncPlayerPosition != null && event.getPacket() instanceof PlayerMoveC2SPacket movePacket) {

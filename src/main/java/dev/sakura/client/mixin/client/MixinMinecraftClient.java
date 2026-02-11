@@ -1,8 +1,8 @@
 package dev.sakura.client.mixin.client;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.input.HandleInputEvent;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.input.HandleInputEvent;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
 import net.minecraft.client.network.ClientPlayerEntity;

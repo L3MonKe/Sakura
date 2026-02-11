@@ -1,13 +1,13 @@
 package dev.sakura.client.module.impl.client;
 
 import dev.sakura.client.config.ConfigManager;
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.util.ScreenshotRecorder;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.TitleS2CPacket;

@@ -1,11 +1,11 @@
 package dev.sakura.client.manager.impl;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.render.Render3DEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.util.AuthUtil;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 

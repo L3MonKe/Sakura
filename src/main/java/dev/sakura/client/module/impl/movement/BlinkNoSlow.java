@@ -1,14 +1,14 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.player.MotionEvent;
-import dev.sakura.client.events.player.SlowdownEvent;
-import dev.sakura.client.events.player.SprintEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.player.MotionEvent;
+import dev.sakura.client.event.impl.player.SlowdownEvent;
+import dev.sakura.client.event.impl.player.SprintEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.MoveUtil;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;

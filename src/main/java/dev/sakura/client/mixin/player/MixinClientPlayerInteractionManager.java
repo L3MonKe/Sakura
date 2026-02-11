@@ -1,7 +1,7 @@
 package dev.sakura.client.mixin.player;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.player.BlockEvent;
+import dev.sakura.client.event.impl.player.BlockEvent;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;

@@ -1,11 +1,11 @@
 package dev.sakura.client.mixin.entity;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.entity.BlockPushEvent;
-import dev.sakura.client.events.player.MotionEvent;
-import dev.sakura.client.events.player.PlayerTickEvent;
-import dev.sakura.client.events.player.SlowdownEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.impl.entity.BlockPushEvent;
+import dev.sakura.client.event.impl.player.MotionEvent;
+import dev.sakura.client.event.impl.player.PlayerTickEvent;
+import dev.sakura.client.event.impl.player.SlowdownEvent;
+import dev.sakura.client.event.type.EventType;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

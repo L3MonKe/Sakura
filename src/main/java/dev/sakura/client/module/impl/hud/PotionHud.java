@@ -1,541 +1,316 @@
 package dev.sakura.client.module.impl.hud;
 
+import dev.sakura.client.gui.panelgui.SmoothAnimationTimer;
+import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.hud.HudEditorScreen;
 import dev.sakura.client.module.HudModule;
-import dev.sakura.client.module.impl.client.ClickGui;
+import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
-import dev.sakura.client.utils.color.ColorUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.ColorValue;
-import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
+import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.registry.entry.RegistryEntry;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_LEFT;
+import static org.lwjgl.nanovg.NanoVG.NVG_ALIGN_MIDDLE;
 
 public class PotionHud extends HudModule {
-    public enum HudMode {
-        Panel,
-        Split
-    }
-
-    public enum TextColorMode {
-        Default,
-        Gradient
-    }
-
-    private final EnumValue<HudMode> mode = new EnumValue<>("Mode", "模式", HudMode.Panel);
     private final NumberValue<Double> scale = new NumberValue<>("Scale", "缩放", 1.0, 0.5, 2.0, 0.05);
-    private final NumberValue<Double> radius = new NumberValue<>("Radius", "圆角半径", 6.0, 0.0, 16.0, 1.0);
-    private final BoolValue showBackground = new BoolValue("Background", "背景", false);
-    private final BoolValue showHeader = new BoolValue("Header", "标题", true, showBackground::get);
-    private final BoolValue showIcon = new BoolValue("Icon", "图标", true);
-    private final BoolValue glowIcon = new BoolValue("IconGlow", "图标光晕", true, showIcon::get);
-    private final BoolValue showProgress = new BoolValue("Progress", "进度条", true);
-    private final BoolValue coloredName = new BoolValue("ColoredName", "名称随效果颜色", true);
-    private final BoolValue backgroundBlur = new BoolValue("Blur", "模糊", true, showBackground::get);
-    private final NumberValue<Double> blurStrength = new NumberValue<>("BlurStrength", "模糊强度", 10.0, 2.0, 24.0, 0.5, () -> backgroundBlur.get());
-    private final BoolValue bloom = new BoolValue("Bloom", "光晕", true);
-    private final EnumValue<Align> align = new EnumValue<>("Align", "对齐", Align.Left);
-    private final ColorValue backgroundColor = new ColorValue("BackgroundColor", "背景颜色", new Color(18, 18, 18, 120));
-    private final ColorValue itemColor = new ColorValue("ItemBackground", "条目背景", new Color(20, 20, 20, 140));
-    private final ColorValue textColor = new ColorValue("Text", "文字颜色", new Color(255, 255, 255, 230));
-    private final ColorValue secondaryTextColor = new ColorValue("SecondaryText", "次级文字颜色", new Color(200, 200, 200, 200));
+    private final NumberValue<Double> radius = new NumberValue<>("Radius", "圆角半径", 5.0, 0.0, 15.0, 0.5);
+    private final BoolValue enableShadow = new BoolValue("Shadow", "阴影", true);
+    private final BoolValue blur = new BoolValue("Blur", "背景模糊", true);
+    private final NumberValue<Double> blurStrength = new NumberValue<>("BlurStrength", "模糊强度", 10.0, 1.0, 20.0, 0.5, blur::get);
+    private final BoolValue hideVanilla = new BoolValue("HideVanilla", "隐藏原版图标", true);
 
-    // Split Mode Settings
-    private final EnumValue<TextColorMode> splitTextColorMode = new EnumValue<>("SplitTextColorMode", "文字颜色模式", TextColorMode.Default, () -> mode.is(HudMode.Split));
-    private final BoolValue splitTextGlow = new BoolValue("SplitTextGlow", "文字发光", true, () -> mode.is(HudMode.Split));
-    private final NumberValue<Double> splitGlowRadius = new NumberValue<>("SplitGlowRadius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(HudMode.Split) && splitTextGlow.get());
-    private final NumberValue<Integer> splitGlowIntensity = new NumberValue<>("SplitGlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(HudMode.Split) && splitTextGlow.get());
-    private final NumberValue<Double> splitLineWidth = new NumberValue<>("SplitLineWidth", "线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(HudMode.Split));
-    private final NumberValue<Double> splitOffsetX = new NumberValue<>("SplitOffsetX", "内容X偏移", 0.0, -20.0, 20.0, 0.5, () -> mode.is(HudMode.Split));
-    private final NumberValue<Double> splitOffsetY = new NumberValue<>("SplitOffsetY", "内容Y偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(HudMode.Split));
-    private final NumberValue<Double> splitIconScale = new NumberValue<>("SplitIconScale", "图标缩放", 1.0, 0.5, 1.5, 0.1, () -> mode.is(HudMode.Split));
-    private final NumberValue<Double> splitItemSpacing = new NumberValue<>("SplitItemSpacing", "行间距", 6.0, 0.0, 20.0, 0.5, () -> mode.is(HudMode.Split));
-
-    // Gradient Settings
-    private final ColorValue gradientColor1 = new ColorValue("GradientColor1", "渐变颜色1", new Color(0, 255, 255), () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
-    private final ColorValue gradientColor2 = new ColorValue("GradientColor2", "渐变颜色2", new Color(255, 0, 255), () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
-    private final NumberValue<Double> gradientSpeed = new NumberValue<>("GradientSpeed", "渐变速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
-    private final NumberValue<Double> colorStep = new NumberValue<>("ColorStep", "颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(HudMode.Split) && splitTextColorMode.is(TextColorMode.Gradient));
-
-    private final Map<StatusEffect, EffectEntry> entries = new LinkedHashMap<>();
-    private float animWidth = 0f;
-    private float animHeight = 0f;
+    private final Map<RegistryEntry<StatusEffect>, EffectInfo> infos = new LinkedHashMap<>();
 
     public PotionHud() {
-        super("PotionHud", "药水显示", 10, 220);
+        super("PotionHud", "药水HUD", 10, 250);
+    }
+
+    public boolean shouldHideVanilla() {
+        return isEnabled() && hideVanilla.get();
     }
 
     @Override
-    public void onRender(DrawContext context) {
-        if (mc.player == null) return;
+    public void renderInGame(DrawContext context) {
+        if (nullCheck()) return;
+        HudEditor editor = Sakura.MODULES.getModule(HudEditor.class);
+        if (editor != null && editor.isEnabled() && mc.currentScreen instanceof HudEditorScreen) return;
+        if (mc.currentScreen != null && mc.currentScreen.showsStatusEffects()) return;
+        renderInternal(context, false, 0, 0);
+    }
 
+    @Override
+    public void renderInEditor(DrawContext context, float mouseX, float mouseY) {
+        if (dragging) {
+            int gameWidth = mc.getWindow().getScaledWidth();
+            int gameHeight = mc.getWindow().getScaledHeight();
+
+            x = Math.max(0, Math.min(mouseX - dragX, gameWidth - width));
+            y = Math.max(0, Math.min(mouseY - dragY, gameHeight - height));
+
+            relativeX = x / gameWidth;
+            relativeY = y / gameHeight;
+        }
+
+        renderInternal(context, true, mouseX, mouseY);
+        NanoVGRenderer.INSTANCE.draw(vg -> NanoVGHelper.drawRect(x, y, width, height, dragging ? new Color(100, 100, 255, 80) : new Color(0, 0, 0, 50)));
+    }
+
+    private void renderInternal(DrawContext context, boolean editor, float mouseX, float mouseY) {
         float s = scale.get().floatValue();
-        boolean inEditor = mc.currentScreen instanceof HudEditorScreen;
 
-        List<StatusEffectInstance> activeEffects = new ArrayList<>(mc.player.getStatusEffects());
-        List<EffectEntry> activeEntries = updateEntries(activeEffects);
-
-        boolean placeholder = activeEntries.isEmpty();
-        if (placeholder && !inEditor) {
-            animWidth = 0;
-            animHeight = 0;
-            width = 0;
-            height = 0;
+        List<RenderEntry> entries = buildEntries(s, editor);
+        if (entries.isEmpty()) {
+            this.width = 50 * s;
+            this.height = 20 * s;
             return;
         }
 
-        List<EffectEntry> layoutEntries = activeEntries;
-        List<EffectEntry> renderEntries;
-        if (placeholder) {
-            EffectEntry sample = new EffectEntry(null);
-            sample.name = "No Effects";
-            sample.durationText = "--:--";
-            sample.maxDuration = 1;
-            sample.duration = 0;
-            sample.progress = 0;
-            sample.order = 0;
-            layoutEntries = Collections.singletonList(sample);
-            renderEntries = layoutEntries;
-        } else {
-            renderEntries = buildRenderEntries(activeEntries);
-        }
+        this.width = entries.stream().map(e -> e.totalW).max(Float::compare).orElse(50f * s);
+        this.height = entries.size() * (28f * s);
 
-        Layout layout = calculateLayout(layoutEntries, s);
-        updateLayoutPositions(renderEntries, layout, s);
-
-        float targetWidth = layout.panelWidth;
-        float targetHeight = layout.panelHeight;
-        animWidth = smooth(animWidth == 0 ? targetWidth : animWidth, targetWidth, 0.2f);
-        animHeight = smooth(animHeight == 0 ? targetHeight : animHeight, targetHeight, 0.2f);
-
-        if (backgroundBlur.get()) {
-            if (mode.is(HudMode.Panel) && showBackground.get()) {
-                BlurShader.drawRoundedBlur(x, y, animWidth, animHeight, layout.panelRadius, blurStrength.get().floatValue());
-            } else if (mode.is(HudMode.Split)) {
-                renderSplitBlurBackgrounds(renderEntries, layout, s);
+        if (blur.get()) {
+            float r = radius.get().floatValue() * s;
+            float strength = blurStrength.get().floatValue();
+            for (RenderEntry e : entries) {
+                BlurShader.drawRoundedBlur(e.iconX, e.y, e.iconW, e.iconH, r, strength);
+                BlurShader.drawRoundedBlur(e.infoX, e.y, e.infoW, e.infoH, r, strength);
             }
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
-            if (mode.is(HudMode.Panel) && showBackground.get()) {
-                if (bloom.get()) {
-                    NanoVGHelper.drawRoundRectBloom(x, y, animWidth, animHeight, layout.panelRadius, backgroundColor.get());
-                } else {
-                    NanoVGHelper.drawRoundRect(x, y, animWidth, animHeight, layout.panelRadius, backgroundColor.get());
-                }
-            }
+            float r = radius.get().floatValue() * s;
+            Color overlay = new Color(0, 0, 0, 50);
 
-            if (layout.showHeader && mode.is(HudMode.Panel)) {
-                int headerFont = FontLoader.bold();
-                float headerFontSize = 12 * s;
-                float headerTextY = y + layout.paddingY + headerFontSize;
-                float headerTextX = layout.alignRight ? x + animWidth - layout.paddingX - NanoVGHelper.getTextWidth("Potions", headerFont, headerFontSize) : x + layout.paddingX;
-                NanoVGHelper.drawString("Potions", headerTextX, headerTextY, headerFont, headerFontSize, textColor.get());
-                float lineY = y + layout.paddingY + layout.headerHeight - 2 * s;
-                NanoVGHelper.drawGradientRRect2(x + layout.paddingX, lineY, animWidth - layout.paddingX * 2, 1.2f * s, 0, ClickGui.color(0), ClickGui.color2(0));
-            }
-
-            if (mode.is(HudMode.Split) && !renderEntries.isEmpty()) {
-                // Calculate total bounds for the unified background and line
-                float minX = Float.MAX_VALUE;
-                float minY = Float.MAX_VALUE;
-                float maxX = Float.MIN_VALUE;
-                float maxY = Float.MIN_VALUE;
-
-                for (EffectEntry entry : renderEntries) {
-                    minX = Math.min(minX, entry.x);
-                    minY = Math.min(minY, entry.y);
-                    maxX = Math.max(maxX, entry.x + entry.width);
-                    maxY = Math.max(maxY, entry.y + layout.itemHeight);
+            for (RenderEntry e : entries) {
+                if (enableShadow.get()) {
+                    Color shadow = new Color(0, 0, 0, 70);
+                    NanoVGHelper.drawRoundRectBloom(e.iconX, e.y, e.iconW, e.iconH, r, shadow);
+                    NanoVGHelper.drawRoundRectBloom(e.infoX, e.y, e.infoW, e.infoH, r, shadow);
                 }
 
-                if (minX < maxX && minY < maxY) {
-                    // Draw unified background (color)
-                    NanoVGHelper.drawRoundRect(minX, minY, maxX - minX, maxY - minY, layout.panelRadius, backgroundColor.get());
+                NanoVGHelper.drawRoundRect(e.iconX, e.y, e.iconW, e.iconH, r, overlay);
+                NanoVGHelper.drawRoundRect(e.infoX, e.y, e.infoW, e.infoH, r, overlay);
 
-                    // Draw unified top line
-                    Color c1 = ClickGui.color(0);
-                    Color c2 = ClickGui.color2(0);
-                    float lineHeight = splitLineWidth.get().floatValue() * s;
-                    NanoVGHelper.drawGradientRRect2(minX, minY, maxX - minX, lineHeight, 0, c1, c2);
-                }
-            }
+                NanoVGHelper.scissor(e.baseX, e.y, e.progressW, e.iconH);
+                NanoVGHelper.drawRoundRect(e.iconX, e.y, e.iconW, e.iconH, r, overlay);
+                NanoVGHelper.drawRoundRect(e.infoX, e.y, e.infoW, e.infoH, r, overlay);
+                NanoVGHelper.resetScissor();
 
-            for (EffectEntry entry : renderEntries) {
-                if (mode.is(HudMode.Split)) {
-                    drawSplitEntry(context, entry, layout, s);
-                } else {
-                    drawEntry(context, entry, layout, s);
-                }
+                float textCenterY = e.y + (e.infoH / 2f);
+                NanoVGHelper.drawString(e.name, e.infoX + (5f * s), textCenterY, e.nameFont, e.nameFontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, new Color(255, 255, 255));
+                NanoVGHelper.drawString(e.duration, e.infoX + (7f * s) + e.nameW, textCenterY, e.durationFont, e.durationFontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, new Color(200, 200, 200));
             }
         });
 
-        width = animWidth;
-        height = animHeight;
+        for (RenderEntry e : entries) {
+            context.getMatrices().pushMatrix();
+            context.getMatrices().translate(e.iconX + (2f * s), e.y + (2f * s));
+            context.getMatrices().scale(s, s);
+            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, InGameHud.getEffectTexture(e.effect), 0, 0, 16, 16);
+            context.getMatrices().popMatrix();
+        }
     }
 
-    private List<EffectEntry> updateEntries(List<StatusEffectInstance> activeEffects) {
-        List<EffectEntry> ordered = new ArrayList<>();
-        Set<StatusEffect> updated = new HashSet<>();
-        int index = 0;
-        for (StatusEffectInstance instance : activeEffects) {
-            StatusEffect effect = instance.getEffectType().value();
-            EffectEntry entry = entries.computeIfAbsent(effect, EffectEntry::new);
-            entry.effectInstance = instance;
-            entry.name = getEffectName(instance);
-            entry.durationText = getDuration(instance);
-            entry.amplifier = instance.getAmplifier();
-            entry.duration = instance.getDuration();
-            entry.maxDuration = Math.max(entry.maxDuration, entry.duration);
-            entry.infinite = instance.isInfinite();
-            entry.removing = false;
-            entry.order = index++;
-            updated.add(effect);
-            ordered.add(entry);
+    private List<RenderEntry> buildEntries(float s, boolean editor) {
+        if (mc.player != null && mc.world != null) {
+            updateInfosFromPlayer();
         }
 
-        for (Iterator<Map.Entry<StatusEffect, EffectEntry>> it = entries.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<StatusEffect, EffectEntry> entry = it.next();
-            if (!updated.contains(entry.getKey())) {
-                entry.getValue().removing = true;
-                if (entry.getValue().offscreen) {
-                    it.remove();
+        int nameFont = FontLoader.medium();
+        int durationFont = FontLoader.regular();
+        float nameFontSize = 10f * s;
+        float durationFontSize = 8f * s;
+
+        float iconW = 20f * s;
+        float iconH = 20f * s;
+        float gap = 5f * s;
+
+        float startY = this.y;
+        List<Map.Entry<RegistryEntry<StatusEffect>, EffectInfo>> snapshot = new ArrayList<>(infos.entrySet());
+        List<RenderEntry> out = new ArrayList<>();
+
+        for (var entry : snapshot) {
+            RegistryEntry<StatusEffect> effect = entry.getKey();
+            EffectInfo info = entry.getValue();
+
+            String name = PotionContentsComponent.getEffectText(effect, info.amplifier).getString();
+            String duration = info.infinite ? "∞" : formatDuration(info.duration);
+
+            float nameW = NanoVGHelper.getTextWidth(name, nameFont, nameFontSize);
+            float durationW = NanoVGHelper.getTextWidth(duration, durationFont, durationFontSize);
+
+            float infoW = nameW + durationW + (12f * s);
+            float totalW = (25f * s) + infoW;
+
+            info.width = totalW;
+            if (info.yTimer.value == -1f) {
+                info.yTimer.value = startY;
+            }
+
+            if (!editor) {
+                if (info.shouldDisappear) {
+                    info.xTimer.target = -totalW - (20f * s);
+                } else {
+                    info.xTimer.target = this.x;
+                    info.yTimer.target = startY;
+                    info.yTimer.update(true);
+
+                    float targetBar = totalW;
+                    if (!info.infinite && info.maxDuration > 0) {
+                        targetBar = (float) info.duration / (float) info.maxDuration * totalW;
+                    }
+                    info.durationTimer.target = targetBar;
+                    if (info.durationTimer.value <= 0f) {
+                        info.durationTimer.value = targetBar;
+                    }
+                }
+
+                info.durationTimer.update(true);
+                info.xTimer.update(true);
+            } else {
+                info.xTimer.value = this.x;
+                info.yTimer.value = startY;
+                float targetBar = totalW;
+                if (!info.infinite && info.maxDuration > 0) {
+                    targetBar = (float) info.duration / (float) info.maxDuration * totalW;
+                }
+                info.durationTimer.value = clampProgress(targetBar, totalW);
+            }
+
+            float baseX = info.xTimer.value;
+            float y = info.yTimer.value;
+            float iconX = baseX;
+            float infoX = baseX + iconW + gap;
+
+            out.add(new RenderEntry(
+                    effect,
+                    baseX, y,
+                    iconX, infoX,
+                    iconW, iconH,
+                    infoW, iconH,
+                    totalW,
+                    clampProgress(info.durationTimer.value, totalW),
+                    name, duration,
+                    nameFont, durationFont,
+                    nameFontSize, durationFontSize,
+                    nameW
+            ));
+
+            startY += 28f * s;
+        }
+
+        if (!editor) {
+            List<RegistryEntry<StatusEffect>> toRemove = new ArrayList<>();
+            for (var entry : infos.entrySet()) {
+                EffectInfo info = entry.getValue();
+                if (info.shouldDisappear && info.xTimer.value <= -info.width - (20f * s)) {
+                    toRemove.add(entry.getKey());
                 }
             }
-        }
-        return ordered;
-    }
-
-    private List<EffectEntry> buildRenderEntries(List<EffectEntry> activeEntries) {
-        List<EffectEntry> renderEntries = new ArrayList<>(activeEntries);
-        for (EffectEntry entry : entries.values()) {
-            if (entry.removing && !renderEntries.contains(entry)) {
-                renderEntries.add(entry);
-            }
-        }
-        renderEntries.sort(Comparator.comparingInt(e -> e.order));
-        return renderEntries;
-    }
-
-    private Layout calculateLayout(List<EffectEntry> renderEntries, float s) {
-        float paddingX = 6f * s;
-        float paddingY = 6f * s;
-        float headerFontSize = 12 * s;
-        float headerHeight = (showBackground.get() && showHeader.get()) ? headerFontSize + 6f * s : 0f;
-        float itemHeight = 20f * s;
-        float itemGap = mode.is(HudMode.Split) ? splitItemSpacing.get().floatValue() * s : 6f * s;
-        float iconBox = showIcon.get() ? 20f * s : 0f;
-        float iconGap = showIcon.get() ? 4f * s : 0f;
-        float infoPadding = 6f * s;
-        float nameFontSize = 11f * s;
-        float timeFontSize = 9f * s;
-        int nameFont = FontLoader.medium();
-        int timeFont = FontLoader.medium();
-
-        float maxTimeWidth = 0f;
-        for (EffectEntry entry : renderEntries) {
-            maxTimeWidth = Math.max(maxTimeWidth, NanoVGHelper.getTextWidth(entry.durationText, timeFont, timeFontSize));
-        }
-
-        float maxItemWidth = 0f;
-        for (EffectEntry entry : renderEntries) {
-            float nameWidth = NanoVGHelper.getTextWidth(entry.name, nameFont, nameFontSize);
-            float infoWidth = Math.max(60f * s, nameWidth + maxTimeWidth + infoPadding * 2 + 6f * s);
-            float itemWidth = iconBox + iconGap + infoWidth;
-            entry.targetInfoWidth = infoWidth;
-            entry.targetWidth = itemWidth;
-            maxItemWidth = Math.max(maxItemWidth, itemWidth);
-        }
-
-        float listHeight = renderEntries.size() * itemHeight + Math.max(0, renderEntries.size() - 1) * itemGap;
-        float panelHeight = headerHeight + paddingY * 2 + listHeight;
-        float panelWidth = maxItemWidth + paddingX * 2;
-        float panelRadius = radius.get().floatValue() * s;
-
-        return new Layout(panelWidth, panelHeight, paddingX, paddingY, headerHeight, itemHeight, itemGap, iconBox, iconGap, infoPadding, panelRadius, maxTimeWidth, showBackground.get() && showHeader.get(), align.get() == Align.Right);
-    }
-
-    private void updateLayoutPositions(List<EffectEntry> renderEntries, Layout layout, float s) {
-        float listStartY = y + layout.paddingY + layout.headerHeight + 3f * s;
-        for (EffectEntry entry : renderEntries) {
-            float baseX = layout.alignRight ? x + layout.panelWidth - layout.paddingX - entry.width : x + layout.paddingX;
-            float targetX = entry.removing ? x - entry.width - 30f * s : baseX;
-            float targetY = entry.removing ? entry.y : listStartY + entry.order * (layout.itemHeight + layout.itemGap);
-            entry.width = smooth(entry.width == 0 ? entry.targetWidth : entry.width, entry.targetWidth, 0.25f);
-            entry.x = smooth(entry.x == 0 ? targetX : entry.x, targetX, 0.2f);
-            entry.y = smooth(entry.y == 0 ? targetY : entry.y, targetY, 0.2f);
-            entry.progress = smooth(entry.progress, entry.infinite ? 1f : MathHelper.clamp(entry.duration / (float) Math.max(1, entry.maxDuration), 0f, 1f), 0.25f);
-            entry.offscreen = entry.x < x - entry.width - 40f * s;
-        }
-    }
-
-    private void renderSplitBlurBackgrounds(List<EffectEntry> entries, Layout layout, float s) {
-        if (entries.isEmpty()) return;
-        float blurVal = blurStrength.get().floatValue();
-        float r = radius.get().floatValue() * s;
-
-        // Calculate total bounds for the unified background
-        float minX = Float.MAX_VALUE;
-        float minY = Float.MAX_VALUE;
-        float maxX = Float.MIN_VALUE;
-        float maxY = Float.MIN_VALUE;
-
-        for (EffectEntry entry : entries) {
-            minX = Math.min(minX, entry.x);
-            minY = Math.min(minY, entry.y);
-            maxX = Math.max(maxX, entry.x + entry.width);
-            maxY = Math.max(maxY, entry.y + layout.itemHeight);
-        }
-
-        // Add padding if desired, or fit exactly to the items
-        // Currently fitting exactly to the union of all item rects
-        if (minX < maxX && minY < maxY) {
-            BlurShader.drawRoundedBlur(minX, minY, maxX - minX, maxY - minY, r, blurVal);
-        }
-    }
-
-    private void drawSplitEntry(DrawContext context, EffectEntry entry, Layout layout, float s) {
-        float itemX = entry.x + splitOffsetX.get().floatValue() * s;
-        float itemY = entry.y + splitOffsetY.get().floatValue() * s;
-        float itemW = entry.width;
-        float itemH = layout.itemHeight;
-
-        // Icon
-        float iconBox = layout.iconBox;
-        float iconGap = layout.iconGap;
-        float contentStartX = itemX + (showIcon.get() ? iconBox + iconGap : 6f * s);
-
-        if (showIcon.get() && entry.effectInstance != null) {
-            float iconSize = 16f * s * splitIconScale.get().floatValue();
-            float iconX = itemX + 4f * s;
-            float iconY = itemY + (itemH - iconSize) / 2f;
-
-            // Removed drawIconGlow as requested
-            drawEffectIcon(context, entry.effectInstance, iconX, iconY, iconSize);
-        }
-
-        // Text
-        int nameFont = FontLoader.medium();
-        int timeFont = FontLoader.medium();
-        float nameFontSize = 11f * s;
-        float timeFontSize = 9f * s;
-
-        float nameX = contentStartX;
-        float timeX = itemX + itemW - 6f * s - NanoVGHelper.getTextWidth(entry.durationText, timeFont, timeFontSize);
-        float textY = itemY + itemH / 2f + nameFontSize / 2.8f;
-        float timeY = itemY + itemH / 2f + timeFontSize / 2.8f;
-
-        Color nameColor = textColor.get();
-        if (splitTextColorMode.is(TextColorMode.Gradient)) {
-            Color c1 = gradientColor1.get();
-            Color c2 = gradientColor2.get();
-            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
-            double currentOffset = offset + (entry.order * colorStep.get());
-            double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
-            nameColor = ColorUtil.interpolateColorC(c1, c2, (float) factor);
-        } else if (coloredName.get() && entry.effectInstance != null) {
-            Color effectColor = new Color(entry.effectInstance.getEffectType().value().getColor());
-            nameColor = ColorUtil.interpolateColorC(effectColor, textColor.get(), 0.35f);
-        }
-
-        if (splitTextGlow.get()) {
-            float glowR = splitGlowRadius.get().floatValue() * s;
-            int glowI = splitGlowIntensity.get();
-            NanoVGHelper.drawGlowingString(entry.name, nameX, textY, nameFont, nameFontSize, nameColor, glowR, glowI);
-            NanoVGHelper.drawGlowingString(entry.durationText, timeX, timeY, timeFont, timeFontSize, secondaryTextColor.get(), glowR, glowI);
-        } else {
-            NanoVGHelper.drawString(entry.name, nameX, textY, nameFont, nameFontSize, nameColor);
-            NanoVGHelper.drawString(entry.durationText, timeX, timeY, timeFont, timeFontSize, secondaryTextColor.get());
-        }
-    }
-
-    private void drawEntry(DrawContext context, EffectEntry entry, Layout layout, float s) {
-        float itemX = entry.x;
-        float itemY = entry.y;
-        float itemHeight = layout.itemHeight;
-        float iconBox = layout.iconBox;
-        float iconGap = layout.iconGap;
-        float infoX = itemX + iconBox + iconGap;
-        float infoWidth = Math.max(10f * s, entry.targetInfoWidth);
-
-        float itemRadius = Math.max(2f, layout.panelRadius * 0.6f);
-        Color iconBg = ColorUtil.applyOpacity(itemColor.get(), 0.9f);
-        Color infoBg = itemColor.get();
-        NanoVGHelper.drawRoundRect(infoX, itemY, infoWidth, itemHeight, itemRadius, infoBg);
-
-        if (iconBox > 0) {
-            NanoVGHelper.drawRoundRect(itemX, itemY, iconBox, itemHeight, itemRadius, iconBg);
-            if (entry.effectInstance != null) {
-                float iconSize = 16f * s;
-                float iconX = itemX + (iconBox - iconSize) / 2f;
-                float iconY = itemY + (itemHeight - iconSize) / 2f;
-                if (glowIcon.get()) {
-                    drawIconGlow(entry.effectInstance, iconX + iconSize / 2f, iconY + iconSize / 2f, iconSize / 2f, entry.order, s);
-                }
-                drawEffectIcon(context, entry.effectInstance, iconX, iconY, iconSize);
+            for (RegistryEntry<StatusEffect> k : toRemove) {
+                infos.remove(k);
             }
         }
 
-        Color accent1 = ClickGui.color(0);
-        Color accent2 = ClickGui.color2(0);
-        NanoVGHelper.drawGradientRRect2(infoX, itemY, 2f * s, itemHeight, 0, accent1, accent2);
+        return out;
+    }
 
-        int nameFont = FontLoader.medium();
-        int timeFont = FontLoader.medium();
-        float nameFontSize = 11f * s;
-        float timeFontSize = 9f * s;
-        float nameX = infoX + layout.infoPadding;
-        float timeX = infoX + infoWidth - layout.infoPadding - layout.maxTimeWidth;
-        float textY = itemY + itemHeight / 2f + nameFontSize / 2.8f;
-        float timeY = itemY + itemHeight / 2f + timeFontSize / 2.8f;
+    private void updateInfosFromPlayer() {
+        Collection<StatusEffectInstance> effects = mc.player.getStatusEffects();
+        Set<RegistryEntry<StatusEffect>> active = new HashSet<>();
+        float initialX = -60f * scale.get().floatValue();
 
-        Color nameColor = textColor.get();
-        if (coloredName.get() && entry.effectInstance != null) {
-            Color effectColor = new Color(entry.effectInstance.getEffectType().value().getColor());
-            nameColor = ColorUtil.interpolateColorC(effectColor, textColor.get(), 0.35f);
+        for (StatusEffectInstance instance : effects) {
+            if (!instance.shouldShowIcon()) continue;
+            RegistryEntry<StatusEffect> effect = instance.getEffectType();
+            active.add(effect);
+
+            EffectInfo info = infos.computeIfAbsent(effect, e -> new EffectInfo(initialX));
+            info.infinite = instance.isInfinite();
+            info.maxDuration = info.infinite ? -1 : Math.max(info.maxDuration, instance.getDuration());
+            info.duration = instance.getDuration();
+            info.amplifier = instance.getAmplifier();
+            info.shouldDisappear = false;
         }
 
-        NanoVGHelper.drawString(entry.name, nameX, textY, nameFont, nameFontSize, nameColor);
-        NanoVGHelper.drawString(entry.durationText, timeX, timeY, timeFont, timeFontSize, secondaryTextColor.get());
-
-        float separatorX = timeX - 4f * s;
-        NanoVGHelper.drawRect(separatorX, itemY + 4f * s, 1f * s, itemHeight - 8f * s, new Color(255, 255, 255, 40));
-
-        if (showProgress.get()) {
-            float barHeight = 2.2f * s;
-            float barY = itemY + itemHeight - barHeight - 2f * s;
-            float barWidth = infoWidth - layout.infoPadding * 2;
-            float progressWidth = barWidth * entry.progress;
-            float barX = infoX + layout.infoPadding;
-            NanoVGHelper.drawRoundRect(barX, barY, barWidth, barHeight, barHeight / 2f, new Color(0, 0, 0, 90));
-            NanoVGHelper.drawGradientRRect2(barX, barY, progressWidth, barHeight, barHeight / 2f, accent1, accent2);
+        for (var entry : infos.entrySet()) {
+            if (!active.contains(entry.getKey())) {
+                entry.getValue().shouldDisappear = true;
+            }
         }
     }
 
-    private void drawEffectIcon(DrawContext context, StatusEffectInstance instance, float x, float y, float size) {
-        int ix = Math.round(x);
-        int iy = Math.round(y);
-        int is = Math.round(size);
-        context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, InGameHud.getEffectTexture(instance.getEffectType()), ix, iy, is, is);
+    private static float clampProgress(float v, float max) {
+        if (max <= 0f) return 0f;
+        if (v < 0f) return 0f;
+        if (v > max) return max;
+        return v;
     }
 
-    private void drawIconGlow(StatusEffectInstance instance, float cx, float cy, float radius, int order, float s) {
-        Color base = new Color(instance.getEffectType().value().getColor());
-        float t = (System.currentTimeMillis() / 280f) + (order * 0.7f);
-        float pulse = (MathHelper.sin(t) + 1f) * 0.5f;
-        Color outer = ColorUtil.applyOpacity(base, 0.12f + 0.28f * pulse);
-        Color inner = ColorUtil.applyOpacity(ColorUtil.interpolateColorC(base, Color.WHITE, 0.25f), 0.08f + 0.2f * pulse);
-        NanoVGHelper.drawCircle(cx, cy, radius + 2f * s, outer);
-        NanoVGHelper.drawCircle(cx, cy, radius + 0.6f * s, inner);
-    }
-
-    private String getEffectName(StatusEffectInstance instance) {
-        String name = instance.getEffectType().value().getName().getString();
-        int amp = instance.getAmplifier();
-        if (amp <= 0) return name;
-        return name + " " + toRoman(amp + 1);
-    }
-
-    private String getDuration(StatusEffectInstance instance) {
-        if (instance.isInfinite()) return "*:*";
-        int ticks = instance.getDuration();
-        int mins = ticks / 1200;
-        int secs = (ticks % 1200) / 20;
-        return mins + ":" + String.format("%02d", secs);
-    }
-
-    private String toRoman(int value) {
-        return switch (value) {
-            case 1 -> "I";
-            case 2 -> "II";
-            case 3 -> "III";
-            case 4 -> "IV";
-            case 5 -> "V";
-            case 6 -> "VI";
-            case 7 -> "VII";
-            case 8 -> "VIII";
-            case 9 -> "IX";
-            case 10 -> "X";
-            default -> String.valueOf(value);
-        };
-    }
-
-    private float smooth(float current, float target, float speed) {
-        return current + (target - current) * MathHelper.clamp(speed, 0f, 1f);
-    }
-
-    private static class Layout {
-        final float panelWidth;
-        final float panelHeight;
-        final float paddingX;
-        final float paddingY;
-        final float headerHeight;
-        final float itemHeight;
-        final float itemGap;
-        final float iconBox;
-        final float iconGap;
-        final float infoPadding;
-        final float panelRadius;
-        final float maxTimeWidth;
-        final boolean showHeader;
-        final boolean alignRight;
-
-        Layout(float panelWidth, float panelHeight, float paddingX, float paddingY, float headerHeight, float itemHeight, float itemGap, float iconBox, float iconGap, float infoPadding, float panelRadius, float maxTimeWidth, boolean showHeader, boolean alignRight) {
-            this.panelWidth = panelWidth;
-            this.panelHeight = panelHeight;
-            this.paddingX = paddingX;
-            this.paddingY = paddingY;
-            this.headerHeight = headerHeight;
-            this.itemHeight = itemHeight;
-            this.itemGap = itemGap;
-            this.iconBox = iconBox;
-            this.iconGap = iconGap;
-            this.infoPadding = infoPadding;
-            this.panelRadius = panelRadius;
-            this.maxTimeWidth = maxTimeWidth;
-            this.showHeader = showHeader;
-            this.alignRight = alignRight;
+    private static String formatDuration(int ticks) {
+        if (ticks < 0) return "0:00";
+        int totalSeconds = ticks / 20;
+        int seconds = totalSeconds % 60;
+        int minutesTotal = totalSeconds / 60;
+        if (minutesTotal >= 60) {
+            int hours = minutesTotal / 60;
+            int minutes = minutesTotal % 60;
+            return hours + ":" + String.format("%02d:%02d", minutes, seconds);
         }
+        return minutesTotal + ":" + String.format("%02d", seconds);
     }
 
-    private enum Align {
-        Left,
-        Right
-    }
+    private static final class EffectInfo {
+        final SmoothAnimationTimer xTimer;
+        final SmoothAnimationTimer yTimer;
+        final SmoothAnimationTimer durationTimer;
 
-    private static class EffectEntry {
-        final StatusEffect effect;
-        StatusEffectInstance effectInstance;
-        String name = "";
-        String durationText = "";
-        float x;
-        float y;
-        float width;
-        float targetWidth;
-        float targetInfoWidth;
-        float progress;
+        int maxDuration = -1;
         int duration;
-        int maxDuration;
         int amplifier;
         boolean infinite;
-        boolean removing;
-        boolean offscreen;
-        int order;
+        boolean shouldDisappear;
+        float width;
 
-        EffectEntry(StatusEffect effect) {
-            this.effect = effect;
+        EffectInfo(float initialX) {
+            this.xTimer = new SmoothAnimationTimer(0f, initialX, 0.2f);
+            this.yTimer = new SmoothAnimationTimer(0f, -1f, 0.2f);
+            this.durationTimer = new SmoothAnimationTimer(0f, -1f, 0.2f);
         }
+    }
+
+    private record RenderEntry(
+            RegistryEntry<StatusEffect> effect,
+            float baseX, float y,
+            float iconX, float infoX,
+            float iconW, float iconH,
+            float infoW, float infoH,
+            float totalW,
+            float progressW,
+            String name, String duration,
+            int nameFont, int durationFont,
+            float nameFontSize, float durationFontSize,
+            float nameW
+    ) {
     }
 }

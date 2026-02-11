@@ -1,8 +1,9 @@
 package dev.sakura.client.module.impl.hud;
 
-import dev.sakura.client.events.packet.PacketEvent;
-import dev.sakura.client.events.render.WorldLoadEvent;
-import dev.sakura.client.events.type.EventType;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.render.WorldLoadEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
@@ -11,7 +12,6 @@ import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.utils.animations.Easing;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;

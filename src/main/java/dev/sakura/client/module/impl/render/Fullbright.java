@@ -1,11 +1,11 @@
 package dev.sakura.client.module.impl.render;
 
-import dev.sakura.client.events.client.GameJoinEvent;
-import dev.sakura.client.events.client.TickEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.GameJoinEvent;
+import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.EnumValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 

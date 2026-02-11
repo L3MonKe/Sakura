@@ -1,8 +1,8 @@
 package dev.sakura.client.mixin.input;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.input.MouseButtonEvent;
-import dev.sakura.client.events.type.KeyAction;
+import dev.sakura.client.event.impl.input.MouseButtonEvent;
+import dev.sakura.client.event.type.KeyAction;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.input.MouseInput;
 import org.spongepowered.asm.mixin.Mixin;

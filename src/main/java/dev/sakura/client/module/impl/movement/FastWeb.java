@@ -1,12 +1,12 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.events.player.MotionEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.CobwebBlock;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;

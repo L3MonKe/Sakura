@@ -1,7 +1,7 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.render.item.RenderItemEntityEvent;
+import dev.sakura.client.event.impl.render.item.RenderItemEntityEvent;
 import net.minecraft.client.item.ItemModelManager;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.entity.ItemEntityRenderer;

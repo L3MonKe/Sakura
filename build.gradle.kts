@@ -53,8 +53,6 @@ repositories {
     maven("https://impactdevelopment.github.io/maven/")
     maven("https://maven.fabricmc.net/")
     maven("https://maven.isxander.dev/")
-    maven("https://maven.meteordev.org/releases")
-    maven("https://maven.meteordev.org/snapshots")
 }
 
 dependencies {
@@ -64,26 +62,10 @@ dependencies {
     modImplementation("net.fabricmc:fabric-loader:${property("loader_version")}")
     modImplementation("net.fabricmc.fabric-api:fabric-api:${property("fabric_version")}")
 
-    implementation(include("meteordevelopment:orbit:${property("orbit_version")}")!!)
-
     // NanoVG 运行库
-    val lwjglVersion = property("nanovg_version")
-    implementation(include("org.lwjgl:lwjgl-nanovg:$lwjglVersion")!!)
-
-    // 跨平台 Natives 支持
-    val platforms = listOf(
-        "natives-windows",
-        "natives-macos",
-        "natives-macos-arm64",
-        "natives-linux",
-        "natives-linux-arm64"
-    )
-
-    platforms.forEach { platform ->
-        runtimeOnly(include("org.lwjgl:lwjgl:$lwjglVersion:$platform")!!)
-        runtimeOnly(include("org.lwjgl:lwjgl-nanovg:$lwjglVersion:$platform")!!)
-        runtimeOnly(include("org.lwjgl:lwjgl-opengles:$lwjglVersion:$platform")!!)
-    }
+    val nvgVersion = property("nanovg_version")
+    implementation(include("org.lwjgl:lwjgl-nanovg:$nvgVersion")!!)
+    runtimeOnly(include("org.lwjgl:lwjgl-nanovg:$nvgVersion:natives-windows")!!)
 
     // native-obfuscator annotations
     implementation(files("libs/annotations.jar"))

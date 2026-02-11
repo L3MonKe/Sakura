@@ -1,9 +1,9 @@
 package dev.sakura.client.manager.impl;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.client.TickEvent;
-import meteordevelopment.orbit.EventHandler;
-import meteordevelopment.orbit.EventPriority;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.EventPriority;
+import dev.sakura.client.event.impl.client.TickEvent;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;

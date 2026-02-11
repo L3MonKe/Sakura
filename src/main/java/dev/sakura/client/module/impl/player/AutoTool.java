@@ -1,13 +1,13 @@
 package dev.sakura.client.module.impl.player;
 
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.render.item.UpdateHeldItemEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.player.inventory.InvHelper;
 import dev.sakura.client.utils.player.EnchantmentUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.*;
 import net.minecraft.enchantment.Enchantments;
 import net.minecraft.item.ItemStack;

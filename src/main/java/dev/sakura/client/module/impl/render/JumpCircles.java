@@ -1,9 +1,10 @@
 package dev.sakura.client.module.impl.render;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
-import dev.sakura.client.events.client.TickEvent;
-import dev.sakura.client.events.render.Render3DEvent;
-import dev.sakura.client.events.render.WorldLoadEvent;
+import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.render.Render3DEvent;
+import dev.sakura.client.event.impl.render.WorldLoadEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.client.ClickGui;
@@ -13,7 +14,6 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import meteordevelopment.orbit.EventHandler;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.RenderLayers;

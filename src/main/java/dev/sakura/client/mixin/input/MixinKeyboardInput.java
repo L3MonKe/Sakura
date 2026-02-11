@@ -2,7 +2,7 @@ package dev.sakura.client.mixin.input;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.sakura.client.Sakura;
-import dev.sakura.client.events.input.MoveInputEvent;
+import dev.sakura.client.event.impl.input.MoveInputEvent;
 import net.minecraft.client.input.KeyboardInput;
 import net.minecraft.util.PlayerInput;
 import org.spongepowered.asm.mixin.Mixin;
