@@ -24,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
@@ -49,6 +50,23 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
 
     @Shadow
     private float equipProgressOffHand;
+
+    @Unique
+    private float cachedSwingProgress;
+
+    @Unique
+    private float cachedEquipProgress;
+
+    @Unique
+    private Hand cachedHand;
+
+    @Shadow
+    private void applyEquipOffset(MatrixStack matrices, Arm arm, float equipProgress) {
+    }
+
+    @Shadow
+    private void applyEatOrDrinkTransformation(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player) {
+    }
 
     @Override
     public float getEquippedProgressMainHand() {
@@ -128,40 +146,56 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
         }
     }
 
+    @Inject(method = "renderFirstPersonItem", at = @At("HEAD"))
+    private void hookRenderFirstPersonItemHead(AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light, CallbackInfo ci) {
+        cachedSwingProgress = swingProgress;
+        cachedEquipProgress = equipProgress;
+        cachedHand = hand;
+    }
+
     @Inject(method = "renderFirstPersonItem", at = @At(value = "HEAD"), cancellable = true)
     private void onRenderItemHook(AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light, CallbackInfo ci) {
         Animations animations = Sakura.MODULES.getModule(Animations.class);
-        if (animations != null && animations.shouldAnimate() && !(item.isEmpty()) && !(item.getItem() instanceof FilledMapItem)) {
+        if (animations != null && hand == Hand.MAIN_HAND && animations.shouldAnimate() && !(item.isEmpty()) && !(item.getItem() instanceof FilledMapItem)) {
             ci.cancel();
             animations.renderFirstPersonItemCustom(player, tickProgress, pitch, hand, swingProgress, item, equipProgress, matrices, orderedRenderCommandQueue, light);
         }
     }
 
+    @Redirect(method = "renderFirstPersonItem", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/item/HeldItemRenderer;applyEatOrDrinkTransformation(Lnet/minecraft/client/util/math/MatrixStack;FLnet/minecraft/util/Arm;Lnet/minecraft/item/ItemStack;Lnet/minecraft/entity/player/PlayerEntity;)V"))
+    private void redirectApplyEatOrDrinkTransformation(HeldItemRenderer instance, MatrixStack matrices, float tickDelta, Arm arm, ItemStack item, PlayerEntity player) {
+        Animations animations = Sakura.MODULES.getModule(Animations.class);
+        if (animations != null && animations.isEnabled() && animations.shouldAnimate() && cachedHand == Hand.MAIN_HAND) {
+            if (cachedSwingProgress != 0.0f) {
+                float side = cachedHand == Hand.MAIN_HAND ? 1.0f : -1.0f;
+                matrices.translate(side * 0.56f, -0.52f + cachedEquipProgress * -0.6f, -0.72f);
+                float f2 = MathHelper.sin(cachedSwingProgress * cachedSwingProgress * (float) Math.PI);
+                float f1 = MathHelper.sin(MathHelper.sqrt(cachedSwingProgress) * (float) Math.PI);
+                matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees(f2 * 20.0f));
+                matrices.multiply(RotationAxis.NEGATIVE_Z.rotationDegrees(f2 * 20.0f));
+                matrices.multiply(RotationAxis.NEGATIVE_X.rotationDegrees(f2 * 80.0f));
+                matrices.translate(-0.8f, 0.2f, 0f);
+                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(30.0f));
+                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-80.0f));
+                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(60.0f));
+                matrices.scale(1.4f, 1.4f, 1.4f);
+                return;
+            }
 
-    private void applyEatOrDrinkTransformationCustom(MatrixStack matrices, float tickDelta, Arm arm, @NotNull ItemStack stack) {
-        float f = (float) mc.player.getItemUseTimeLeft() - tickDelta + 1.0F;
-        float g = f / (float) stack.getMaxUseTime(mc.player);
-        float h;
-        if (g < 0.8F) {
-            h = MathHelper.abs(MathHelper.cos(f / 4.0F * 3.1415927F) * 0.005F);
-            matrices.translate(0.0F, h, 0.0F);
+            applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
+            applyEquipOffset(matrices, arm, cachedEquipProgress);
+            doSwingAnimation(matrices, cachedSwingProgress);
+            return;
         }
-        h = 1.0F - (float) Math.pow(g, 27.0);
-        int i = arm == Arm.RIGHT ? 1 : -1;
 
-        ViewModel viewModel = Sakura.MODULES.getModule(ViewModel.class);
-        matrices.translate(h * 0.6F * (float) i * viewModel.eatX.get(), h * -0.5F * viewModel.eatY.get(), h * 0.0F);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * h * 90.0F));
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(h * 10.0F));
-        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * h * 30.0F));
+        applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
     }
 
-    @Inject(method = "applyEatOrDrinkTransformation", at = @At(value = "HEAD"), cancellable = true)
-    private void applyEatOrDrinkTransformationHook(MatrixStack matrices, float tickDelta, Arm arm, ItemStack stack, PlayerEntity player, CallbackInfo ci) {
-        Animations animations = Sakura.MODULES.getModule(Animations.class);
-        if (animations.isEnabled() && animations.shouldAnimate()) {
-            applyEatOrDrinkTransformationCustom(matrices, tickDelta, arm, stack);
-            ci.cancel();
-        }
+    private void doSwingAnimation(MatrixStack matrices, float swingProgress) {
+        float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
+        float f1 = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(f * -20.0f));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(f1 * -20.0f));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(f1 * -80.0f));
     }
 }

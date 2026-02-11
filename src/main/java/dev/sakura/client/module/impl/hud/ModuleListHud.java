@@ -717,11 +717,13 @@ public class ModuleListHud extends HudModule {
         float maxX = Float.NEGATIVE_INFINITY;
         float maxY = Float.NEGATIVE_INFINITY;
         for (BackgroundSegment segment : segments) {
+            float segX = segment.x - overlap;
             float segY = segment.y - overlap;
+            float segW = segment.w + overlap * 2.0f;
             float segH = segment.h + overlap * 2.0f;
-            minX = Math.min(minX, segment.x);
+            minX = Math.min(minX, segX);
             minY = Math.min(minY, segY);
-            maxX = Math.max(maxX, segment.x + segment.w);
+            maxX = Math.max(maxX, segX + segW);
             maxY = Math.max(maxY, segY + segH);
         }
 
@@ -740,10 +742,10 @@ public class ModuleListHud extends HudModule {
         for (int i = 0; i < count; i++) {
             BackgroundSegment segment = segments.get(i);
             int base = i * 4;
-            rects[base] = segment.x;
-            rects[base + 1] = segment.y;
-            rects[base + 2] = segment.w;
-            rects[base + 3] = segment.h;
+            rects[base] = segment.x - overlap;
+            rects[base + 1] = segment.y - overlap;
+            rects[base + 2] = segment.w + overlap * 2.0f;
+            rects[base + 3] = segment.h + overlap * 2.0f;
             radii[i] = 0.0f;
         }
         if (count > 0) {
