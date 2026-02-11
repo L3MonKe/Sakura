@@ -258,6 +258,10 @@ public class AutoThrow extends Module {
 
         if (target != null) {
             Rotation targetRotation = calculateArc(target);
+
+            targetRotation.yaw += MathUtil.getRandom(-5.0, 5.0);
+            targetRotation.pitch += MathUtil.getRandom(-5.0, 5.0);
+
             this.targetRotation = targetRotation;
 
             Managers.ROTATION.setRotations(targetRotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
