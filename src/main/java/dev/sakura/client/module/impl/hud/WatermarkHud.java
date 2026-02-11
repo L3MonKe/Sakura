@@ -7,6 +7,7 @@ import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
+import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
@@ -73,6 +74,12 @@ public class WatermarkHud extends HudModule {
     private final NumberValue<Double> sakuraLineHeight = new NumberValue<>("SakuraLineHeight", "Sakura-线条高度", 2.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
     private final ColorValue sakuraLineColor1 = new ColorValue("SakuraLineColor1", "Sakura-线条色1", new Color(0, 255, 255), () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
     private final ColorValue sakuraLineColor2 = new ColorValue("SakuraLineColor2", "Sakura-线条色2", new Color(255, 0, 255), () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
+
+    private final BoolValue sakuraShadow = new BoolValue("SakuraShadow", "Sakura-阴影", false, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraShadowRange = new NumberValue<>("SakuraShadowRange", "Sakura-阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
+    private final NumberValue<Double> sakuraShadowStrength = new NumberValue<>("SakuraShadowStrength", "Sakura-阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
+    public enum SakuraShadowMode {Solid, Gradient}
+    private final EnumValue<SakuraShadowMode> sakuraShadowMode = new EnumValue<>("SakuraShadowMode", "Sakura-阴影模式", SakuraShadowMode.Solid, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
 
     private int iconImage = -1;
     private float rotationAngle = 0.0f;
@@ -173,17 +180,9 @@ public class WatermarkHud extends HudModule {
             float currentY = y + textOffsetY;
             float textY = currentY + fontH;
 
-            // Gradient Paint Logic for Sakura
-            // Calculate dynamic colors
-            double offset = (System.currentTimeMillis() * sakuraGradientSpeed.get()) / 20.0;
-            float factor1 = (float) (Math.sin(Math.toRadians(offset)) + 1) / 2;
-            float factor2 = (float) (Math.sin(Math.toRadians(offset + 180)) + 1) / 2;
-
-            Color c1_base = sakuraTextColor1.get();
-            Color c2_base = sakuraTextColor2.get();
-
-            Color c1 = interpolateColor(c1_base, c2_base, factor1);
-            Color c2 = interpolateColor(c1_base, c2_base, factor2);
+            Color[] colors = getSakuraTextGradientColors();
+            Color c1 = colors[0];
+            Color c2 = colors[1];
 
             // Create gradient across the text width
             NVGPaint paint = NVGPaint.create();
@@ -380,6 +379,20 @@ public class WatermarkHud extends HudModule {
         float radius = sakuraBackgroundRadius.get().floatValue() * s;
         long vg = NanoVGRenderer.INSTANCE.getContext();
 
+        if (sakuraShadow.get()) {
+            float[] rects = new float[]{bgX, bgY, bgW, bgH};
+            float[] radii = new float[]{radius};
+
+            if (sakuraShadowMode.is(SakuraShadowMode.Gradient)) {
+                Color[] colors = getSakuraTextGradientColors();
+                Color start = new Color(colors[0].getRed(), colors[0].getGreen(), colors[0].getBlue(), 255);
+                Color end = new Color(colors[1].getRed(), colors[1].getGreen(), colors[1].getBlue(), 255);
+                ShadowShader.drawStairShadowGradient(bgX, bgY, bgW, bgH, sakuraShadowRange.get().floatValue() * s, sakuraShadowStrength.get().floatValue(), start, end, rects, radii, 1);
+            } else {
+                ShadowShader.drawStairShadow(bgX, bgY, bgW, bgH, sakuraShadowRange.get().floatValue() * s, sakuraShadowStrength.get().floatValue(), new Color(0, 0, 0), rects, radii, 1);
+            }
+        }
+
         if (sakuraBlur.get()) {
             BlurShader.drawRoundedBlur(bgX, bgY, bgW, bgH, radius, 10);
         }
@@ -393,6 +406,17 @@ public class WatermarkHud extends HudModule {
         if (sakuraTopLine.get()) {
             renderSakuraGradientLine(bgX, bgY, bgW, radius);
         }
+    }
+
+    private Color[] getSakuraTextGradientColors() {
+        double offset = (System.currentTimeMillis() * sakuraGradientSpeed.get()) / 20.0;
+        float factor1 = (float) (Math.sin(Math.toRadians(offset)) + 1) / 2;
+        float factor2 = (float) (Math.sin(Math.toRadians(offset + 180)) + 1) / 2;
+
+        Color c1Base = sakuraTextColor1.get();
+        Color c2Base = sakuraTextColor2.get();
+
+        return new Color[]{interpolateColor(c1Base, c2Base, factor1), interpolateColor(c1Base, c2Base, factor2)};
     }
 
     private void renderSakuraGradientLine(float x, float y, float w, float radius) {

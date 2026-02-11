@@ -191,15 +191,22 @@ public class BlurProgram {
             }
         }
 
-        int paddingPx = (int) Math.ceil(10.0f * scale);
+        int paddingPx = (int) Math.ceil(Math.max(10.0f, quality) * 2.0f);
         int scissorX = Math.max(0, (int) Math.floor(pxX) - paddingPx);
         int scissorY = Math.max(0, (int) Math.floor(pxY) - paddingPx);
+        scissorX = Math.min(scissorX, fbWidth);
+        scissorY = Math.min(scissorY, fbHeight);
+
         int scissorW = Math.min(fbWidth - scissorX, (int) Math.ceil(pxW) + paddingPx * 2);
         int scissorH = Math.min(fbHeight - scissorY, (int) Math.ceil(pxH) + paddingPx * 2);
+        scissorW = Math.max(0, scissorW);
+        scissorH = Math.max(0, scissorH);
 
         try (RenderPass renderPass = encoder.createRenderPass(() -> "Sakura Blur", framebuffer.getColorAttachmentView(), OptionalInt.empty(), framebuffer.useDepthAttachment ? framebuffer.getDepthAttachmentView() : null, OptionalDouble.empty())) {
             renderPass.setPipeline(this.blurPipeline);
-            renderPass.enableScissor(scissorX, scissorY, Math.max(0, scissorW), Math.max(0, scissorH));
+            if (scissorW > 0 && scissorH > 0) {
+                renderPass.enableScissor(scissorX, scissorY, scissorW, scissorH);
+            }
             RenderSystem.bindDefaultUniforms(renderPass);
             renderPass.setUniform("BlurUniforms", this.uniforms.getBlocking());
             renderPass.bindTexture("InputSampler", this.input.getColorAttachmentView(), RenderSystem.getSamplerCache().get(FilterMode.LINEAR));
