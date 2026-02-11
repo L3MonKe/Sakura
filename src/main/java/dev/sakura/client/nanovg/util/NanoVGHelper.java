@@ -18,9 +18,17 @@ public class NanoVGHelper {
         return NanoVGRenderer.INSTANCE.getContext();
     }
 
+    private static void setColor(NVGColor nvgColor, int r, int g, int b, int a) {
+        nvgRGBA((byte) r, (byte) g, (byte) b, (byte) a, nvgColor);
+    }
+
+    private static void setColor(NVGColor nvgColor, Color color) {
+        setColor(nvgColor, color.getRed(), color.getGreen(), color.getBlue(), color.getAlpha());
+    }
+
     public static NVGColor nvgColor(Color color) {
         NVGColor nvgColor = NVGColor.create();
-        nvgRGBA((byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue(), (byte) color.getAlpha(), nvgColor);
+        setColor(nvgColor, color);
         return nvgColor;
     }
 
@@ -29,7 +37,7 @@ public class NanoVGHelper {
      */
     public static NVGColor nvgColor(int r, int g, int b, int a) {
         NVGColor nvgColor = NVGColor.create();
-        nvgRGBA((byte) r, (byte) g, (byte) b, (byte) a, nvgColor);
+        setColor(nvgColor, r, g, b, a);
         return nvgColor;
     }
 
@@ -221,25 +229,32 @@ public class NanoVGHelper {
         float baseAlpha = color.getAlpha() / 255.0f;
         int glowSteps = (int) Math.max(10, glowRadius * 2);
 
-        nvgSave(vg);
-        for (int i = 0; i < glowSteps; i++) {
-            float progress = (float) i / glowSteps;
-            float offset = (glowRadius * progress);
+        int r = color.getRed();
+        int g = color.getGreen();
+        int b = color.getBlue();
 
-            float alphaFactor = (float) Math.cos(progress * Math.PI / 2);
-            float currentAlpha = baseAlpha * alphaFactor * 0.3f;
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            NVGColor nvgGlowColor = NVGColor.malloc(stack);
+            nvgSave(vg);
+            for (int i = 0; i < glowSteps; i++) {
+                float progress = (float) i / glowSteps;
+                float offset = glowRadius * progress;
 
-            if (currentAlpha <= 0.005f) continue;
+                float alphaFactor = (float) Math.cos(progress * (Math.PI / 2));
+                float currentAlpha = baseAlpha * alphaFactor * 0.3f;
 
-            Color glowColor = new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (currentAlpha * 255));
-            NVGColor nvgGlowColor = nvgColor(glowColor);
+                if (currentAlpha <= 0.005f) continue;
 
-            nvgBeginPath(vg);
-            nvgRoundedRect(vg, x - offset, y - offset, w + offset * 2, h + offset * 2, radius + offset);
-            nvgFillColor(vg, nvgGlowColor);
-            nvgFill(vg);
+                int a = (int) (currentAlpha * 255.0f);
+                setColor(nvgGlowColor, r, g, b, a);
+
+                nvgBeginPath(vg);
+                nvgRoundedRect(vg, x - offset, y - offset, w + offset * 2, h + offset * 2, radius + offset);
+                nvgFillColor(vg, nvgGlowColor);
+                nvgFill(vg);
+            }
+            nvgRestore(vg);
         }
-        nvgRestore(vg);
     }
 
     /**
@@ -254,18 +269,19 @@ public class NanoVGHelper {
      */
     public static void drawBloomBox(float x, float y, float w, float h, float radius, float glowRadius, Color color) {
         long vg = getContext();
-        NVGPaint paint = NVGPaint.create();
-        NVGColor innerColor = nvgColor(color);
-        NVGColor outerColor = nvgColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 0));
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            NVGPaint paint = NVGPaint.malloc(stack);
+            NVGColor innerColor = NVGColor.malloc(stack);
+            NVGColor outerColor = NVGColor.malloc(stack);
 
-        // 绘制发光
-        nvgBeginPath(vg);
-        nvgBoxGradient(vg, x, y, w, h, radius, glowRadius, innerColor, outerColor, paint);
-        // 扩大绘制区域以容纳发光
-        float feather = glowRadius * 2;
-        nvgRoundedRect(vg, x - feather, y - feather, w + feather * 2, h + feather * 2, radius + feather);
-        nvgFillPaint(vg, paint);
-        nvgFill(vg);
+            initInnerOuterColors(innerColor, outerColor, color);
+            nvgBeginPath(vg);
+            nvgBoxGradient(vg, x, y, w, h, radius, glowRadius, innerColor, outerColor, paint);
+            float feather = glowRadius * 2;
+            nvgRoundedRect(vg, x - feather, y - feather, w + feather * 2, h + feather * 2, radius + feather);
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
+        }
     }
 
     public static void drawRect(float x, float y, float w, float h, Color color) {
@@ -436,35 +452,44 @@ public class NanoVGHelper {
         return new Color(r, g, b, a);
     }
 
-    /**
-     * 绘制阴影
-     */
-    public static void drawShadow(float x, float y, float w, float h, float radius, Color color, float blur, float offsetX, float offsetY) {
-        long vg = getContext();
+    private static void initInnerOuterColors(NVGColor innerColor, NVGColor outerColor, Color color) {
+        setColor(innerColor, color);
+        setColor(outerColor, color.getRed(), color.getGreen(), color.getBlue(), 0);
+    }
 
-        NVGPaint shadowPaint = NVGPaint.create();
-        NVGColor innerColor = nvgColor(color);
-        NVGColor outerColor = nvgColor(new Color(color.getRed(), color.getGreen(), color.getBlue(), 0));
-
-        nvgBoxGradient(vg, x + offsetX, y + offsetY, w, h, radius, blur, innerColor, outerColor, shadowPaint);
-
-        nvgBeginPath(vg);
+    private static void drawShadowHolePath(long vg, float x, float y, float w, float h, float radius, float blur, float offsetX, float offsetY) {
         float ox = x + offsetX - blur;
         float oy = y + offsetY - blur;
         float ow = w + blur * 2;
         float oh = h + blur * 2;
 
+        nvgBeginPath(vg);
         if (radius > 0.0f) {
             nvgRoundedRect(vg, ox, oy, ow, oh, radius + blur);
-            nvgPathWinding(vg, NVG_HOLE);
             nvgRoundedRect(vg, x + offsetX, y + offsetY, w, h, radius);
         } else {
             nvgRect(vg, ox, oy, ow, oh);
-            nvgPathWinding(vg, NVG_HOLE);
             nvgRect(vg, x + offsetX, y + offsetY, w, h);
         }
-        nvgFillPaint(vg, shadowPaint);
-        nvgFill(vg);
+        nvgPathWinding(vg, NVG_HOLE);
+    }
+
+    /**
+     * 绘制阴影
+     */
+    public static void drawShadow(float x, float y, float w, float h, float radius, Color color, float blur, float offsetX, float offsetY) {
+        long vg = getContext();
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            NVGPaint shadowPaint = NVGPaint.malloc(stack);
+            NVGColor innerColor = NVGColor.malloc(stack);
+            NVGColor outerColor = NVGColor.malloc(stack);
+
+            initInnerOuterColors(innerColor, outerColor, color);
+            nvgBoxGradient(vg, x + offsetX, y + offsetY, w, h, radius, blur, innerColor, outerColor, shadowPaint);
+            drawShadowHolePath(vg, x, y, w, h, radius, blur, offsetX, offsetY);
+            nvgFillPaint(vg, shadowPaint);
+            nvgFill(vg);
+        }
     }
 
     /**
@@ -538,7 +563,7 @@ public class NanoVGHelper {
 
         try (MemoryStack stack = MemoryStack.stackPush()) {
             NVGColor nvgColor = NVGColor.malloc(stack);
-            nvgRGBA((byte) color.getRed(), (byte) color.getGreen(), (byte) color.getBlue(), (byte) color.getAlpha(), nvgColor);
+            setColor(nvgColor, color);
 
             nvgStrokeWidth(vg, strokeWidth);
             nvgStrokeColor(vg, nvgColor);
