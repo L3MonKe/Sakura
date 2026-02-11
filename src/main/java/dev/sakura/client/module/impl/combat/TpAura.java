@@ -1,6 +1,5 @@
 package dev.sakura.client.module.impl.combat;
 
-import dev.sakura.client.Sakura;
 import dev.sakura.client.events.client.TickEvent;
 import dev.sakura.client.events.packet.PacketEvent;
 import dev.sakura.client.events.render.Render3DEvent;
@@ -9,7 +8,6 @@ import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IPlayerMoveC2SPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.module.impl.player.GrimDisabler;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.path.AStarPathfinder;
 import dev.sakura.client.utils.player.PacketUtil;
@@ -21,7 +19,6 @@ import meteordevelopment.orbit.EventHandler;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
-import net.minecraft.network.packet.s2c.play.PositionFlag;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -29,9 +26,9 @@ import net.minecraft.util.math.Vec3d;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Random;
 
 public class TpAura extends Module {
     public enum Mode {
@@ -51,7 +48,6 @@ public class TpAura extends Module {
     private final BoolValue allowDiagonal = new BoolValue("Allow Diagonal", "允许对角", false, () -> mode.is(Mode.AStar));
     private final BoolValue tpBack = new BoolValue("Tp Back", "传回原位", true, () -> mode.is(Mode.AStar));
     private final NumberValue<Integer> stickTicks = new NumberValue<>("Stick", "停留Tick", 5, 1, 10, 1, () -> mode.is(Mode.AStar));
-    private final BoolValue autoDisable = new BoolValue("Auto Disable", "自动关闭", true);
 
     private final BoolValue renderPath = new BoolValue("Render Path", "渲染路径", true);
     private final BoolValue renderDesync = new BoolValue("Render Desync", "渲染假位置", true);
@@ -71,8 +67,6 @@ public class TpAura extends Module {
     private BlockPos aStarStart;
     private List<BlockPos> aStarPath;
     private int aStarWaitTicks;
-
-    private final Random random = new Random();
 
     public TpAura() {
         super("TpAura", "TP光环", Category.Combat);
@@ -123,11 +117,6 @@ public class TpAura extends Module {
     private void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if (autoDisable.get() && (mc.player.isDead() || mc.player.getHealth() <= 0)) {
-            toggle();
-            ChatUtil.clientMessage("§cTpAura disabled due to death.");
-            return;
-        }
 
         boolean clickTick = isClickTick();
         if (desyncPlayerPosition != null && clickTick) {
@@ -158,29 +147,10 @@ public class TpAura extends Module {
             return;
         }
 
-        if (event.getType() == EventType.RECEIVE && event.getPacket() instanceof PlayerPositionLookS2CPacket packet) {
-            if (Sakura.MODULES.getModule(GrimDisabler.class).isEnabled()) {
-                // GrimDisabler handles the S08 packet and fakes the position.
-                // We should sync our desync position to what the server expects (which is what GrimDisabler set us to).
-                double x = packet.change().position().x;
-                double y = packet.change().position().y;
-                double z = packet.change().position().z;
-
-                if (packet.relatives().contains(PositionFlag.X)) x += mc.player.getX();
-                if (packet.relatives().contains(PositionFlag.Y)) y += mc.player.getY();
-                if (packet.relatives().contains(PositionFlag.Z)) z += mc.player.getZ();
-
-                desyncPlayerPosition = new Vec3d(x, y, z);
-
-                // Don't reset runtime, just sync position and continue
-                return;
-            }
-
-            if (desyncPlayerPosition != null) {
-                lastStuckTime = System.currentTimeMillis();
-                ChatUtil.clientMessage("§cTpAura 传送失败: " + formatVec(desyncPlayerPosition) + " (ID=" + packet.teleportId() + ")");
-                resetRuntime();
-            }
+        if (event.getType() == EventType.RECEIVE && desyncPlayerPosition != null && event.getPacket() instanceof PlayerPositionLookS2CPacket packet) {
+            lastStuckTime = System.currentTimeMillis();
+            ChatUtil.clientMessage("§cTpAura 传送失败: " + formatVec(desyncPlayerPosition) + " (ID=" + packet.teleportId() + ")");
+            resetRuntime();
         }
     }
 
@@ -194,20 +164,20 @@ public class TpAura extends Module {
             for (int i = 0; i < aStarPath.size() - 1; i++) {
                 Vec3d a = toPlayerPos(aStarPath.get(i));
                 Vec3d b = toPlayerPos(aStarPath.get(i + 1));
-                dev.sakura.client.utils.render.Render3DUtil.drawLine(event.getMatrices(), a, b, new Color(120, 190, 255, 180), 2f);
+                Render3DUtil.drawLine(event.getMatrices(), a, b, new Color(120, 190, 255, 180), 2f);
             }
         }
 
         if (renderDesync.get() && desyncPlayerPosition != null) {
             Box box = buildPlayerBox(desyncPlayerPosition);
             Render3DUtil.drawOutlineBox(event.getMatrices(), box, new Color(255, 255, 255, 200).getRGB(), 2f);
-            dev.sakura.client.utils.render.Render3DUtil.drawFilledBox(event.getMatrices(), box, new Color(255, 255, 255, 30).getRGB());
+            Render3DUtil.drawFilledBox(event.getMatrices(), box, new Color(255, 255, 255, 30).getRGB());
         }
 
         if (mode.is(Mode.Immediate) && desyncPlayerPosition != null) {
             Vec3d start = mc.player.getEntityPos();
             Vec3d end = desyncPlayerPosition;
-            dev.sakura.client.utils.render.Render3DUtil.drawLine(event.getMatrices(), start, end, new Color(255, 255, 255, 180), 2f);
+            Render3DUtil.drawLine(event.getMatrices(), start, end, new Color(255, 255, 255, 180), 2f);
         }
     }
 
@@ -275,9 +245,8 @@ public class TpAura extends Module {
 
         BlockPos start = aStarStart != null ? aStarStart : (desyncPlayerPosition != null ? BlockPos.ofFloored(desyncPlayerPosition) : mc.player.getBlockPos());
         LivingEntity target = findBestTarget(toPlayerPos(start), maxDistance.get());
-        if (target == null) {
-            return;
-        }
+        if (target == null) return;
+
 
         BlockPos end = target.getBlockPos();
         List<BlockPos> path = AStarPathfinder.findPath(mc.world, mc.player, start, end, maxCost.get(), allowDiagonal.get());
@@ -301,9 +270,7 @@ public class TpAura extends Module {
         if (candidates == null || candidates.isEmpty()) {
             return null;
         }
-        return candidates.stream()
-                .min(Comparator.comparingDouble(e -> e.squaredDistanceTo(from)))
-                .orElse(null);
+        return candidates.stream().min(Comparator.comparingDouble(e -> e.squaredDistanceTo(from))).orElse(null);
     }
 
     private void tryAttack() {
@@ -340,21 +307,13 @@ public class TpAura extends Module {
         Vec3d playerPos = mc.player.getEntityPos();
         int times = (int) ((Math.abs(playerPos.x - position.x) + Math.abs(playerPos.y - position.y) + Math.abs(playerPos.z - position.z)) / 10.0);
         for (int i = 0; i < times; i++) {
-            PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.Full(
-                    mc.player.getX(), mc.player.getY(), mc.player.getZ(),
-                    getRandomizedYaw(), getRandomizedPitch(),
-                    mc.player.isOnGround(), mc.player.horizontalCollision
-            ));
+            PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.Full(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.getYaw(), mc.player.getPitch(), mc.player.isOnGround(), mc.player.horizontalCollision));
         }
-        PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.Full(
-                position.x, position.y, position.z,
-                getRandomizedYaw(), getRandomizedPitch(),
-                mc.player.isOnGround(), mc.player.horizontalCollision
-        ));
+        PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.Full(position.x, position.y, position.z, mc.player.getYaw(), mc.player.getPitch(), mc.player.isOnGround(), mc.player.horizontalCollision));
     }
 
     private void travelAStar(List<BlockPos> path) {
-        if (path == null || path.isEmpty()) {
+        if (path.isEmpty()) {
             return;
         }
 
@@ -374,32 +333,14 @@ public class TpAura extends Module {
             if (hasCollisionBetween(start, end)) {
                 for (int j = i; j <= endIndex; j++) {
                     Vec3d p = points.get(j);
-                    PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(
-                            p.x, p.y, p.z, mc.player.isOnGround(), mc.player.horizontalCollision
-                    ));
+                    PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(p.x, p.y, p.z, mc.player.isOnGround(), mc.player.horizontalCollision));
                     desyncPlayerPosition = p;
                 }
             } else {
-                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(
-                        end.x, end.y, end.z, mc.player.isOnGround(), mc.player.horizontalCollision
-                ));
+                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(end.x, end.y, end.z, mc.player.isOnGround(), mc.player.horizontalCollision));
                 desyncPlayerPosition = end;
             }
         }
-    }
-
-    private float getRandomizedYaw() {
-        float yaw = mc.player.getYaw();
-        // Add small random offset to break perfect angles if they are integers
-        if (Math.abs(yaw % 90) < 0.0001) {
-            yaw += (float) (random.nextDouble() * 0.0002 - 0.0001);
-        }
-        return yaw;
-    }
-
-    private float getRandomizedPitch() {
-        // Pitch usually doesn't have the 90 degree check as strictly, but good to keep consistent
-        return mc.player.getPitch();
     }
 
     private boolean hasCollisionBetween(Vec3d start, Vec3d end) {
@@ -446,8 +387,8 @@ public class TpAura extends Module {
     }
 
     private static List<BlockPos> reversePath(List<BlockPos> path) {
-        ArrayList<BlockPos> reversed = new ArrayList<>(path);
-        java.util.Collections.reverse(reversed);
+        List<BlockPos> reversed = new ArrayList<>(path);
+        Collections.reverse(reversed);
         return reversed;
     }
 
