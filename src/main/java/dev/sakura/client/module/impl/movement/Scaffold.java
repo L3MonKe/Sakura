@@ -229,7 +229,7 @@ public class Scaffold extends Module {
         }
 
         if (render.get()) {
-            Managers.RENDER.add(targetPos, sideColor.get(), lineColor.get(), 1000, shrink.get());
+            Managers.RENDER.add(targetPos, sideColor.get(), lineColor.get(), shrink.get());
         }
     }
 

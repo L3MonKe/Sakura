@@ -16,6 +16,7 @@ import dev.sakura.client.module.impl.player.*;
 import dev.sakura.client.module.impl.player.inventory.InvManager;
 import dev.sakura.client.module.impl.player.inventory.Stealer;
 import dev.sakura.client.module.impl.render.*;
+import dev.sakura.client.module.impl.settings.RenderSetting;
 import dev.sakura.client.values.Value;
 import org.lwjgl.glfw.GLFW;
 
@@ -101,6 +102,9 @@ public class ModuleManager {
         add(new HudEditor());
         add(new Targets());
         add(new Teams());
+
+        // Settings
+        add(new RenderSetting());
 
         // HUD
         add(new DynamicIslandHud());

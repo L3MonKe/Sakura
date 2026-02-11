@@ -266,7 +266,7 @@ public class AutoDick extends Module {
 
         if (swingHand.get()) mc.player.swingHand(Hand.MAIN_HAND);
 
-        Managers.RENDER.add(data.pos, sideColor.get(), lineColor.get(), 1000, shrink.get());
+        Managers.RENDER.add(data.pos, sideColor.get(), lineColor.get(), shrink.get());
         return true;
     }
 
