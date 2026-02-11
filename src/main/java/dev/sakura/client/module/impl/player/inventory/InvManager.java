@@ -249,6 +249,7 @@ public class InvManager extends Module {
 
         if (!this.inventoryOnly.get() && this.inventoryOpen) {
             mc.player.setSprinting(false);
+            mc.options.sprintKey.setPressed(false);
         }
 
         if (mc.currentScreen instanceof HandledScreen<?> container && container.getScreenHandler().syncId != mc.player.playerScreenHandler.syncId) {
@@ -556,6 +557,7 @@ public class InvManager extends Module {
                 mc.player.networkHandler.sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.STOP_SPRINTING));
                 // 强制客户端停止疾跑
                 mc.player.setSprinting(false);
+                mc.options.sprintKey.setPressed(false);
             }
         }
     }
