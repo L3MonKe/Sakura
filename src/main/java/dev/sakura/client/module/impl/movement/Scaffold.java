@@ -257,8 +257,9 @@ public class Scaffold extends Module {
                     int y = d - x - z;
                     for (int rev1 = 0; rev1 <= 1; rev1++) {
                         for (int rev2 = 0; rev2 <= 1; rev2++) {
-                            if (checkBlock(baseVec, new BlockPos(baseX + (rev1 == 0 ? x : -x), getYLevel() - y, baseZ + (rev2 == 0 ? z : -z))))
+                            if (checkBlock(baseVec, new BlockPos(baseX + (rev1 == 0 ? x : -x), getYLevel() - y, baseZ + (rev2 == 0 ? z : -z)))) {
                                 return;
+                            }
                         }
                     }
                 }
