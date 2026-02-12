@@ -367,34 +367,12 @@ public class TargetHud extends HudModule {
         this.width = 150;
         this.height = 50;
 
-        // Bloom (Outer Glow/Shadow) - Removed in favor of Kawase Bloom
-        /*
-        float bloom = modernBloom.get().floatValue();
-        if (bloom > 0) {
-            // Use bloom as a colored glow matching the health bar if enabled
-            Color baseColor;
-            if (bloomFollowHP.get()) {
-                Color hpC = healthColor.get();
-                // If following HP, use HP color with some transparency (e.g. 100)
-                baseColor = new Color(hpC.getRed(), hpC.getGreen(), hpC.getBlue(), 100);
-            } else {
-                // Otherwise use custom color
-                baseColor = modernBloomColor.get();
-            }
-            NanoVGHelper.drawShadow(x, y, width, height, bloom, baseColor, 8, 0, 0);
-        }
-        */
-
-        // Background (Semi-transparent with Blur support)
         int alpha = modernBgAlpha.get();
         float blur = modernBlur.get().floatValue();
         Color bgColor = new Color(0, 0, 0, alpha);
 
         if (blur > 0) {
-            // Use drawShadow to simulate a blurred/feathered background rect
-            // We draw it multiple times or mix with rect to ensure core opacity if needed,
-            // but simple shadow usually works for fuzzy rect.
-            NanoVGHelper.drawShadow(x, y, width, height, blur, bgColor, 8, 0, 0);
+            NanoVGHelper.drawRoundRectBloom(x, y, width, height, blur, bgColor);
         } else {
             NanoVGHelper.drawRoundRect(x, y, width, height, 8, bgColor);
         }

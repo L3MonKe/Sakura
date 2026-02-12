@@ -267,7 +267,6 @@ public class AuthScreen extends Screen {
             NanoVGHelper.drawCircle(cx + l.w * 0.14f, cy + l.h * 0.22f, l.w * 0.28f, withAlpha(new Color(236, 72, 153), 16));
 
             float r = 22f * s;
-            NanoVGHelper.drawShadow(l.x, l.y, l.w, l.h, r, new Color(0, 0, 0, 120), 34, 0, 16);
             NanoVGHelper.drawRoundRect(l.x, l.y, l.w, l.h, r, new Color(18, 18, 24, 238));
             NanoVGHelper.drawRoundRectOutline(l.x, l.y, l.w, l.h, r, 1.0f, new Color(255, 255, 255, 26));
 

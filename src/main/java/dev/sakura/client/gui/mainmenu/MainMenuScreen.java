@@ -221,30 +221,6 @@ public class MainMenuScreen extends Screen {
     }
 
     private void drawPanelChrome(Layout layout, float opacity) {
-        NanoVGHelper.drawShadow(
-                layout.panelX,
-                layout.panelY,
-                layout.panelW,
-                layout.panelH,
-                layout.panelR,
-                applyAlpha(SHADOW_FAR, opacity),
-                42f * layout.scale,
-                0f,
-                10f * layout.scale
-        );
-
-        NanoVGHelper.drawShadow(
-                layout.panelX,
-                layout.panelY,
-                layout.panelW,
-                layout.panelH,
-                layout.panelR,
-                applyAlpha(SHADOW_NEAR, opacity),
-                18f * layout.scale,
-                0f,
-                3f * layout.scale
-        );
-
         NanoVGHelper.drawGradientRRect(
                 layout.panelX,
                 layout.panelY,

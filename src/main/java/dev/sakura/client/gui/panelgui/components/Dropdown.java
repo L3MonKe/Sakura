@@ -75,8 +75,7 @@ public class Dropdown extends Component {
         float hoverProgress = hoverAnimation.value / 100.0f;
         float openProgress = openAnimation.value / 255.0f;
 
-        NanoVGHelper.drawRoundRect(x, y, width, height, cornerRadius, GlassmorphismColors.BACKGROUND);
-        NanoVGHelper.drawShadow(x, y, width, height, cornerRadius, new Color(0, 0, 0, 120), 10.0f, 0.0f, 0.0f);
+        NanoVGHelper.drawRoundRectBloom(x, y, width, height, cornerRadius, GlassmorphismColors.BACKGROUND);
 
         if (hoverProgress > 0.001f || open) {
             Color overlayColor = Colors.withAlpha(GlassmorphismColors.HOVER, (GlassmorphismColors.HOVER.getAlpha() / 255.0f) * hoverProgress);
@@ -253,8 +252,7 @@ public class Dropdown extends Component {
         float menuY = getMenuY();
         float menuHeight = OPTION_HEIGHT * options.size();
 
-        NanoVGHelper.drawRoundRect(x, menuY, width, menuHeight, cornerRadius, GlassmorphismColors.DROPDOWN_BACKGROUND);
-        NanoVGHelper.drawShadow(x, menuY, width, menuHeight, cornerRadius, new Color(0, 0, 0, 120), 10.0f, 0.0f, 0.0f);
+        NanoVGHelper.drawRoundRectBloom(x, menuY, width, menuHeight, cornerRadius, GlassmorphismColors.DROPDOWN_BACKGROUND);
 
         for (int i = 0; i < options.size(); i++) {
             float optionY = menuY + i * OPTION_HEIGHT;

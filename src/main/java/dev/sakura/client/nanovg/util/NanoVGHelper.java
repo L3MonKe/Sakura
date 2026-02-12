@@ -142,18 +142,6 @@ public class NanoVGHelper {
     }
 
     /**
-     * 获取文本高度
-     */
-    public static float getTextHeight(int font, String text) {
-        long vg = getContext();
-        nvgFontFaceId(vg, font);
-
-        float[] bounds = new float[4];
-        nvgTextBounds(vg, 0, 0, text, bounds);
-        return bounds[3] - bounds[1];
-    }
-
-    /**
      * 绘制圆形
      */
     public static void drawCircle(float x, float y, float radius, Color color) {
@@ -261,27 +249,7 @@ public class NanoVGHelper {
      * 绘制带发光效果的圆角矩形
      */
     public static void drawRoundRectBloom(float x, float y, float w, float h, float radius, Color color) {
-        drawRoundRectBloom(x, y, w, h, radius, 5.0f, color);
-    }
-
-    /**
-     * 绘制实心发光盒（用于 Bloom 效果，配合 Stencil 使用）
-     */
-    public static void drawBloomBox(float x, float y, float w, float h, float radius, float glowRadius, Color color) {
-        long vg = getContext();
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            NVGPaint paint = NVGPaint.malloc(stack);
-            NVGColor innerColor = NVGColor.malloc(stack);
-            NVGColor outerColor = NVGColor.malloc(stack);
-
-            initInnerOuterColors(innerColor, outerColor, color);
-            nvgBeginPath(vg);
-            nvgBoxGradient(vg, x, y, w, h, radius, glowRadius, innerColor, outerColor, paint);
-            float feather = glowRadius * 2;
-            nvgRoundedRect(vg, x - feather, y - feather, w + feather * 2, h + feather * 2, radius + feather);
-            nvgFillPaint(vg, paint);
-            nvgFill(vg);
-        }
+        drawRoundRectBloom(x, y, w, h, radius, 7.0f, color);
     }
 
     public static void drawRect(float x, float y, float w, float h, Color color) {
@@ -455,55 +423,6 @@ public class NanoVGHelper {
     private static void initInnerOuterColors(NVGColor innerColor, NVGColor outerColor, Color color) {
         setColor(innerColor, color);
         setColor(outerColor, color.getRed(), color.getGreen(), color.getBlue(), 0);
-    }
-
-    private static void drawShadowHolePath(long vg, float x, float y, float w, float h, float radius, float blur, float offsetX, float offsetY) {
-        float ox = x + offsetX - blur;
-        float oy = y + offsetY - blur;
-        float ow = w + blur * 2;
-        float oh = h + blur * 2;
-
-        nvgBeginPath(vg);
-        if (radius > 0.0f) {
-            nvgRoundedRect(vg, ox, oy, ow, oh, radius + blur);
-            nvgRoundedRect(vg, x + offsetX, y + offsetY, w, h, radius);
-        } else {
-            nvgRect(vg, ox, oy, ow, oh);
-            nvgRect(vg, x + offsetX, y + offsetY, w, h);
-        }
-        nvgPathWinding(vg, NVG_HOLE);
-    }
-
-    /**
-     * 绘制阴影
-     */
-    public static void drawShadow(float x, float y, float w, float h, float radius, Color color, float blur, float offsetX, float offsetY) {
-        long vg = getContext();
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            NVGPaint shadowPaint = NVGPaint.malloc(stack);
-            NVGColor innerColor = NVGColor.malloc(stack);
-            NVGColor outerColor = NVGColor.malloc(stack);
-
-            initInnerOuterColors(innerColor, outerColor, color);
-            nvgBoxGradient(vg, x + offsetX, y + offsetY, w, h, radius, blur, innerColor, outerColor, shadowPaint);
-            drawShadowHolePath(vg, x, y, w, h, radius, blur, offsetX, offsetY);
-            nvgFillPaint(vg, shadowPaint);
-            nvgFill(vg);
-        }
-    }
-
-    /**
-     * 绘制无裁剪阴影的矩形
-     */
-    public static void drawRectShadowNoClip(float x, float y, float w, float h, float radius, Color color, float blur, float offsetX, float offsetY) {
-        drawShadow(x, y, w, h, radius, color, blur, offsetX, offsetY);
-    }
-
-    /**
-     * 绘制无裁剪阴影的矩形（无圆角）
-     */
-    public static void drawRectShadowNoClip(float x, float y, float w, float h, Color color, float blur, float offsetX, float offsetY) {
-        drawShadow(x, y, w, h, 0, color, blur, offsetX, offsetY);
     }
 
     /**

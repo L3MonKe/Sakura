@@ -1,5 +1,6 @@
 package dev.sakura.client.mixin.render;
 
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.impl.render.Render2DEvent;
 import dev.sakura.client.module.impl.hud.HotbarHud;
@@ -20,6 +21,12 @@ import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 @Mixin(InGameHud.class)
 public class MixinInGameHud {
+    private static int sakura$getVanillaHudYOffset() {
+        HotbarHud hotbarHud = Sakura.MODULES.getModule(HotbarHud.class);
+        if (hotbarHud == null || !hotbarHud.isEnabled()) return 0;
+        return hotbarHud.getVanillaHudYOffset();
+    }
+
     @Inject(method = "render", at = @At("TAIL"))
     private void onRender(DrawContext context, RenderTickCounter tickCounter, CallbackInfo ci) {
         Sakura.EVENT_BUS.post(new Render2DEvent(context));
@@ -31,6 +38,16 @@ public class MixinInGameHud {
         if (hotbarHud != null && hotbarHud.isEnabled()) {
             ci.cancel();
         }
+    }
+
+    @ModifyExpressionValue(method = "renderStatusBars", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;getScaledWindowHeight()I"))
+    private int sakura$offsetStatusBarsY(int original) {
+        return original - sakura$getVanillaHudYOffset();
+    }
+
+    @ModifyExpressionValue(method = "renderMountHealth", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;getScaledWindowHeight()I"))
+    private int sakura$offsetMountHealthY(int original) {
+        return original - sakura$getVanillaHudYOffset();
     }
 
     @Inject(method = "renderStatusEffectOverlay", at = @At("HEAD"), cancellable = true)

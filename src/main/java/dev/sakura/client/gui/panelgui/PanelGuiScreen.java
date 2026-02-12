@@ -65,7 +65,7 @@ public class PanelGuiScreen extends Screen {
         sidebar = new Sidebar(windowX, windowY, SIDEBAR_WIDTH, windowHeight);
         sidebar.setLogoText("O");
         sidebar.setTitle(Sakura.MOD_NAME);
-        sidebar.setSubtitle("打不过zen");
+        sidebar.setSubtitle("By Fin_LemonKe");
 
         List<NavItem> items = new ArrayList<>();
         NavItem toSelect = null;
@@ -154,8 +154,7 @@ public class PanelGuiScreen extends Screen {
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
-            NanoVGHelper.drawShadow(windowX, windowY, windowWidth, windowHeight, 12.0f, new Color(0, 0, 0, 120), 14.0f, 0.0f, 0.0f);
-            NanoVGHelper.drawRoundRect(windowX, windowY, windowWidth, windowHeight, 12.0f, WINDOW_BACKGROUND_COLOR);
+            NanoVGHelper.drawRoundRectBloom(windowX, windowY, windowWidth, windowHeight, 12.0f, WINDOW_BACKGROUND_COLOR);
 
             if (sidebar != null) {
                 sidebar.render(context, mouseX, mouseY, deltaTicks);

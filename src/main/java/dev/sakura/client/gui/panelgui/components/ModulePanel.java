@@ -11,7 +11,6 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.input.CharInput;
 import net.minecraft.client.input.KeyInput;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -188,8 +187,7 @@ public class ModulePanel extends Component {
         NanoVGHelper.drawString(name, x, y - 1.0f + titleHeight, FontLoader.regular(), titleFontSize, GlassmorphismColors.TEXT_PRIMARY);
 
         float blockY = y + titleHeight + titleSpacing;
-        NanoVGHelper.drawRoundRect(x, blockY, width, bodyHeight, blockCornerRadius, GlassmorphismColors.BACKGROUND);
-        NanoVGHelper.drawShadow(x, blockY, width, bodyHeight, blockCornerRadius, new Color(0, 0, 0, 120), 10.0f, 0.0f, 0.0f);
+        NanoVGHelper.drawRoundRectBloom(x, blockY, width, bodyHeight, blockCornerRadius, GlassmorphismColors.BACKGROUND);
 
         float itemCullMargin = 24.0f;
         float visibleTop = Float.isFinite(clipTop) ? clipTop - itemCullMargin : Float.NEGATIVE_INFINITY;

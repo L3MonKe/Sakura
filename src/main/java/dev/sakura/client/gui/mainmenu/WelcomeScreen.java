@@ -440,9 +440,7 @@ public class WelcomeScreen extends Screen {
                 float contentW = viewW - padding * 2;
                 float contentH = viewH - padding * 2;
 
-                NanoVGHelper.drawShadow(viewX, viewY, viewW, viewH, 12, new Color(0, 0, 0, 100), 20, 0, 5);
-
-                NanoVGHelper.drawRoundRect(viewX, viewY, viewW, viewH, 12, new Color(30, 30, 30, 200));
+                NanoVGHelper.drawRoundRectBloom(viewX, viewY, viewW, viewH, 12, new Color(30, 30, 30, 200));
 
                 NanoVGHelper.drawRoundRectOutline(viewX, viewY, viewW, viewH, 12, 1.0f, new Color(255, 255, 255, 30));
 

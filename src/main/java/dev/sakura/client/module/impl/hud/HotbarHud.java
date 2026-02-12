@@ -133,6 +133,15 @@ public class HotbarHud extends HudModule {
         return radius.get().floatValue();
     }
 
+    public int getVanillaHudYOffset() {
+        float localScale = scale.get().floatValue();
+        float vanillaHotbarHeight = 22.0f;
+        float bottomPadding = 4.0f * localScale;
+        float localHotbarHeight = (SLOT_SIZE * localScale) + (PADDING * localScale * 2.0f);
+        float extraSafety = 2.0f * localScale;
+        return Math.max(0, Math.round(localHotbarHeight + bottomPadding - vanillaHotbarHeight + extraSafety));
+    }
+
     private void renderBloom(DrawContext context) {
         if (!enableBloom.get()) return;
 

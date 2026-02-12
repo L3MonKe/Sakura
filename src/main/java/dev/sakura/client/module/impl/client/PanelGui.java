@@ -1,6 +1,7 @@
 package dev.sakura.client.module.impl.client;
 
 import dev.sakura.client.Sakura;
+import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.gui.panelgui.PanelGuiScreen;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -18,8 +19,10 @@ public class PanelGui extends Module {
             toggle();
             return;
         }
-        if (Sakura.PANELGUI == null) {
-            Sakura.PANELGUI = new PanelGuiScreen();
+
+        ClickGui clickGui = Sakura.MODULES.getModule(ClickGui.class);
+        if (mc.currentScreen instanceof ClickGuiScreen && clickGui.isEnabled()) {
+            clickGui.toggle();
         }
         mc.setScreen(Sakura.PANELGUI);
     }
