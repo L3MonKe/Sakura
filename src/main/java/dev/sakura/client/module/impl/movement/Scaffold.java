@@ -271,6 +271,8 @@ public class Scaffold extends Module {
     private boolean checkBlock(Vec3d baseVec, BlockPos pos) {
         if (BlockUtil.solid(mc.world.getBlockState(pos))) return false;
 
+        if (pos.getY() > getYLevel()) return false;
+
         Vec3d center = new Vec3d(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         for (Direction dir : Direction.values()) {
             Vec3d hit = center.add(new Vec3d(dir.getVector()).multiply(0.5));

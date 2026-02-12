@@ -70,12 +70,14 @@ public class Sidebar extends Component {
             float logoX = x + padding + logoOffsetX;
             float logoY = currentY + logoOffsetY;
 
-            float logoH = NanoVGHelper.getFontHeight(FontLoader.icons(), logoSize);
-            NanoVGHelper.drawString(logoText, logoX, logoY + logoH, FontLoader.icons(), logoSize, new Color(255, 255, 255, 255));
+            int logoFont = FontLoader.newIc();
+            float logoW = NanoVGHelper.getTextWidth(logoText, logoFont, logoSize);
+            float logoH = NanoVGHelper.getFontHeight(logoFont, logoSize);
+            NanoVGHelper.drawString(logoText, logoX, logoY + logoH, logoFont, logoSize, new Color(255, 255, 255, 255));
 
             float titleH = 0.0f;
             float subtitleH = 0.0f;
-            float titleX = logoX + NanoVGHelper.getTextWidth(logoText, FontLoader.icons(), logoSize) + 6.0f;
+            float titleX = logoX + logoW + 6.0f;
             if (title != null && !title.isEmpty()) {
                 titleH = NanoVGHelper.getFontHeight(FontLoader.regular(), titleSize);
                 NanoVGHelper.drawString(title, titleX, logoY + titleH, FontLoader.regular(), titleSize, GlassmorphismColors.TEXT_PRIMARY);

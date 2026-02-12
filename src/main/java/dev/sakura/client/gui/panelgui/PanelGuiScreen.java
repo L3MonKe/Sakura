@@ -63,7 +63,7 @@ public class PanelGuiScreen extends Screen {
 
     private void createSidebar() {
         sidebar = new Sidebar(windowX, windowY, SIDEBAR_WIDTH, windowHeight);
-        sidebar.setLogoText("\ue133");
+        sidebar.setLogoText("O");
         sidebar.setTitle(Sakura.MOD_NAME);
         sidebar.setSubtitle("打不过zen");
 
@@ -79,7 +79,7 @@ public class PanelGuiScreen extends Screen {
             }
         }
         sidebar.clearSections();
-        sidebar.addSection("MODULES", items);
+        sidebar.addSection(null, items);
         if (toSelect != null) {
             sidebar.setSelectedItem(toSelect);
         }
@@ -166,18 +166,6 @@ public class PanelGuiScreen extends Screen {
 
             Dropdown.renderOpenMenus(context, mouseX, mouseY, deltaTicks);
             SettingItem.renderQueuedTooltips(context);
-
-            if (Sakura.mc.player != null) {
-                float iconSize = 18.0f;
-                float iconX = windowX + 16.0f;
-                float iconY = windowY + windowHeight - iconSize - 16.0f;
-                float textX = iconX + iconSize + 8.0f;
-                float fontSize = 7.0f;
-                float textHeight = NanoVGHelper.getFontHeight(dev.sakura.client.nanovg.font.FontLoader.regular(), fontSize);
-                float textTop = iconY + (iconSize - textHeight) / 2.0f;
-                float textBaseline = textTop + textHeight;
-                NanoVGHelper.drawString(Sakura.mc.player.getName().getString(), textX, textBaseline, dev.sakura.client.nanovg.font.FontLoader.regular(), fontSize, GlassmorphismColors.TEXT_PRIMARY);
-            }
         });
     }
 
