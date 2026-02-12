@@ -111,7 +111,7 @@ public class Scaffold extends Module {
         if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
             return;
         }
-        
+
         if (nullCheck()) return;
 
         if (mc.options.attackKey.isPressed()) {

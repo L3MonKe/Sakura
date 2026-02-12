@@ -14,7 +14,6 @@ import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
-import net.minecraft.world.dimension.DimensionType;
 
 public class AutoStuck extends Module {
     public AutoStuck() {
@@ -59,7 +58,7 @@ public class AutoStuck extends Module {
 
     private boolean isOverVoid() {
         Vec3d start = mc.player.getEntityPos();
-        Vec3d end = new Vec3d(start.x, DimensionType.MIN_HEIGHT - 2.0, start.z);
+        Vec3d end = new Vec3d(start.x, mc.world.getBottomY() - 2.0, start.z);
         HitResult hit = mc.world.raycast(new RaycastContext(start, end, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, mc.player));
         return hit.getType() == HitResult.Type.MISS;
     }
