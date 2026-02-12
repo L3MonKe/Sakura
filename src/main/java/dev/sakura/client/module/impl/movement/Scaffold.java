@@ -53,6 +53,7 @@ public class Scaffold extends Module {
     private final BoolValue sideCheck = new BoolValue("Side Check", "放置面检测", false);
     private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
+    private final BoolValue fade = new BoolValue("Fade", "变淡", false, render::get);
     private final BoolValue shrink = new BoolValue("Shrink", "收缩", true, render::get);
     private final ColorValue sideColor = new ColorValue("Side Color", "侧面颜色", new Color(255, 183, 197, 100), render::get);
     private final ColorValue lineColor = new ColorValue("Line Color", "线条颜色", new Color(255, 105, 180), render::get);
@@ -229,7 +230,7 @@ public class Scaffold extends Module {
         }
 
         if (render.get()) {
-            Managers.RENDER.add(targetPos, sideColor.get(), lineColor.get(), shrink.get());
+            Managers.RENDER.add(targetPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
         }
     }
 

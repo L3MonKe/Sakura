@@ -11,6 +11,6 @@ public class RenderSetting extends Module {
         super("Render", "渲染", Category.Settings);
     }
 
-    public static final EnumValue<Easing> easing = new EnumValue<>("Easing", "Easing", Easing.EXPO_IN_OUT);
+    public static final EnumValue<Easing> easing = new EnumValue<>("Easing", "Easing", Easing.LINEAR);
     public static final NumberValue<Integer> fadeTime = new NumberValue<>("FadeTime", "淡出时间", 500, 0, 3000, 50);
 }

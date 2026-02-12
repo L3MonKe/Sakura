@@ -78,7 +78,9 @@ public class WatermarkHud extends HudModule {
     private final BoolValue sakuraShadow = new BoolValue("SakuraShadow", "Sakura-阴影", false, () -> mode.is(ListMode.Sakura));
     private final NumberValue<Double> sakuraShadowRange = new NumberValue<>("SakuraShadowRange", "Sakura-阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
     private final NumberValue<Double> sakuraShadowStrength = new NumberValue<>("SakuraShadowStrength", "Sakura-阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
+
     public enum SakuraShadowMode {Solid, Gradient}
+
     private final EnumValue<SakuraShadowMode> sakuraShadowMode = new EnumValue<>("SakuraShadowMode", "Sakura-阴影模式", SakuraShadowMode.Solid, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
 
     private int iconImage = -1;

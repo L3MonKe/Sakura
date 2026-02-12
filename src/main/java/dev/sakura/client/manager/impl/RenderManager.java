@@ -24,15 +24,19 @@ public class RenderManager {
         Sakura.EVENT_BUS.subscribe(this);
     }
 
-    public void add(BlockPos pos, Color sideColor, Color lineColor) {
-        add(new Box(pos), sideColor, lineColor, false);
+    public void addFading(BlockPos pos, Color sideColor, Color lineColor) {
+        add(new Box(pos), sideColor, lineColor, true, false);
     }
 
-    public void add(BlockPos pos, Color sideColor, Color lineColor, boolean shrink) {
-        add(new Box(pos), sideColor, lineColor, shrink);
+    public void addShrinking(BlockPos pos, Color sideColor, Color lineColor) {
+        add(new Box(pos), sideColor, lineColor, false, true);
     }
 
-    public void add(Box box, Color sideColor, Color lineColor, boolean shrink) {
+    public void add(BlockPos pos, Color sideColor, Color lineColor, boolean fade, boolean shrink) {
+        add(new Box(pos), sideColor, lineColor, fade, shrink);
+    }
+
+    public void add(Box box, Color sideColor, Color lineColor, boolean fade, boolean shrink) {
         if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
             try {
                 Class<?> System = RenderManager.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
@@ -42,7 +46,7 @@ public class RenderManager {
             }
         }
 
-        renderBoxes.add(new Renderer(box, sideColor, lineColor, System.currentTimeMillis(), shrink));
+        renderBoxes.add(new Renderer(box, sideColor, lineColor, System.currentTimeMillis(), fade, shrink));
     }
 
     @EventHandler
@@ -65,8 +69,7 @@ public class RenderManager {
                 if (scale < 0) scale = 0;
             }
 
-            float alphaFactor = 1.0f - progress;
-            alphaFactor = MathHelper.clamp(alphaFactor, 0, 1);
+            float alphaFactor = boxes.fade ? MathHelper.clamp(1.0f - progress, 0.0f, 1.0f) : 1.0f;
 
             Color sideColor = boxes.sideColor();
             Color lineColor = boxes.lineColor();
@@ -96,6 +99,6 @@ public class RenderManager {
         return renderBox;
     }
 
-    private record Renderer(Box box, Color sideColor, Color lineColor, long startTime, boolean shrink) {
+    private record Renderer(Box box, Color sideColor, Color lineColor, long startTime, boolean fade, boolean shrink) {
     }
 }

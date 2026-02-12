@@ -46,7 +46,9 @@ public class TimeChargeHud extends HudModule {
     private final BoolValue shadow = new BoolValue("Shadow", "背景阴影", false);
     private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "阴影范围", 8.0, 0.0, 30.0, 1.0, shadow::get);
     private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "阴影强度", 0.6, 0.0, 1.0, 0.05, shadow::get);
+
     public enum ShadowMode {Solid, Gradient}
+
     private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "阴影模式", ShadowMode.Solid, shadow::get);
 
     private final BoolValue bloom = new BoolValue("Bloom", "外发光", true);

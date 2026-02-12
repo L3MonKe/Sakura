@@ -71,6 +71,7 @@ public class AutoDick extends Module {
     private final NumberValue<Integer> delay = new NumberValue<>("Delay", "延迟", 0, 0, 150, 1);
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
     private final BoolValue render = new BoolValue("Render", "渲染", true);
+    private final BoolValue fade = new BoolValue("Fade", "变淡", false, render::get);
     private final BoolValue shrink = new BoolValue("Shrink", "收缩", true, render::get);
     private final ColorValue sideColor = new ColorValue("Side Color", "侧面颜色", new Color(255, 183, 197, 100), render::get);
     private final ColorValue lineColor = new ColorValue("Line Color", "线条颜色", new Color(255, 105, 180), render::get);
@@ -266,7 +267,7 @@ public class AutoDick extends Module {
 
         if (swingHand.get()) mc.player.swingHand(Hand.MAIN_HAND);
 
-        Managers.RENDER.add(data.pos, sideColor.get(), lineColor.get(), shrink.get());
+        Managers.RENDER.add(data.pos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
         return true;
     }
 

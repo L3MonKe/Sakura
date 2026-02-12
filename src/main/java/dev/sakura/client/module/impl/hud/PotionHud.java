@@ -21,12 +21,11 @@ import net.minecraft.component.type.PotionContentsComponent;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.registry.entry.RegistryEntry;
+import org.lwjgl.nanovg.NVGPaint;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-
-import org.lwjgl.nanovg.NVGPaint;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 
