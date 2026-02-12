@@ -2,6 +2,7 @@ package dev.sakura.client.module.impl.player.inventory;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.EventPriority;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.type.EventType;
@@ -220,7 +221,7 @@ public class InvManager extends Module {
         return true;
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH)
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
