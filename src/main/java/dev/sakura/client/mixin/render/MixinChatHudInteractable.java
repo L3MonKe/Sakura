@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
 
-@Mixin(targets = "net.minecraft.client.gui.hud.ChatHud$Interactable")
+@Mixin(targets = "net.minecraft.client.gui.hudeditor.ChatHud$Interactable")
 public class MixinChatHudInteractable {
     @Shadow
     private DrawContext context;

@@ -1,7 +1,7 @@
 package dev.sakura.client.module;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.gui.hud.HudEditorScreen;
+import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.util.NanoVGHelper;

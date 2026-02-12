@@ -1,4 +1,4 @@
-package dev.sakura.client.gui.component;
+package dev.sakura.client.gui.mainmenu.component;
 
 import dev.sakura.client.gui.theme.SakuraTheme;
 import dev.sakura.client.nanovg.NanoVGRenderer;

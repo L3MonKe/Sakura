@@ -2,7 +2,7 @@ package dev.sakura.client.module.impl.client;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
-import dev.sakura.client.gui.hud.HudEditorScreen;
+import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.BoolValue;

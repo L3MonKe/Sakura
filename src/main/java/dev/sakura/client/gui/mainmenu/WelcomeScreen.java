@@ -3,7 +3,7 @@ package dev.sakura.client.gui.mainmenu;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.clickgui.component.ModuleComponent;
 import dev.sakura.client.gui.clickgui.panel.CategoryPanel;
-import dev.sakura.client.gui.component.AdvancedColorPicker;
+import dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;

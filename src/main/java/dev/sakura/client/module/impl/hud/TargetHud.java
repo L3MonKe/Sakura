@@ -7,7 +7,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.render.Render3DEvent;
-import dev.sakura.client.gui.hud.HudEditorScreen;
+import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.combat.KillAura;
@@ -144,7 +144,7 @@ public class TargetHud extends HudModule {
 
 
     private static final Identifier TARGET_TEX = Identifier.of("sakura", "textures/particles/target.png");
-    private static final Identifier THUD_TEX = Identifier.of("sakura", "textures/hud/thud.png");
+    private static final Identifier THUD_TEX = Identifier.of("sakura", "textures/hudeditor/thud.png");
 
     // Animations
     private final Animation animation = new EaseOutSine(300, 1.0, Direction.BACKWARDS);

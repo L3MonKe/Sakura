@@ -7,7 +7,7 @@ import dev.sakura.client.event.EventBus;
 import dev.sakura.client.event.IEventBus;
 import dev.sakura.client.gui.auth.AuthScreen;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
-import dev.sakura.client.gui.hud.HudEditorScreen;
+import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.gui.panelgui.PanelGuiScreen;
 import dev.sakura.client.manager.Managers;

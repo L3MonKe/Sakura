@@ -1,8 +1,8 @@
-package dev.sakura.client.gui.hud;
+package dev.sakura.client.gui.hudeditor;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.IComponent;
-import dev.sakura.client.gui.hud.component.HudModuleComponent;
+import dev.sakura.client.gui.hudeditor.component.HudModuleComponent;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.client.ClickGui;

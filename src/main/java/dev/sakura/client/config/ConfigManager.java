@@ -3,7 +3,7 @@ package dev.sakura.client.config;
 import com.google.gson.*;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.clickgui.panel.CategoryPanel;
-import dev.sakura.client.gui.hud.HudPanel;
+import dev.sakura.client.gui.hudeditor.HudPanel;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;

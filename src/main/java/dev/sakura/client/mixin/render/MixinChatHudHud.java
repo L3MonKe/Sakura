@@ -21,7 +21,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
 
-@Mixin(targets = "net.minecraft.client.gui.hud.ChatHud$Hud")
+@Mixin(targets = "net.minecraft.client.gui.hudeditor.ChatHud$Hud")
 public class MixinChatHudHud {
     @Final
     @Shadow

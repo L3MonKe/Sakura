@@ -1,7 +1,7 @@
 package dev.sakura.client.module.impl.hud;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.gui.hud.HudEditorScreen;
+import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.gui.panelgui.SmoothAnimationTimer;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.client.HudEditor;

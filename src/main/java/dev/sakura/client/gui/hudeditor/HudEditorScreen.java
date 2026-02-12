@@ -1,4 +1,4 @@
-package dev.sakura.client.gui.hud;
+package dev.sakura.client.gui.hudeditor;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.HudModule;

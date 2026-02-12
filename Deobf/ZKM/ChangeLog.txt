@@ -25,8 +25,8 @@ Package: dev.sakura.client.gui.clickgui.component	=>	dev.sakura.client
 Package: dev.sakura.client.gui.clickgui.component.values	=>	dev.sakura.client
 Package: dev.sakura.client.gui.clickgui.panel	=>	dev.sakura.client
 Package: dev.sakura.client.gui.component	=>	dev.sakura.client
-Package: dev.sakura.client.gui.hud	=>	dev.sakura.client
-Package: dev.sakura.client.gui.hud.component	=>	dev.sakura.client
+Package: dev.sakura.client.gui.hudeditor	=>	dev.sakura.client
+Package: dev.sakura.client.gui.hudeditor.component	=>	dev.sakura.client
 Package: dev.sakura.client.gui.mainmenu	=>	dev.sakura.client
 Package: dev.sakura.client.gui.theme	=>	dev.sakura.client
 Package: dev.sakura.client.interfaces	=>	dev.sakura.client
@@ -100,7 +100,7 @@ Class: public dev.sakura.client.Sakura	=>	dev.sakura.client.Mahiro_i
 		public static dev.sakura.client.config.ConfigManager CONFIG	=>	Mahiro_U
 		public static final dev.sakura.client.event.IEventBus EVENT_BUS	=>	Mahiro_m
 		public static java.util.concurrent.Executor EXECUTOR	=>	Mahiro_l
-		public static dev.sakura.client.gui.hud.HudEditorScreen HUDEDITOR	=>	Mahiro_o
+		public static dev.sakura.client.gui.hudeditor.HudEditorScreen HUDEDITOR	=>	Mahiro_o
 		public static final org.apache.logging.log4j.Logger LOGGER	=>	Mahiro_t
 		public static dev.sakura.client.module.ModuleManager MODULES	=>	Mahiro_y
 		public static final java.lang.String MOD_NAME	=>	Mahiro_j
@@ -1673,9 +1673,9 @@ Class: public dev.sakura.client.gui.clickgui.panel.CategoryPanel	=>	dev.sakura.c
 		public void setY(float)	=>	Mahiro_O(java.lang.Object[])* :SAIjFWhHV8kZNv
 		public void update(int, int)	=>	Mahiro_o(int, long, int)	=>	Mahiro_o(java.lang.Object[])* :NElfAEmWVyIj9W
 
-Class: public dev.sakura.client.gui.component.AdvancedColorPicker	=>	dev.sakura.client.Mahiro_sz
+Class: public dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker	=>	dev.sakura.client.Mahiro_sz
 	Source: "AdvancedColorPicker.java"
-	FieldsOf: dev.sakura.client.gui.component.AdvancedColorPicker
+	FieldsOf: dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker
 		private static final int HEADER_HEIGHT	=>	Mahiro_l
 		private static final int PADDING	=>	Mahiro_h
 		private static final int SPACING	=>	Mahiro_y
@@ -1683,7 +1683,7 @@ Class: public dev.sakura.client.gui.component.AdvancedColorPicker	=>	dev.sakura.
 		private static final int SV_BOX_HEIGHT	=>	Mahiro_s
 		private static int[] a	=>	Mahiro_M Manufactured:
 		private dev.sakura.client.values.impl.ColorValue activeColorValue	=>	Mahiro_Z
-		private dev.sakura.client.gui.component.AdvancedColorPicker$EditField activeField	=>	Mahiro_K
+		private dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField activeField	=>	Mahiro_K
 		private boolean draggingAlpha	=>	Mahiro_R
 		private boolean draggingHue	=>	Mahiro_G
 		private boolean draggingSV	=>	Mahiro_b
@@ -1699,7 +1699,7 @@ Class: public dev.sakura.client.gui.component.AdvancedColorPicker	=>	dev.sakura.
 		private final int width	=>	Mahiro_O
 		private final int x	=>	Mahiro_E
 		private final int y	=>	Mahiro_H
-	MethodsOf: dev.sakura.client.gui.component.AdvancedColorPicker
+	MethodsOf: dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker
 		static void <clinit>()	=>	<clinit>() :kDaZLNfmV8kZNv Manufactured:
 		public void <init>(java.lang.String, dev.sakura.client.values.impl.ColorValue, int, int)	=>	<init>(java.lang.String, long, dev.sakura.client.Mahiro_yJ, int, int) :XRFUpIraVyIj9W
 		public static int[] a()	=>	Mahiro_q() Manufactured:
@@ -1716,13 +1716,13 @@ Class: public dev.sakura.client.gui.component.AdvancedColorPicker	=>	dev.sakura.
 		private static java.lang.invoke.CallSite c(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static long c(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
 		public boolean charTyped(char)	=>	Mahiro_b(char, long)	=>	Mahiro_b(java.lang.Object[])* :BlkCJu1jVyIj9W
-		private boolean checkInputClick(double, double, int, int, int, int, dev.sakura.client.gui.component.AdvancedColorPicker$EditField)	=>	Mahiro_i(double, double, int, int, int, int, long, dev.sakura.client.Mahiro_ym)	=>	Mahiro_i(java.lang.Object[])* :YgNeSRZ8Vy-S4y
+		private boolean checkInputClick(double, double, int, int, int, int, dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField)	=>	Mahiro_i(double, double, int, int, int, int, long, dev.sakura.client.Mahiro_ym)	=>	Mahiro_i(java.lang.Object[])* :YgNeSRZ8Vy-S4y
 		private void drawAlphaStrip(float, float, float, float, java.awt.Color)	=>	Mahiro_L(long, float, float, float, float, java.awt.Color)	=>	Mahiro_L(java.lang.Object[])* :EYES21-OVyta6S
 		private void drawGradientRect(float, float, float, float, java.awt.Color, java.awt.Color, boolean)	=>	Mahiro_k(float, float, float, float, java.awt.Color, long, java.awt.Color, boolean)	=>	Mahiro_k(java.lang.Object[])* :ejfN0qWVVyE5c5
 		private void drawHueStrip(float, float, float, float)	=>	Mahiro_i(float, long, float, float, float)	=>	Mahiro_i(java.lang.Object[])* :Q13V8OyfVyIj9W
 		private void drawIndicators(int, int, int, int, int, int, int)	=>	Mahiro_v(int, int, int, long, int, int, int, int)	=>	Mahiro_v(java.lang.Object[])* :nDYL0PF7VyrOal
 		private void drawInfo(int, int, java.awt.Color)	=>	Mahiro_m(long, int, int, java.awt.Color)	=>	Mahiro_m(java.lang.Object[])* :ed$TeRWKVyta6S
-		private void drawInputBox(int, int, int, int, java.lang.String, int, dev.sakura.client.gui.component.AdvancedColorPicker$EditField)	=>	Mahiro_s(int, int, long, int, int, java.lang.String, int, dev.sakura.client.Mahiro_ym)	=>	Mahiro_s(java.lang.Object[])* :n$ubzz4vVyAC_8
+		private void drawInputBox(int, int, int, int, java.lang.String, int, dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField)	=>	Mahiro_s(int, int, long, int, int, java.lang.String, int, dev.sakura.client.Mahiro_ym)	=>	Mahiro_s(java.lang.Object[])* :n$ubzz4vVyAC_8
 		private void drawSVBox(float, float, float, float, float)	=>	Mahiro_a(float, long, float, float, float, float)	=>	Mahiro_a(java.lang.Object[])* :BiVL_mtlVyIj9W
 		private void drawToggle(int, int, int, int, int, int)	=>	Mahiro_j(int, int, int, int, int, long, int)	=>	Mahiro_j(java.lang.Object[])* :Gy$RnS3tVyE5c5
 		public int getHeight()	=>	Mahiro_I(java.lang.Object[])* :ApD_LgdAV8kZNv
@@ -1740,27 +1740,27 @@ Class: public dev.sakura.client.gui.component.AdvancedColorPicker	=>	dev.sakura.
 		private void updateHue(int, int, int)	=>	Mahiro_t(java.lang.Object[])* :nGjtBNEMV8kZNv
 		private void updateSV(int, int, int, int, int)	=>	Mahiro_p(java.lang.Object[])* :NxHcrt1OV8kZNv
 
-Class: final enum dev.sakura.client.gui.component.AdvancedColorPicker$EditField	=>	dev.sakura.client.Mahiro_ym
+Class: final enum dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField	=>	dev.sakura.client.Mahiro_ym
 	Source: "AdvancedColorPicker.java"
-	FieldsOf: dev.sakura.client.gui.component.AdvancedColorPicker$EditField
-		private static final dev.sakura.client.gui.component.AdvancedColorPicker$EditField[] $VALUES	=>	Mahiro_L
-		public static final enum dev.sakura.client.gui.component.AdvancedColorPicker$EditField A	NameNotChanged
-		public static final enum dev.sakura.client.gui.component.AdvancedColorPicker$EditField B	NameNotChanged
-		public static final enum dev.sakura.client.gui.component.AdvancedColorPicker$EditField G	NameNotChanged
-		public static final enum dev.sakura.client.gui.component.AdvancedColorPicker$EditField HEX	NameNotChanged
-		public static final enum dev.sakura.client.gui.component.AdvancedColorPicker$EditField NONE	NameNotChanged
-		public static final enum dev.sakura.client.gui.component.AdvancedColorPicker$EditField R	NameNotChanged
-	MethodsOf: dev.sakura.client.gui.component.AdvancedColorPicker$EditField
-		private static dev.sakura.client.gui.component.AdvancedColorPicker$EditField[] $values()	=>	Mahiro_l(long)	=>	Mahiro_l(java.lang.Object[])* :k6-$oOIIVyta6S
+	FieldsOf: dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField
+		private static final dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField[] $VALUES	=>	Mahiro_L
+		public static final enum dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField A	NameNotChanged
+		public static final enum dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField B	NameNotChanged
+		public static final enum dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField G	NameNotChanged
+		public static final enum dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField HEX	NameNotChanged
+		public static final enum dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField NONE	NameNotChanged
+		public static final enum dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField R	NameNotChanged
+	MethodsOf: dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField
+		private static dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField[] $values()	=>	Mahiro_l(long)	=>	Mahiro_l(java.lang.Object[])* :k6-$oOIIVyta6S
 		static void <clinit>()	=>	<clinit>() :NiLikGWUV8kZNv
 		private void <init>(java.lang.String, int)	=>	<init>(java.lang.String, int) :IYHK4n9LV8kZNv
 		private static java.lang.String a(byte[])	SignatureNotChanged: Manufactured:
-		public static dev.sakura.client.gui.component.AdvancedColorPicker$EditField valueOf(java.lang.String)	=>	valueOf(java.lang.String) :svt7ndPlV8kZNv
-		public static dev.sakura.client.gui.component.AdvancedColorPicker$EditField[] values()	=>	values() :Wo_tyNc2V8kZNv
+		public static dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField valueOf(java.lang.String)	=>	valueOf(java.lang.String) :svt7ndPlV8kZNv
+		public static dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField[] values()	=>	values() :Wo_tyNc2V8kZNv
 
-Class: public dev.sakura.client.gui.component.MButton	=>	dev.sakura.client.Mahiro_tX
+Class: public dev.sakura.client.gui.mainmenu.component.MButton	=>	dev.sakura.client.Mahiro_tX
 	Source: "MButton.java"
-	FieldsOf: dev.sakura.client.gui.component.MButton
+	FieldsOf: dev.sakura.client.gui.mainmenu.component.MButton
 		private boolean danger	=>	Mahiro_y
 		private final dev.sakura.client.utils.animations.Animation hoverAnim	=>	Mahiro_G
 		private boolean loading	=>	Mahiro_b
@@ -1770,7 +1770,7 @@ Class: public dev.sakura.client.gui.component.MButton	=>	dev.sakura.client.Mahir
 		private boolean pressed	=>	Mahiro_q
 		private boolean primary	=>	Mahiro_w
 		private boolean selected	=>	Mahiro_x
-	MethodsOf: dev.sakura.client.gui.component.MButton
+	MethodsOf: dev.sakura.client.gui.mainmenu.component.MButton
 		static void <clinit>()	=>	<clinit>() :wdG1wOZiV8kZNv Manufactured:
 		public void <init>(int, int, int, int, java.lang.String, net.minecraft.class_4185$class_4241)	=>	<init>(int, long, int, int, int, java.lang.String, net.minecraft.class_4185$class_4241) :wG2Q5s4UVyIj9W
 		public void <init>(int, int, int, int, net.minecraft.class_2561, net.minecraft.class_4185$class_4241)	=>	<init>(int, int, int, int, net.minecraft.class_2561, int, int, net.minecraft.class_4185$class_4241, char) :YuAFNoW2VyEDfM
@@ -1787,12 +1787,12 @@ Class: public dev.sakura.client.gui.component.MButton	=>	dev.sakura.client.Mahir
 		public void setPrimary(boolean)	=>	Mahiro_r(boolean, long)	=>	Mahiro_r(java.lang.Object[])* :SIYEhhYcVyIj9W
 		public void setSelected(boolean)	=>	Mahiro_f(java.lang.Object[])* :kY3_CvhsV8kZNv
 
-Class: public dev.sakura.client.gui.hud.HudEditorScreen	=>	dev.sakura.client.Mahiro_yA
+Class: public dev.sakura.client.gui.hudeditor.HudEditorScreen	=>	dev.sakura.client.Mahiro_yA
 	Source: "HudEditorScreen.java"
-	FieldsOf: dev.sakura.client.gui.hud.HudEditorScreen
+	FieldsOf: dev.sakura.client.gui.hudeditor.HudEditorScreen
 		private static java.lang.String[] a	=>	Mahiro_f Manufactured:
-		private final dev.sakura.client.gui.hud.HudPanel hudPanel	=>	Mahiro_N
-	MethodsOf: dev.sakura.client.gui.hud.HudEditorScreen
+		private final dev.sakura.client.gui.hudeditor.HudPanel hudPanel	=>	Mahiro_N
+	MethodsOf: dev.sakura.client.gui.hudeditor.HudEditorScreen
 		static void <clinit>()	=>	<clinit>() :BBaRr6eWV8kZNv Manufactured:
 		public void <init>()	=>	<init>(int, int, short) :IcNU3y9SVyIJdT
 		public static java.lang.String[] a()	=>	Mahiro__() Manufactured:
@@ -1801,7 +1801,7 @@ Class: public dev.sakura.client.gui.hud.HudEditorScreen	=>	dev.sakura.client.Mah
 		public static void a(java.lang.String[])	=>	Mahiro_y(java.lang.String[]) Manufactured:
 		private static java.lang.invoke.CallSite a(java.lang.invoke.MethodHandles$Lookup, java.lang.String, java.lang.invoke.MethodType)	SignatureNotChanged: Manufactured:
 		private static int a(java.lang.invoke.MethodHandles$Lookup, java.lang.invoke.MutableCallSite, java.lang.String, java.lang.Object[])	SignatureNotChanged: Manufactured:
-		public dev.sakura.client.gui.hud.HudPanel getHudPanel()	=>	Mahiro_O(java.lang.Object[])* :y-rGVRYxV8kZNv
+		public dev.sakura.client.gui.hudeditor.HudPanel getHudPanel()	=>	Mahiro_O(java.lang.Object[])* :y-rGVRYxV8kZNv
 		public void method_25394(net.minecraft.class_332, int, int, float)	=>	method_25394(net.minecraft.class_332, int, int, float) :WwVn_NnmV8kZNv
 		public boolean method_25400(net.minecraft.class_11905)	=>	method_25400(net.minecraft.class_11905) :ecnS1xjYV8kZNv
 		public boolean method_25401(double, double, double, double)	=>	method_25401(double, double, double, double) :naVNQtlDV8kZNv
@@ -1812,9 +1812,9 @@ Class: public dev.sakura.client.gui.hud.HudEditorScreen	=>	dev.sakura.client.Mah
 		public void method_25420(net.minecraft.class_332, int, int, float)	=>	method_25420(net.minecraft.class_332, int, int, float) :nfHrz5YbV8kZNv
 		public boolean method_25421()	=>	method_25421() :sEOdA$_AV8kZNv
 
-Class: public dev.sakura.client.gui.hud.HudPanel	=>	dev.sakura.client.Mahiro_SD
+Class: public dev.sakura.client.gui.hudeditor.HudPanel	=>	dev.sakura.client.Mahiro_SD
 	Source: "HudPanel.java"
-	FieldsOf: dev.sakura.client.gui.hud.HudPanel
+	FieldsOf: dev.sakura.client.gui.hudeditor.HudPanel
 		private float dragX	=>	Mahiro_S
 		private float dragY	=>	Mahiro_k
 		private boolean dragging	=>	Mahiro_n
@@ -1825,7 +1825,7 @@ Class: public dev.sakura.client.gui.hud.HudPanel	=>	dev.sakura.client.Mahiro_SD
 		private float width	=>	Mahiro_V
 		private float x	=>	Mahiro_B
 		private float y	=>	Mahiro_N
-	MethodsOf: dev.sakura.client.gui.hud.HudPanel
+	MethodsOf: dev.sakura.client.gui.hudeditor.HudPanel
 		static void <clinit>()	=>	<clinit>() :zxlpzvQ0V8kZNv Manufactured:
 		public void <init>()	=>	<init>(char, long) :tXU1en-SVyIJ1b
 		private static java.lang.String a(byte[])	SignatureNotChanged: Manufactured:
@@ -1848,9 +1848,9 @@ Class: public dev.sakura.client.gui.hud.HudPanel	=>	dev.sakura.client.Mahiro_SD
 		public void setY(float)	=>	Mahiro_C(java.lang.Object[])* :qOHRTvhJV8kZNv
 		public void update(int, int)	=>	Mahiro_E(long, int, int)	=>	Mahiro_E(java.lang.Object[])* :nR_X-xsxVyta6S
 
-Class: public dev.sakura.client.gui.hud.component.HudModuleComponent	=>	dev.sakura.client.Mahiro_tQ
+Class: public dev.sakura.client.gui.hudeditor.component.HudModuleComponent	=>	dev.sakura.client.Mahiro_tQ
 	Source: "HudModuleComponent.java"
-	FieldsOf: dev.sakura.client.gui.hud.component.HudModuleComponent
+	FieldsOf: dev.sakura.client.gui.hudeditor.component.HudModuleComponent
 		private static final int MODULE_HEIGHT	=>	Mahiro_i
 		private static dev.sakura.client.module.Module[] a	=>	Mahiro_Q Manufactured:
 		private float fontSize	=>	Mahiro_L
@@ -1865,7 +1865,7 @@ Class: public dev.sakura.client.gui.hud.component.HudModuleComponent	=>	dev.saku
 		private float width	=>	Mahiro_d
 		private float x	=>	Mahiro_a
 		private float y	=>	Mahiro_m
-	MethodsOf: dev.sakura.client.gui.hud.component.HudModuleComponent
+	MethodsOf: dev.sakura.client.gui.hudeditor.component.HudModuleComponent
 		static void <clinit>()	=>	<clinit>() :BYbZFbthV8kZNv Manufactured:
 		public void <init>(dev.sakura.client.module.HudModule)	=>	<init>(dev.sakura.client.Mahiro_Y, long) :-pWBdRLSVyIj9W
 		public static dev.sakura.client.module.Module[] a()	=>	Mahiro_L() Manufactured:
@@ -2076,7 +2076,7 @@ Class: public dev.sakura.client.gui.mainmenu.WelcomeScreen	=>	dev.sakura.client.
 		private float imageScrollY	=>	Mahiro_p
 		private long initTime	=>	Mahiro_E
 		private boolean isImageLoading	=>	Mahiro_M
-		private dev.sakura.client.gui.component.AdvancedColorPicker mainColorPicker	=>	Mahiro_Y
+		private dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker mainColorPicker	=>	Mahiro_Y
 		private int pi8Texture	=>	Mahiro_W
 		private final java.util.List previewPanels	=>	Mahiro_h
 		private long stepTransitionStart	=>	Mahiro_A
@@ -9583,9 +9583,9 @@ ForwardClass: dev.sakura.client.gui.clickgui.ClickGuiScreen Package: dev.sakura.
 ForwardClass: dev.sakura.client.gui.clickgui.component.ModuleComponent Package: dev.sakura.client.gui.clickgui.component	Data: 12780 a2780 b2780 c2781 g
 ForwardClass: dev.sakura.client.gui.clickgui.component.values.ColorValueComponent Package: dev.sakura.client.gui.clickgui.component.values	Data: 52789 a2788 b2789 F
 ForwardClass: dev.sakura.client.gui.clickgui.panel.CategoryPanel Package: dev.sakura.client.gui.clickgui.panel	Data: M2749 a2749 b2749 X
-ForwardClass: dev.sakura.client.gui.component.AdvancedColorPicker Package: dev.sakura.client.gui.component	Data: 42827 a2827 b2827 C
-ForwardClass: dev.sakura.client.gui.hud.HudEditorScreen Package: dev.sakura.client.gui.hud	Data: 52776 a2776 b2776 b
-ForwardClass: dev.sakura.client.gui.hud.component.HudModuleComponent Package: dev.sakura.client.gui.hud.component	Data: M2787 a2787 b2787 w
+ForwardClass: dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker Package: dev.sakura.client.gui.component	Data: 42827 a2827 b2827 C
+ForwardClass: dev.sakura.client.gui.hudeditor.HudEditorScreen Package: dev.sakura.client.gui.hudeditor	Data: 52776 a2776 b2776 b
+ForwardClass: dev.sakura.client.gui.hudeditor.component.HudModuleComponent Package: dev.sakura.client.gui.hudeditor.component	Data: M2787 a2787 b2787 w
 ForwardClass: dev.sakura.client.gui.mainmenu.MainMenuScreen Package: dev.sakura.client.gui.mainmenu	Data: M2762 a2762 b2762 t
 ForwardClass: dev.sakura.client.gui.theme.SakuraTheme Package: dev.sakura.client.gui.theme	Data: 12705 a2705 b2705 c2706 o
 ForwardClass: dev.sakura.client.manager.Managers Package: dev.sakura.client.manager	Data: 32762 a2762 b2762 A
@@ -9724,12 +9724,12 @@ MemberClass: dev.sakura.client.gui.clickgui.component.values.MultiBoolValueCompo
 MemberClass: dev.sakura.client.gui.clickgui.component.values.NumberValueComponent	Data: 2651
 MemberClass: dev.sakura.client.gui.clickgui.component.values.StringValueComponent	Data: 2599
 MemberClass: dev.sakura.client.gui.clickgui.panel.CategoryPanel	Data: 2634 Sj
-MemberClass: dev.sakura.client.gui.component.AdvancedColorPicker	Data: 2713 Pi
-MemberClass: dev.sakura.client.gui.component.AdvancedColorPicker$EditField	Data: 2706
-MemberClass: dev.sakura.client.gui.component.MButton	Data: 2680
-MemberClass: dev.sakura.client.gui.hud.HudEditorScreen	Data: 2665
-MemberClass: dev.sakura.client.gui.hud.HudPanel	Data: 2630 Rv
-MemberClass: dev.sakura.client.gui.hud.component.HudModuleComponent	Data: 2677 Jp
+MemberClass: dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker	Data: 2713 Pi
+MemberClass: dev.sakura.client.gui.mainmenu.component.AdvancedColorPicker$EditField	Data: 2706
+MemberClass: dev.sakura.client.gui.mainmenu.component.MButton	Data: 2680
+MemberClass: dev.sakura.client.gui.hudeditor.HudEditorScreen	Data: 2665
+MemberClass: dev.sakura.client.gui.hudeditor.HudPanel	Data: 2630 Rv
+MemberClass: dev.sakura.client.gui.hudeditor.component.HudModuleComponent	Data: 2677 Jp
 MemberClass: dev.sakura.client.gui.mainmenu.MainMenuScreen	Data: 2653
 MemberClass: dev.sakura.client.gui.mainmenu.MainMenuScreen$Layout	Data: 2719
 MemberClass: dev.sakura.client.gui.mainmenu.MainMenuScreen$MainMenuEntry	Data: 2669

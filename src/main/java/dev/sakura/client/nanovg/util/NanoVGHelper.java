@@ -420,11 +420,6 @@ public class NanoVGHelper {
         return new Color(r, g, b, a);
     }
 
-    private static void initInnerOuterColors(NVGColor innerColor, NVGColor outerColor, Color color) {
-        setColor(innerColor, color);
-        setColor(outerColor, color.getRed(), color.getGreen(), color.getBlue(), 0);
-    }
-
     /**
      * 获取字体高度
      */
