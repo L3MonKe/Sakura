@@ -108,14 +108,18 @@ public class Scaffold extends Module {
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
-        if (nullCheck()) return;
-
         if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
             return;
         }
+        
+        if (nullCheck()) return;
 
         if (mc.options.attackKey.isPressed()) {
             mc.options.attackKey.setPressed(false);
+        }
+
+        if (mc.options.useKey.isPressed()) {
+            mc.options.useKey.setPressed(false);
         }
 
         getBlockInfo();
