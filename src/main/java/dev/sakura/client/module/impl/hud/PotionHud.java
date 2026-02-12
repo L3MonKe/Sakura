@@ -128,7 +128,7 @@ public class PotionHud extends HudModule {
             boolean glow = textGlow.get();
             float glowRadius = glowRange.get().floatValue() * s;
             int glowPower = Math.max(1, glowIntensity.get());
-            int align = NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE;
+            int align = NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE;
 
             for (RenderEntry e : entries) {
                 NanoVGHelper.drawRoundRect(e.iconX, e.y, e.iconW, e.iconH, r, overlay);
@@ -139,8 +139,7 @@ public class PotionHud extends HudModule {
                 NanoVGHelper.drawRoundRect(e.infoX, e.y, e.infoW, e.infoH, r, overlay);
                 NanoVGHelper.resetScissor();
 
-                float nameLineH = NanoVGHelper.getFontHeight(e.nameFont, e.nameFontSize);
-                float textY = e.y + ((e.infoH - nameLineH) / 2f) + nameLineH;
+                float textY = e.y + (e.infoH / 2f);
                 float nameX = e.infoX + (5f * s);
                 float durationX = e.infoX + (7f * s) + e.nameW;
 

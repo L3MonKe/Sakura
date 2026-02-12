@@ -2,7 +2,6 @@ package dev.sakura.client.shaders.program;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.Std140Builder;
-import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -10,7 +9,10 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
-import net.minecraft.client.gl.*;
+import net.minecraft.client.gl.Framebuffer;
+import net.minecraft.client.gl.MappableRingBuffer;
+import net.minecraft.client.gl.RenderPipelines;
+import net.minecraft.client.gl.UniformType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
 
@@ -25,24 +27,13 @@ public class ShadowProgram {
     private static final Identifier MASK_FRAGMENT_SHADER = Identifier.of("sakura", "core/blur_mask");
     private static final Identifier SHADOW_FRAGMENT_SHADER = Identifier.of("sakura", "core/shadow");
 
-    private static final int MAX_SEGMENTS = 64;
-    private static final int UNIFORMS_SIZE = getUniformSize();
+    private static final int UNIFORMS_SIZE = SegmentUniforms.uniformSize();
 
     private RenderPipeline maskPipeline;
     private RenderPipeline shadowPipeline;
     private MappableRingBuffer uniforms;
-    private Framebuffer mask;
-
-    private static int getUniformSize() {
-        Std140SizeCalculator calc = new Std140SizeCalculator().putVec4().putVec4().putVec4().putVec4().putVec4();
-        for (int i = 0; i < MAX_SEGMENTS; i++) {
-            calc.putVec4();
-        }
-        for (int i = 0; i < MAX_SEGMENTS; i++) {
-            calc.putVec4();
-        }
-        return calc.get();
-    }
+    private final LazyFramebuffer mask = new LazyFramebuffer("Sakura Shadow Mask");
+    private final float[] tmpTopBottom = new float[2];
 
     private void ensureProgram() {
         if (this.uniforms == null) {
@@ -71,16 +62,6 @@ public class ShadowProgram {
         }
     }
 
-    private void ensureMaskBuffer(int width, int height) {
-        if (this.mask == null) {
-            this.mask = new SimpleFramebuffer("Sakura Shadow Mask", width, height, false);
-            return;
-        }
-        if (this.mask.textureWidth != width || this.mask.textureHeight != height) {
-            this.mask.resize(width, height);
-        }
-    }
-
     public void renderStairShadow(float x, float y, float width, float height, float range, float strength, Color color, float[] segmentRects, float[] segmentRadii, int segmentCount) {
         this.renderStairShadow(x, y, width, height, range, strength, color, color, false, segmentRects, segmentRadii, segmentCount);
     }
@@ -98,8 +79,8 @@ public class ShadowProgram {
 
         int fbWidth = mc.getWindow().getFramebufferWidth();
         int fbHeight = mc.getWindow().getFramebufferHeight();
-        this.ensureMaskBuffer(fbWidth, fbHeight);
-        if (this.mask.getColorAttachment() == null || this.mask.getColorAttachmentView() == null) {
+        Framebuffer mask = this.mask.ensure(fbWidth, fbHeight);
+        if (mask.getColorAttachment() == null || mask.getColorAttachmentView() == null) {
             return;
         }
 
@@ -114,22 +95,10 @@ public class ShadowProgram {
         float pxW = width * scale;
         float pxH = height * scale;
 
-        float topY = Float.POSITIVE_INFINITY;
-        float bottomY = Float.NEGATIVE_INFINITY;
-        int count = Math.max(0, Math.min(MAX_SEGMENTS, segmentCount));
-        for (int i = 0; i < count; i++) {
-            int base = i * 4;
-            float segY = segmentRects[base + 1];
-            float segH = segmentRects[base + 3];
-            float segTop = (scaledHeight - (segY + segH)) * scale;
-            float segBottom = (scaledHeight - segY) * scale;
-            topY = Math.min(topY, segTop);
-            bottomY = Math.max(bottomY, segBottom);
-        }
-        if (!Float.isFinite(topY) || !Float.isFinite(bottomY)) {
-            topY = pxY;
-            bottomY = pxY + pxH;
-        }
+        int count = SegmentUniforms.clampCount(segmentCount);
+        SegmentUniforms.computeVerticalBounds(scale, scaledHeight, pxY, pxH, segmentRects, count, this.tmpTopBottom);
+        float topY = this.tmpTopBottom[0];
+        float bottomY = this.tmpTopBottom[1];
 
         int paddingPx = (int) Math.ceil(Math.max(2.0f, rangePx * 2.0f));
         int scissorX = Math.max(0, (int) Math.floor(pxX) - paddingPx);
@@ -138,7 +107,7 @@ public class ShadowProgram {
         int scissorH = Math.min(fbHeight - scissorY, (int) Math.ceil(pxH) + paddingPx * 2);
 
         CommandEncoder encoder = RenderSystem.getDevice().createCommandEncoder();
-        GpuTexture maskColor = this.mask.getColorAttachment();
+        GpuTexture maskColor = mask.getColorAttachment();
         if (maskColor != null) {
             encoder.clearColorTexture(maskColor, ColorHelper.getArgb(0, 0, 0, 0));
         }
@@ -150,37 +119,10 @@ public class ShadowProgram {
             builder.putVec4(startColor.getRed() / 255.0f, startColor.getGreen() / 255.0f, startColor.getBlue() / 255.0f, 1.0f);
             builder.putVec4(endColor.getRed() / 255.0f, endColor.getGreen() / 255.0f, endColor.getBlue() / 255.0f, gradient ? 1.0f : 0.0f);
             builder.putVec4((float) count, 0.0f, 0.0f, 0.0f);
-
-
-            for (int i = 0; i < MAX_SEGMENTS; i++) {
-                if (segmentRects != null && i < count) {
-                    int base = i * 4;
-                    float segX = segmentRects[base];
-                    float segY = segmentRects[base + 1];
-                    float segW = segmentRects[base + 2];
-                    float segH = segmentRects[base + 3];
-
-                    float segPxX = segX * scale;
-                    float segPxY = (scaledHeight - (segY + segH)) * scale;
-                    float segPxW = segW * scale;
-                    float segPxH = segH * scale;
-                    builder.putVec4(segPxX, segPxY, segPxW, segPxH);
-                } else {
-                    builder.putVec4(0.0f, 0.0f, 0.0f, 0.0f);
-                }
-            }
-
-            for (int i = 0; i < MAX_SEGMENTS; i++) {
-                if (segmentRadii != null && i < count) {
-                    float r = Math.max(0.0f, segmentRadii[i] * scale);
-                    builder.putVec4(r, 0.0f, 0.0f, 0.0f);
-                } else {
-                    builder.putVec4(0.0f, 0.0f, 0.0f, 0.0f);
-                }
-            }
+            SegmentUniforms.putSegments(builder, scale, scaledHeight, segmentRects, segmentRadii, count);
         }
 
-        try (RenderPass maskPass = encoder.createRenderPass(() -> "Sakura Shadow Mask", this.mask.getColorAttachmentView(), OptionalInt.empty(), null, OptionalDouble.empty())) {
+        try (RenderPass maskPass = encoder.createRenderPass(() -> "Sakura Shadow Mask", mask.getColorAttachmentView(), OptionalInt.empty(), null, OptionalDouble.empty())) {
             maskPass.setPipeline(this.maskPipeline);
             RenderSystem.bindDefaultUniforms(maskPass);
             maskPass.setUniform("BlurUniforms", this.uniforms.getBlocking());
@@ -192,7 +134,7 @@ public class ShadowProgram {
             shadowPass.enableScissor(scissorX, scissorY, Math.max(0, scissorW), Math.max(0, scissorH));
             RenderSystem.bindDefaultUniforms(shadowPass);
             shadowPass.setUniform("BlurUniforms", this.uniforms.getBlocking());
-            shadowPass.bindTexture("MaskSampler", this.mask.getColorAttachmentView(), RenderSystem.getSamplerCache().get(FilterMode.LINEAR));
+            shadowPass.bindTexture("MaskSampler", mask.getColorAttachmentView(), RenderSystem.getSamplerCache().get(FilterMode.LINEAR));
             shadowPass.draw(0, 3);
         }
 

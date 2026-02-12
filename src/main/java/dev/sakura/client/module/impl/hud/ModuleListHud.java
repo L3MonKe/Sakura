@@ -126,6 +126,7 @@ public class ModuleListHud extends HudModule {
     private static final float CATEGORY_ICON_SPACING = 6f;
     private static final Color SUFFIX_COLOR = new Color(180, 180, 180);
     private static final Color BACKGROUND_COLOR = new Color(18, 18, 18, 70);
+    private static final int MAX_SEGMENTS = 64;
 
     private static final String CATEGORY_ICON = "U";
     private static final float ICON_BACKGROUND_WIDTH = 12f;
@@ -148,6 +149,21 @@ public class ModuleListHud extends HudModule {
     private final List<Module> tmpVisibleModules = new ArrayList<>();
     private final Map<Module, ModuleEntry> moduleEntryCache = new HashMap<>();
 
+    private long frameTimeMs = 0L;
+    private boolean frameGradientReady = false;
+    private Color frameGradientC1 = Color.WHITE;
+    private Color frameGradientC2 = Color.WHITE;
+    private double frameGradientOffset = 0.0;
+
+    private long frameSegmentsTimeMs = Long.MIN_VALUE;
+    private float frameSegmentsScale = Float.NaN;
+    private float frameSegmentsFontSize = Float.NaN;
+    private float frameSegmentsStartY = Float.NaN;
+    private final List<BackgroundSegment> frameSegments = new ArrayList<>();
+
+    private final float[] tmpSegmentRects = new float[MAX_SEGMENTS * 4];
+    private final float[] tmpSegmentRadii = new float[MAX_SEGMENTS];
+
     public static void onModuleToggle(Module module, boolean enabled) {
         ModuleListHud instance = Sakura.MODULES.getModule(ModuleListHud.class);
         instance.dirty = true;
@@ -167,6 +183,9 @@ public class ModuleListHud extends HudModule {
 
     @Override
     public void onRender(DrawContext context) {
+        frameTimeMs = System.currentTimeMillis();
+        frameGradientReady = false;
+        frameSegmentsTimeMs = Long.MIN_VALUE;
         update();
         ensureWithinScreenBounds();
 
@@ -700,6 +719,24 @@ public class ModuleListHud extends HudModule {
         return prefixSymbol + suffix + suffixSymbol;
     }
 
+    private void ensureFrameGradient() {
+        if (frameGradientReady) {
+            return;
+        }
+        Color c1 = gradientColor1.get();
+        Color c2 = gradientColor2.get();
+        if (autoColor.get()) {
+            double speed = gradientSpeed.get();
+            float hue = (float) ((frameTimeMs * speed / 5000.0) % 1.0);
+            c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
+            c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
+        }
+        frameGradientC1 = c1;
+        frameGradientC2 = c2;
+        frameGradientOffset = (frameTimeMs * gradientSpeed.get()) / 50.0;
+        frameGradientReady = true;
+    }
+
     private void renderBlurBackgrounds() {
         float scale = hudScale.get().floatValue();
         float fontSize = customFontSize.get().floatValue();
@@ -736,24 +773,22 @@ public class ModuleListHud extends HudModule {
             return;
         }
 
-        int count = Math.min(64, segments.size());
-        float[] rects = new float[count * 4];
-        float[] radii = new float[count];
+        int count = Math.min(MAX_SEGMENTS, segments.size());
         for (int i = 0; i < count; i++) {
             BackgroundSegment segment = segments.get(i);
             int base = i * 4;
-            rects[base] = segment.x - overlap;
-            rects[base + 1] = segment.y - overlap;
-            rects[base + 2] = segment.w + overlap * 2.0f;
-            rects[base + 3] = segment.h + overlap * 2.0f;
-            radii[i] = 0.0f;
+            tmpSegmentRects[base] = segment.x - overlap;
+            tmpSegmentRects[base + 1] = segment.y - overlap;
+            tmpSegmentRects[base + 2] = segment.w + overlap * 2.0f;
+            tmpSegmentRects[base + 3] = segment.h + overlap * 2.0f;
+            tmpSegmentRadii[i] = 0.0f;
         }
         if (count > 0) {
-            radii[0] = r;
-            radii[count - 1] = r;
+            tmpSegmentRadii[0] = r;
+            tmpSegmentRadii[count - 1] = r;
         }
 
-        BlurShader.drawSegmentedBlur(blurX, blurY, blurW, blurH, 0.0f, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 1.0f, rects, radii, count);
+        BlurShader.drawSegmentedBlur(blurX, blurY, blurW, blurH, 0.0f, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 1.0f, tmpSegmentRects, tmpSegmentRadii, count);
     }
 
     private void renderBackgroundShadow() {
@@ -786,34 +821,27 @@ public class ModuleListHud extends HudModule {
             return;
         }
 
-        int count = Math.min(64, segments.size());
-        float[] rects = new float[count * 4];
-        float[] radii = new float[count];
+        int count = Math.min(MAX_SEGMENTS, segments.size());
         for (int i = 0; i < count; i++) {
             BackgroundSegment segment = segments.get(i);
             int base = i * 4;
-            rects[base] = segment.x;
-            rects[base + 1] = segment.y - overlap;
-            rects[base + 2] = segment.w;
-            rects[base + 3] = segment.h + overlap * 2.0f;
-            radii[i] = 0.0f;
+            tmpSegmentRects[base] = segment.x;
+            tmpSegmentRects[base + 1] = segment.y - overlap;
+            tmpSegmentRects[base + 2] = segment.w;
+            tmpSegmentRects[base + 3] = segment.h + overlap * 2.0f;
+            tmpSegmentRadii[i] = 0.0f;
         }
         float r = backgroundRadius.get().floatValue() * scale;
         if (count > 0) {
-            radii[0] = r;
-            radii[count - 1] = r;
+            tmpSegmentRadii[0] = r;
+            tmpSegmentRadii[count - 1] = r;
         }
 
         if (shadowMode.is(ShadowMode.Gradient)) {
-            Color c1 = gradientColor1.get();
-            Color c2 = gradientColor2.get();
-            if (autoColor.get()) {
-                float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
-                c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
-                c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
-            }
-
-            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+            ensureFrameGradient();
+            Color c1 = frameGradientC1;
+            Color c2 = frameGradientC2;
+            double offset = frameGradientOffset;
             int lastIndex = Math.max(0, count - 1);
             double topOffset = offset;
             double bottomOffset = offset + (lastIndex * colorStep.get());
@@ -834,14 +862,14 @@ public class ModuleListHud extends HudModule {
                     shadowStrength.get().floatValue(),
                     start,
                     end,
-                    rects,
-                    radii,
+                    tmpSegmentRects,
+                    tmpSegmentRadii,
                     count
             );
             return;
         }
 
-        ShadowShader.drawStairShadow(shadowX, shadowY, shadowW, shadowH, shadowRange.get().floatValue(), shadowStrength.get().floatValue(), new Color(0, 0, 0), rects, radii, count);
+        ShadowShader.drawStairShadow(shadowX, shadowY, shadowW, shadowH, shadowRange.get().floatValue(), shadowStrength.get().floatValue(), new Color(0, 0, 0), tmpSegmentRects, tmpSegmentRadii, count);
     }
 
     private void renderGradientContent() {
@@ -901,16 +929,10 @@ public class ModuleListHud extends HudModule {
             float animatedTextX = alignRight.get() ?
                     textX + (itemWidth - animatedItemWidth) : textX;
 
-            Color c1 = gradientColor1.get();
-            Color c2 = gradientColor2.get();
-
-            if (autoColor.get()) {
-                float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
-                c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
-                c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
-            }
-
-            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+            ensureFrameGradient();
+            Color c1 = frameGradientC1;
+            Color c2 = frameGradientC2;
+            double offset = frameGradientOffset;
             double currentOffset = offset + (index * colorStep.get());
             double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
 
@@ -949,8 +971,20 @@ public class ModuleListHud extends HudModule {
     }
 
     private List<BackgroundSegment> buildGradientBackgroundSegments(float scale, float fontSize, float startY) {
+        if (frameSegmentsTimeMs == frameTimeMs
+                && Float.compare(frameSegmentsScale, scale) == 0
+                && Float.compare(frameSegmentsFontSize, fontSize) == 0
+                && Float.compare(frameSegmentsStartY, startY) == 0) {
+            return frameSegments;
+        }
+
+        frameSegmentsTimeMs = frameTimeMs;
+        frameSegmentsScale = scale;
+        frameSegmentsFontSize = fontSize;
+        frameSegmentsStartY = startY;
+
         float currentBgY = startY;
-        List<BackgroundSegment> segments = new ArrayList<>();
+        frameSegments.clear();
         int index = 0;
 
         for (ModuleEntry entry : moduleEntries) {
@@ -977,13 +1011,13 @@ public class ModuleListHud extends HudModule {
             float bgY = renderY + bgOffset - heightAdjustment;
             float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
 
-            segments.add(new BackgroundSegment(index, itemBgX - (4 * scale), bgY, bgWidth, bgH, (float) animationValue));
+            frameSegments.add(new BackgroundSegment(index, itemBgX - (4 * scale), bgY, bgWidth, bgH, (float) animationValue));
 
             currentBgY += (float) (itemFullHeight * animationValue);
             index++;
         }
 
-        return segments;
+        return frameSegments;
     }
 
     private void drawMergedGradientBackground(List<BackgroundSegment> segments, float scale) {
@@ -1015,18 +1049,14 @@ public class ModuleListHud extends HudModule {
     }
 
     private void drawGradientLines(List<BackgroundSegment> segments, float scale) {
-        Color c1 = gradientColor1.get();
-        Color c2 = gradientColor2.get();
-        if (autoColor.get()) {
-            float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
-            c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
-            c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
-        }
+        ensureFrameGradient();
+        Color c1 = frameGradientC1;
+        Color c2 = frameGradientC2;
 
         float r = backgroundRadius.get().floatValue() * scale;
         float lineW = lineWidth.get().floatValue() * scale;
 
-        double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+        double offset = frameGradientOffset;
         if (lineMode.is(LineMode.Box)) {
             long vg = NanoVGRenderer.INSTANCE.getContext();
             int lastIndex = segments.size() - 1;
@@ -1193,16 +1223,10 @@ public class ModuleListHud extends HudModule {
             float animatedItemWidth = itemWidth * (float) animationValue;
             float animatedTextX = alignRight.get() ? textX + (itemWidth - animatedItemWidth) : textX;
 
-            Color c1 = gradientColor1.get();
-            Color c2 = gradientColor2.get();
-
-            if (autoColor.get()) {
-                float hue = (float) ((System.currentTimeMillis() * gradientSpeed.get() / 5000.0) % 1.0);
-                c1 = Color.getHSBColor(hue, 0.7f, 1.0f);
-                c2 = Color.getHSBColor((hue + 0.5f) % 1.0f, 0.7f, 1.0f);
-            }
-
-            double offset = (System.currentTimeMillis() * gradientSpeed.get()) / 50.0;
+            ensureFrameGradient();
+            Color c1 = frameGradientC1;
+            Color c2 = frameGradientC2;
+            double offset = frameGradientOffset;
             double currentOffset = offset + (index * colorStep.get());
             double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
 
