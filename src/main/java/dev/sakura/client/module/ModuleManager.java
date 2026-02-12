@@ -13,6 +13,7 @@ import dev.sakura.client.module.impl.combat.*;
 import dev.sakura.client.module.impl.hud.*;
 import dev.sakura.client.module.impl.movement.*;
 import dev.sakura.client.module.impl.player.*;
+import dev.sakura.client.module.impl.player.Timer;
 import dev.sakura.client.module.impl.player.inventory.InvManager;
 import dev.sakura.client.module.impl.player.inventory.Stealer;
 import dev.sakura.client.module.impl.render.*;
@@ -70,7 +71,7 @@ public class ModuleManager {
         add(new GhostHand());
 //        add(new PacketMine());
         add(new Stealer());
-        add(new TimerModule());
+        add(new Timer());
         add(new InvManager());
 
         // Render

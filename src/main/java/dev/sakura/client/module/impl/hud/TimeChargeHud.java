@@ -2,7 +2,7 @@ package dev.sakura.client.module.impl.hud;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.HudModule;
-import dev.sakura.client.module.impl.player.TimerModule;
+import dev.sakura.client.module.impl.player.Timer;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
@@ -73,7 +73,7 @@ public class TimeChargeHud extends HudModule {
 
     @Override
     public void onRender(DrawContext context) {
-        TimerModule timerModule = Sakura.MODULES.getModule(TimerModule.class);
+        Timer timerModule = Sakura.MODULES.getModule(Timer.class);
         if (!timerModule.isEnabled()) return;
 
         // 更新尺寸

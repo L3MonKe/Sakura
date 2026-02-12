@@ -7226,9 +7226,9 @@ Class: public final enum dev.sakura.client.module.impl.player.PacketMine$Swap	=>
 		public static dev.sakura.client.module.impl.player.PacketMine$Swap valueOf(java.lang.String)	=>	valueOf(java.lang.String) :SSJXOo2wV8kZNv
 		public static dev.sakura.client.module.impl.player.PacketMine$Swap[] values()	=>	values() :JoE2qTc7V8kZNv
 
-Class: public dev.sakura.client.module.impl.player.TimerModule	=>	dev.sakura.client.Mahiro_KX
+Class: public dev.sakura.client.module.impl.player.Timer	=>	dev.sakura.client.Mahiro_KX
 	Source: "TimerModule.java"
-	FieldsOf: dev.sakura.client.module.impl.player.TimerModule
+	FieldsOf: dev.sakura.client.module.impl.player.Timer
 		private static final double CHARGE_SPEED	=>	Mahiro_z
 		private static final double CHARGE_TIME	=>	Mahiro_u
 		private static final double NORMAL_DURATION	=>	Mahiro_Q
@@ -7239,7 +7239,7 @@ Class: public dev.sakura.client.module.impl.player.TimerModule	=>	dev.sakura.cli
 		public final dev.sakura.client.values.impl.BoolValue moveCharge	=>	Mahiro_v
 		private double progress	=>	Mahiro_r
 		public final dev.sakura.client.values.impl.BoolValue pulse	=>	Mahiro_h
-	MethodsOf: dev.sakura.client.module.impl.player.TimerModule
+	MethodsOf: dev.sakura.client.module.impl.player.Timer
 		static void <clinit>()	=>	<clinit>() :ymYvM6FFV8kZNv Manufactured:
 		public void <init>()	=>	<init>(long) :q0YWj6iJVyta6S
 		private static java.lang.String b(byte[])	SignatureNotChanged: Manufactured:
@@ -11164,7 +11164,7 @@ MemberClass: dev.sakura.client.module.impl.player.PacketMine	Data: 2691 J
 MemberClass: dev.sakura.client.module.impl.player.PacketMine$BlockData	Data: 2668
 MemberClass: dev.sakura.client.module.impl.player.PacketMine$RemineMode	Data: 2709
 MemberClass: dev.sakura.client.module.impl.player.PacketMine$Swap	Data: 2662
-MemberClass: dev.sakura.client.module.impl.player.TimerModule	Data: 2662
+MemberClass: dev.sakura.client.module.impl.player.Timer	Data: 2662
 MemberClass: dev.sakura.client.module.impl.player.inventory.InvHelper	Data: 2647
 MemberClass: dev.sakura.client.module.impl.player.inventory.InvManager	Data: 2657 U
 MemberClass: dev.sakura.client.module.impl.player.inventory.InvManager$BowPriority	Data: 2673

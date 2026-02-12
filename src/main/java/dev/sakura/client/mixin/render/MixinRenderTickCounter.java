@@ -2,7 +2,7 @@ package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.impl.client.TimerEvent;
-import dev.sakura.client.module.impl.player.TimerModule;
+import dev.sakura.client.module.impl.player.Timer;
 import net.minecraft.client.render.RenderTickCounter;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,7 +20,7 @@ public class MixinRenderTickCounter {
     public void onBeginRenderTick(long long_1, CallbackInfoReturnable<Integer> cir) {
         TimerEvent event = new TimerEvent();
         Sakura.EVENT_BUS.post(event);
-        TimerModule timer = Sakura.MODULES.getModule(TimerModule.class);
+        Timer timer = Sakura.MODULES.getModule(Timer.class);
         if (!event.isCancelled()) {
             if (event.isModified()) {
                 dynamicDeltaTicks *= event.get();

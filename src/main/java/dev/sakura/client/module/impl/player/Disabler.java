@@ -26,7 +26,6 @@ public class Disabler extends Module {
 
     private final BoolValue logging = new BoolValue("Logging", "日志", false);
     private final BoolValue disAim360 = new BoolValue("Aim 360", "Aim 360", true);
-    //by Gemini
     private final BoolValue aca = new BoolValue("ACA", "打死ACA", true);
     private final BoolValue grim = new BoolValue("Grim", "Grim Disabler", true);
     private final BoolValue grimBadPackets = new BoolValue("Grim BadPackets", "Grim烂包", true, grim::get);

@@ -11,8 +11,8 @@ import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import org.lwjgl.glfw.GLFW;
 
-public class TimerModule extends Module {
-    public TimerModule() {
+public class Timer extends Module {
+    public Timer() {
         super("Timer", "变速", Category.Player);
     }
 
