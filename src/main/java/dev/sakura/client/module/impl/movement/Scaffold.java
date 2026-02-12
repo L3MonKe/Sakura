@@ -143,30 +143,47 @@ public class Scaffold extends Module {
 
         if (nullCheck()) return;
 
-        getBlockInfo();
+        int loops = (int) Math.ceil(Math.hypot(mc.player.getVelocity().x, mc.player.getVelocity().z)) + 2;
 
-        MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
-        if (mode.is(Mode.Telly)) {
-            if (mc.player.isOnGround()) {
-                yLevel = (int) Math.floor(mc.player.getY()) - 1;
-                airTicks = 0;
-                Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
-                Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
-            } else {
-                if (onAir() && airTicks >= tellyTick.get() && blockCache != null) {
-                    Rotation rotation = getRotation(blockCache);
-                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-                    place();
-                } else if (!onAir() && blockCache != null) {
-                    Rotation rotation = getRotation(blockCache);
-                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+        for (int i = 0; i < loops; i++) {
+            blockCache = null;
+            getBlockInfo();
+
+            MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
+            boolean placed = false;
+
+            if (mode.is(Mode.Telly)) {
+                if (mc.player.isOnGround()) {
+                    yLevel = (int) Math.floor(mc.player.getY()) - 1;
+                    airTicks = 0;
+                    Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+                    Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
+                    break;
+                } else {
+                    if (blockCache != null) {
+                        if (onAir() && airTicks >= tellyTick.get()) {
+                            Rotation rotation = getRotation(blockCache);
+                            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                            place();
+                            placed = true;
+                        } else if (!onAir()) {
+                            Rotation rotation = getRotation(blockCache);
+                            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                        }
+                    }
                 }
-                airTicks++;
+            } else if (blockCache != null) {
+                Rotation rotation = getRotation(blockCache);
+                Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                place();
+                placed = true;
             }
-        } else if (blockCache != null) {
-            Rotation rotation = getRotation(blockCache);
-            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-            place();
+
+            if (blockCache == null || !placed) break;
+        }
+
+        if (mode.is(Mode.Telly) && !mc.player.isOnGround()) {
+            airTicks++;
         }
 
         if (swapMode.is(SwapMode.Silent)) {
