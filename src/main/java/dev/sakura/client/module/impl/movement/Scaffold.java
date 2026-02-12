@@ -3,7 +3,9 @@ package dev.sakura.client.module.impl.movement;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MouseButtonEvent;
+import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.StrafeEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.event.type.KeyAction;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
@@ -28,6 +30,7 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.block.FallingBlock;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
@@ -42,16 +45,30 @@ import net.minecraft.util.math.Vec3d;
 import java.awt.*;
 
 public class Scaffold extends Module {
+    private enum Mode {
+        GodBridge,
+        Telly
+    }
+
+    private enum SwapMode {
+        None,
+        Normal,
+        InvSwitch,
+        Silent
+    }
+
+    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Telly);
     private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
     private final BoolValue swapBack = new BoolValue("SwapBack", "停用还原", true, () -> swapMode.is(SwapMode.Normal));
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
-    private final BoolValue telly = new BoolValue("Telly", "Telly搭路", true);
-    private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 1, 0, 8, 1, telly::get);
-    private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, telly::get);
+    private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 1, 0, 8, 1, () -> mode.is(Mode.Telly));
+    private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, () -> mode.is(Mode.Telly));
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
-    private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, telly::get);
+    private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, () -> mode.is(Mode.Telly));
     private final BoolValue sideCheck = new BoolValue("Side Check", "放置面检测", false);
     private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true);
+    private final BoolValue safeWalk = new BoolValue("Safe Walk", "安全行走", true);
+
     private final BoolValue render = new BoolValue("Render", "渲染", true);
     private final BoolValue fade = new BoolValue("Fade", "变淡", false, render::get);
     private final BoolValue shrink = new BoolValue("Shrink", "收缩", true, render::get);
@@ -79,7 +96,7 @@ public class Scaffold extends Module {
 
     @Override
     public String getSuffix() {
-        return telly.get() ? "Telly" : "GodBridge";
+        return mode.get().name();
     }
 
     @Override
@@ -98,34 +115,38 @@ public class Scaffold extends Module {
     }
 
     @EventHandler
-    public void onMouseButton(MouseButtonEvent event) {
+    private void onMouseButton(MouseButtonEvent event) {
         if (mc.currentScreen != null) return;
-        if (event.getButton() == 0 && event.getAction() == KeyAction.Press) {
+        if (event.getAction() != KeyAction.Press) return;
+        if (event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_LEFT) {
             event.setCancelled(true);
             mc.options.attackKey.setPressed(false);
+        }
+        if (event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_RIGHT) {
+            event.setCancelled(true);
+            mc.options.useKey.setPressed(false);
         }
     }
 
     @EventHandler
-    public void onTick(TickEvent.Pre event) {
+    private void onMotion(MotionEvent e) {
+        if (e.getType() == EventType.PRE && safeWalk.get() && mode.is(Mode.GodBridge)) {
+            mc.options.sneakKey.setPressed(mc.player.isOnGround() && SafeWalk.isOnBlockEdge(0.3F));
+        }
+    }
+
+    @EventHandler
+    private void onTick(TickEvent.Pre event) {
         if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
             return;
         }
 
         if (nullCheck()) return;
 
-        if (mc.options.attackKey.isPressed()) {
-            mc.options.attackKey.setPressed(false);
-        }
-
-        if (mc.options.useKey.isPressed()) {
-            mc.options.useKey.setPressed(false);
-        }
-
         getBlockInfo();
 
         MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
-        if (telly.get()) {
+        if (mode.is(Mode.Telly)) {
             if (mc.player.isOnGround()) {
                 yLevel = (int) Math.floor(mc.player.getY()) - 1;
                 airTicks = 0;
@@ -155,7 +176,7 @@ public class Scaffold extends Module {
 
     @EventHandler
     public void onStrafe(StrafeEvent event) {
-        if (mc.player.isOnGround() && MoveUtil.isMoving() && telly.get() && !mc.options.jumpKey.isPressed()) {
+        if (mc.player.isOnGround() && MoveUtil.isMoving() && mode.is(Mode.Telly) && !mc.options.jumpKey.isPressed()) {
             mc.player.jump();
         }
     }
@@ -180,7 +201,7 @@ public class Scaffold extends Module {
     }
 
     public int getYLevel() {
-        if (keepY.get() && !mc.options.jumpKey.isPressed() && MoveUtil.isMoving() && telly.get() && mc.player.fallDistance <= 1) {
+        if (keepY.get() && !mc.options.jumpKey.isPressed() && MoveUtil.isMoving() && mode.is(Mode.Telly) && mc.player.fallDistance <= 1) {
             return yLevel;
         } else {
             return MathHelper.floor(mc.player.getY()) - 1;
@@ -286,7 +307,7 @@ public class Scaffold extends Module {
 
             Vec3d relevant = hit.subtract(baseVec);
             if (relevant.lengthSquared() <= 4.5 * 4.5 && relevant.dotProduct(new Vec3d(dir.getVector())) >= 0) {
-                if (dir.getOpposite() == Direction.UP && !telly.get() && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+                if (dir.getOpposite() == Direction.UP && mode.is(Mode.GodBridge) && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
                     continue;
                 }
 
@@ -312,13 +333,6 @@ public class Scaffold extends Module {
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, sideCheck.get());
         if (hasRotated) return reverseYaw;
         return rotations;
-    }
-
-    private enum SwapMode {
-        None,
-        Normal,
-        InvSwitch,
-        Silent
     }
 
     private record BlockCache(BlockPos position, Direction facing, Vec3d hitVec) {

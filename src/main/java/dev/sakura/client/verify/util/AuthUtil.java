@@ -11,9 +11,6 @@ import net.minecraft.client.MinecraftClient;
 
 import java.io.IOException;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -29,6 +26,8 @@ public final class AuthUtil {
 
     public static final AtomicReference<String> authed = new AtomicReference<>("");
     public static final String AUTH_OK_TOKEN = "SakuraVerifyToken0123456789ABCDE";
+    private static final long TIME_WINDOW_MS = 30_000L;
+    private static final long MAX_TIME_WINDOW_SKEW = 1L;
 
     private AuthUtil() {
     }
@@ -90,14 +89,18 @@ public final class AuthUtil {
                     @Override
                     public void onLoginResult(boolean success, long expireAt, long timeWindow, String message) {
                         long now = Instant.now().toEpochMilli();
-                        long nowTimeWindow = now / 30000L;
-                        boolean ok = success && nowTimeWindow == timeWindow;
-                        if (ok) {
+                        long nowTimeWindow = now / TIME_WINDOW_MS;
+                        long skew = Math.abs(nowTimeWindow - timeWindow);
+                        boolean timeOk = skew <= MAX_TIME_WINDOW_SKEW;
+                        if (success) {
                             authedFlag.set(true);
                             authed.set(AUTH_OK_TOKEN);
                             AuthState.setAuthed(username, expireAt);
                             if (finished.compareAndSet(false, true)) {
                                 MinecraftClient.getInstance().execute(() -> {
+                                    if (!timeOk && ui != null) {
+                                        ui.accept(true, "登录成功，但本地时间偏差较大，建议校准系统时间");
+                                    }
                                     MainMenuScreen screen = new MainMenuScreen();
                                     screen.startIntro();
                                     MinecraftClient.getInstance().setScreen(screen);
@@ -107,9 +110,6 @@ public final class AuthUtil {
                             authed.set("");
                             AuthState.clear();
                             String m = message == null ? "" : message;
-                            if (success && nowTimeWindow != timeWindow) {
-                                m = "请尝试重新登陆或校准系统时间";
-                            }
                             String display = "登录失败 " + m;
                             if (finished.compareAndSet(false, true)) {
                                 MinecraftClient.getInstance().execute(() -> {
@@ -124,34 +124,23 @@ public final class AuthUtil {
                     @Override
                     public void onRegisterResult(boolean success, long expireAt, long timeWindow, String message) {
                         long now = Instant.now().toEpochMilli();
-                        long nowTimeWindow = now / 30000L;
-                        if (success && nowTimeWindow == timeWindow) {
+                        long nowTimeWindow = now / TIME_WINDOW_MS;
+                        long skew = Math.abs(nowTimeWindow - timeWindow);
+                        boolean timeOk = skew <= MAX_TIME_WINDOW_SKEW;
+                        if (success) {
                             authedFlag.set(true);
                             authed.set(AUTH_OK_TOKEN);
                             AuthState.setAuthed(username, expireAt);
                             if (finished.compareAndSet(false, true)) {
                                 MinecraftClient.getInstance().execute(() -> {
+                                    if (!timeOk && ui != null) {
+                                        ui.accept(true, "注册成功，但本地时间偏差较大，建议校准系统时间");
+                                    }
                                     MainMenuScreen screen = new MainMenuScreen();
                                     screen.startIntro();
                                     MinecraftClient.getInstance().setScreen(screen);
                                 });
                             }
-                            return;
-                        }
-
-                        if (success && nowTimeWindow != timeWindow) {
-                            authed.set("");
-                            AuthState.clear();
-                            LocalDateTime date = LocalDateTime.ofInstant(Instant.ofEpochMilli(expireAt), ZoneId.systemDefault());
-                            String formattedDate = date.format(DateTimeFormatter.ofPattern("yyyy年MM月dd日"));
-                            if (finished.compareAndSet(false, true)) {
-                                MinecraftClient.getInstance().execute(() -> {
-                                    if (ui != null) {
-                                        ui.accept(false, ("注册成功, 请重启客户端 到期时间: " + formattedDate).trim());
-                                    }
-                                });
-                            }
-                            MinecraftClient.getInstance().scheduleStop();
                             return;
                         }
 

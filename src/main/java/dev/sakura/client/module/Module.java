@@ -30,13 +30,12 @@ public class Module {
     public final List<Value<?>> values = new ArrayList<>();
     private final Animation animations = new DecelerateAnimation(250, 1).setDirection(Direction.BACKWARDS);
 
-    protected final MinecraftClient mc;
+    protected static final MinecraftClient mc = MinecraftClient.getInstance();
 
     public Module(String englishName, String chineseName, Category category) {
         this.englishName = englishName;
         this.chineseName = chineseName;
         this.category = category;
-        this.mc = MinecraftClient.getInstance();
         this.hidden = new BoolValue("Hidden", "隐藏", false);
         this.values.add(this.hidden);
     }

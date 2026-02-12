@@ -52,6 +52,7 @@ public class ModuleManager {
         add(new KeepSprint());
         add(new NoFall());
         add(new NoSlow());
+        add(new SafeWalk());
         add(new Scaffold());
         add(new Stuck());
         add(new Velocity());

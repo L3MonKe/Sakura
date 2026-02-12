@@ -7,7 +7,6 @@ import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.MainMenuShader;
-import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.animations.AnimationUtil;
 import dev.sakura.client.utils.animations.Direction;
 import dev.sakura.client.utils.animations.impl.SmoothStepAnimation;
@@ -375,28 +374,6 @@ public class MainMenuScreen extends Screen {
 
         float panelP = AnimationUtil.smoothstep(0.15f, 0.55f, p);
         drawPanelBlur(layout, panelP);
-
-        if (panelP > 0.05f) {
-            float sPanelEase = AnimationUtil.easeOutCubic(panelP);
-            float sPanelOffsetY = (1f - sPanelEase) * (14f * layout.scale);
-            float sPanelScale = MathHelper.lerp(sPanelEase, 0.985f, 1.0f);
-
-            float rectW = layout.panelW * sPanelScale;
-            float rectH = layout.panelH * sPanelScale;
-            float rectX = layout.centerX - rectW / 2f;
-            float rectY = layout.centerY - rectH / 2f + sPanelOffsetY;
-            float rectR = layout.panelR * sPanelScale;
-
-            ShadowShader.drawStairShadow(
-                    rectX, rectY, rectW, rectH,
-                    60f * layout.scale,
-                    panelP * 0.4f,
-                    Color.BLACK,
-                    new float[]{rectX, rectY, rectW, rectH},
-                    new float[]{rectR},
-                    1
-            );
-        }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
             Color accent = ClickGui.color(0);
