@@ -103,7 +103,7 @@ val isMyHome = run {
 
 val minecraftModsDir = file("C:/Users/L3MonKe/Desktop/MC/.minecraft/versions/Sakura-1.21.11/mods")
 
-/*val copyJarToMinecraftMods = tasks.register<Copy>("copyJarToMinecraftMods") {
+val copyJarToMinecraftMods = tasks.register<Copy>("copyJarToMinecraftMods") {
     group = "distribution"
 
     val remapJar = tasks.named<RemapJarTask>("remapJar")
@@ -113,10 +113,10 @@ val minecraftModsDir = file("C:/Users/L3MonKe/Desktop/MC/.minecraft/versions/Sak
 
     from(remapJar.flatMap { it.archiveFile })
     into(minecraftModsDir)
-}*/
+}
 
 tasks.named("build") {
-    //finalizedBy(copyJarToMinecraftMods)
+    finalizedBy(copyJarToMinecraftMods)
 }
 
 tasks.jar {
