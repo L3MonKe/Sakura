@@ -57,11 +57,11 @@ public class Scaffold extends Module {
         Silent
     }
 
-    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Telly);
+    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.GodBridge);
     private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
     private final BoolValue swapBack = new BoolValue("SwapBack", "停用还原", true, () -> swapMode.is(SwapMode.Normal));
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
-    private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 1, 0, 8, 1, () -> mode.is(Mode.Telly));
+    private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 0, 0, 8, 1, () -> mode.is(Mode.Telly));
     private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, () -> mode.is(Mode.Telly));
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, () -> mode.is(Mode.Telly));
@@ -146,7 +146,6 @@ public class Scaffold extends Module {
         int loops = (int) Math.ceil(Math.hypot(mc.player.getVelocity().x, mc.player.getVelocity().z)) + 2;
 
         for (int i = 0; i < loops; i++) {
-            blockCache = null;
             getBlockInfo();
 
             MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
@@ -342,9 +341,7 @@ public class Scaffold extends Module {
     }
 
     private Rotation getRotation(BlockCache blockCache) {
-        Rotation rotations = onAir()
-                ? RotationUtil.calculate(new Vec3d(blockCache.position.getX(), blockCache.position.getY(), blockCache.position.getZ()), blockCache.facing)
-                : RotationUtil.calculate(blockCache.position);
+        Rotation rotations = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.facing) : RotationUtil.calculate(blockCache.position.toCenterPos());
 
         Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), rotations.pitch);
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, sideCheck.get());

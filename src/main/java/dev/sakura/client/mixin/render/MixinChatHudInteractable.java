@@ -13,6 +13,7 @@ import net.minecraft.util.math.ColorHelper;
 import org.joml.Matrix3x2f;
 import org.joml.Matrix3x2fc;
 import org.joml.Vector2f;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,20 +23,25 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.*;
 
-@Mixin(targets = "net.minecraft.client.gui.hudeditor.ChatHud$Interactable")
+@Mixin(targets = "net.minecraft.client.gui.hud.ChatHud$Interactable")
 public class MixinChatHudInteractable {
+    @Final
     @Shadow
     private DrawContext context;
 
+    @Final
     @Shadow
     private TextRenderer textRenderer;
 
+    @Final
     @Shadow
     private int mouseX;
 
+    @Final
     @Shadow
     private int mouseY;
 
+    @Final
     @Shadow
     private Vector2f untransformedOffset;
 

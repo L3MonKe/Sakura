@@ -137,6 +137,10 @@ public class RaytraceUtil {
         return overBlock(rotation, direction, pos, false);
     }
 
+    public static Boolean overBlock(final Rotation rotation, final BlockPos pos, boolean strict) {
+        return overBlock(rotation, Direction.UP, pos, strict);
+    }
+
     public static boolean overBlock(final Rotation rotation, final Direction direction, final BlockPos pos, final boolean strict) {
         if (mc.player == null || mc.world == null) return false;
 
