@@ -124,7 +124,7 @@ public class BlurProgram {
             Std140Builder builder = Std140Builder.intoBuffer(view.data());
             builder.putVec4(framebuffer.textureWidth, framebuffer.textureHeight, quality, alpha);
             builder.putVec4(pxW, pxH, pxX, pxY);
-            builder.putVec4(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, 1.0f);
+            builder.putVec4(color.getRed() / 255.0f, color.getGreen() / 255.0f, color.getBlue() / 255.0f, color.getAlpha() / 255.0f);
             builder.putVec4(rPx, 0.0f, 0.0f, 0.0f);
             builder.putVec4((float) count, 0.0f, 0.0f, 0.0f);
             if (useFallbackRect) {

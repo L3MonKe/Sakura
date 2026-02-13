@@ -33,7 +33,8 @@ vec4 blurWeighted(vec2 uv, vec2 radius) {
     }
 
     c /= max(1e-5, total);
-    return (c + Color1);
+    vec3 tinted = mix(c.rgb, Color1.rgb, clamp(Color1.a, 0.0, 1.0));
+    return vec4(tinted, c.a);
 }
 
 void main() {

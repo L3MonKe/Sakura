@@ -34,18 +34,34 @@ public class ModuleListHud extends HudModule {
 
     public enum ListMode {
         Normal,
-        Gradient
+        Gradient,
+        NewStyle
     }
 
     public enum FontMode {
         Default,
         Minecraft,
-        Comfortaa
+        Comfortaa,
+        Ax,
+        Geologica,
+        Material,
+        Tenacity
+    }
+
+    public enum NewStyleColorMode {
+        Astolfo,
+        Static,
+        DoubleColor
+    }
+
+    public enum BarMode {
+        Right,
+        Outline
     }
 
     // --- 核心设置 (Core Settings) ---
     private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Normal);
-    private final EnumValue<FontMode> fontMode = new EnumValue<>("Font Mode", "渐变-字体模式", FontMode.Default, () -> mode.is(ListMode.Gradient));
+    private final EnumValue<FontMode> fontMode = new EnumValue<>("Font Mode", "字体模式", FontMode.Default, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
     private final NumberValue<Double> hudScale = new NumberValue<>("Hud Scale", "HUD缩放", 1.1, 0.5, 2.0, 0.1);
     private final BoolValue alignRight = new BoolValue("Align Right", "右对齐", false);
     private final BoolValue hideHudModules = new BoolValue("Hide HudModules", "隐藏HUD模块", true);
@@ -61,51 +77,67 @@ public class ModuleListHud extends HudModule {
     private final NumberValue<Double> sliderSpeed = new NumberValue<>("Slider Speed", "滑动速度", 0.2, 0.01, 1.0, 0.01);
 
     // --- 普通模式设置 (Normal Mode) ---
-    private final BoolValue normalRainbowColor = new BoolValue("Normal Rainbow", "普通-彩虹色", false, () -> mode.is(ListMode.Normal));
-    private final BoolValue normalShowCategory = new BoolValue("Normal Show Category", "普通-显示分类", true, () -> mode.is(ListMode.Normal));
-    private final NumberValue<Double> normalRadius = new NumberValue<>("Normal Radius", "普通-圆角半径", 6.0, 0.0, 15.0, 1.0, () -> mode.is(ListMode.Normal));
+    private final BoolValue normalRainbowColor = new BoolValue("Normal Rainbow", "彩虹色", false, () -> mode.is(ListMode.Normal));
+    private final BoolValue normalShowCategory = new BoolValue("Normal Show Category", "显示分类", true, () -> mode.is(ListMode.Normal));
+    private final NumberValue<Double> normalRadius = new NumberValue<>("Normal Radius", "圆角半径", 6.0, 0.0, 15.0, 1.0, () -> mode.is(ListMode.Normal));
+
+    // --- 新风格设置 (New Style) ---
+    private final EnumValue<NewStyleColorMode> newStyleColorMode = new EnumValue<>("Color Mode", "颜色模式", NewStyleColorMode.Astolfo, () -> mode.is(ListMode.NewStyle));
+    private final ColorValue newStyleStaticColor = new ColorValue("Static Color", "静态颜色", new Color(255, 255, 255), () -> mode.is(ListMode.NewStyle) && newStyleColorMode.is(NewStyleColorMode.Static));
+    private final ColorValue newStyleColor1 = new ColorValue("Gradient Color 1", "渐变色1", new Color(0, 255, 255), () -> mode.is(ListMode.NewStyle) && newStyleColorMode.is(NewStyleColorMode.DoubleColor));
+    private final ColorValue newStyleColor2 = new ColorValue("Gradient Color 2", "渐变色2", new Color(255, 0, 255), () -> mode.is(ListMode.NewStyle) && newStyleColorMode.is(NewStyleColorMode.DoubleColor));
+    private final BoolValue newStyleBackground = new BoolValue("New Background", "背景", true, () -> mode.is(ListMode.NewStyle));
+    private final ColorValue newStyleBackgroundColor = new ColorValue("New Bg Color", "背景颜色", new Color(0, 0, 0, 180), () -> mode.is(ListMode.NewStyle) && newStyleBackground.get());
+    private final NumberValue<Double> newStyleBackgroundPadX = new NumberValue<>("Bg Pad X", "背景X边距", 4.0, -10.0, 20.0, 0.5, () -> mode.is(ListMode.NewStyle) && newStyleBackground.get());
+    private final NumberValue<Double> newStyleBackgroundPadY = new NumberValue<>("Bg Pad Y", "背景Y边距", 2.0, -10.0, 20.0, 0.5, () -> mode.is(ListMode.NewStyle) && newStyleBackground.get());
+    private final BoolValue newStyleBar = new BoolValue("Deco Bar", "新风格-装饰条", true, () -> mode.is(ListMode.NewStyle));
+    private final EnumValue<BarMode> newStyleBarMode = new EnumValue<>("Bar Mode", "装饰条模式", BarMode.Right, () -> mode.is(ListMode.NewStyle) && newStyleBar.get());
+    private final NumberValue<Double> newStyleBarWidth = new NumberValue<>("Bar Width", "装饰条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.NewStyle) && newStyleBar.get());
+    private final NumberValue<Double> newStyleX = new NumberValue<>("Pos X", "X轴距离", 0.0, 0.0, 1000.0, 1.0, () -> mode.is(ListMode.NewStyle));
+    private final NumberValue<Double> newStyleY = new NumberValue<>("Pos Y", "Y轴距离", 0.0, -100.0, 1000.0, 1.0, () -> mode.is(ListMode.NewStyle));
 
     // --- 渐变模式设置 (Gradient Mode) ---
     // 1. 文本与字体 (Text & Font)
-    private final NumberValue<Double> customFontSize = new NumberValue<>("Font Size", "渐变-字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> textOffsetY = new NumberValue<>("Text Offset Y", "渐变-文字Y偏移", 1.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient));
-    private final BoolValue textGlow = new BoolValue("Text Glow", "渐变-文本发光", true, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> glowRadius = new NumberValue<>("Glow Radius", "渐变-发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && textGlow.get());
-    private final NumberValue<Integer> glowIntensity = new NumberValue<>("Glow Intensity", "渐变-发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && textGlow.get());
+    private final NumberValue<Double> customFontSize = new NumberValue<>("Font Size", "字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
+    private final NumberValue<Double> textOffsetX = new NumberValue<>("Text Offset X", "文字X偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
+    private final NumberValue<Double> textOffsetY = new NumberValue<>("Text Offset Y", "文字Y偏移", 1.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
+    private final BoolValue textGlow = new BoolValue("Text Glow", "文本发光", true, () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> glowRadius = new NumberValue<>("Glow Radius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && textGlow.get());
+    private final NumberValue<Integer> glowIntensity = new NumberValue<>("Glow Intensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && textGlow.get());
 
     // 2. 渐变颜色 (Colors)
-    private final BoolValue autoColor = new BoolValue("Auto Color", "渐变-自动调色", false, () -> mode.is(ListMode.Gradient));
-    private final ColorValue gradientColor1 = new ColorValue("Color 1", "渐变-颜色1", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient));
-    private final ColorValue gradientColor2 = new ColorValue("Color 2", "渐变-颜色2", new Color(255, 0, 255), () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> gradientSpeed = new NumberValue<>("Gradient Speed", "渐变-速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> colorStep = new NumberValue<>("Color Step", "渐变-颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(ListMode.Gradient));
+    private final BoolValue autoColor = new BoolValue("Auto Color", "自动调色", false, () -> mode.is(ListMode.Gradient));
+    private final ColorValue gradientColor1 = new ColorValue("Color 1", "颜色1", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient));
+    private final ColorValue gradientColor2 = new ColorValue("Color 2", "颜色2", new Color(255, 0, 255), () -> mode.is(ListMode.Gradient));
+    private final NumberValue<Double> gradientSpeed = new NumberValue<>("Gradient Speed", "渐变速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
+    private final NumberValue<Double> colorStep = new NumberValue<>("Color Step", "颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
 
     // 3. 背景设置 (Background)
-    private final BoolValue background = new BoolValue("Background", "渐变-背景", false, () -> mode.is(ListMode.Gradient));
+    private final BoolValue background = new BoolValue("Background", "背景", false, () -> mode.is(ListMode.Gradient));
 
     public enum BackgroundMode {Normal, Blur}
 
-    private final EnumValue<BackgroundMode> backgroundMode = new EnumValue<>("Background Mode", "渐变-背景模式", BackgroundMode.Normal, () -> mode.is(ListMode.Gradient) && background.get());
-    private final ColorValue backgroundColor = new ColorValue("Background Color", "渐变-背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> backgroundRadius = new NumberValue<>("Background Radius", "渐变-背景圆角", 0.0, 0.0, 10.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("Background Offset Y", "渐变-背景Y偏移", -3.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> blurStrength = new NumberValue<>("Blur Strength", "渐变-模糊强度", 10.0, 0.0, 50.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur));
+    private final EnumValue<BackgroundMode> backgroundMode = new EnumValue<>("Background Mode", "背景模式", BackgroundMode.Normal, () -> mode.is(ListMode.Gradient) && background.get());
+    private final ColorValue backgroundColor = new ColorValue("Background Color", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
+    private final NumberValue<Double> backgroundRadius = new NumberValue<>("Background Radius", "背景圆角", 0.0, 0.0, 10.0, 1.0, () -> (mode.is(ListMode.Gradient) && background.get()) || (mode.is(ListMode.NewStyle) && newStyleBackground.get()));
+    private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("Background Offset Y", "背景Y偏移", -3.0, -10.0, 10.0, 0.5, () -> (mode.is(ListMode.Gradient) && background.get()) || (mode.is(ListMode.NewStyle) && newStyleBackground.get()));
+    private final NumberValue<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 10.0, 0.0, 50.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur));
 
-    private final BoolValue backgroundShadow = new BoolValue("Background Shadow", "渐变-背景阴影", false, () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "渐变-阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
-    private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "渐变-阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+    private final BoolValue backgroundShadow = new BoolValue("Background Shadow", "背景阴影", false, () -> mode.is(ListMode.Gradient) && background.get());
+    private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+    private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
 
     public enum ShadowMode {Solid, Gradient}
 
-    private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "渐变-阴影模式", ShadowMode.Solid, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+    private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "阴影模式", ShadowMode.Solid, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
 
     // 4. 线条设置 (Lines)
-    private final BoolValue showGradientLine = new BoolValue("Show Line", "渐变-显示线条", false, () -> mode.is(ListMode.Gradient));
+    private final BoolValue showGradientLine = new BoolValue("Show Line", "显示线条", false, () -> mode.is(ListMode.Gradient));
 
     public enum LineMode {Left, Box}
 
-    private final EnumValue<LineMode> lineMode = new EnumValue<>("Line Mode", "渐变-线条模式", LineMode.Left, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
-    private final NumberValue<Double> lineWidth = new NumberValue<>("Line Width", "渐变-线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
+    private final EnumValue<LineMode> lineMode = new EnumValue<>("Line Mode", "线条模式", LineMode.Left, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
+    private final NumberValue<Double> lineWidth = new NumberValue<>("Line Width", "线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
 
     private float targetWidth = 0;
     private float targetHeight = 0;
@@ -187,7 +219,9 @@ public class ModuleListHud extends HudModule {
         frameGradientReady = false;
         frameSegmentsTimeMs = Long.MIN_VALUE;
         update();
-        ensureWithinScreenBounds();
+        if (!mode.is(ListMode.NewStyle)) {
+            ensureWithinScreenBounds();
+        }
 
         if (mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get()) {
             renderBackgroundShadow();
@@ -195,6 +229,10 @@ public class ModuleListHud extends HudModule {
 
         if (mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur)) {
             renderBlurBackgrounds();
+        }
+
+        if (mode.is(ListMode.NewStyle) && newStyleBackground.get() && backgroundMode.is(BackgroundMode.Blur)) {
+            renderNewStyleBlur();
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
@@ -216,15 +254,26 @@ public class ModuleListHud extends HudModule {
         float oldWidth = currentWidth;
         updateModuleList();
         calculateTargetSize();
-        updateModulePositions();
+        // updateModulePositions(); // Moved down
         float speed = animationSpeed.get().floatValue();
         currentWidth += (targetWidth - currentWidth) * speed;
         currentHeight += (targetHeight - currentHeight) * speed;
 
-        if (alignRight.get()) {
+        if (mode.is(ListMode.NewStyle)) {
+            float scale = hudScale.get().floatValue();
+            int screenWidth = mc.getWindow().getScaledWidth();
+
+            float xCorrection = (PADDING_X - 4) * scale;
+            this.x = screenWidth - (currentWidth * scale) - newStyleX.get().floatValue() + xCorrection;
+
+            float topOffset = (PADDING_Y + backgroundOffsetY.get().floatValue()) * scale;
+            this.y = newStyleY.get().floatValue() - topOffset - (2.0f * scale);
+        } else if (alignRight.get()) {
             float scale = hudScale.get().floatValue();
             x -= (currentWidth - oldWidth) * scale;
         }
+
+        updateModulePositions();
 
         this.width = currentWidth * hudScale.get().floatValue();
         this.height = currentHeight * hudScale.get().floatValue();
@@ -233,7 +282,7 @@ public class ModuleListHud extends HudModule {
 
     private void updateModulePositions() {
         float scale = hudScale.get().floatValue();
-        float fontSize = mode.is(ListMode.Gradient) ? customFontSize.get().floatValue() : 10f;
+        float fontSize = (mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) ? customFontSize.get().floatValue() : 10f;
         float itemSpacing = this.itemSpacing.get().floatValue();
 
         float currentY = y + (PADDING_Y * scale) - (scrollOffset * scale);
@@ -268,19 +317,26 @@ public class ModuleListHud extends HudModule {
     }
 
     private int getFontId() {
-        if (mode.is(ListMode.Gradient) && fontMode.is(FontMode.Comfortaa)) {
-            return FontLoader.comfortaa();
+        if (mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) {
+            return switch (fontMode.get()) {
+                case Comfortaa -> FontLoader.comfortaa();
+                case Ax -> FontLoader.ax();
+                case Geologica -> FontLoader.geologica();
+                case Material -> FontLoader.material();
+                case Tenacity -> FontLoader.tenacity();
+                default -> FontLoader.medium();
+            };
         }
         return FontLoader.medium();
     }
 
     private float getModuleTextWidth(String text) {
         float scale = hudScale.get().floatValue();
-        if (mode.is(ListMode.Gradient) && fontMode.is(FontMode.Minecraft)) {
+        if ((mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) && fontMode.is(FontMode.Minecraft)) {
             float fontSize = customFontSize.get().floatValue();
             return mc.textRenderer.getWidth(text) * (fontSize / 9.0f) * scale;
         }
-        float fontSize = mode.is(ListMode.Gradient) ? customFontSize.get().floatValue() : 10f;
+        float fontSize = (mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) ? customFontSize.get().floatValue() : 10f;
         int font = getFontId();
         return NanoVGHelper.getTextWidth(text, font, fontSize * scale);
     }
@@ -384,8 +440,9 @@ public class ModuleListHud extends HudModule {
 
     private void calculateTargetSize() {
         boolean isGradient = mode.is(ListMode.Gradient);
+        boolean isNewStyle = mode.is(ListMode.NewStyle);
         double spacing = itemSpacing.get();
-        boolean showCat = isGradient ? false : normalShowCategory.get();
+        boolean showCat = (isGradient || isNewStyle) ? false : normalShowCategory.get();
 
         if (moduleEntries.isEmpty()) {
             targetWidth = 50;
@@ -398,7 +455,7 @@ public class ModuleListHud extends HudModule {
         float totalHeight = PADDING_Y * 2 * scale;
 
         float maxTextWidth = 0;
-        float fontSize = isGradient ? customFontSize.get().floatValue() : 10f;
+        float fontSize = (isGradient || isNewStyle) ? customFontSize.get().floatValue() : 10f;
         int font = getFontId();
 
         for (ModuleEntry entry : moduleEntries) {
@@ -518,6 +575,11 @@ public class ModuleListHud extends HudModule {
     }
 
     private void renderContent() {
+        if (mode.is(ListMode.NewStyle)) {
+            renderNewStyle();
+            return;
+        }
+
         if (mode.is(ListMode.Gradient)) {
             renderGradientContent();
             return;
@@ -987,6 +1049,8 @@ public class ModuleListHud extends HudModule {
         frameSegments.clear();
         int index = 0;
 
+        boolean forceRight = mode.is(ListMode.NewStyle);
+
         for (ModuleEntry entry : moduleEntries) {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
             double animationValue = animation != null ? animation.getOutput() : 1.0;
@@ -999,10 +1063,15 @@ public class ModuleListHud extends HudModule {
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
             float moduleNameWidth = getModuleTextWidth(moduleName);
-            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + (2 * scale)) + (PADDING_X * 2 * scale);
+            
+            // Sync gap logic with renderNewStyle
+            float spaceWidth = getModuleTextWidth(" "); 
+            float gap = spaceWidth; 
+            
+            float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + gap) + (PADDING_X * 2 * scale);
 
             float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
-            float itemBgX = alignRight.get()
+            float itemBgX = (alignRight.get() || forceRight)
                     ? (x + (currentWidth * scale) - itemWidth + (PADDING_X * scale))
                     : (x + (PADDING_X * scale));
 
@@ -1035,6 +1104,8 @@ public class ModuleListHud extends HudModule {
 
     private void buildMergedBackgroundPath(long vg, List<BackgroundSegment> segments, float r, boolean line) {
         int lastIndex = segments.size() - 1;
+        boolean isNewStyle = mode.is(ListMode.NewStyle);
+        
         for (BackgroundSegment segment : segments) {
             boolean isFirst = segment.index == 0;
             boolean isLast = segment.index == lastIndex;
@@ -1043,6 +1114,9 @@ public class ModuleListHud extends HudModule {
             float rTopRight = (isFirst && !line) ? r : 0;
             float rBottomRight = (isLast && !line) ? r : 0;
             float rBottomLeft = isLast ? r : 0;
+            
+            if (isNewStyle) {
+            }
 
             nvgRoundedRectVarying(vg, segment.x, segment.y, segment.w, segment.h, rTopLeft, rTopRight, rBottomRight, rBottomLeft);
         }
@@ -1177,6 +1251,36 @@ public class ModuleListHud extends HudModule {
         nvgClosePath(vg);
     }
 
+    private void buildStaircaseBackgroundPath(long vg, List<BackgroundSegment> segments, float r) {
+        if (segments.isEmpty()) return;
+
+        BackgroundSegment first = segments.get(0);
+        BackgroundSegment last = segments.get(segments.size() - 1);
+
+        float rightX = first.x + first.w;
+        float topY = first.y;
+        float bottomY = last.y + last.h;
+
+        nvgMoveTo(vg, rightX, topY);
+
+        for (int i = 0; i < segments.size(); i++) {
+            BackgroundSegment seg = segments.get(i);
+            
+
+            if (i == 0) {
+                 nvgLineTo(vg, seg.x, seg.y);
+            } else {
+                 nvgLineTo(vg, seg.x, seg.y);
+            }
+
+            nvgLineTo(vg, seg.x, seg.y + seg.h);
+        }
+
+        nvgLineTo(vg, rightX, bottomY);
+
+        nvgClosePath(vg);
+    }
+
     private void renderGradientTextVanilla(DrawContext context) {
         float scale = hudScale.get().floatValue();
         float fontSize = customFontSize.get().floatValue();
@@ -1270,6 +1374,236 @@ public class ModuleListHud extends HudModule {
     }
 
     private record BackgroundSegment(int index, float x, float y, float w, float h, float alphaFactor) {
+    }
+
+    private void renderNewStyleBlur() {
+        float scale = hudScale.get().floatValue();
+        float fontSize = customFontSize.get().floatValue();
+        float currentY = y;
+        List<BackgroundSegment> segments = new ArrayList<>();
+        int segmentIndex = 0;
+
+        float padX = newStyleBackgroundPadX.get().floatValue() * scale;
+        float padY = newStyleBackgroundPadY.get().floatValue() * scale;
+        float bgOffsetY = backgroundOffsetY.get().floatValue() * scale;
+
+        for (ModuleEntry entry : moduleEntries) {
+            EaseInOutQuad animation = moduleAnimations.get(entry.module);
+            double animationValue = animation != null ? animation.getOutput() : 1.0;
+            if (animationValue < 0.01) {
+                continue;
+            }
+
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
+            float renderY = moduleYPositions.getOrDefault(entry.module, currentY);
+
+            String moduleName = entry.module.getEnglishName();
+            String suffix = entry.module.getSuffix();
+            String formattedSuffix = getFormattedSuffix(suffix);
+
+            float gap = 3f * scale;
+            float textWidth = getModuleTextWidth(moduleName);
+            if (!suffix.isEmpty()) {
+                textWidth += getModuleTextWidth(formattedSuffix) + gap;
+            }
+
+            float textLeft = x + (currentWidth * scale) - (PADDING_X * scale) - textWidth;
+            float bgX = textLeft - padX;
+            float bgY = renderY + bgOffsetY - padY;
+            float bgW = textWidth + (padX * 2.0f);
+            float bgH = (itemFullHeight * (float) animationValue) + (padY * 2.0f);
+
+            segments.add(new BackgroundSegment(segmentIndex, bgX, bgY, bgW, bgH, (float) animationValue));
+
+            currentY += itemFullHeight * (float) animationValue;
+            segmentIndex++;
+        }
+
+        if (segments.isEmpty()) {
+            return;
+        }
+
+        float overlap = Math.max(0.5f, 0.5f * scale);
+        float minX = Float.POSITIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY;
+        float maxX = Float.NEGATIVE_INFINITY;
+        float maxY = Float.NEGATIVE_INFINITY;
+
+        for (BackgroundSegment segment : segments) {
+            minX = Math.min(minX, segment.x - overlap);
+            minY = Math.min(minY, segment.y - overlap);
+            maxX = Math.max(maxX, segment.x + segment.w + overlap);
+            maxY = Math.max(maxY, segment.y + segment.h + overlap);
+        }
+
+        float blurW = Math.max(0.0f, maxX - minX);
+        float blurH = Math.max(0.0f, maxY - minY);
+        if (blurW <= 0.0f || blurH <= 0.0f) {
+            return;
+        }
+
+        int count = Math.min(MAX_SEGMENTS, segments.size());
+        for (int i = 0; i < count; i++) {
+            BackgroundSegment segment = segments.get(i);
+            int base = i * 4;
+            tmpSegmentRects[base] = segment.x - overlap;
+            tmpSegmentRects[base + 1] = segment.y - overlap;
+            tmpSegmentRects[base + 2] = segment.w + overlap * 2.0f;
+            tmpSegmentRects[base + 3] = segment.h + overlap * 2.0f;
+            tmpSegmentRadii[i] = 0.0f;
+        }
+        float r = backgroundRadius.get().floatValue() * scale;
+        if (count > 0) {
+            tmpSegmentRadii[0] = r;
+            tmpSegmentRadii[count - 1] = r;
+        }
+
+        Color tint = newStyleBackgroundColor.get();
+        float tintAlpha = tint.getAlpha() / 255.0f;
+        BlurShader.drawSegmentedBlur(minX, minY, blurW, blurH, 0.0f, tint, blurStrength.get().floatValue(), tintAlpha, tmpSegmentRects, tmpSegmentRadii, count);
+    }
+
+    private void renderNewStyle() {
+        float scale = hudScale.get().floatValue();
+        float fontSize = customFontSize.get().floatValue();
+        int font = getFontId();
+        float currentY = y;
+        int index = 0;
+
+        List<BackgroundSegment> newStyleSegments = new ArrayList<>();
+        float segmentsY = currentY;
+        int segmentIndex = 0;
+
+        for (ModuleEntry entry : moduleEntries) {
+            EaseInOutQuad animation = moduleAnimations.get(entry.module);
+            double animationValue = animation != null ? animation.getOutput() : 1.0;
+            if (animationValue < 0.01) continue;
+
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
+            float renderY = moduleYPositions.getOrDefault(entry.module, segmentsY);
+
+            String moduleName = entry.module.getEnglishName();
+            String suffix = entry.module.getSuffix();
+            String formattedSuffix = getFormattedSuffix(suffix);
+
+            float nameWidth = getModuleTextWidth(moduleName);
+            float gap = 3f * scale;
+            float padding = PADDING_X * scale;
+
+            float suffixW = suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + gap;
+            float contentWidth = nameWidth + suffixW;
+            float itemWidth = contentWidth + padding * 2;
+
+            float drawX = x + (currentWidth * scale) - itemWidth;
+
+            float bgW = contentWidth + (8 * scale);
+            float bgX = drawX + padding - (4 * scale);
+
+            float heightAdjustment = itemSpacing.get() == 0 ? 0.5f * scale : 0;
+            float bgOffset = backgroundOffsetY.get().floatValue() * scale;
+            float bgY = renderY + bgOffset - heightAdjustment;
+            float bgH = (itemFullHeight * (float) animationValue) + heightAdjustment;
+
+            newStyleSegments.add(new BackgroundSegment(segmentIndex, bgX, bgY, bgW, bgH, (float) animationValue));
+
+            segmentsY += itemFullHeight * (float) animationValue;
+            segmentIndex++;
+        }
+
+        if (newStyleBar.get() && !newStyleSegments.isEmpty()) {
+            float barWidth = newStyleBarWidth.get().floatValue() * scale;
+            for (int i = 0; i < newStyleSegments.size(); i++) {
+                BackgroundSegment segment = newStyleSegments.get(i);
+                Color color = getNewStyleColor(i, segment.alphaFactor);
+
+                if (newStyleBarMode.is(BarMode.Right)) {
+                    float bgRight = segment.x + segment.w;
+                    NanoVGHelper.drawRect(bgRight - barWidth, segment.y, barWidth, segment.h, color);
+                    continue;
+                }
+
+                NanoVGHelper.drawRect(segment.x, segment.y, barWidth, segment.h, color);
+
+                if (i < newStyleSegments.size() - 1) {
+                    BackgroundSegment nextSegment = newStyleSegments.get(i + 1);
+                    float currentLeft = segment.x;
+                    float nextLeft = nextSegment.x;
+
+                    if (nextLeft > currentLeft) {
+                        NanoVGHelper.drawRect(currentLeft, segment.y + segment.h - barWidth, (nextLeft - currentLeft) + barWidth, barWidth, color);
+                    } else {
+                        NanoVGHelper.drawRect(nextLeft, segment.y + segment.h - barWidth, (currentLeft - nextLeft) + barWidth, barWidth, color);
+                    }
+                } else {
+                    NanoVGHelper.drawRect(segment.x, segment.y + segment.h - barWidth, segment.w, barWidth, color);
+                }
+            }
+        }
+
+        for (ModuleEntry entry : moduleEntries) {
+            EaseInOutQuad animation = moduleAnimations.get(entry.module);
+            double animationValue = animation != null ? animation.getOutput() : 1.0;
+
+            if (animationValue < 0.01) continue;
+
+            float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
+            float renderY = moduleYPositions.getOrDefault(entry.module, currentY);
+
+            String moduleName = entry.module.getEnglishName();
+            String suffix = entry.module.getSuffix();
+            String formattedSuffix = getFormattedSuffix(suffix);
+
+            float nameWidth = getModuleTextWidth(moduleName);
+            float gap = 3f * scale; 
+            
+            float suffixW = suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + gap;
+            float contentWidth = nameWidth + suffixW;
+            
+            // Calculate Color
+            Color color = getNewStyleColor(index, (float) animationValue);
+
+            // Draw Text
+            float textX = x + (currentWidth * scale) - (PADDING_X * scale) - contentWidth;
+            
+            float textXOffset = textOffsetX.get().floatValue() * scale;
+            float textYOffset = textOffsetY.get().floatValue() * scale;
+            
+            float finalTextX = textX + textXOffset;
+            float fontHeight = NanoVGHelper.getFontHeight(font, fontSize * scale);
+            float finalTextY = renderY + fontHeight / 2 + (2 * scale) + textYOffset;
+
+            NanoVGHelper.drawString(moduleName, finalTextX, finalTextY, font, fontSize * scale, color);
+
+            if (!suffix.isEmpty()) {
+                NanoVGHelper.drawString(formattedSuffix, finalTextX + nameWidth + gap, finalTextY, font, fontSize * scale, Color.GRAY);
+            }
+
+            currentY += itemFullHeight * (float) animationValue;
+            index++;
+        }
+    }
+    
+    private Color getNewStyleColor(int index, float alphaFactor) {
+        Color color = Color.WHITE;
+        ensureFrameGradient();
+        
+        if (newStyleColorMode.is(NewStyleColorMode.Static)) {
+            color = newStyleStaticColor.get();
+        } else if (newStyleColorMode.is(NewStyleColorMode.Astolfo)) {
+             float hue = (System.currentTimeMillis() % 3000) / 3000f; 
+             hue += (index * 0.05f); 
+             if (hue > 1) hue -= 1;
+             color = Color.getHSBColor(hue, 0.6f, 1.0f);
+        } else if (newStyleColorMode.is(NewStyleColorMode.DoubleColor)) {
+            Color c1 = newStyleColor1.get();
+            Color c2 = newStyleColor2.get();
+            double offset = frameGradientOffset;
+            double currentOffset = offset + (index * colorStep.get());
+            double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
+            color = interpolateColor(c1, c2, (float) factor);
+        }
+        
+        return new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (color.getAlpha() * alphaFactor));
     }
 
     private record ModuleEntry(Module module) {

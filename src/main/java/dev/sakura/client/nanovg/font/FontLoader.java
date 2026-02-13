@@ -36,4 +36,20 @@ public class FontLoader {
     public static int comfortaa() {
         return FontManager.fontWithCJK("Comfortaa.ttf");
     }
+
+    public static int ax() {
+        return FontManager.fontWithCJK("ax-regular.ttf");
+    }
+
+    public static int geologica() {
+        return FontManager.fontWithCJK("geologica.ttf");
+    }
+
+    public static int material() {
+        return FontManager.fontWithCJK("material.ttf");
+    }
+
+    public static int tenacity() {
+        return FontManager.fontWithCJK("tenacity-bold.ttf");
+    }
 }
