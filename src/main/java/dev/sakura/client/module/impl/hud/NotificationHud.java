@@ -29,6 +29,7 @@ public class NotificationHud extends HudModule {
     private final Value<Boolean> notificationShadow = new BoolValue("NotificationShadow", "通知阴影", true, () -> mode.is(NotificationManager.RenderMode.Xylitol3) || mode.is(NotificationManager.RenderMode.Xylitol4));
     private final Value<Double> shadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 0.5, () -> notificationShadow.get() && (mode.is(NotificationManager.RenderMode.Xylitol3) || mode.is(NotificationManager.RenderMode.Xylitol4)));
     private final Value<Double> shadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.01, () -> notificationShadow.get() && (mode.is(NotificationManager.RenderMode.Xylitol3) || mode.is(NotificationManager.RenderMode.Xylitol4)));
+    private final Value<Double> xylitol4CornerRadius = new NumberValue<>("CornerRadius", "圆角", 0.0, 0.0, 30.0, 0.5, () -> mode.is(NotificationManager.RenderMode.Xylitol4));
 
     public NotificationHud() {
         super("Notification", "通知", 10, 10);
@@ -63,11 +64,19 @@ public class NotificationHud extends HudModule {
         }
         NotificationManager.Xylitol4Offsets xylitol4Offsets = currentMode == NotificationManager.RenderMode.Xylitol4 ? NotificationManager.XYLITOL4_HARDCODED_OFFSETS : NotificationManager.Xylitol4Offsets.ZERO;
         NotificationManager.ShadowSettings shadowSettings = new NotificationManager.ShadowSettings(notificationShadow.get(), shadowRange.get().floatValue(), shadowStrength.get().floatValue());
+        float cornerRadius = currentMode == NotificationManager.RenderMode.Xylitol4 ? xylitol4CornerRadius.get().floatValue() : 0.0f;
+
+        float renderX = x;
+        if (currentMode == NotificationManager.RenderMode.Xylitol3 || currentMode == NotificationManager.RenderMode.Xylitol4) {
+            float screenW = mc.getWindow().getScaledWidth();
+            float maxAllowed = Math.max(0.0f, screenW - maxWidth);
+            renderX = Math.max(0.0f, Math.min(renderX, maxAllowed));
+        }
 
         if (Sakura.MODULES.getModule(HudEditor.class).isEnabled()) {
             float[] size = NotificationManager.renderPreview(
                     context.getMatrices(),
-                    x, y,
+                    renderX, y,
                     currentMode,
                     primary,
                     background,
@@ -79,14 +88,15 @@ public class NotificationHud extends HudModule {
                     lineLengthValue,
                     alignmentValue,
                     xylitol4Offsets,
-                    shadowSettings
+                    shadowSettings,
+                    cornerRadius
             );
-            width = size[0];
+            width = (currentMode == NotificationManager.RenderMode.Xylitol3 || currentMode == NotificationManager.RenderMode.Xylitol4) ? maxWidth : size[0];
             height = size[1];
         } else {
             NotificationManager.render(
                     context.getMatrices(),
-                    x, y,
+                    renderX, y,
                     currentMode,
                     primary,
                     background,
@@ -98,7 +108,8 @@ public class NotificationHud extends HudModule {
                     lineLengthValue,
                     alignmentValue,
                     xylitol4Offsets,
-                    shadowSettings
+                    shadowSettings,
+                    cornerRadius
             );
         }
     }

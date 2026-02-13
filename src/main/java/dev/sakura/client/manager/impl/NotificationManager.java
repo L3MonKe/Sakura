@@ -126,10 +126,14 @@ public class NotificationManager {
     }
 
     public static float[] renderPreview(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings) {
+        return renderPreview(matrices, x, y, mode, primaryColor, backgroundColor, maxWidth, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, 0.0f);
+    }
+
+    public static float[] renderPreview(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
         if (mode == RenderMode.Legacy) {
             return renderPreviewLegacy(x, y, alignment == Alignment.LEFT, primaryColor, backgroundColor, maxWidth, blur, blurStrength);
         }
-        return renderPreviewXylitol(x, y, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings);
+        return renderPreviewXylitol(x, y, maxWidth, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius);
     }
 
     public static void render(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment) {
@@ -141,11 +145,15 @@ public class NotificationManager {
     }
 
     public static void render(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings) {
+        render(matrices, x, y, mode, primaryColor, backgroundColor, maxWidth, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, 0.0f);
+    }
+
+    public static void render(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
         if (mode == RenderMode.Legacy) {
             renderLegacy(x, y, alignment == Alignment.LEFT, primaryColor, backgroundColor, maxWidth, blur, blurStrength);
             return;
         }
-        renderXylitol(x, y, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings);
+        renderXylitol(x, y, maxWidth, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius);
     }
 
     public static float[] renderPreview(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment) {
@@ -286,7 +294,7 @@ public class NotificationManager {
         return new float[]{w, h};
     }
 
-    private static float[] renderPreviewXylitol(float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings) {
+    private static float[] renderPreviewXylitol(float x, float y, float maxWidth, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
         String message = "KillAura §a enabled";
         String plain = Notification.stripFormatting(message);
         Notification.ParsedLines lines = Notification.parseLines(plain);
@@ -300,13 +308,23 @@ public class NotificationManager {
 
         float progress = 0.65f;
         float output = 1.0f;
-        float drawX = alignment == Alignment.RIGHT ? (x + w * (1.0f - output)) : (x - w * (1.0f - output));
+        float drawX;
+        if (alignment == Alignment.RIGHT) {
+            float anchorRight = x + Math.max(0.0f, maxWidth);
+            drawX = anchorRight - w * output;
+        } else {
+            drawX = x - w * (1.0f - output);
+        }
         float drawY = y;
+
+        float safeScale = Math.max(0.1f, scale);
+        float r = mode == RenderMode.Xylitol4 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
+        r = Math.min(r, Math.min(w, h) * 0.5f);
 
         if (shadowSettings != null && shadowSettings.enabled) {
             float[] rects = new float[]{drawX, drawY, w, h};
-            float[] radii = new float[]{0.0f};
-            float range = Math.max(0.0f, shadowSettings.range) * Math.max(0.1f, scale);
+            float[] radii = new float[]{r};
+            float range = Math.max(0.0f, shadowSettings.range) * safeScale;
             float strength = shadowSettings.strength;
             if (mode == RenderMode.Xylitol4) {
                 Color start = ClickGui.color(1);
@@ -322,15 +340,15 @@ public class NotificationManager {
         }
 
         if (blur) {
-            BlurShader.drawRoundedBlur(drawX, drawY, w, h, 0.0f, blurStrength);
+            BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength);
         }
 
         XylitolType type = inferXylitolType(message);
-        NanoVGRenderer.INSTANCE.draw(vg -> drawXylitolNotification(mode, type, drawX, drawY, w, h, title, desc, primaryColor, backgroundColor, progress, scale, fontSize, xylitol4LineLength, xylitol4Offsets));
+        NanoVGRenderer.INSTANCE.draw(vg -> drawXylitolNotification(mode, type, drawX, drawY, w, h, title, desc, primaryColor, backgroundColor, progress, scale, fontSize, xylitol4LineLength, xylitol4Offsets, cornerRadius));
         return new float[]{w, h};
     }
 
-    private static void renderXylitol(float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings) {
+    private static void renderXylitol(float x, float y, float maxWidth, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
         float yOffset = 0.0f;
         float safeScale = Math.max(0.1f, scale);
         float spacing = 6.0f * safeScale;
@@ -374,15 +392,24 @@ public class NotificationManager {
             float w = size[0];
             float h = size[1];
 
-            float drawX = alignment == Alignment.RIGHT ? (x + w * (1.0f - output)) : (x - w * (1.0f - output));
+            float drawX;
+            if (alignment == Alignment.RIGHT) {
+                float anchorRight = x + Math.max(0.0f, maxWidth);
+                drawX = anchorRight - w * output;
+            } else {
+                drawX = x - w * (1.0f - output);
+            }
             float drawY = y - yOffset;
 
             float progress = Math.max(0.0f, Math.min(1.0f, elapsed / (float) Math.max(1L, notification.length)));
             XylitolType type = inferXylitolType(notification.message);
 
+            float r = mode == RenderMode.Xylitol4 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
+            r = Math.min(r, Math.min(w, h) * 0.5f);
+
             if (shadowSettings != null && shadowSettings.enabled) {
                 float[] rects = new float[]{drawX, drawY, w, h};
-                float[] radii = new float[]{0.0f};
+                float[] radii = new float[]{r};
                 float range = Math.max(0.0f, shadowSettings.range) * safeScale;
                 float strength = shadowSettings.strength;
                 if (mode == RenderMode.Xylitol4) {
@@ -399,7 +426,7 @@ public class NotificationManager {
             }
 
             if (blur) {
-                BlurShader.drawRoundedBlur(drawX, drawY, w, h, 0.0f, blurStrength);
+                BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength);
             }
 
             float finalX = drawX;
@@ -407,13 +434,13 @@ public class NotificationManager {
             float finalW = w;
             float finalH = h;
             float finalProgress = progress;
-            NanoVGRenderer.INSTANCE.draw(vg -> drawXylitolNotification(mode, type, finalX, finalY, finalW, finalH, title, desc, primaryColor, backgroundColor, finalProgress, scale, fontSize, xylitol4LineLength, xylitol4Offsets));
+            NanoVGRenderer.INSTANCE.draw(vg -> drawXylitolNotification(mode, type, finalX, finalY, finalW, finalH, title, desc, primaryColor, backgroundColor, finalProgress, scale, fontSize, xylitol4LineLength, xylitol4Offsets, cornerRadius));
 
             yOffset += (h + spacing) * (hide ? output : 1.0f);
         }
     }
 
-    private static void drawXylitolNotification(RenderMode mode, XylitolType type, float x, float y, float width, float height, String title, String description, Color primaryColor, Color backgroundColor, float progress, float scale, float fontSize, float xylitol4LineLength, Xylitol4Offsets xylitol4Offsets) {
+    private static void drawXylitolNotification(RenderMode mode, XylitolType type, float x, float y, float width, float height, String title, String description, Color primaryColor, Color backgroundColor, float progress, float scale, float fontSize, float xylitol4LineLength, Xylitol4Offsets xylitol4Offsets, float cornerRadius) {
         scale = Math.max(0.1f, scale);
         fontSize = Math.max(6.0f, fontSize);
 
@@ -451,7 +478,13 @@ public class NotificationManager {
         float descriptionOffsetY = xylitol4Offsets.descriptionOffsetY * scale;
         float lineOffsetY = xylitol4Offsets.lineOffsetY * scale;
 
-        NanoVGHelper.drawRect(x, y, width, height, new Color(0, 0, 0, 76));
+        float r = Math.max(0.0f, cornerRadius) * scale;
+        r = Math.min(r, Math.min(width, height) * 0.5f);
+        if (r > 0.001f) {
+            NanoVGHelper.drawRoundRect(x, y, width, height, r, new Color(0, 0, 0, 76));
+        } else {
+            NanoVGHelper.drawRect(x, y, width, height, new Color(0, 0, 0, 76));
+        }
         if (mode == RenderMode.Xylitol4) {
             Color start = ClickGui.color(1);
             Color end = ClickGui.color2(1);
