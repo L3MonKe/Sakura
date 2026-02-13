@@ -69,7 +69,7 @@ public class ModuleManager {
         add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());
-        add(new NameProtect());
+//        add(new PacketMine());
         add(new Stealer());
         add(new Timer());
         add(new InvManager());
