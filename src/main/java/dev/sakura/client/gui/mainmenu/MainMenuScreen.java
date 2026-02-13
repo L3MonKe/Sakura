@@ -32,18 +32,18 @@ import static dev.sakura.client.Sakura.mc;
 public class MainMenuScreen extends Screen {
     private static final Color OVERLAY_TINT_1 = new Color(62, 137, 154, 50);
     private static final Color OVERLAY_TINT_2 = new Color(25, 25, 25, 50);
-    private static final Color PANEL_GRADIENT_TOP = new Color(15, 32, 39, 255);
-    private static final Color PANEL_GRADIENT_BOTTOM = new Color(15, 32, 39, 140);
-    private static final Color PANEL_BLUR_COLOR = new Color(15, 32, 39, 0);
-    private static final Color PANEL_OUTLINE = new Color(0, 0, 0, 60);
-    private static final Color SHADOW_FAR = new Color(0, 0, 0, 90);
-    private static final Color SHADOW_NEAR = new Color(0, 0, 0, 160);
-    private static final Color ACCENT_GRADIENT_BOTTOM = new Color(55, 59, 68, 140);
-    private static final Color TITLE_COLOR = new Color(220, 220, 220, 255);
-    private static final Color URL_COLOR = new Color(200, 200, 200, 255);
-    private static final Color SEPARATOR_COLOR = new Color(200, 200, 200, 255);
-    private static final Color LOVE_COLOR = new Color(255, 255, 255, 100);
-    private static final Color DEV_HIGHLIGHT = new Color(206, 206, 226, 255);
+    private static final Color PANEL_GRADIENT_TOP = new Color(30, 20, 40, 200);
+    private static final Color PANEL_GRADIENT_BOTTOM = new Color(30, 20, 40, 180);
+    private static final Color PANEL_BLUR_COLOR = new Color(20, 10, 30, 0);
+    private static final Color PANEL_OUTLINE = new Color(255, 180, 200, 80);
+    private static final Color SHADOW_FAR = new Color(20, 10, 30, 90);
+    private static final Color SHADOW_NEAR = new Color(20, 10, 30, 160);
+    private static final Color ACCENT_GRADIENT_BOTTOM = new Color(60, 40, 70, 160);
+    private static final Color TITLE_COLOR = new Color(255, 240, 245, 255);
+    private static final Color URL_COLOR = new Color(255, 200, 220, 255);
+    private static final Color SEPARATOR_COLOR = new Color(255, 180, 200, 200);
+    private static final Color LOVE_COLOR = new Color(255, 255, 255, 150);
+    private static final Color DEV_HIGHLIGHT = new Color(255, 150, 180, 255);
     private static final Color WHITE = new Color(255, 255, 255, 255);
 
     private static final List<String> CHANGE_LOGS = List.of(
@@ -349,6 +349,10 @@ public class MainMenuScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         long now = Util.getMeasuringTimeMs();
+        
+        // Update Shader Mouse
+        MainMenuShader.getSharedInstance().setMouse((float)mouseX / width, 1.0f - (float)mouseY / height);
+
         if (postAuthIntroActive) {
             // TODO: 验证动画渲染逻辑
             // 这里处理从 AuthScreen 过渡到 MainMenuScreen 的动画效果
