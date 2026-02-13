@@ -66,7 +66,7 @@ public class TargetHud extends HudModule {
     }
 
     public enum StyleEn {
-        ThunderHack, Modern, Sakura
+        ThunderHack, Modern, Sakura, Hanabi
     }
 
     public enum ImageModeEn {
@@ -108,6 +108,33 @@ public class TargetHud extends HudModule {
     private final NumberValue<Integer> MahiroDelayTime = new NumberValue<>("DelayTime", "延迟时间(ms)", 600, 0, 2000, 50, () -> style.get() == StyleEn.Sakura && MahiroDelay.get() && MahiroDelayWait.get());
     private final NumberValue<Double> MahiroDelaySpeed = new NumberValue<>("DelaySpeed", "延迟动画速度", 2.0, 0.1, 10.0, 0.1, () -> style.get() == StyleEn.Sakura && MahiroDelay.get());
     private final ColorValue MahiroDelayColor = new ColorValue("DelayColor", "延迟血条颜色", new Color(255, 255, 0, 150), () -> style.get() == StyleEn.Sakura && MahiroDelay.get());
+
+    private final BoolValue hanabiBarGlow = new BoolValue("HanabiBarGlow", "Hanabi血条发光", true, () -> style.get() == StyleEn.Hanabi);
+    private final NumberValue<Double> hanabiBarGlowRange = new NumberValue<>("HanabiGlowRange", "Hanabi发光范围", 14.0, 0.0, 40.0, 1.0, () -> style.get() == StyleEn.Hanabi && hanabiBarGlow.get());
+    private final NumberValue<Double> hanabiBarGlowStrength = new NumberValue<>("HanabiGlowStrength", "Hanabi发光强度", 0.9, 0.0, 1.0, 0.05, () -> style.get() == StyleEn.Hanabi && hanabiBarGlow.get());
+
+    private static final float HANABI_NAME_SIZE = 11f;
+    private static final float HANABI_NAME_X = 0f;
+    private static final float HANABI_NAME_Y = 2f;
+
+    private static final float HANABI_INFO_SIZE = 8f;
+    private static final float HANABI_INFO_X = 0f;
+    private static final float HANABI_INFO_Y = 6f;
+
+    private static final float HANABI_BLOCK_SIZE = 8f;
+    private static final float HANABI_BLOCK_X = 0f;
+    private static final float HANABI_BLOCK_Y = 6f;
+
+    private static final float HANABI_HEALTH_SIZE = 9f;
+    private static final float HANABI_HEALTH_TEXT_RIGHT_PAD = 6f;
+    private static final float HANABI_HEALTH_TEXT_Y = 33f;
+    private static final float HANABI_HEART_SIZE = 12f;
+    private static final float HANABI_HEART_GAP = 3f;
+    private static final Color HANABI_LABEL_COLOR = new Color(200, 200, 200, 170);
+    private static final Color HANABI_VALUE_COLOR = new Color(240, 240, 240, 230);
+    private static final Color HANABI_HP_TEXT_COLOR = new Color(240, 240, 240, 230);
+    private static final Color HANABI_HEART_NORMAL_COLOR = new Color(200, 200, 200, 200);
+    private static final Color HANABI_HEART_HURT_COLOR = new Color(195, 0, 255, 230);
 
     // Modern Settings
     private final NumberValue<Integer> modernBgAlpha = new NumberValue<>("BgAlpha", "背景透明度", 100, 0, 255, 1, () -> style.get() == StyleEn.Modern);
@@ -166,6 +193,12 @@ public class TargetHud extends HudModule {
     private float ticks = 0;
     private boolean needsCacheClear = false;
     private KillAura killAuraModule;
+
+    private float hanabiHealthBarWidth = 140f;
+    private float hanabiHealthBarWidth2 = 140f;
+    private float hanabiHudHeight = 0f;
+    private final float[] hanabiGlowSegmentRects = new float[4];
+    private final float[] hanabiGlowSegmentRadii = new float[]{0f};
 
     private final RenderPipeline TARGET_ICON_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
             .withLocation("pipeline/sakura_target_icon")
@@ -239,12 +272,17 @@ public class TargetHud extends HudModule {
             target = currentTarget;
             animation.setDirection(Direction.FORWARDS);
         } else {
+            if (style.get() == StyleEn.Hanabi) {
+                target = null;
+            }
             animation.setDirection(Direction.BACKWARDS);
         }
 
-        if (animation.getOutput().floatValue() <= 0.01f && !hasTarget) {
-            target = null;
-            return;
+        if (style.get() != StyleEn.Hanabi) {
+            if (animation.getOutput().floatValue() <= 0.01f && !hasTarget) {
+                target = null;
+                return;
+            }
         }
 
         float animValue = animation.getOutput().floatValue();
@@ -300,9 +338,13 @@ public class TargetHud extends HudModule {
             delayHealth = health;
         }
 
+        if (style.get() == StyleEn.Hanabi) {
+            updateHanabiState(target, health, maxHealth);
+        }
+
         // Render Background and Main Elements via NanoVG
         final LivingEntity renderTarget = target;
-        if (renderTarget == null) return;
+        if (style.get() != StyleEn.Hanabi && renderTarget == null) return;
 
         final float finalHealth = displayHealth; // Use smooth health
         final float finalMaxHealth = maxHealth;
@@ -322,17 +364,20 @@ public class TargetHud extends HudModule {
 
             // No custom X/Y animation translation anymore as per request
 
-            // Scale Animation
-            float centerX = x + width / 2f;
-            float centerY = y + height / 2f;
-            NanoVGHelper.translate(vg, centerX, centerY);
-            NanoVGHelper.scale(vg, animValue, animValue);
-            NanoVGHelper.translate(vg, -centerX, -centerY);
+            if (style.get() != StyleEn.Hanabi) {
+                float centerX = x + width / 2f;
+                float centerY = y + height / 2f;
+                NanoVGHelper.translate(vg, centerX, centerY);
+                NanoVGHelper.scale(vg, animValue, animValue);
+                NanoVGHelper.translate(vg, -centerX, -centerY);
+            }
 
             if (style.get() == StyleEn.Modern) {
                 renderModern(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
             } else if (style.get() == StyleEn.Sakura) {
                 renderMahiro(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
+            } else if (style.get() == StyleEn.Hanabi) {
+                renderHanabi(vg, renderTarget, finalHealth, finalMaxHealth, animValue);
             } else {
                 renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
             }
@@ -340,20 +385,58 @@ public class TargetHud extends HudModule {
             NanoVGHelper.restore();
         });
 
+        if (style.get() == StyleEn.Hanabi) {
+            if (target != null && hanabiHudHeight > 0.5f && hanabiHealthBarWidth > 0.5f) {
+                if (hanabiBarGlow.get()) {
+                    int healthColor = getHanabiHealthColor(health, maxHealth).getRGB();
+                    Color start = new Color(0, 81, 179, 255);
+                    Color endBase = new Color(healthColor, true);
+                    Color end = new Color(endBase.getRed(), endBase.getGreen(), endBase.getBlue(), 255);
+
+                    float barX = x;
+                    float barY = y + 37f;
+                    float barW = hanabiHealthBarWidth;
+                    float barH = 3f;
+
+                    hanabiGlowSegmentRects[0] = barX;
+                    hanabiGlowSegmentRects[1] = barY;
+                    hanabiGlowSegmentRects[2] = barW;
+                    hanabiGlowSegmentRects[3] = barH;
+                    hanabiGlowSegmentRadii[0] = 0f;
+                    ShadowShader.drawStairShadowGradient(
+                            barX,
+                            barY,
+                            barW,
+                            barH,
+                            hanabiBarGlowRange.get().floatValue(),
+                            hanabiBarGlowStrength.get().floatValue(),
+                            start,
+                            end,
+                            hanabiGlowSegmentRects,
+                            hanabiGlowSegmentRadii,
+                            1
+                    );
+                }
+            }
+        }
+
         // 2. Render Items (Armor, Hands) - Must be done outside NanoVG frame usually to use DrawContext
         if (target instanceof PlayerEntity player && animValue > 0.1f) {
             context.getMatrices().pushMatrix();
 
             // No custom X/Y animation translation anymore as per request
 
-            // Scale from center
-            float centerX = x + width / 2f;
-            float centerY = y + height / 2f;
-            context.getMatrices().translate(centerX, centerY);
-            context.getMatrices().scale(animValue, animValue);
-            context.getMatrices().translate(-centerX, -centerY);
+            if (style.get() != StyleEn.Hanabi) {
+                float centerX = x + width / 2f;
+                float centerY = y + height / 2f;
+                context.getMatrices().translate(centerX, centerY);
+                context.getMatrices().scale(animValue, animValue);
+                context.getMatrices().translate(-centerX, -centerY);
+            }
 
-            renderThunderHackItems(context, player);
+            if (style.get() != StyleEn.Hanabi) {
+                renderThunderHackItems(context, player);
+            }
 
             context.getMatrices().popMatrix();
         }
@@ -978,6 +1061,191 @@ public class TargetHud extends HudModule {
         }
 
         NanoVGHelper.restore();
+    }
+
+    private void renderHanabi(long vg, LivingEntity target, float health, float maxHealth, float animationFactor) {
+        renderHanabiFlat(vg, target, health, maxHealth);
+    }
+
+    private void renderHanabiFlat(long vg, LivingEntity target, float health, float maxHealth) {
+        float w = 140f;
+        float h = 40f;
+        this.width = w;
+        this.height = h;
+
+        boolean noTarget = target == null;
+        if (noTarget && hanabiHudHeight == 0.0f) return;
+
+        int healthColor;
+        String healthStr;
+        boolean hurtNow;
+        if (noTarget) {
+            healthStr = String.valueOf(0.0f);
+            healthColor = getHanabiHealthColor(0.0f, 20.0f).getRGB();
+            hurtNow = false;
+        } else {
+            healthStr = String.valueOf(((int) health) / 2f);
+            healthColor = getHanabiHealthColor(health, maxHealth).getRGB();
+            hurtNow = target.hurtTime > 0;
+        }
+
+        NanoVG.nvgScissor(vg, x, y + (h - hanabiHudHeight), w, hanabiHudHeight);
+
+        NanoVGHelper.drawRect(x, y, w, h, new Color(0, 0, 0, 180));
+
+        NanoVGHelper.drawRect(x, y + 37f, w, 3f, new Color(0, 0, 0, 49));
+        NanoVGHelper.drawRect(x, y + 37f, hanabiHealthBarWidth2, 3f, new Color(255, 0, 213, 220));
+
+        NanoVGHelper.drawGradientRRect2(x, y + 37f, hanabiHealthBarWidth, 3f, 0f, new Color(0, 81, 179), new Color(healthColor));
+
+        float hpTextWidth = NanoVGHelper.getTextWidth(healthStr, FontLoader.bold(), HANABI_HEALTH_SIZE);
+        float hpTextX = x + w - HANABI_HEALTH_TEXT_RIGHT_PAD - hpTextWidth;
+        float hpTextY = y + HANABI_HEALTH_TEXT_Y;
+        NanoVGHelper.drawString(healthStr, hpTextX, hpTextY, FontLoader.bold(), HANABI_HEALTH_SIZE, HANABI_HP_TEXT_COLOR);
+        float heartW = NanoVGHelper.getTextWidth("❤", FontLoader.bold(), HANABI_HEART_SIZE);
+        NanoVGHelper.drawString("❤", hpTextX - HANABI_HEART_GAP - heartW, hpTextY, FontLoader.bold(), HANABI_HEART_SIZE, hurtNow ? HANABI_HEART_HURT_COLOR : HANABI_HEART_NORMAL_COLOR);
+
+        float infoX = x + 37f + HANABI_INFO_X;
+        float infoY = y + 17f + HANABI_INFO_Y;
+
+        NanoVGHelper.drawString("XYZ:", infoX, infoY, FontLoader.regular(), HANABI_INFO_SIZE, HANABI_LABEL_COLOR);
+        float cursor = infoX + NanoVGHelper.getTextWidth("XYZ:", FontLoader.regular(), HANABI_INFO_SIZE);
+
+        String xStr = noTarget ? "0" : String.valueOf((int) target.getX());
+        String yStr = noTarget ? "0" : String.valueOf((int) target.getY());
+        String zStr = noTarget ? "0" : String.valueOf((int) target.getZ());
+
+        NanoVGHelper.drawString(" " + xStr, cursor, infoY, FontLoader.regular(), HANABI_INFO_SIZE, HANABI_VALUE_COLOR);
+        cursor += NanoVGHelper.getTextWidth(" " + xStr, FontLoader.regular(), HANABI_INFO_SIZE);
+        NanoVGHelper.drawString(" " + yStr, cursor, infoY, FontLoader.regular(), HANABI_INFO_SIZE, HANABI_VALUE_COLOR);
+        cursor += NanoVGHelper.getTextWidth(" " + yStr, FontLoader.regular(), HANABI_INFO_SIZE);
+        NanoVGHelper.drawString(" " + zStr, cursor, infoY, FontLoader.regular(), HANABI_INFO_SIZE, HANABI_VALUE_COLOR);
+        cursor += NanoVGHelper.getTextWidth(" " + zStr, FontLoader.regular(), HANABI_INFO_SIZE);
+
+        NanoVGHelper.drawString(" | Hurt:", cursor, infoY, FontLoader.regular(), HANABI_INFO_SIZE, HANABI_LABEL_COLOR);
+        cursor += NanoVGHelper.getTextWidth(" | Hurt:", FontLoader.regular(), HANABI_INFO_SIZE);
+        NanoVGHelper.drawString(String.valueOf(hurtNow), cursor, infoY, FontLoader.regular(), HANABI_INFO_SIZE, HANABI_LABEL_COLOR);
+
+        NanoVGHelper.drawString(noTarget ? "(No target)" : target.getName().getString(), x + 36f + HANABI_NAME_X, y + 10f + HANABI_NAME_Y, FontLoader.bold(), HANABI_NAME_SIZE, Color.WHITE);
+
+        if (target instanceof PlayerEntity player) {
+            drawPlayerAvatar(player, x + 3f, y + 3f, 32f, 0f, 1f, 0f);
+        } else {
+            NanoVGHelper.drawRect(x + 3f, y + 3f, 32f, 32f, new Color(80, 80, 80, 200));
+        }
+
+        NanoVG.nvgResetScissor(vg);
+    }
+
+    private void updateHanabiState(LivingEntity target, float health, float maxHealth) {
+        float w = 140f;
+        float h = 40f;
+        this.width = w;
+        this.height = h;
+
+        boolean noTarget = target == null;
+        double hpPercentage;
+        if (noTarget) {
+            hpPercentage = 0.0;
+        } else {
+            hpPercentage = health / Math.max(0.001f, maxHealth);
+        }
+        hpPercentage = MathHelper.clamp(hpPercentage, 0.0, 1.0);
+        double hpWidth = 140.0 * hpPercentage;
+
+        float fps = mc.getCurrentFps() > 0 ? mc.getCurrentFps() : 60f;
+        if (noTarget) {
+            hanabiHealthBarWidth2 = (float) hanabiGetAnimationStateSmooth(0.0, hanabiHealthBarWidth2, 6.0 / fps);
+            hanabiHealthBarWidth = (float) hanabiGetAnimationStateSmooth(0.0, hanabiHealthBarWidth, 14.0 / fps);
+            hanabiHudHeight = (float) hanabiGetAnimationStateSmooth(0.0, hanabiHudHeight, 8.0 / fps);
+        } else {
+            hanabiHealthBarWidth2 = hanabiMoveUD(hanabiHealthBarWidth2, (float) hpWidth, 6.0f / fps, 3.0f / fps);
+            hanabiHealthBarWidth = (float) hanabiGetAnimationStateSmooth(hpWidth, hanabiHealthBarWidth, 14.0 / fps);
+            hanabiHudHeight = (float) hanabiGetAnimationStateSmooth(40.0, hanabiHudHeight, 8.0 / fps);
+        }
+
+        if (hanabiHudHeight == 0.0f) {
+            hanabiHealthBarWidth2 = w;
+            hanabiHealthBarWidth = w;
+        }
+    }
+
+    private static float hanabiMoveUD(float current, float end, float smoothSpeed, float minSpeed) {
+        float movement = (end - current) * smoothSpeed;
+        if (movement > 0.0f) {
+            movement = Math.max(minSpeed, movement);
+            movement = Math.min(end - current, movement);
+        } else if (movement < 0.0f) {
+            movement = Math.min(-minSpeed, movement);
+            movement = Math.max(end - current, movement);
+        }
+        return current + movement;
+    }
+
+    private static double hanabiGetAnimationStateSmooth(double target, double current, double speed) {
+        boolean larger = target > current;
+        if (speed < 0.0) {
+            speed = 0.0;
+        } else if (speed > 1.0) {
+            speed = 1.0;
+        }
+        if (target == current) {
+            return target;
+        }
+        double dif = Math.max(target, current) - Math.min(target, current);
+        double factor = dif * speed;
+        if (factor < 0.1) {
+            factor = 0.1;
+        }
+        if (larger) {
+            if (current + factor > target) {
+                current = target;
+            } else {
+                current += factor;
+            }
+        } else if (current - factor < target) {
+            current = target;
+        } else {
+            current -= factor;
+        }
+        return current;
+    }
+
+    private static Color getHanabiHealthColor(float health, float maxHealth) {
+        float progress = MathHelper.clamp(health / Math.max(0.001f, maxHealth), 0f, 1f);
+        Color[] colors = new Color[]{new Color(0, 81, 179), new Color(0, 153, 255), new Color(47, 154, 241)};
+        float[] fractions = new float[]{0f, 0.5f, 1f};
+        return blendColors(fractions, colors, progress).brighter();
+    }
+
+    private static Color blendColors(float[] fractions, Color[] colors, float progress) {
+        int[] indices = getFractionIndices(fractions, progress);
+        float[] range = new float[]{fractions[indices[0]], fractions[indices[1]]};
+        Color[] colorRange = new Color[]{colors[indices[0]], colors[indices[1]]};
+        float max = range[1] - range[0];
+        float value = progress - range[0];
+        float weight = value / max;
+        return blend(colorRange[0], colorRange[1], 1.0f - weight);
+    }
+
+    private static int[] getFractionIndices(float[] fractions, float progress) {
+        int startPoint = 0;
+        while (startPoint < fractions.length && fractions[startPoint] <= progress) {
+            startPoint++;
+        }
+        if (startPoint >= fractions.length) {
+            startPoint = fractions.length - 1;
+        }
+        return new int[]{Math.max(0, startPoint - 1), startPoint};
+    }
+
+    private static Color blend(Color color1, Color color2, float ratio) {
+        float ir = 1.0f - ratio;
+        float[] rgb1 = new float[3];
+        float[] rgb2 = new float[3];
+        color1.getColorComponents(rgb1);
+        color2.getColorComponents(rgb2);
+        return new Color(rgb1[0] * ratio + rgb2[0] * ir, rgb1[1] * ratio + rgb2[1] * ir, rgb1[2] * ratio + rgb2[2] * ir);
     }
 
     // ====================================================================================

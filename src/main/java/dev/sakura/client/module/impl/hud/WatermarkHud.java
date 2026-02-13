@@ -32,7 +32,7 @@ public class WatermarkHud extends HudModule {
         Xylitol
     }
 
-    private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Normal);
+    private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Xylitol);
     private final NumberValue<Double> hudScale = new NumberValue<>("Scale", "缩放", 1.0, 0.5, 2.0, 0.1);
 
     // Shared Settings
@@ -144,6 +144,7 @@ public class WatermarkHud extends HudModule {
     public WatermarkHud() {
         super("Watermark", "水印", 10, 10);
         this.lastUpdateTime = System.currentTimeMillis();
+        setInitialState(true);
     }
 
     @Override
@@ -521,11 +522,16 @@ public class WatermarkHud extends HudModule {
         String clientName = xylitolAnimateText.get() ? xylitolMarkStr : XYLITOL_MAIN_TEXT;
         if (clientName == null) clientName = "";
 
-        String username = AuthState.getCurrentUser();
-        if (username == null || username.isBlank()) {
-            UsernameEmptyNullPointerException e = new UsernameEmptyNullPointerException();
-            Sakura.LOGGER.error("哎呦我去你真牛逼你咋裂的？", e);
-            throw e;
+        String username;
+        if (mc.player == null || mc.world == null) {
+            username = "Player";
+        } else {
+            username = AuthState.getCurrentUser();
+            if (username == null || username.isBlank()) {
+                UsernameEmptyNullPointerException e = new UsernameEmptyNullPointerException();
+                Sakura.LOGGER.error("哎呦我去你真牛逼你咋裂的？", e);
+                throw e;
+            }
         }
         int fps = mc.getCurrentFps();
         String ver = Sakura.MOD_VER;
