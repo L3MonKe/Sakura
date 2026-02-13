@@ -34,12 +34,12 @@ public class MainMenuScreen extends Screen {
     private static final Color SIDEBAR_BG_BOTTOM = new Color(20, 10, 30, 50);
     private static final Color SIDEBAR_BLUR = new Color(20, 10, 30, 0);
     private static final Color SIDEBAR_BORDER = new Color(255, 200, 220, 30);
-    
+
     private static final Color BUTTON_NORMAL = new Color(255, 255, 255, 10);
     private static final Color BUTTON_HOVER = new Color(255, 255, 255, 40);
     private static final Color BUTTON_TEXT = new Color(255, 255, 255, 220);
     private static final Color BUTTON_TEXT_HOVER = new Color(255, 255, 255, 255);
-    
+
     private static final Color TITLE_COLOR = new Color(255, 240, 245, 255);
     private static final Color ACCENT_COLOR = new Color(255, 150, 180, 255);
     private static final Color WHITE = new Color(255, 255, 255, 255);
@@ -210,7 +210,7 @@ public class MainMenuScreen extends Screen {
     private void drawSidebar(Layout layout, float opacity) {
         // Gradient Background
         NanoVGHelper.drawGradientRRect(0, 0, layout.width, layout.height, 0,
-            applyAlpha(SIDEBAR_BG_TOP, opacity), applyAlpha(SIDEBAR_BG_BOTTOM, opacity));
+                applyAlpha(SIDEBAR_BG_TOP, opacity), applyAlpha(SIDEBAR_BG_BOTTOM, opacity));
 
         // Right Border
         NanoVGHelper.drawRect(layout.width - 1, 0, 1, layout.height, applyAlpha(SIDEBAR_BORDER, opacity));
@@ -219,20 +219,20 @@ public class MainMenuScreen extends Screen {
     private void drawTitle(Layout layout, float opacity) {
         float titleSize = refFont(60f, layout.scale);
         float subSize = refFont(16f, layout.scale);
-        
+
         float startX = 40f * layout.scale;
         float startY = 80f * layout.scale;
 
         // "Sakura" Title
         NanoVGHelper.drawString("Sakura", startX, startY, FontLoader.bold(), titleSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BOTTOM, applyAlpha(TITLE_COLOR, opacity));
-        
+
         // "Client" Subtitle
         NanoVGHelper.drawString("Client", startX + NanoVGHelper.getTextWidth("Sakura", FontLoader.bold(), titleSize) + 10f * layout.scale, startY - 8f * layout.scale, FontLoader.regular(), subSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BOTTOM, applyAlpha(ACCENT_COLOR, opacity * 0.8f));
 
         // Separator
         NanoVGHelper.drawRect(startX, startY + 10f * layout.scale, 60f * layout.scale, 2f * layout.scale, applyAlpha(ACCENT_COLOR, opacity * 0.6f));
     }
-    
+
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         long now = Util.getMeasuringTimeMs();
@@ -241,7 +241,7 @@ public class MainMenuScreen extends Screen {
         MainMenuShader.getSharedInstance().setMouse((float) mouseX / width, 1.0f - (float) mouseY / height);
 
         if (postAuthIntroActive) {
-             if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
+            if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
             float t = MathHelper.clamp((float) (now - postAuthIntroStartTime) / (float) POST_AUTH_INTRO_DURATION_MS, 0f, 1f);
             float shaderT = AnimationUtil.smoothstep(0.0f, 1.0f, t);
             MainMenuShader.getSharedInstance().render(this.width, this.height, shaderT);
@@ -271,13 +271,13 @@ public class MainMenuScreen extends Screen {
         NanoVGRenderer.INSTANCE.draw(vg -> {
             drawSidebar(layout, contentP);
             drawTitle(layout, contentP);
-            
+
             float entriesP = AnimationUtil.smoothstep(0.3f, 1.0f, p);
             renderEntries(mouseX, mouseY, layout, entriesP);
-            
+
             float socialP = AnimationUtil.smoothstep(0.5f, 1.0f, p);
             renderSocialLinks(layout, socialP);
-            
+
             // Draw Version Info bottom right (outside sidebar)
             float versionAlpha = AnimationUtil.smoothstep(0.8f, 1.0f, p);
             if (versionAlpha > 0.01f) {
@@ -286,7 +286,7 @@ public class MainMenuScreen extends Screen {
                 NanoVGHelper.drawString(ver, width - 20f * scale, height - 20f * scale, FontLoader.regular(), verSize, NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_BOTTOM, applyAlpha(WHITE, versionAlpha * 0.5f));
             }
         });
-        
+
 
     }
 
@@ -303,18 +303,17 @@ public class MainMenuScreen extends Screen {
             float x = startX + i * spacing;
             float y = startY;
             float size = 30f * layout.scale;
-            
+
             link.setBounds(x, y, size, size);
-            
-            float mX = (float)(mc.mouse.getX() * mc.getWindow().getScaledWidth() / mc.getWindow().getWidth());
-            float mY = (float)(mc.mouse.getY() * mc.getWindow().getScaledHeight() / mc.getWindow().getHeight());
+
+            float mX = (float) (mc.mouse.getX() * mc.getWindow().getScaledWidth() / mc.getWindow().getWidth());
+            float mY = (float) (mc.mouse.getY() * mc.getWindow().getScaledHeight() / mc.getWindow().getHeight());
             boolean hovered = link.isHovered(mX, mY);
-            
+
             Color color = hovered ? ACCENT_COLOR : BUTTON_TEXT;
-            NanoVGHelper.drawString(link.glyph, x + size/2f, y + size/2f, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(color, opacity));
+            NanoVGHelper.drawString(link.glyph, x + size / 2f, y + size / 2f, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(color, opacity));
         }
     }
-
 
 
     private void renderEntries(int mouseX, int mouseY, Layout layout, float entranceProgress) {
@@ -332,12 +331,12 @@ public class MainMenuScreen extends Screen {
             float itemP = (entranceProgress - 0.2f - i * 0.05f) / 0.5f;
             itemP = MathHelper.clamp(itemP, 0f, 1f);
             itemP = AnimationUtil.easeOutCubic(itemP);
-            
+
             float alpha = itemP;
             float offsetX = (1f - itemP) * (-50f * layout.scale);
-            
+
             float drawX = startX + offsetX;
-            
+
             entry.setBounds(drawX, y, buttonW, buttonH);
 
             boolean hovered = mouseX >= drawX && mouseX <= drawX + buttonW && mouseY >= y && mouseY <= y + buttonH;
@@ -352,22 +351,22 @@ public class MainMenuScreen extends Screen {
             if (hoverP > 0.01f) {
                 Color borderColor = applyAlpha(ACCENT_COLOR, hoverP * 0.5f * alpha);
                 NanoVGHelper.drawRoundRectOutline(drawX, y, buttonW, buttonH, 8f * layout.scale, 1.5f, borderColor);
-                
+
                 // Left Accent Bar
-                NanoVGHelper.drawRoundRect(drawX, y + 8f*layout.scale, 3f*layout.scale, buttonH - 16f*layout.scale, 1.5f, applyAlpha(ACCENT_COLOR, hoverP * alpha));
+                NanoVGHelper.drawRoundRect(drawX, y + 8f * layout.scale, 3f * layout.scale, buttonH - 16f * layout.scale, 1.5f, applyAlpha(ACCENT_COLOR, hoverP * alpha));
             }
 
             // Text & Icon
             float contentOffsetX = 20f * layout.scale + (hoverP * 5f * layout.scale); // Slide text slightly on hover
             float fontSize = refFont(22f, layout.scale);
-            
+
             Color textColor = ColorUtil.interpolateColorC(BUTTON_TEXT, BUTTON_TEXT_HOVER, hoverP);
-            
+
             // Icon
-            NanoVGHelper.drawString(entry.iconGlyph, drawX + contentOffsetX, y + buttonH/2f, FontLoader.newIc(), fontSize * 1.2f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(textColor, alpha));
-            
+            NanoVGHelper.drawString(entry.iconGlyph, drawX + contentOffsetX, y + buttonH / 2f, FontLoader.newIc(), fontSize * 1.2f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(textColor, alpha));
+
             // Text
-            NanoVGHelper.drawString(entry.label, drawX + contentOffsetX + 35f * layout.scale, y + buttonH/2f + 1f, FontLoader.bold(), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(textColor, alpha));
+            NanoVGHelper.drawString(entry.label, drawX + contentOffsetX + 35f * layout.scale, y + buttonH / 2f + 1f, FontLoader.bold(), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(textColor, alpha));
         }
     }
 

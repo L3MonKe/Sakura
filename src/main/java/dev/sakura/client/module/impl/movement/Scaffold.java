@@ -2,9 +2,10 @@ package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.StrafeEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
@@ -20,18 +21,16 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
+import net.minecraft.block.AirBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.FallingBlock;
+import net.minecraft.block.FluidBlock;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 
 import java.awt.*;
 
@@ -83,15 +82,36 @@ public class Scaffold extends Module {
     @Override
     protected void onEnable() {
         blockCache = null;
-        shouldSwapBack = false;
     }
 
     @Override
     protected void onDisable() {
         blockCache = null;
+    }
 
-        if (shouldSwapBack) {
-            InvUtil.swapBack();
+    public static Vec3d getVec3(BlockPos pos, Direction face) {
+        double x = (double) pos.getX() + 0.5;
+        double y = (double) pos.getY() + 0.5;
+        double z = (double) pos.getZ() + 0.5;
+        if (face == Direction.UP || face == Direction.DOWN) {
+            x += MathUtil.getRandom(0.3, -0.3);
+            z += MathUtil.getRandom(0.3, -0.3);
+        } else {
+            y += MathUtil.getRandom(0.3, -0.3);
+        }
+        if (face == Direction.WEST || face == Direction.EAST) {
+            z += MathUtil.getRandom(0.3, -0.3);
+        }
+        if (face == Direction.SOUTH || face == Direction.NORTH) {
+            x += MathUtil.getRandom(0.3, -0.3);
+        }
+        return new Vec3d(x, y, z);
+    }
+
+    @EventHandler
+    public void onMotion(MotionEvent e) {
+        if (e.getType() == EventType.PRE && safeWalk.get() && mode.is(Mode.GodBridge)) {
+            mc.options.sneakKey.setPressed(mc.player.isOnGround() && SafeWalk.isOnBlockEdge(0.3F));
         }
     }
 
@@ -106,61 +126,35 @@ public class Scaffold extends Module {
             if (mc.player.isOnGround()) {
                 yLevel = (int) Math.floor(mc.player.getY()) - 1;
                 airTicks = 0;
+                blockCache = null;
                 Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
-                Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
+                Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix);
             } else {
-                if (onAir() && airTicks >= tellyTick.get() && blockCache != null) {
-                    Rotation rotation = getRotation(blockCache);
-                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                if (airTicks >= tellyTick.get() && blockCache != null) {
+                    Managers.ROTATION.setRotations(getRotation(blockCache), rotationSpeed.get(), movementFix);
                     place();
-                } else if (!onAir() && blockCache != null) {
-                    Rotation rotation = getRotation(blockCache);
-                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
                 }
                 airTicks++;
             }
-        } else if (onAir() && blockCache != null) {
-            Rotation rotation = getRotation(blockCache);
-            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+        } else if (blockCache != null) {
+            Managers.ROTATION.setRotations(getRotation(blockCache), rotationSpeed.get(), movementFix);
             place();
-        }
-
-        if (swapMode.is(SwapMode.Silent)) {
-            InvUtil.swapBack();
         }
     }
 
     @EventHandler
-    public void onStrafe(StrafeEvent event) {
+    private void onStrafe(StrafeEvent event) {
+        if (nullCheck()) return;
         if (mc.player.isOnGround() && MoveUtil.isMoving() && mode.is(Mode.Telly) && !mc.options.jumpKey.isPressed()) {
             mc.player.jump();
         }
     }
 
-    public static Vec3d getVec3(BlockPos pos, Direction face) {
-        double x = (double) pos.getX() + 0.5;
-        double y = (double) pos.getY() + 0.5;
-        double z = (double) pos.getZ() + 0.5;
-        if (face != Direction.UP && face != Direction.DOWN) {
-            y += 0.08;
-        } else {
-            x += MathUtil.getRandom(0.3, -0.3);
-            z += MathUtil.getRandom(0.3, -0.3);
-        }
-        if (face == Direction.WEST || face == Direction.EAST) {
-            z += MathUtil.getRandom(0.3, -0.3);
-        }
-        if (face == Direction.SOUTH || face == Direction.NORTH) {
-            x += MathUtil.getRandom(0.3, -0.3);
-        }
-        return new Vec3d(x, y, z);
-    }
-
-    public int getYLevel() {
+    private int getYLevel() {
         if (keepY.get() && !mc.options.jumpKey.isPressed() && MoveUtil.isMoving() && mode.is(Mode.Telly) && mc.player.fallDistance <= 1) {
             return yLevel;
         } else {
-            return MathHelper.floor(mc.player.getY()) - 1;
+            return (int) Math.floor(mc.player.getY()) - 1;
         }
     }
 
@@ -173,82 +167,44 @@ public class Scaffold extends Module {
         return !(block instanceof FallingBlock) || !FallingBlock.canFallThrough(mc.world.getBlockState(pos));
     }
 
-    public void place() {
-        if (!onAir()) return;
+    private void place() {
+        FindItemResult item = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
+        if (!item.found()) return;
 
-        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position, sideCheck.get());
-        if (!hasRotated) return;
+        BlockPos blockPos = blockCache.position.offset(blockCache.facing);
+        if (!BlockUtil.canPlaceAt(blockPos)) return;
 
-        BlockPos targetPos = blockCache.position.offset(blockCache.facing);
-        if (!BlockUtil.canPlaceAt(targetPos)) return;
-
-        Hand hand;
-        boolean invSwapped = false;
-        if (swapMode.is(SwapMode.None)) {
-            if (validItem(mc.player.getOffHandStack(), blockCache.position)) {
-                hand = Hand.OFF_HAND;
-            } else if (validItem(mc.player.getMainHandStack(), blockCache.position)) {
-                hand = Hand.MAIN_HAND;
-            } else {
-                return;
-            }
-        } else {
-            if (swapMode.is(SwapMode.InvSwitch)) {
-                if (validItem(mc.player.getOffHandStack(), blockCache.position)) {
-                    hand = Hand.OFF_HAND;
-                } else if (validItem(mc.player.getMainHandStack(), blockCache.position)) {
-                    hand = Hand.MAIN_HAND;
+        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockCache.facing, blockCache.position, false);
+        if (hasRotated) {
+            ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockCache.position, blockCache.facing), blockCache.facing, blockCache.position, false));
+            if (result.isAccepted()) {
+                if (swingHand.get()) {
+                    mc.player.swingHand(item.getHand());
                 } else {
-                    FindItemResult item = InvUtil.find(itemStack -> validItem(itemStack, blockCache.position), 0, 35);
-                    if (!item.found()) return;
-                    invSwapped = InvUtil.invSwap(item.slot());
-                    hand = Hand.MAIN_HAND;
+                    mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
                 }
-            } else {
-                FindItemResult item = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
-                if (!item.found()) return;
-
-                InvUtil.swap(item.isOffhand() ? mc.player.getInventory().getSelectedSlot() : item.slot(), swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get()));
-                hand = item.getHand();
-                shouldSwapBack = true;
             }
-        }
 
-        ActionResult result = mc.interactionManager.interactBlock(mc.player, hand, new BlockHitResult(blockCache.hitVec, blockCache.facing, blockCache.position, false));
 
-        if (result.isAccepted()) {
-            if (swingHand.get()) mc.player.swingHand(hand);
-            else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
-        }
-
-        if (invSwapped) {
-            InvUtil.invSwapBack();
-        }
-
-        if (render.get()) {
-            Managers.RENDER.add(targetPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+            if (render.get()) {
+                Managers.RENDER.add(blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+            }
         }
     }
 
-    public void getBlockInfo() {
+    private void getBlockInfo() {
         Vec3d baseVec = mc.player.getEyePos();
         BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
         int baseX = base.getX();
         int baseZ = base.getZ();
-
-        if (mc.world.getBlockState(base).hasSolidTopSurface(mc.world, base, mc.player)) {
-            return;
-        }
-
+        if (mc.world.getBlockState(base).hasSolidTopSurface(mc.world, base, mc.player)) return;
         if (checkBlock(baseVec, base)) {
             return;
         }
-
         for (int d = 1; d <= 6; d++) {
             if (checkBlock(baseVec, new BlockPos(baseX, getYLevel() - d, baseZ))) {
                 return;
             }
-
             for (int x = 0; x <= d; x++) {
                 for (int z = 0; z <= d - x; z++) {
                     int y = d - x - z;
@@ -264,12 +220,15 @@ public class Scaffold extends Module {
     }
 
     private boolean checkBlock(Vec3d baseVec, BlockPos pos) {
-        if (BlockUtil.solid(mc.world.getBlockState(pos))) return false;
+        if (!(mc.world.getBlockState(pos).getBlock() instanceof AirBlock) && !(mc.world.getBlockState(pos).getBlock() instanceof FluidBlock)) {
+            return false;
+        }
 
         Vec3d center = new Vec3d(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
         for (Direction dir : Direction.values()) {
             Vec3d hit = center.add(new Vec3d(dir.getVector()).multiply(0.5));
-            BlockPos baseBlockPos = pos.offset(dir);
+            Vec3i baseBlock = pos.add(dir.getVector());
+            BlockPos baseBlockPos = new BlockPos(baseBlock.getX(), baseBlock.getY(), baseBlock.getZ());
 
             if (!mc.world.getBlockState(baseBlockPos).hasSolidTopSurface(mc.world, baseBlockPos, mc.player)) continue;
 
@@ -278,29 +237,21 @@ public class Scaffold extends Module {
                 if (dir.getOpposite() == Direction.UP && mode.is(Mode.GodBridge) && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
                     continue;
                 }
-
-                blockCache = new BlockCache(baseBlockPos, dir.getOpposite(), getVec3(baseBlockPos, dir.getOpposite()));
+                blockCache = new BlockCache(new BlockPos(baseBlock), dir.getOpposite());
                 return true;
             }
         }
         return false;
     }
 
-    private boolean onAir() {
-        Vec3d baseVec = mc.player.getEyePos();
-        BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
-        return !mc.world.getBlockState(base).hasSolidTopSurface(mc.world, base, mc.player);
-    }
-
     private Rotation getRotation(BlockCache blockCache) {
-        Rotation rotations = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.facing) : RotationUtil.calculate(blockCache.position.toCenterPos());
-
-        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), rotations.pitch);
+        Rotation calculate = RotationUtil.calculate(blockCache.position.toCenterPos());
+        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, false);
         if (hasRotated) return reverseYaw;
-        return rotations;
+        else return calculate;
     }
 
-    private record BlockCache(BlockPos position, Direction facing, Vec3d hitVec) {
+    private record BlockCache(BlockPos position, Direction facing) {
     }
 }
