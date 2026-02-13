@@ -349,9 +349,9 @@ public class MainMenuScreen extends Screen {
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         long now = Util.getMeasuringTimeMs();
-        
+
         // Update Shader Mouse
-        MainMenuShader.getSharedInstance().setMouse((float)mouseX / width, 1.0f - (float)mouseY / height);
+        MainMenuShader.getSharedInstance().setMouse((float) mouseX / width, 1.0f - (float) mouseY / height);
 
         if (postAuthIntroActive) {
             // TODO: 验证动画渲染逻辑

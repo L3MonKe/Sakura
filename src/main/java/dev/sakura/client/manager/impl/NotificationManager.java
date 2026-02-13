@@ -1,16 +1,16 @@
 package dev.sakura.client.manager.impl;
 
+import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
-import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.utils.animations.Easing;
 import dev.sakura.client.verify.util.ExitUtil;
+import org.joml.Matrix3x2fStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
-import org.joml.Matrix3x2fStack;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -58,9 +58,11 @@ public class NotificationManager {
         COLOR_CODES.put('r', new Color(255, 255, 255));
     }
 
-    public record Xylitol4Offsets(float titleOffsetX, float titleOffsetY, float iconOffsetX, float iconOffsetY, float descriptionOffsetX, float descriptionOffsetY, float lineOffsetY) {
+    public record Xylitol4Offsets(float titleOffsetX, float titleOffsetY, float iconOffsetX, float iconOffsetY,
+                                  float descriptionOffsetX, float descriptionOffsetY, float lineOffsetY) {
         public static final Xylitol4Offsets ZERO = new Xylitol4Offsets(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     }
+
     public static final Xylitol4Offsets XYLITOL4_HARDCODED_OFFSETS = new Xylitol4Offsets(-3.0f, -3.0f, -2.0f, -4.0f, -1.5f, 0.0f, -3.0f);
     public static final Alignment XYLITOL3_HARDCODED_ALIGNMENT = Alignment.RIGHT;
     public static final float XYLITOL3_HARDCODED_SCALE = 1.85f;
@@ -688,7 +690,8 @@ public class NotificationManager {
             return text.replaceAll("§.", "");
         }
 
-        private record ParsedLines(String title, String subTitle) { }
+        private record ParsedLines(String title, String subTitle) {
+        }
 
         private static ParsedLines parseLines(String plainText) {
             String trimmed = plainText.trim();

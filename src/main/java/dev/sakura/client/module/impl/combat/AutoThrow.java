@@ -20,7 +20,6 @@ import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -57,33 +56,6 @@ public class AutoThrow extends Module {
 
     public AutoThrow() {
         super("AutoThrow", "自动投掷", Category.Combat);
-
-        ClientTickEvents.START_CLIENT_TICK.register(minecraftClient -> {
-            if (minecraftClient.player == null || minecraftClient.world == null) return;
-
-            if (isEnabled() && isThrowing && targetRotation != null) {
-                realYaw = minecraftClient.player.getYaw();
-                realPitch = minecraftClient.player.getPitch();
-                realLastYaw = minecraftClient.player.lastYaw;
-                realLastPitch = minecraftClient.player.lastPitch;
-                realBodyYaw = minecraftClient.player.bodyYaw;
-                realHeadYaw = minecraftClient.player.headYaw;
-
-                minecraftClient.player.setYaw(targetRotation.yaw);
-                minecraftClient.player.setPitch(targetRotation.pitch);
-
-                minecraftClient.player.lastYaw = targetRotation.yaw;
-                minecraftClient.player.lastPitch = targetRotation.pitch;
-
-                minecraftClient.player.bodyYaw = targetRotation.yaw;
-                minecraftClient.player.headYaw = targetRotation.yaw;
-            }
-
-            if (!shouldSwapBack) return;
-
-            shouldSwapBack = false;
-            InvUtil.swapBack();
-        });
     }
 
     @Override
@@ -166,6 +138,29 @@ public class AutoThrow extends Module {
     @EventHandler
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
+
+        if (isEnabled() && isThrowing && targetRotation != null) {
+            realYaw = mc.player.getYaw();
+            realPitch = mc.player.getPitch();
+            realLastYaw = mc.player.lastYaw;
+            realLastPitch = mc.player.lastPitch;
+            realBodyYaw = mc.player.bodyYaw;
+            realHeadYaw = mc.player.headYaw;
+
+            mc.player.setYaw(targetRotation.yaw);
+            mc.player.setPitch(targetRotation.pitch);
+
+            mc.player.lastYaw = targetRotation.yaw;
+            mc.player.lastPitch = targetRotation.pitch;
+
+            mc.player.bodyYaw = targetRotation.yaw;
+            mc.player.headYaw = targetRotation.yaw;
+        }
+
+        if (!shouldSwapBack) return;
+
+        shouldSwapBack = false;
+        InvUtil.swapBack();
 
         if (Sakura.MODULES.getModule(Scaffold.class).isEnabled()) return;
 

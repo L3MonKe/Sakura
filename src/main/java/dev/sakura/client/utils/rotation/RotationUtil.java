@@ -66,7 +66,7 @@ public class RotationUtil {
         return calculate(new Vector3d(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()), mc.player.getZ()), to);
     }
 
-    public static Rotation calculate(final Vector3d position, final Direction direction) {
+    public static Rotation calculate(Vector3d position, Direction direction) {
         double x = position.getX() + 0.5;
         double y = position.getY() + 0.5;
         double z = position.getZ() + 0.5;
@@ -77,39 +77,15 @@ public class RotationUtil {
         return calculate(new Vector3d(x, y, z));
     }
 
-    public static Rotation calculate(final BlockPos position, final Direction direction) {
-        Vec3d centerPos = position.toCenterPos();
-        double x = centerPos.getX() + direction.getOffsetX() * 0.5;
-        double y = centerPos.getY() + direction.getOffsetY() * 0.5;
-        double z = centerPos.getZ() + direction.getOffsetZ() * 0.5;
+    public static Rotation calculate(BlockPos position, Direction direction) {
+        double x = position.getX() + 0.5D;
+        double y = position.getY() + 0.5D;
+        double z = position.getZ() + 0.5D;
 
-        for (double i = -0.3; i <= 0.3; i += 0.3) {
-            for (double j = -0.3; j <= 0.3; j += 0.3) {
-                if (i == 0 && j == 0) continue;
-
-                double testX = x;
-                double testY = y;
-                double testZ = z;
-
-                if (direction.getAxis() == Direction.Axis.X) {
-                    testY += i;
-                    testZ += j;
-                } else if (direction.getAxis() == Direction.Axis.Y) {
-                    testX += i;
-                    testZ += j;
-                } else {
-                    testX += i;
-                    testY += j;
-                }
-
-                Rotation testRotation = calculate(new Vector3d(testX, testY, testZ));
-                if (RaytraceUtil.overBlock(testRotation, direction, position)) {
-                    return testRotation;
-                }
-            }
-        }
-
-        return calculate(new Vector3d(x, y, z));
+        x += (double) direction.getVector().getX() * 0.5;
+        y += (double) direction.getVector().getY() * 0.5;
+        z += (double) direction.getVector().getZ() * 0.5;
+        return calculate(new Vec3d(x, y, z));
     }
 
     public static Rotation applySensitivityPatch(final Rotation rotation) {

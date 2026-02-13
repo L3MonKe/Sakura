@@ -148,12 +148,9 @@ public class InvUtil {
         return true;
     }
 
-    public static boolean swapBack() {
-        if (previousSlot == -1) return false;
-
-        boolean return_ = swap(previousSlot, false);
-        previousSlot = -1;
-        return return_;
+    public static void swapBack() {
+        if (previousSlot == -1) return;
+        mc.player.getInventory().setSelectedSlot(previousSlot);
     }
 
     public static boolean invSwap(int slot) {
