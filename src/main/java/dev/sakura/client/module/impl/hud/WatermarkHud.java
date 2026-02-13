@@ -1,6 +1,7 @@
 package dev.sakura.client.module.impl.hud;
 
 import dev.sakura.client.Sakura;
+import dev.sakura.client.exception.UsernameEmptyNullPointerException;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -8,6 +9,7 @@ import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
+import dev.sakura.client.verify.AuthState;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
@@ -519,7 +521,12 @@ public class WatermarkHud extends HudModule {
         String clientName = xylitolAnimateText.get() ? xylitolMarkStr : XYLITOL_MAIN_TEXT;
         if (clientName == null) clientName = "";
 
-        String username = mc.getSession() != null ? mc.getSession().getUsername() : "Player";
+        String username = AuthState.getCurrentUser();
+        if (username == null || username.isBlank()) {
+            UsernameEmptyNullPointerException e = new UsernameEmptyNullPointerException();
+            Sakura.LOGGER.error("哎呦我去你真牛逼你咋裂的？", e);
+            throw e;
+        }
         int fps = mc.getCurrentFps();
         String ver = Sakura.MOD_VER;
         String info = " | " + username + " | fps:" + fps + " | " + ver;
