@@ -88,8 +88,8 @@ public class FallingPlayer {
             fw *= v;
             float f1 = MathHelper.sin(this.yaw * (float) Math.PI / 180.0F);
             float f2 = MathHelper.cos(this.yaw * (float) Math.PI / 180.0F);
-            this.motionX += (double) (sr * f2 - fw * f1);
-            this.motionZ += (double) (fw * f2 + sr * f1);
+            this.motionX += sr * f2 - fw * f1;
+            this.motionZ += fw * f2 + sr * f1;
         }
 
         this.motionY -= 0.08;

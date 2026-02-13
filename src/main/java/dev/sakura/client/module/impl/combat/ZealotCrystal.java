@@ -1,3 +1,4 @@
+/*
 package dev.sakura.client.module.impl.combat;
 
 import com.google.common.eventbus.Subscribe;
@@ -597,7 +598,8 @@ public class ZealotCrystal extends Module {
         return predictedPos;
     }
 
-  /*  @Subscribe
+  */
+/*  @Subscribe
     public void onRender3D(Render3DEvent event) {
         if (bestPlacePos != null) {
             BlockPos renderPos = bestPlacePos.up();
@@ -633,7 +635,8 @@ public class ZealotCrystal extends Module {
             RenderUtil.drawBox(event.getMatrix(), sliceBox, predictColor, O.getValue());
             RenderUtil.drawBoxFilled(event.getMatrix(), sliceBox, predictColor);
         }
-    }*/
+    }*//*
+
 
 
     //misc
@@ -698,3 +701,4 @@ public class ZealotCrystal extends Module {
         return true;
     }
 }
+*/

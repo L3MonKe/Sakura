@@ -1,10 +1,8 @@
 package dev.sakura.client.utils.world;
 
 
-
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
-import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.component.type.ItemEnchantmentsComponent;
 import net.minecraft.enchantment.Enchantment;
@@ -30,15 +28,14 @@ import net.minecraft.world.Difficulty;
 import net.minecraft.world.GameMode;
 
 import java.util.ArrayList;
-import java.util.List;
-
 import java.util.HashMap;
-
+import java.util.List;
 import java.util.Map;
+
 import static dev.sakura.client.Sakura.mc;
 import static net.minecraft.world.GameMode.CREATIVE;
 
-public class DamageUtils{
+public class DamageUtils {
     private static final Map<String, Integer> PROTECTION_MAP = new HashMap<>() {{
         put("protection", 1);
         put("blast_protection", 2);
@@ -53,11 +50,12 @@ public class DamageUtils{
 
     /**
      * 新增的重载，用于根据预测的实体中心点计算水晶伤害
-     * @param entity 目标实体
+     *
+     * @param entity                目标实体
      * @param predictedEntityCenter 预测的实体脚底中心点
-     * @param crystalAnchorPos 水晶依附的方块位置
-     * @param exception 在光线追踪中需要忽略的方块 (通常是正在挖掘的方块)
-     * @param ignoreTerrain 是否忽略可破坏地形的阻挡
+     * @param crystalAnchorPos      水晶依附的方块位置
+     * @param exception             在光线追踪中需要忽略的方块 (通常是正在挖掘的方块)
+     * @param ignoreTerrain         是否忽略可破坏地形的阻挡
      * @return 计算出的伤害值
      */
     public static float getCrystalDamage(Entity entity, Vec3d predictedEntityCenter, BlockPos crystalAnchorPos, BlockPos exception, boolean ignoreTerrain) {
@@ -83,9 +81,11 @@ public class DamageUtils{
         Vec3d explosionSource = Vec3d.ofCenter(crystalAnchorPos.up());
         return getDamage(entity, predictedBox, explosionSource, CRYSTAL_POWER, exception, ignoreTerrain);
     }
+
     public static float getCrystalDamage(Entity entity, Box box, EndCrystalEntity crystal, boolean ignoreTerrain) {
         return getDamage(entity, box, Vec3d.ofCenter(crystal.getBlockPos(), 0), 6.0f, null, ignoreTerrain);
     }
+
     public static float getCrystalDamage(Entity entity, Vec3d explosionPos, boolean ignoreTerrain) {
         // 用实体自身的包围盒
         Box box = entity.getBoundingBox();
@@ -93,6 +93,7 @@ public class DamageUtils{
         BlockPos exception = null;
         return getDamage(entity, box, explosionPos, power, exception, ignoreTerrain);
     }
+
     public static float getCrystalDamage(Entity entity, Box box, BlockPos position, BlockPos exception, boolean ignoreTerrain) {
         return getDamage(entity, box, Vec3d.ofCenter(position, 1), 6.0f, exception, ignoreTerrain);
     }
@@ -103,8 +104,8 @@ public class DamageUtils{
 
     public static float getCrystalDamage(Entity entity, Vec3d predictedPos, Vec3d crystalPos, boolean ignoreTerrain) {
         // 使用预测位置构建包围盒
-        double entityWidth = entity instanceof LivingEntity ? ((LivingEntity)entity).getWidth() : 0.6;
-        double entityHeight = entity instanceof LivingEntity ? ((LivingEntity)entity).getHeight() : 1.8;
+        double entityWidth = entity instanceof LivingEntity ? ((LivingEntity) entity).getWidth() : 0.6;
+        double entityHeight = entity instanceof LivingEntity ? ((LivingEntity) entity).getHeight() : 1.8;
 
         Box predictedBox = new Box(
                 predictedPos.x - entityWidth / 2.0,
@@ -121,7 +122,8 @@ public class DamageUtils{
     public static float getDamage(Entity entity, Box box, Vec3d vec3d, float power, BlockPos exception, boolean ignoreTerrain) {
         if (mc.world == null) return 0.0f; // 添加空检查
         if (mc.world.getDifficulty() == Difficulty.PEACEFUL) return 0.0f;
-        if (!(entity instanceof net.minecraft.client.network.OtherClientPlayerEntity) && entity instanceof PlayerEntity player && getGameMode(player) == GameMode.CREATIVE) return 0.0f;
+        if (!(entity instanceof net.minecraft.client.network.OtherClientPlayerEntity) && entity instanceof PlayerEntity player && getGameMode(player) == GameMode.CREATIVE)
+            return 0.0f;
 
         float diameter = power * 2.0f;
 
@@ -217,7 +219,8 @@ public class DamageUtils{
                 blockState = Blocks.AIR.getDefaultState();
             } else {
                 blockState = mc.world.getBlockState(blockPos);
-                if (blockState.getBlock().getBlastResistance() < 600 && ignoreTerrain) blockState = Blocks.AIR.getDefaultState();
+                if (blockState.getBlock().getBlastResistance() < 600 && ignoreTerrain)
+                    blockState = Blocks.AIR.getDefaultState();
             }
 
             BlockHitResult hitResult = blockState.getCollisionShape(mc.world, blockPos).raycast(start, end, blockPos);

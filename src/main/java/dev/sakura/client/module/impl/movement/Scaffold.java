@@ -3,9 +3,7 @@ package dev.sakura.client.module.impl.movement;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MouseButtonEvent;
-import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.StrafeEvent;
-import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.event.type.KeyAction;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
@@ -24,13 +22,9 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import dev.sakura.client.verify.VerificationClient;
-import dev.sakura.client.verify.util.AuthUtil;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.FallingBlock;
-import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
@@ -79,7 +73,6 @@ public class Scaffold extends Module {
     private BlockCache blockCache;
     private int airTicks;
     private boolean shouldSwapBack;
-    private FindItemResult findItemResult;
 
     public Scaffold() {
         super("Scaffold", "自动搭路", Category.Movement);
@@ -88,7 +81,6 @@ public class Scaffold extends Module {
             if (minecraftClient.player == null || minecraftClient.world == null) return;
             if (!shouldSwapBack) return;
 
-            // TODO:改成手动切换selected
             shouldSwapBack = false;
             InvUtil.swapBack();
         });
@@ -111,78 +103,46 @@ public class Scaffold extends Module {
             shouldSwapBack = true;
         }
         blockCache = null;
-        findItemResult = null;
     }
 
     @EventHandler
-    private void onMouseButton(MouseButtonEvent event) {
+    public void onMouseButton(MouseButtonEvent event) {
         if (mc.currentScreen != null) return;
         if (event.getAction() != KeyAction.Press) return;
-        if (event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_LEFT) {
+        if (event.getButton() == 0) {
             event.setCancelled(true);
             mc.options.attackKey.setPressed(false);
         }
-        if (event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_RIGHT) {
-            event.setCancelled(true);
-            mc.options.useKey.setPressed(false);
-        }
     }
 
     @EventHandler
-    private void onMotion(MotionEvent e) {
-        if (e.getType() == EventType.PRE && safeWalk.get() && mode.is(Mode.GodBridge)) {
-            mc.options.sneakKey.setPressed(mc.player.isOnGround() && SafeWalk.isOnBlockEdge(0.3F));
-        }
-    }
-
-    @EventHandler
-    private void onTick(TickEvent.Pre event) {
-        if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
-            return;
-        }
-
+    public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        int loops = (int) Math.ceil(Math.hypot(mc.player.getVelocity().x, mc.player.getVelocity().z)) + 2;
+        getBlockInfo();
 
-        for (int i = 0; i < loops; i++) {
-            getBlockInfo();
-
-            MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
-            boolean placed = false;
-
-            if (mode.is(Mode.Telly)) {
-                if (mc.player.isOnGround()) {
-                    yLevel = (int) Math.floor(mc.player.getY()) - 1;
-                    airTicks = 0;
-                    Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
-                    Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
-                    break;
-                } else {
-                    if (blockCache != null) {
-                        if (onAir() && airTicks >= tellyTick.get()) {
-                            Rotation rotation = getRotation(blockCache);
-                            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-                            place();
-                            placed = true;
-                        } else if (!onAir()) {
-                            Rotation rotation = getRotation(blockCache);
-                            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-                        }
-                    }
+        MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
+        if (mode.is(Mode.Telly)) {
+            if (mc.player.isOnGround()) {
+                yLevel = (int) Math.floor(mc.player.getY()) - 1;
+                airTicks = 0;
+                Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+                Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix, RotationManager.Priority.High);
+            } else {
+                if (onAir() && airTicks >= tellyTick.get() && blockCache != null) {
+                    Rotation rotation = getRotation(blockCache);
+                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+                    place();
+                } else if (!onAir() && blockCache != null) {
+                    Rotation rotation = getRotation(blockCache);
+                    Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
                 }
-            } else if (blockCache != null) {
-                Rotation rotation = getRotation(blockCache);
-                Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
-                place();
-                placed = true;
+                airTicks++;
             }
-
-            if (blockCache == null || !placed) break;
-        }
-
-        if (mode.is(Mode.Telly) && !mc.player.isOnGround()) {
-            airTicks++;
+        } else if (onAir() && blockCache != null) {
+            Rotation rotation = getRotation(blockCache);
+            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), movementFix, RotationManager.Priority.High);
+            place();
         }
 
         if (swapMode.is(SwapMode.Silent)) {
@@ -229,8 +189,6 @@ public class Scaffold extends Module {
 
         Block block = ((BlockItem) itemStack.getItem()).getBlock();
 
-        if (block == Blocks.TNT) return false;
-
         if (!Block.isShapeFullCube(block.getDefaultState().getCollisionShape(mc.world, pos))) return false;
         return !(block instanceof FallingBlock) || !FallingBlock.canFallThrough(mc.world.getBlockState(pos));
     }
@@ -244,20 +202,37 @@ public class Scaffold extends Module {
         BlockPos targetPos = blockCache.position.offset(blockCache.facing);
         if (!BlockUtil.canPlaceAt(targetPos)) return;
 
+        Hand hand;
         boolean invSwapped = false;
-        if (swapMode.is(SwapMode.InvSwitch)) {
-            findItemResult = InvUtil.find(itemStack -> validItem(itemStack, blockCache.position), 0, 35);
-            if (!findItemResult.found()) return;
-            invSwapped = InvUtil.invSwap(findItemResult.slot());
+        if (swapMode.is(SwapMode.None)) {
+            if (validItem(mc.player.getOffHandStack(), blockCache.position)) {
+                hand = Hand.OFF_HAND;
+            } else if (validItem(mc.player.getMainHandStack(), blockCache.position)) {
+                hand = Hand.MAIN_HAND;
+            } else {
+                return;
+            }
         } else {
-            findItemResult = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
-            if (!findItemResult.found()) return;
+            if (swapMode.is(SwapMode.InvSwitch)) {
+                if (validItem(mc.player.getOffHandStack(), blockCache.position)) {
+                    hand = Hand.OFF_HAND;
+                } else if (validItem(mc.player.getMainHandStack(), blockCache.position)) {
+                    hand = Hand.MAIN_HAND;
+                } else {
+                    FindItemResult item = InvUtil.find(itemStack -> validItem(itemStack, blockCache.position), 0, 35);
+                    if (!item.found()) return;
+                    invSwapped = InvUtil.invSwap(item.slot());
+                    hand = Hand.MAIN_HAND;
+                }
+            } else {
+                FindItemResult item = InvUtil.findInHotbar(itemStack -> validItem(itemStack, blockCache.position));
+                if (!item.found()) return;
 
-            boolean remember = swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get());
-            InvUtil.swap(findItemResult.isOffhand() ? mc.player.getInventory().getSelectedSlot() : findItemResult.slot(), remember);
+                boolean remember = swapMode.is(SwapMode.Silent) || (swapMode.is(SwapMode.Normal) && swapBack.get());
+                InvUtil.swap(item.isOffhand() ? mc.player.getInventory().getSelectedSlot() : item.slot(), remember);
+                hand = item.getHand();
+            }
         }
-
-        Hand hand = findItemResult.getHand();
 
         ActionResult result = mc.interactionManager.interactBlock(mc.player, hand, new BlockHitResult(blockCache.hitVec, blockCache.facing, blockCache.position, false));
 
@@ -323,7 +298,7 @@ public class Scaffold extends Module {
 
             Vec3d relevant = hit.subtract(baseVec);
             if (relevant.lengthSquared() <= 4.5 * 4.5 && relevant.dotProduct(new Vec3d(dir.getVector())) >= 0) {
-                if (dir.getOpposite() == Direction.UP && mode.is(Mode.GodBridge) && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+                if (dir.getOpposite() == Direction.UP && !mode.is(Mode.Telly) && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
                     continue;
                 }
 
@@ -341,8 +316,9 @@ public class Scaffold extends Module {
     }
 
     private Rotation getRotation(BlockCache blockCache) {
-        Rotation rotations = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.facing) : RotationUtil.calculate(blockCache.position.toCenterPos());
-
+        Rotation rotations = onAir()
+                ? RotationUtil.calculate(new Vec3d(blockCache.position.getX(), blockCache.position.getY(), blockCache.position.getZ()), blockCache.facing)
+                : RotationUtil.calculate(blockCache.position.toCenterPos());
         Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), rotations.pitch);
         boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.facing, blockCache.position, sideCheck.get());
         if (hasRotated) return reverseYaw;
