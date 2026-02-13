@@ -30,20 +30,18 @@ import java.util.List;
 import static dev.sakura.client.Sakura.mc;
 
 public class MainMenuScreen extends Screen {
-    private static final Color OVERLAY_TINT_1 = new Color(62, 137, 154, 50);
-    private static final Color OVERLAY_TINT_2 = new Color(25, 25, 25, 50);
-    private static final Color PANEL_GRADIENT_TOP = new Color(30, 20, 40, 200);
-    private static final Color PANEL_GRADIENT_BOTTOM = new Color(30, 20, 40, 180);
-    private static final Color PANEL_BLUR_COLOR = new Color(20, 10, 30, 0);
-    private static final Color PANEL_OUTLINE = new Color(255, 180, 200, 80);
-    private static final Color SHADOW_FAR = new Color(20, 10, 30, 90);
-    private static final Color SHADOW_NEAR = new Color(20, 10, 30, 160);
-    private static final Color ACCENT_GRADIENT_BOTTOM = new Color(60, 40, 70, 160);
+    private static final Color SIDEBAR_BG_TOP = new Color(20, 10, 30, 100);
+    private static final Color SIDEBAR_BG_BOTTOM = new Color(20, 10, 30, 50);
+    private static final Color SIDEBAR_BLUR = new Color(20, 10, 30, 0);
+    private static final Color SIDEBAR_BORDER = new Color(255, 200, 220, 30);
+    
+    private static final Color BUTTON_NORMAL = new Color(255, 255, 255, 10);
+    private static final Color BUTTON_HOVER = new Color(255, 255, 255, 40);
+    private static final Color BUTTON_TEXT = new Color(255, 255, 255, 220);
+    private static final Color BUTTON_TEXT_HOVER = new Color(255, 255, 255, 255);
+    
     private static final Color TITLE_COLOR = new Color(255, 240, 245, 255);
-    private static final Color URL_COLOR = new Color(255, 200, 220, 255);
-    private static final Color SEPARATOR_COLOR = new Color(255, 180, 200, 200);
-    private static final Color LOVE_COLOR = new Color(255, 255, 255, 150);
-    private static final Color DEV_HIGHLIGHT = new Color(255, 150, 180, 255);
+    private static final Color ACCENT_COLOR = new Color(255, 150, 180, 255);
     private static final Color WHITE = new Color(255, 255, 255, 255);
 
     private static final List<String> CHANGE_LOGS = List.of(
@@ -205,147 +203,36 @@ public class MainMenuScreen extends Screen {
     }
 
     private Layout resolveLayout(float scale) {
-        float centerX = width / 2f;
-        float centerY = height / 2f;
-        return new Layout(centerX, centerY, scale);
+        float sidebarW = 300f * scale;
+        return new Layout(sidebarW, height, scale);
     }
 
-    private void drawPanelBlur(Layout layout, float opacity) {
-        if (opacity <= 0.02f) return;
-        BlurShader.drawRoundedBlur(layout.panelX, layout.panelY, layout.panelW, layout.panelH, layout.panelR, PANEL_BLUR_COLOR, 10f * layout.scale, 0.8f * opacity);
+    private void drawSidebar(Layout layout, float opacity) {
+        // Gradient Background
+        NanoVGHelper.drawGradientRRect(0, 0, layout.width, layout.height, 0,
+            applyAlpha(SIDEBAR_BG_TOP, opacity), applyAlpha(SIDEBAR_BG_BOTTOM, opacity));
+
+        // Right Border
+        NanoVGHelper.drawRect(layout.width - 1, 0, 1, layout.height, applyAlpha(SIDEBAR_BORDER, opacity));
     }
 
-    private void drawBackgroundTints(Layout layout, float opacity) {
-        NanoVGHelper.drawRoundRect(0, 0, width, height, 0, applyAlpha(OVERLAY_TINT_1, opacity));
-        NanoVGHelper.drawRoundRect(0, 0, width, height, 0, applyAlpha(OVERLAY_TINT_2, opacity));
+    private void drawTitle(Layout layout, float opacity) {
+        float titleSize = refFont(60f, layout.scale);
+        float subSize = refFont(16f, layout.scale);
+        
+        float startX = 40f * layout.scale;
+        float startY = 80f * layout.scale;
+
+        // "Sakura" Title
+        NanoVGHelper.drawString("Sakura", startX, startY, FontLoader.bold(), titleSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BOTTOM, applyAlpha(TITLE_COLOR, opacity));
+        
+        // "Client" Subtitle
+        NanoVGHelper.drawString("Client", startX + NanoVGHelper.getTextWidth("Sakura", FontLoader.bold(), titleSize) + 10f * layout.scale, startY - 8f * layout.scale, FontLoader.regular(), subSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BOTTOM, applyAlpha(ACCENT_COLOR, opacity * 0.8f));
+
+        // Separator
+        NanoVGHelper.drawRect(startX, startY + 10f * layout.scale, 60f * layout.scale, 2f * layout.scale, applyAlpha(ACCENT_COLOR, opacity * 0.6f));
     }
-
-    private void drawPanelChrome(Layout layout, float opacity) {
-        NanoVGHelper.drawGradientRRect(
-                layout.panelX,
-                layout.panelY,
-                layout.panelW,
-                layout.panelH,
-                layout.panelR,
-                applyAlpha(PANEL_GRADIENT_TOP, opacity),
-                applyAlpha(PANEL_GRADIENT_BOTTOM, opacity)
-        );
-
-        NanoVGHelper.drawRoundRectOutline(
-                layout.panelX,
-                layout.panelY,
-                layout.panelW,
-                layout.panelH,
-                layout.panelR,
-                1.25f * layout.scale,
-                applyAlpha(PANEL_OUTLINE, opacity)
-        );
-    }
-
-    private void drawAccentBar(Layout layout, Color accent, float opacity) {
-        NanoVGHelper.scissor(layout.scissorX, layout.scissorY, layout.scissorW, layout.scissorH);
-        NanoVGHelper.drawGradientRRect(
-                layout.panelX,
-                layout.accentY,
-                layout.panelW,
-                layout.accentH,
-                layout.panelR,
-                applyAlpha(accent, opacity),
-                applyAlpha(ACCENT_GRADIENT_BOTTOM, opacity)
-        );
-        NanoVGHelper.resetScissor();
-    }
-
-    private void drawTitleBlock(Layout layout, Color iconColor, float opacity, float socialOpacity) {
-        float titleSize = refFont(40f, layout.scale);
-        NanoVGHelper.drawString(
-                "Minecraft 1.21.11",
-                layout.centerX,
-                layout.titleY,
-                FontLoader.bold(),
-                titleSize,
-                NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
-                applyAlpha(TITLE_COLOR, opacity)
-        );
-
-        float urlSize = refFont(15f, layout.scale);
-        NanoVGHelper.drawString(
-                "dev.sakura",
-                layout.centerX,
-                layout.urlY,
-                FontLoader.bold(),
-                urlSize,
-                NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
-                applyAlpha(URL_COLOR, opacity)
-        );
-
-        NanoVGHelper.drawRect(layout.centerX - 110f * layout.scale, layout.sepY, 220f * layout.scale, layout.scale, applyAlpha(SEPARATOR_COLOR, opacity));
-
-        float loveSize = refFont(15f, layout.scale);
-        NanoVGHelper.drawString(
-                "Love By Fin_LemonKe",
-                layout.centerX,
-                layout.loveY,
-                FontLoader.bold(),
-                loveSize,
-                NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
-                applyAlpha(LOVE_COLOR, opacity)
-        );
-
-        renderSocialLinks(layout.centerX, layout.centerY, layout.scale, applyAlpha(iconColor, socialOpacity), socialOpacity);
-    }
-
-    private void drawVersion(Layout layout, Color color, float opacity) {
-        float logoSize = refFont(80f, layout.scale);
-        float versionX = width / 2f + NanoVGHelper.getTextWidth(Sakura.MOD_NAME, FontLoader.bold(), logoSize) / 2f - 5f * layout.scale;
-        float versionY = 7f * layout.scale + height / 2f - 50f * layout.scale - 100f * layout.scale;
-        float versionSize = refFont(15f, layout.scale);
-        NanoVGHelper.drawString(
-                Sakura.MOD_VER,
-                versionX,
-                versionY,
-                FontLoader.greycliffSemi(),
-                versionSize,
-                NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP,
-                applyAlpha(color, opacity)
-        );
-    }
-
-    private void drawFadeOverlay(float opacity) {
-        int alpha = Math.round(255 * (1 - opacity));
-        NanoVGHelper.drawRoundRect(0, 0, width, height, 0, new Color(0, 0, 0, alpha));
-    }
-
-    private void drawLogo(Layout layout, float liftY, float opacity) {
-        float logoSize = refFont(80f, layout.scale);
-        float aWidth = NanoVGHelper.getTextWidth("S", FontLoader.bold(), logoSize);
-        float baseY = 7f * layout.scale + height / 2f - 50f * layout.scale - liftY;
-
-        float etaWidth = NanoVGHelper.getTextWidth("akura", FontLoader.bold(), logoSize);
-        float zX = width / 2f - aWidth / 2f - etaWidth / 2f;
-        float etaX = width / 2f - etaWidth / 2f + aWidth / 2f;
-
-        NanoVGHelper.drawString(
-                "S",
-                zX,
-                baseY,
-                FontLoader.bold(),
-                logoSize,
-                NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP,
-                applyAlpha(WHITE, opacity)
-        );
-
-        NanoVGHelper.drawString(
-                "akura",
-                etaX,
-                baseY,
-                FontLoader.bold(),
-                logoSize,
-                NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP,
-                applyAlpha(WHITE, opacity)
-        );
-    }
-
+    
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         long now = Util.getMeasuringTimeMs();
@@ -354,9 +241,7 @@ public class MainMenuScreen extends Screen {
         MainMenuShader.getSharedInstance().setMouse((float) mouseX / width, 1.0f - (float) mouseY / height);
 
         if (postAuthIntroActive) {
-            // TODO: 验证动画渲染逻辑
-            // 这里处理从 AuthScreen 过渡到 MainMenuScreen 的动画效果
-            if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
+             if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
             float t = MathHelper.clamp((float) (now - postAuthIntroStartTime) / (float) POST_AUTH_INTRO_DURATION_MS, 0f, 1f);
             float shaderT = AnimationUtil.smoothstep(0.0f, 1.0f, t);
             MainMenuShader.getSharedInstance().render(this.width, this.height, shaderT);
@@ -376,162 +261,113 @@ public class MainMenuScreen extends Screen {
         float scale = getScale();
         Layout layout = resolveLayout(scale);
 
-        float panelP = AnimationUtil.smoothstep(0.15f, 0.55f, p);
-        drawPanelBlur(layout, panelP);
+        float contentP = AnimationUtil.smoothstep(0.1f, 1.0f, p);
+
+        // Draw Sidebar Blur (Outside NanoVG context to prevent flickering/state corruption)
+        if (contentP > 0.02f) {
+            BlurShader.drawQuadBlur(0, 0, layout.width, layout.height, 15f * layout.scale * contentP);
+        }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
-            Color accent = ClickGui.color(0);
-            Color white = WHITE;
-
-            float overlayAlpha = AnimationUtil.smoothstep(0.0f, 0.25f, p);
-            drawBackgroundTints(layout, overlayAlpha);
-
-            float panelEase = AnimationUtil.easeOutCubic(panelP);
-            float panelOffsetY = (1f - panelEase) * (14f * layout.scale);
-            float panelScale = MathHelper.lerp(panelEase, 0.985f, 1.0f);
-
-            float titleAlpha = AnimationUtil.smoothstep(0.35f, 0.75f, p);
-            float socialAlpha = AnimationUtil.smoothstep(0.60f, 1.0f, p);
-            float versionAlpha = AnimationUtil.smoothstep(0.25f, 0.65f, p);
-            float devAlpha = AnimationUtil.smoothstep(0.45f, 0.95f, p);
-
-            NanoVGHelper.save();
-            NanoVGHelper.translate(vg, 0f, panelOffsetY);
-            NanoVGHelper.translate(vg, layout.centerX, layout.centerY);
-            NanoVGHelper.scale(vg, panelScale, panelScale);
-            NanoVGHelper.translate(vg, -layout.centerX, -layout.centerY);
-
-            drawPanelChrome(layout, panelP);
-            drawAccentBar(layout, accent, panelP);
-            drawTitleBlock(layout, white, titleAlpha, socialAlpha);
-            drawVersion(layout, white, versionAlpha);
-
-            renderDevelopmentInfo(layout.centerX, layout.centerY, layout.scale, devAlpha);
-            renderEntries(mouseX, mouseY, layout.centerX, layout.centerY, layout.scale, accent, p);
-
-            NanoVGHelper.restore();
-
-            if (!fromSplash && !suppressFadeOverlay) {
-                drawFadeOverlay(p);
+            drawSidebar(layout, contentP);
+            drawTitle(layout, contentP);
+            
+            float entriesP = AnimationUtil.smoothstep(0.3f, 1.0f, p);
+            renderEntries(mouseX, mouseY, layout, entriesP);
+            
+            float socialP = AnimationUtil.smoothstep(0.5f, 1.0f, p);
+            renderSocialLinks(layout, socialP);
+            
+            // Draw Version Info bottom right (outside sidebar)
+            float versionAlpha = AnimationUtil.smoothstep(0.8f, 1.0f, p);
+            if (versionAlpha > 0.01f) {
+                String ver = "Sakura Client " + Sakura.MOD_VER;
+                float verSize = refFont(14f, scale);
+                NanoVGHelper.drawString(ver, width - 20f * scale, height - 20f * scale, FontLoader.regular(), verSize, NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_BOTTOM, applyAlpha(WHITE, versionAlpha * 0.5f));
             }
-
-            float logoP = AnimationUtil.smoothstep(0.05f, 0.45f, p);
-            float logoLift = AnimationUtil.easeOutCubic(logoP) * (95f * layout.scale);
-            float logoAlpha = AnimationUtil.smoothstep(0.10f, 0.45f, p);
-            drawLogo(layout, logoLift, logoAlpha);
         });
+        
+
     }
 
-    private void renderSocialLinks(float centerX, float centerY, float scale, Color color, float opacity) {
-        if (opacity <= 0.01f || socialLinks.size() < 4) {
-            for (SocialLink link : socialLinks) {
-                link.setBounds(0f, 0f, 0f, 0f);
-            }
-            return;
+    private void renderSocialLinks(Layout layout, float opacity) {
+        if (opacity <= 0.01f || socialLinks.isEmpty()) return;
+
+        float iconSize = refFont(24f, layout.scale);
+        float spacing = 40f * layout.scale;
+        float startX = 40f * layout.scale;
+        float startY = layout.height - 60f * layout.scale;
+
+        for (int i = 0; i < socialLinks.size(); i++) {
+            SocialLink link = socialLinks.get(i);
+            float x = startX + i * spacing;
+            float y = startY;
+            float size = 30f * layout.scale;
+            
+            link.setBounds(x, y, size, size);
+            
+            float mX = (float)(mc.mouse.getX() * mc.getWindow().getScaledWidth() / mc.getWindow().getWidth());
+            float mY = (float)(mc.mouse.getY() * mc.getWindow().getScaledHeight() / mc.getWindow().getHeight());
+            boolean hovered = link.isHovered(mX, mY);
+            
+            Color color = hovered ? ACCENT_COLOR : BUTTON_TEXT;
+            NanoVGHelper.drawString(link.glyph, x + size/2f, y + size/2f, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(color, opacity));
         }
-        float iconSize = refFont(60f, scale);
-        float hitW = 25f * scale;
-        float hitH = 25f * scale;
-        float drawYOffset = -3f * scale;
-
-        float wDrawX = centerX + 53f * scale;
-        float wHitY = centerY + 16f * scale;
-        socialLinks.getFirst().setBounds(wDrawX, wHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.getFirst().glyph, wDrawX, wHitY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
-
-        float vDrawX = centerX + (55f + 40f) * scale;
-        float vDrawY = centerY + 15f * scale;
-        float vHitX = centerX + (55f + 43f) * scale;
-        float vHitY = vDrawY;
-        socialLinks.get(1).setBounds(vHitX, vHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.get(1).glyph, vDrawX, vDrawY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
-
-        float yDrawX = centerX + 50f * scale;
-        float yHitY = centerY + 50f * scale;
-        socialLinks.get(2).setBounds(yDrawX, yHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.get(2).glyph, yDrawX, yHitY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
-
-        float zDrawX = centerX + (55f + 43f) * scale;
-        float zDrawY = yHitY;
-        float zHitX = centerX + (55f + 40f) * scale;
-        float zHitY = zDrawY;
-        socialLinks.get(3).setBounds(zHitX, zHitY, hitW, hitH);
-        NanoVGHelper.drawString(socialLinks.get(3).glyph, zDrawX, zDrawY + drawYOffset, FontLoader.newIc(), iconSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_TOP, color);
     }
 
-    private void renderDevelopmentInfo(float centerX, float centerY, float scale, float opacity) {
-        if (opacity <= 0.01f) return;
-        float offsetX = (1f - AnimationUtil.easeOutCubic(opacity)) * (10f * scale);
 
-        NanoVGHelper.save();
-        NanoVGHelper.translate(offsetX, 0f);
 
-        float lineX = centerX + 130f * scale - 15f * scale;
-        float topY = centerY - 100f * scale + 15.5f * scale;
-        NanoVGHelper.drawRect(lineX, topY, scale, 78f * scale, applyAlpha(WHITE, opacity));
-
-        float fontSize = refFont(15f, scale);
-        float rightEdge = centerX + 130f * scale - 18f * scale;
-
-        for (int i = 0; i < CHANGE_LOGS.size(); i++) {
-            String text = CHANGE_LOGS.get(i);
-            Color c = i >= 3 ? applyAlpha(DEV_HIGHLIGHT, opacity) : applyAlpha(WHITE, opacity);
-            float y = centerY - 100f * scale + (17.5f + i * 10f) * scale;
-            NanoVGHelper.drawString(
-                    text,
-                    rightEdge,
-                    y,
-                    FontLoader.bold(),
-                    fontSize,
-                    NanoVG.NVG_ALIGN_RIGHT | NanoVG.NVG_ALIGN_TOP,
-                    c
-            );
-        }
-
-        NanoVGHelper.restore();
-    }
-
-    private void renderEntries(int mouseX, int mouseY, float centerX, float centerY, float scale, Color accent, float entranceProgress) {
-        float x = centerX - 110f * scale;
-        float yStart = centerY - 100f * scale + 17.5f * scale;
-        float entryW = 160f * scale;
-        float entryH = 35f * scale;
-        float stepY = 35f * scale;
-        Color entryColor = applyAlpha(accent, 1.0f);
-        Color hoverColor = ColorUtil.darker(ColorUtil.darker(entryColor, 0.7f), 0.7f);
+    private void renderEntries(int mouseX, int mouseY, Layout layout, float entranceProgress) {
+        float startX = 20f * layout.scale;
+        float startY = 180f * layout.scale;
+        float buttonW = layout.width - 40f * layout.scale;
+        float buttonH = 45f * layout.scale;
+        float spacing = 10f * layout.scale;
 
         for (int i = 0; i < entries.size(); i++) {
             MainMenuEntry entry = entries.get(i);
-            float y = yStart + i * stepY;
+            float y = startY + i * (buttonH + spacing);
 
-            float itemP = (entranceProgress - 0.35f - i * 0.06f) / 0.45f;
+            // Entrance Animation (Slide in from left)
+            float itemP = (entranceProgress - 0.2f - i * 0.05f) / 0.5f;
             itemP = MathHelper.clamp(itemP, 0f, 1f);
-            itemP = AnimationUtil.smoothstep(0.0f, 1.0f, itemP);
+            itemP = AnimationUtil.easeOutCubic(itemP);
+            
+            float alpha = itemP;
+            float offsetX = (1f - itemP) * (-50f * layout.scale);
+            
+            float drawX = startX + offsetX;
+            
+            entry.setBounds(drawX, y, buttonW, buttonH);
 
-            float itemEase = AnimationUtil.easeOutCubic(itemP);
-            float itemOffsetX = (1f - itemEase) * (-10f * scale);
-            float drawX = x + itemOffsetX;
-            float itemAlpha = itemP;
-
-            entry.setBounds(drawX - 80f * scale, y - 15f * scale, entryW, entryH);
-
-            float fontSize = refFont(20f, scale);
-            float textWidth = NanoVGHelper.getTextWidth(entry.label, FontLoader.bold(), fontSize);
-            boolean hovered = mouseX >= (drawX - 10f * scale) && mouseX <= (drawX - 10f * scale + textWidth + 30f * scale)
-                    && mouseY >= (y - 10f * scale) && mouseY <= (y - 10f * scale + 28f * scale);
-
+            boolean hovered = mouseX >= drawX && mouseX <= drawX + buttonW && mouseY >= y && mouseY <= y + buttonH;
             entry.hoverAnimation.setDirection(hovered ? Direction.FORWARDS : Direction.BACKWARDS);
-            float expand = (textWidth + 30f * scale) * entry.hoverAnimation.getOutput().floatValue();
-            NanoVGHelper.drawRoundRect(drawX - 10f * scale, y - 10f * scale, expand, 28f * scale, 6f * scale, applyAlpha(hoverColor, itemAlpha));
+            float hoverP = entry.hoverAnimation.getOutput().floatValue();
 
-            float rowCenterY = y + 4f * scale;
-            NanoVGHelper.drawRect(drawX - 5f * scale, rowCenterY - 4f * scale, scale, 8f * scale, applyAlpha(WHITE, itemAlpha));
-            NanoVGHelper.drawString(entry.label, drawX + 15f * scale, rowCenterY + scale, FontLoader.bold(), fontSize,
-                    NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(entryColor, itemAlpha));
+            // Glass Button Background
+            Color bgColor = ColorUtil.interpolateColorC(BUTTON_NORMAL, BUTTON_HOVER, hoverP);
+            NanoVGHelper.drawRoundRect(drawX, y, buttonW, buttonH, 8f * layout.scale, applyAlpha(bgColor, alpha));
 
-            float iconSize = refFont(30f, scale);
-            NanoVGHelper.drawString(entry.iconGlyph, drawX, rowCenterY, FontLoader.newIc(), iconSize,
-                    NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(entryColor, itemAlpha));
+            // Hover Glow/Border
+            if (hoverP > 0.01f) {
+                Color borderColor = applyAlpha(ACCENT_COLOR, hoverP * 0.5f * alpha);
+                NanoVGHelper.drawRoundRectOutline(drawX, y, buttonW, buttonH, 8f * layout.scale, 1.5f, borderColor);
+                
+                // Left Accent Bar
+                NanoVGHelper.drawRoundRect(drawX, y + 8f*layout.scale, 3f*layout.scale, buttonH - 16f*layout.scale, 1.5f, applyAlpha(ACCENT_COLOR, hoverP * alpha));
+            }
+
+            // Text & Icon
+            float contentOffsetX = 20f * layout.scale + (hoverP * 5f * layout.scale); // Slide text slightly on hover
+            float fontSize = refFont(22f, layout.scale);
+            
+            Color textColor = ColorUtil.interpolateColorC(BUTTON_TEXT, BUTTON_TEXT_HOVER, hoverP);
+            
+            // Icon
+            NanoVGHelper.drawString(entry.iconGlyph, drawX + contentOffsetX, y + buttonH/2f, FontLoader.newIc(), fontSize * 1.2f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(textColor, alpha));
+            
+            // Text
+            NanoVGHelper.drawString(entry.label, drawX + contentOffsetX + 35f * layout.scale, y + buttonH/2f + 1f, FontLoader.bold(), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, applyAlpha(textColor, alpha));
         }
     }
 
@@ -626,48 +462,14 @@ public class MainMenuScreen extends Screen {
     }
 
     private static final class Layout {
-        private final float centerX;
-        private final float centerY;
+        private final float width;
+        private final float height;
         private final float scale;
-        private final float panelX;
-        private final float panelY;
-        private final float panelW;
-        private final float panelH;
-        private final float panelR;
-        private final float scissorX;
-        private final float scissorY;
-        private final float scissorW;
-        private final float scissorH;
-        private final float accentY;
-        private final float accentH;
-        private final float titleY;
-        private final float urlY;
-        private final float sepY;
-        private final float loveY;
 
-        private Layout(float centerX, float centerY, float scale) {
-            this.centerX = centerX;
-            this.centerY = centerY;
+        private Layout(float width, float height, float scale) {
+            this.width = width;
+            this.height = height;
             this.scale = scale;
-
-            this.panelX = centerX - 130f * scale;
-            this.panelY = centerY - 150f * scale;
-            this.panelW = 260f * scale;
-            this.panelH = 300f * scale;
-            this.panelR = 14f * scale;
-
-            this.scissorX = centerX - 135f * scale;
-            this.scissorY = centerY + 80f * scale;
-            this.scissorW = 270f * scale;
-            this.scissorH = 80f * scale;
-
-            this.accentY = centerY + 50f * scale;
-            this.accentH = 100f * scale;
-
-            this.titleY = centerY + 90f * scale;
-            this.urlY = centerY + 112.5f * scale;
-            this.sepY = centerY + 125f * scale;
-            this.loveY = centerY + 135f * scale;
         }
     }
 
