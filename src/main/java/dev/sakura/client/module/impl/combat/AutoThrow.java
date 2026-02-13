@@ -5,6 +5,7 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
+import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
@@ -86,6 +87,36 @@ public class AutoThrow extends Module {
         ItemStack currentStack = mc.player.getInventory().getStack(currentSlot);
 
         if (event.getHand() == Hand.MAIN_HAND && (currentStack.getItem() == Items.SNOWBALL || currentStack.getItem() == Items.EGG)) {
+            int bestSlot = -1;
+            for (int i = 0; i < 9; i++) {
+                ItemStack s = mc.player.getInventory().getStack(i);
+                if (!s.isEmpty() && s.getItem() != Items.SNOWBALL && s.getItem() != Items.EGG) {
+                    bestSlot = i;
+                    break;
+                }
+            }
+
+            if (bestSlot != -1) {
+                event.setItem(mc.player.getInventory().getStack(bestSlot));
+            }
+        }
+    }
+
+    @EventHandler
+    public void onUpdateHeldItem(UpdateHeldItemEvent event) {
+        if (!silentSwitch.get()) return;
+        if (mc.player == null) return;
+        if (event.getHand() != Hand.MAIN_HAND) return;
+
+        if (oldSlot != -1) {
+            event.setItem(mc.player.getInventory().getStack(oldSlot));
+            return;
+        }
+
+        int currentSlot = mc.player.getInventory().getSelectedSlot();
+        ItemStack currentStack = mc.player.getInventory().getStack(currentSlot);
+
+        if (currentStack.getItem() == Items.SNOWBALL || currentStack.getItem() == Items.EGG) {
             int bestSlot = -1;
             for (int i = 0; i < 9; i++) {
                 ItemStack s = mc.player.getInventory().getStack(i);
