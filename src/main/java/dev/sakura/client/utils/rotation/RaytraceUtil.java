@@ -142,24 +142,13 @@ public class RaytraceUtil {
     }
 
     public static boolean overBlock(final Rotation rotation, final Direction direction, final BlockPos pos, final boolean strict) {
-        if (mc.player == null || mc.world == null) return false;
-
-        float yaw = rotation.yaw;
-        float pitch = rotation.pitch;
-
         Vec3d cameraPos = mc.player.getCameraPosVec(1.0F);
-        Vec3d rotationVec = Vec3d.fromPolar(pitch, yaw);
+        Vec3d rotationVec = Vec3d.fromPolar(rotation.pitch, rotation.yaw);
         Vec3d reachVec = cameraPos.add(rotationVec.multiply(4.5));
 
-        BlockHitResult hitResult = mc.world.raycast(new RaycastContext(
-                cameraPos,
-                reachVec,
-                RaycastContext.ShapeType.COLLIDER,
-                RaycastContext.FluidHandling.NONE,
-                mc.player
-        ));
+        BlockHitResult hitResult = mc.world.raycast(new RaycastContext(cameraPos, reachVec, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, mc.player));
 
-        if (hitResult.getType() != HitResult.Type.BLOCK) {
+        if (hitResult.getType() == HitResult.Type.MISS) {
             return false;
         }
 
