@@ -92,6 +92,10 @@ public class Module {
         }
     }
 
+    protected void setInitialState(boolean state) {
+        this.state = state;
+    }
+
     public void reset() {
         setState(false);
         if (!englishName.equalsIgnoreCase("ClickGui")) {
