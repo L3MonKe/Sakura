@@ -48,6 +48,7 @@
     "render.MixinChatHud",
     "render.MixinChatHudHud",
     "render.MixinChatHudInteractable",
+    "render.MixinChatHudNameProtect",
     "render.MixinChatMessages",
     "render.MixinChatScreen",
     "render.MixinChestBlockEntityRenderer",

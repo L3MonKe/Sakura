@@ -6,6 +6,7 @@ import dev.sakura.client.event.impl.render.Render2DEvent;
 import dev.sakura.client.module.impl.hud.HotbarHud;
 import dev.sakura.client.module.impl.hud.PotionHud;
 import dev.sakura.client.module.impl.hud.ScoreBoardHud;
+import dev.sakura.client.module.impl.player.NameProtect;
 import dev.sakura.client.module.impl.render.NoRender;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.hud.InGameHud;
@@ -16,6 +17,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
@@ -114,6 +116,12 @@ public class MixinInGameHud {
     private void onRenderHeldItemTooltip(DrawContext context, CallbackInfo ci) {
         NoRender noRender = Sakura.MODULES.getModule(NoRender.class);
         if (noRender.noHeldItemName()) ci.cancel();
+    }
+
+    @ModifyVariable(method = "renderHeldItemTooltip", at = @At("HEAD"), argsOnly = true)
+    private DrawContext hookRenderHeldItemTooltip(DrawContext context) {
+        // NameProtect replacement for item tooltips if needed
+        return context;
     }
 
     @Inject(method = "renderNauseaOverlay", at = @At("HEAD"), cancellable = true)
