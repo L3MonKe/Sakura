@@ -1063,11 +1063,11 @@ public class ModuleListHud extends HudModule {
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
             float moduleNameWidth = getModuleTextWidth(moduleName);
-            
+
             // Sync gap logic with renderNewStyle
-            float spaceWidth = getModuleTextWidth(" "); 
-            float gap = spaceWidth; 
-            
+            float spaceWidth = getModuleTextWidth(" ");
+            float gap = spaceWidth;
+
             float itemWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + gap) + (PADDING_X * 2 * scale);
 
             float bgWidth = itemWidth - (PADDING_X * 2 * scale) + (8 * scale);
@@ -1105,7 +1105,7 @@ public class ModuleListHud extends HudModule {
     private void buildMergedBackgroundPath(long vg, List<BackgroundSegment> segments, float r, boolean line) {
         int lastIndex = segments.size() - 1;
         boolean isNewStyle = mode.is(ListMode.NewStyle);
-        
+
         for (BackgroundSegment segment : segments) {
             boolean isFirst = segment.index == 0;
             boolean isLast = segment.index == lastIndex;
@@ -1114,7 +1114,7 @@ public class ModuleListHud extends HudModule {
             float rTopRight = (isFirst && !line) ? r : 0;
             float rBottomRight = (isLast && !line) ? r : 0;
             float rBottomLeft = isLast ? r : 0;
-            
+
             if (isNewStyle) {
             }
 
@@ -1265,12 +1265,12 @@ public class ModuleListHud extends HudModule {
 
         for (int i = 0; i < segments.size(); i++) {
             BackgroundSegment seg = segments.get(i);
-            
+
 
             if (i == 0) {
-                 nvgLineTo(vg, seg.x, seg.y);
+                nvgLineTo(vg, seg.x, seg.y);
             } else {
-                 nvgLineTo(vg, seg.x, seg.y);
+                nvgLineTo(vg, seg.x, seg.y);
             }
 
             nvgLineTo(vg, seg.x, seg.y + seg.h);
@@ -1554,20 +1554,20 @@ public class ModuleListHud extends HudModule {
             String formattedSuffix = getFormattedSuffix(suffix);
 
             float nameWidth = getModuleTextWidth(moduleName);
-            float gap = 3f * scale; 
-            
+            float gap = 3f * scale;
+
             float suffixW = suffix.isEmpty() ? 0 : getModuleTextWidth(formattedSuffix) + gap;
             float contentWidth = nameWidth + suffixW;
-            
+
             // Calculate Color
             Color color = getNewStyleColor(index, (float) animationValue);
 
             // Draw Text
             float textX = x + (currentWidth * scale) - (PADDING_X * scale) - contentWidth;
-            
+
             float textXOffset = textOffsetX.get().floatValue() * scale;
             float textYOffset = textOffsetY.get().floatValue() * scale;
-            
+
             float finalTextX = textX + textXOffset;
             float fontHeight = NanoVGHelper.getFontHeight(font, fontSize * scale);
             float finalTextY = renderY + fontHeight / 2 + (2 * scale) + textYOffset;
@@ -1582,18 +1582,18 @@ public class ModuleListHud extends HudModule {
             index++;
         }
     }
-    
+
     private Color getNewStyleColor(int index, float alphaFactor) {
         Color color = Color.WHITE;
         ensureFrameGradient();
-        
+
         if (newStyleColorMode.is(NewStyleColorMode.Static)) {
             color = newStyleStaticColor.get();
         } else if (newStyleColorMode.is(NewStyleColorMode.Astolfo)) {
-             float hue = (System.currentTimeMillis() % 3000) / 3000f; 
-             hue += (index * 0.05f); 
-             if (hue > 1) hue -= 1;
-             color = Color.getHSBColor(hue, 0.6f, 1.0f);
+            float hue = (System.currentTimeMillis() % 3000) / 3000f;
+            hue += (index * 0.05f);
+            if (hue > 1) hue -= 1;
+            color = Color.getHSBColor(hue, 0.6f, 1.0f);
         } else if (newStyleColorMode.is(NewStyleColorMode.DoubleColor)) {
             Color c1 = newStyleColor1.get();
             Color c2 = newStyleColor2.get();
@@ -1602,7 +1602,7 @@ public class ModuleListHud extends HudModule {
             double factor = (Math.sin(Math.toRadians(currentOffset)) + 1) / 2;
             color = interpolateColor(c1, c2, (float) factor);
         }
-        
+
         return new Color(color.getRed(), color.getGreen(), color.getBlue(), (int) (color.getAlpha() * alphaFactor));
     }
 
