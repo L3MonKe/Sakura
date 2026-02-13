@@ -1,5 +1,6 @@
 package dev.sakura.client.module.impl.movement;
 
+import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
@@ -9,10 +10,7 @@ import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
-import dev.sakura.client.utils.player.FindItemResult;
-import dev.sakura.client.utils.player.InvUtil;
-import dev.sakura.client.utils.player.MoveUtil;
-import dev.sakura.client.utils.player.SlotUtil;
+import dev.sakura.client.utils.player.*;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.RaytraceUtil;
 import dev.sakura.client.utils.rotation.Rotation;
@@ -26,11 +24,13 @@ import net.minecraft.block.*;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
 
 import java.awt.*;
+
 
 public class Scaffold extends Module {
     public Scaffold() {
@@ -76,6 +76,11 @@ public class Scaffold extends Module {
 
     private BlockInfo blockInfo;
 
+    private int rotateCount = 0;
+    private int placeCount = 0;
+    private int direction = 1;
+    private boolean reachable = true;
+
     @Override
     public String getSuffix() {
         return mode.get().name();
@@ -87,6 +92,10 @@ public class Scaffold extends Module {
         swapped = false;
         invSwapped = false;
         shouldSwapBack = false;
+        rotateCount = 0;
+        placeCount = 0;
+        direction = 1;
+        reachable = true;
     }
 
     @Override
@@ -230,21 +239,64 @@ public class Scaffold extends Module {
             case InvSwitch -> invSwapped = InvUtil.invSwap(item.slot());
         }
 
-        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockInfo.dir, blockInfo.position, sideCheck.get());
-        if (hasRotated) {
-            ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
-            if (result.isAccepted()) {
-                if (swingHand.get()) {
-                    mc.player.swingHand(item.getHand());
-                } else {
-                    mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
-                }
-            }
-
-            if (render.get()) {
-                Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+        reachable = true;
+        if (mc.player.getVelocity().y < -0.1) {
+            FallingPlayer fallingPlayer = new FallingPlayer(mc.player);
+            fallingPlayer.calculate(2);
+            if (blockInfo.position.getY() > fallingPlayer.y) {
+                reachable = false;
             }
         }
+
+        if (!checkPlace(blockInfo)) return;
+
+        if (!reachable && rotateCount < 8) {
+            if (placeCount >= 7) {
+                reachable = true;
+                rotateCount = 0;
+                return;
+            }
+
+            Sakura.skipTicks = 3;
+            placeCount++;
+            direction *= -1;
+
+            float yaw = Managers.ROTATION.getRotation().yaw * direction;
+            mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.LookAndOnGround(yaw, Managers.ROTATION.getRotation().pitch, mc.player.isOnGround(), mc.player.horizontalCollision));
+
+            rotateCount++;
+            doInteract(item);
+        } else {
+            boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockInfo.dir, blockInfo.position, sideCheck.get());
+            if (hasRotated) {
+                doInteract(item);
+            }
+            rotateCount = 0;
+            placeCount = 0;
+        }
+    }
+
+    private void doInteract(FindItemResult item) {
+        ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
+        if (result.isAccepted()) {
+            if (swingHand.get()) {
+                mc.player.swingHand(item.getHand());
+            } else {
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
+            }
+        }
+
+        if (render.get()) {
+            Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+        }
+    }
+
+    private boolean checkPlace(BlockInfo data) {
+        Vec3d center = new Vec3d((double) data.position.getX() + 0.5, (float) data.position.getY() + 0.5F, (double) data.position.getZ() + 0.5);
+        Vec3d hit = center.add(new Vec3d(data.dir.getVector().getX() * 0.5, data.dir.getVector().getY() * 0.5, data.dir.getVector().getZ() * 0.5));
+        Vec3d relevant = hit.subtract(mc.player.getEyePos());
+        Vec3d normal = new Vec3d(data.dir.getVector().getX(), data.dir.getVector().getY(), data.dir.getVector().getZ());
+        return relevant.lengthSquared() <= 20.25 && relevant.normalize().dotProduct(normal.multiply(-1).normalize()) >= 0.0;
     }
 
     private void updateBlockInfo() {
