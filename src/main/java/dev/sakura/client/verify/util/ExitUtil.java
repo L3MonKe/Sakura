@@ -14,11 +14,7 @@ public final class ExitUtil {
     }
 
     public static boolean isVerified() {
-        try {
-            return VerificationClient.getTransport() != null && AuthUtil.authed.get().length() == 32;
-        } catch (Exception ignored) {
-            return false;
-        }
+        return VerificationClient.getTransport() != null && AuthUtil.authed.get().length() == 32;
     }
 
     public static void ensureVerifiedOrExit() {
