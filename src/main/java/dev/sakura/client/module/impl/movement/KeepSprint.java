@@ -1,6 +1,8 @@
 package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.entity.AttackEntityEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
@@ -9,8 +11,6 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 import net.minecraft.util.math.MathHelper;
-import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.entity.AttackEntityEvent;
 
 public class KeepSprint extends Module {
     private boolean attacking;
