@@ -9,10 +9,24 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 import net.minecraft.util.math.MathHelper;
+import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.entity.AttackEntityEvent;
 
 public class KeepSprint extends Module {
+    private boolean attacking;
+
     public KeepSprint() {
         super("KeepSprint", "保持疾跑", Category.Movement);
+    }
+
+    @EventHandler
+    public void onAttack(AttackEntityEvent event) {
+        attacking = true;
+    }
+
+    @EventHandler
+    public void onTick(TickEvent.Pre event) {
+        attacking = false;
     }
 
     @EventHandler
@@ -20,10 +34,12 @@ public class KeepSprint extends Module {
         if (nullCheck()) return;
         if (event.getType() == EventType.SEND && event.getPacket() instanceof ClientCommandC2SPacket packet) {
             if (packet.getMode() == ClientCommandC2SPacket.Mode.STOP_SPRINTING) {
-                if (mc.player.forwardSpeed > 0) {
-                    float serverYaw = Managers.ROTATION.isActive() ? RotationManager.rotations.yaw : mc.player.getYaw();
-                    if (Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - serverYaw)) < 45) {
-                        event.cancel();
+                if (attacking) {
+                    if (mc.player.forwardSpeed > 0) {
+                        float serverYaw = Managers.ROTATION.isActive() ? RotationManager.rotations.yaw : mc.player.getYaw();
+                        if (Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - serverYaw)) < 45) {
+                            event.cancel();
+                        }
                     }
                 }
             }
