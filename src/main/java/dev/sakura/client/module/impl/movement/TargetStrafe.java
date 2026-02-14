@@ -59,26 +59,22 @@ public class TargetStrafe extends Module {
     public void onMoveInput(MoveInputEvent event) {
         if (nullCheck()) return;
 
-        // 获取目标
         KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
         if (killAura == null || !killAura.isEnabled()) return;
         LivingEntity target = killAura.getCurrentTarget();
 
         if (target == null) return;
 
-        // 检查按键
         if (moveOnly.get() && !MoveUtil.isMoving()) return;
         if (jumpOnly.get() && !mc.options.jumpKey.isPressed()) return;
 
         double distance = mc.player.distanceTo(target);
         if (distance > followRange.get()) return;
 
-        // 碰撞反转方向
         if (mc.player.horizontalCollision) {
             direction = -direction;
         }
 
-        // 玩家手动控制方向
         if (controlDirection.get()) {
             if (mc.options.leftKey.isPressed()) direction = 1;
             if (mc.options.rightKey.isPressed()) direction = -1;
@@ -90,17 +86,14 @@ public class TargetStrafe extends Module {
         Vec3d strafeVec = computeDirectionVec(strafeYaw, distance, speed, range.get().floatValue(), direction);
         Vec3d pointCoords = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ()).add(strafeVec);
 
-        // 验证点是否安全
         if (!validatePoint(pointCoords)) {
             direction = -direction;
             strafeVec = computeDirectionVec(strafeYaw, distance, speed, range.get().floatValue(), direction);
         }
 
-        // 应用移动
         double targetYaw = Math.toDegrees(Math.atan2(-strafeVec.x, strafeVec.z));
         MoveUtil.fixMovement(event, (float) targetYaw);
 
-        // 修复侧向疾跑 (Legit): 如果主要输入不是向前，则禁止疾跑
         if (event.getForward() < 0.8f) {
             mc.player.setSprinting(false);
         }
@@ -109,8 +102,7 @@ public class TargetStrafe extends Module {
     private Vec3d computeDirectionVec(double strafeYaw, double distance, double speed, float range, int direction) {
         double yaw = strafeYaw - (0.5f * Math.PI);
         double encirclement = distance - range;
-        
-        // 简单的缓冲逻辑
+
         if (encirclement < -speed) encirclement = -speed;
         
         double encirclementX = -Math.sin(yaw) * encirclement;
@@ -123,15 +115,11 @@ public class TargetStrafe extends Module {
     }
 
     private boolean validatePoint(Vec3d point) {
-        // 1. 碰撞检测
         Box box = mc.player.getDimensions(mc.player.getPose()).getBoxAt(point);
-        // 使用 getBlockCollisions 检查是否有碰撞
         if (mc.world.getBlockCollisions(mc.player, box).iterator().hasNext()) return false;
 
-        // 2. 边缘检测 (防止掉落)
         if (edgeCheck.get() && isCloseToFall(point)) return false;
 
-        // 3. 虚空检测
         if (voidCheck.get() && wouldFallIntoVoid(point)) return false;
 
         return true;
@@ -143,12 +131,10 @@ public class TargetStrafe extends Module {
                 .expand(-0.05, 0.0, -0.05) // 稍微收缩
                 .offset(0.0, -1.2, 0.0); // 检查下方 1.2 格
 
-        // 如果下方是空的 (没有碰撞箱)，则认为会掉落
         return !mc.world.getBlockCollisions(mc.player, box).iterator().hasNext();
     }
 
     private boolean wouldFallIntoVoid(Vec3d point) {
-        // 简单的虚空检测：检查下方 5 格内是否有碰撞箱
         for (int i = 0; i < 5; i++) {
             BlockPos pos = BlockPos.ofFloored(point.x, point.y - i, point.z);
             if (!mc.world.getBlockState(pos).getCollisionShape(mc.world, pos).isEmpty()) {
@@ -172,7 +158,6 @@ public class TargetStrafe extends Module {
     
     private void drawCircle(Render3DEvent event, LivingEntity entity, double radius, Color color) {
         MatrixStack stack = event.getMatrices();
-        // 使用插值位置
         double x = MathHelper.lerp(event.getTickDelta(), entity.lastRenderX, entity.getX());
         double y = MathHelper.lerp(event.getTickDelta(), entity.lastRenderY, entity.getY());
         double z = MathHelper.lerp(event.getTickDelta(), entity.lastRenderZ, entity.getZ());
@@ -180,7 +165,6 @@ public class TargetStrafe extends Module {
         int points = circlePoints.get();
         double anglePerPoint = 360.0 / points;
 
-        // 绘制多边形
         for (int i = 0; i < points; i++) {
             double rad = Math.toRadians(i * anglePerPoint);
             double radNext = Math.toRadians((i + 1) * anglePerPoint);
@@ -204,7 +188,6 @@ public class TargetStrafe extends Module {
                 c = color;
             }
 
-            // 绘制发光
             if (glow.get()) {
                 float radiusVal = glowRadius.get().floatValue();
                 int opacityVal = glowOpacity.get();
