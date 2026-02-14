@@ -3,9 +3,8 @@ package dev.sakura.client.gui.auth;
 import dev.sakura.client.gui.theme.SakuraTheme;
 import dev.sakura.client.verify.AuthState;
 import dev.sakura.client.verify.VerificationClient;
-import dev.sakura.client.verify.client.IRCHandler;
-import dev.sakura.client.verify.client.IRCTransport;
-import dev.sakura.client.verify.util.*;
+import dev.sakura.client.verify.util.AuthUtil;
+import dev.sakura.client.verify.util.ExitUtil;
 import org.lwjgl.glfw.*;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -19,10 +18,8 @@ import org.lwjgl.system.MemoryUtil;
 import java.awt.*;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -30,8 +27,6 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 public final class LoginWindow {
-    private static final long TIME_WINDOW_MS = 30_000L;
-    private static final long MAX_TIME_WINDOW_SKEW = 1L;
     private static final AtomicBoolean gateRan = new AtomicBoolean(false);
 
     public static void verifyOrExit() {
@@ -66,8 +61,6 @@ public final class LoginWindow {
     private final AtomicReference<String> status = new AtomicReference<>("");
     private final AtomicReference<StatusKind> statusKind = new AtomicReference<>(StatusKind.Neutral);
     private volatile long verifyStartedAtMs = 0L;
-    private volatile long expireAt = 0L;
-    private volatile long timeWindow = 0L;
     private volatile String activeUsername = "";
 
     private long window;
@@ -556,98 +549,30 @@ public final class LoginWindow {
         status.set("正在连接验证服务器...");
         statusKind.set(StatusKind.Neutral);
 
-        Thread t = new Thread(() -> startAuth(mode, u, p, lic), "Sakura-PreInit-Auth");
-        t.setDaemon(true);
-        t.start();
-    }
+        AuthUtil.Mode m = mode == Mode.Login ? AuthUtil.Mode.Login : AuthUtil.Mode.Register;
+        AuthUtil.startAuth(m, u, p, lic, (v, msg) -> {
+            String text = msg == null ? "" : msg;
+            status.set(text);
 
-    private void startAuth(Mode mode, String username, String password, String license) {
-        final String hwid = HwidUtil.getHWID();
-        final Set<String> qqSet = QQUtils.getAllQQ();
-        String p = TodeskUtils.getPhone();
-        final String phone = p == null ? "" : p;
+            if (v) {
+                verifying.set(true);
+                statusKind.set(StatusKind.Neutral);
+                return;
+            }
 
-        IRCTransport transport;
-        try {
-            transport = VerificationClient.connect(new IRCHandler() {
-                @Override
-                public void onMessage(String sender, String message) {
-                }
-
-                @Override
-                public void onDisconnected(String message) {
-                    verifying.set(false);
-                    status.set("连接断开: " + (message == null ? "" : message));
-                    statusKind.set(StatusKind.Error);
-                    AuthUtil.authed.set("");
-                    AuthState.clear();
-                    VerificationClient.shutdown();
-                }
-
-                @Override
-                public void onConnected() {
-                }
-
-                @Override
-                public String getInGameUsername() {
-                    return activeUsername == null ? "" : activeUsername;
-                }
-
-                @Override
-                public void onLoginResult(boolean success, long expireAtMillis, long timeWindowValue, String message) {
-                    handleAuthResult("登录", success, expireAtMillis, timeWindowValue, message);
-                }
-
-                @Override
-                public void onRegisterResult(boolean success, long expireAtMillis, long timeWindowValue, String message) {
-                    handleAuthResult("注册", success, expireAtMillis, timeWindowValue, message);
-                }
-            });
-        } catch (Exception e) {
             verifying.set(false);
-            status.set("连接失败: " + (e.getMessage() == null ? "" : e.getMessage()));
-            statusKind.set(StatusKind.Error);
-            return;
-        }
+            verifyStartedAtMs = 0L;
 
-        status.set(mode == Mode.Login ? "正在登录..." : "正在注册...");
-        statusKind.set(StatusKind.Neutral);
-
-        if (mode == Mode.Login) {
-            transport.login(username, password, hwid, qqSet, phone);
-        } else {
-            transport.register(username, password, hwid, qqSet, phone, license);
-        }
-    }
-
-    private void handleAuthResult(String action, boolean success, long expireAtMillis, long timeWindowValue, String message) {
-        verifying.set(false);
-        verifyStartedAtMs = 0L;
-        expireAt = expireAtMillis;
-        timeWindow = timeWindowValue;
-
-        if (!success) {
-            AuthUtil.authed.set("");
-            AuthState.clear();
-            String m = message == null ? "" : message;
-            status.set((action + "失败 " + m).trim());
-            statusKind.set(StatusKind.Error);
-            userField.pulseError();
-            passField.pulseError();
-            if (mode == Mode.Register) licenseField.pulseError();
-            return;
-        }
-
-        long now = Instant.now().toEpochMilli();
-        long nowTimeWindow = now / TIME_WINDOW_MS;
-        long skew = Math.abs(nowTimeWindow - timeWindowValue);
-        boolean timeOk = skew <= MAX_TIME_WINDOW_SKEW;
-
-        AuthUtil.authed.set(AuthUtil.AUTH_OK_TOKEN);
-        AuthState.setAuthed(activeUsername, expireAtMillis);
-        status.set(timeOk ? "验证成功，正在进入游戏..." : "验证成功，但本地时间偏差较大，建议校准系统时间");
-        statusKind.set(StatusKind.Success);
-        authed.set(true);
+            if (AuthState.isAuthed() && AuthState.getExpireAt() > System.currentTimeMillis()) {
+                statusKind.set(StatusKind.Success);
+                authed.set(true);
+            } else {
+                statusKind.set(StatusKind.Error);
+                userField.pulseError();
+                passField.pulseError();
+                if (mode == Mode.Register) licenseField.pulseError();
+            }
+        });
     }
 
     private void render(float dt) {
