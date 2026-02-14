@@ -59,6 +59,7 @@ public class ModuleManager {
         add(new Stuck());
         add(new Velocity());
         add(new VelocityRubberband());
+        add(new TargetStrafe());
 
         // Player
         add(new AntiHunger());
@@ -87,6 +88,7 @@ public class ModuleManager {
         add(new JumpCircles());
         add(new KillEffect());
 //        add(new MotionBlur());
+        add(new NameProtect());
         add(new NameTags());
         add(new NoFov());
         add(new NoRender());
