@@ -8,6 +8,7 @@ import dev.sakura.client.verify.protocol.IRCProtocol;
 import dev.sakura.niurendeobf.ZKMIndy;
 
 import java.io.*;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.util.Map;
 import java.util.Set;
@@ -35,7 +36,8 @@ public class IRCTransport {
 
     public IRCTransport(String host, int port, IRCHandler handler) throws IOException {
         this.handler = handler;
-        this.socket = new Socket(host, port);
+        this.socket = new Socket();
+        this.socket.connect(new InetSocketAddress(host, port), 6_000);
         this.socket.setTcpNoDelay(true);
         this.in = new DataInputStream(new BufferedInputStream(socket.getInputStream(), 1024 * 64));
         this.out = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream(), 1024 * 64));

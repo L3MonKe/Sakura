@@ -7,8 +7,8 @@ import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.KillAura;
-import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.color.ColorUtil;
+import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
@@ -40,7 +40,7 @@ public class TargetStrafe extends Module {
     private final NumberValue<Integer> gradientSpeed = new NumberValue<>("Gradient Speed", "渐变速度", 30, 1, 100, 1, () -> colorMode.is(ColorMode.Gradient));
     private final NumberValue<Integer> gradientStep = new NumberValue<>("Gradient Step", "渐变跨度", 4, 1, 50, 1, () -> colorMode.is(ColorMode.Gradient));
     private final NumberValue<Integer> circlePoints = new NumberValue<>("Points", "边数", 32, 3, 120, 1);
-    
+
     private final BoolValue glow = new BoolValue("Glow", "发光", true);
     private final NumberValue<Double> glowRadius = new NumberValue<>("Glow Radius", "发光半径", 2.0, 1.0, 5.0, 0.5, glow::get);
     private final NumberValue<Integer> glowOpacity = new NumberValue<>("Glow Opacity", "发光透明度", 100, 0, 255, 5, glow::get);
@@ -82,7 +82,7 @@ public class TargetStrafe extends Module {
 
         double speed = MoveUtil.getSpeed();
         double strafeYaw = Math.atan2(target.getZ() - mc.player.getZ(), target.getX() - mc.player.getX());
-        
+
         Vec3d strafeVec = computeDirectionVec(strafeYaw, distance, speed, range.get().floatValue(), direction);
         Vec3d pointCoords = new Vec3d(mc.player.getX(), mc.player.getY(), mc.player.getZ()).add(strafeVec);
 
@@ -104,13 +104,13 @@ public class TargetStrafe extends Module {
         double encirclement = distance - range;
 
         if (encirclement < -speed) encirclement = -speed;
-        
+
         double encirclementX = -Math.sin(yaw) * encirclement;
         double encirclementZ = Math.cos(yaw) * encirclement;
-        
+
         double strafeX = -Math.sin(strafeYaw) * speed * direction;
         double strafeZ = Math.cos(strafeYaw) * speed * direction;
-        
+
         return new Vec3d(encirclementX + strafeX, 0.0, encirclementZ + strafeZ);
     }
 
@@ -155,33 +155,33 @@ public class TargetStrafe extends Module {
 
         drawCircle(event, target, range.get(), circleColor.get());
     }
-    
+
     private void drawCircle(Render3DEvent event, LivingEntity entity, double radius, Color color) {
         MatrixStack stack = event.getMatrices();
         double x = MathHelper.lerp(event.getTickDelta(), entity.lastRenderX, entity.getX());
         double y = MathHelper.lerp(event.getTickDelta(), entity.lastRenderY, entity.getY());
         double z = MathHelper.lerp(event.getTickDelta(), entity.lastRenderZ, entity.getZ());
-        
+
         int points = circlePoints.get();
         double anglePerPoint = 360.0 / points;
 
         for (int i = 0; i < points; i++) {
             double rad = Math.toRadians(i * anglePerPoint);
             double radNext = Math.toRadians((i + 1) * anglePerPoint);
-            
+
             double x1 = Math.sin(rad) * radius;
             double z1 = Math.cos(rad) * radius;
             double x2 = Math.sin(radNext) * radius;
             double z2 = Math.cos(radNext) * radius;
-            
+
             Color c;
             if (colorMode.is(ColorMode.Gradient)) {
                 // 计算双色渐变
                 c = ColorUtil.interpolateColorsBackAndForth(
-                        gradientSpeed.get(), 
-                        i * gradientStep.get(), 
-                        gradientColor1.get(), 
-                        gradientColor2.get(), 
+                        gradientSpeed.get(),
+                        i * gradientStep.get(),
+                        gradientColor1.get(),
+                        gradientColor2.get(),
                         false
                 );
             } else {
@@ -192,18 +192,18 @@ public class TargetStrafe extends Module {
                 float radiusVal = glowRadius.get().floatValue();
                 int opacityVal = glowOpacity.get();
                 for (int w = 1; w <= 3; w++) {
-                    Render3DUtil.drawLine(stack, 
-                        new Vec3d(x + x1, y, z + z1), 
-                        new Vec3d(x + x2, y, z + z2), 
-                        ColorUtil.applyOpacity(c, (opacityVal / (w * 1.5f)) / 255.0f), 
-                        2.0f + w * radiusVal);
+                    Render3DUtil.drawLine(stack,
+                            new Vec3d(x + x1, y, z + z1),
+                            new Vec3d(x + x2, y, z + z2),
+                            ColorUtil.applyOpacity(c, (opacityVal / (w * 1.5f)) / 255.0f),
+                            2.0f + w * radiusVal);
                 }
             }
 
-            Render3DUtil.drawLine(stack, 
-                new Vec3d(x + x1, y, z + z1), 
-                new Vec3d(x + x2, y, z + z2), 
-                c, 2.0f);
+            Render3DUtil.drawLine(stack,
+                    new Vec3d(x + x1, y, z + z1),
+                    new Vec3d(x + x2, y, z + z2),
+                    c, 2.0f);
         }
     }
 }
