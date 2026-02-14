@@ -96,15 +96,6 @@ public class RotationManager {
         smooth();
     }
 
-    public boolean inFov(Vec3d directionVec, double fov) {
-        float[] angle = getRotation(new Vec3d(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()), mc.player.getZ()), directionVec);
-        return inFov(angle[0], angle[1], fov);
-    }
-
-    public boolean inFov(float yaw, float pitch, double fov) {
-        return MathHelper.angleBetween(yaw, rotations.yaw) + Math.abs(pitch - rotations.pitch) <= fov;
-    }
-
     private void smooth() {
         if (!smoothed) {
             float targetYaw = targetRotations.yaw;
@@ -153,12 +144,15 @@ public class RotationManager {
                 }
             }
 
-            rotations = RotationUtil.smooth(new Rotation(targetYaw, targetPitch),
-                    rotationSpeed + Math.random());
+            rotations = RotationUtil.smooth(new Rotation(targetYaw, targetPitch), rotationSpeed + Math.random());
 
-            if (Float.isNaN(rotations.yaw) || Float.isInfinite(rotations.yaw)) rotations.yaw = mc.player.getYaw();
-            if (Float.isNaN(rotations.pitch) || Float.isInfinite(rotations.pitch))
+            if (Float.isNaN(rotations.yaw) || Float.isInfinite(rotations.yaw)) {
+                rotations.yaw = mc.player.getYaw();
+            }
+
+            if (Float.isNaN(rotations.pitch) || Float.isInfinite(rotations.pitch)) {
                 rotations.pitch = mc.player.getPitch();
+            }
         }
 
         smoothed = true;
@@ -295,23 +289,8 @@ public class RotationManager {
                 lastRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             }
 
-            float eventYaw = event.getYaw();
-            float eventPitch = event.getPitch();
-            Rotation targetAnimation = new Rotation(eventYaw, eventPitch);
-            if (!active) {
-                lastAnimationRotation = targetAnimation;
-                animationRotation = targetAnimation;
-            } else {
-                if (animationRotation == null) {
-                    lastAnimationRotation = targetAnimation;
-                    animationRotation = targetAnimation;
-                } else {
-                    lastAnimationRotation = animationRotation;
-                    float renderYaw = animationRotation.yaw + (eventYaw - animationRotation.yaw) * 0.5f;
-                    float renderPitch = animationRotation.pitch + (eventPitch - animationRotation.pitch) * 0.5f;
-                    animationRotation = new Rotation(renderYaw, renderPitch);
-                }
-            }
+            lastAnimationRotation = animationRotation;
+            animationRotation = new Rotation(event.getYaw(), event.getPitch());
             targetRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             smoothed = false;
         }
