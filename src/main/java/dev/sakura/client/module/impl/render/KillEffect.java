@@ -1,13 +1,16 @@
 package dev.sakura.client.module.impl.render;
 
+import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.mixin.accessor.IPlayerInteractEntityC2SPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.module.impl.combat.KillAura;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
+
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -95,12 +98,7 @@ public class KillEffect extends Module {
                 for (int id : packet.getEntityIds()) {
                     Entity entity = mc.world.getEntityById(id);
                     if (entity != null) {
-                        // Check if player is in tab list
-                        if (entity instanceof PlayerEntity player) {
-                            if (mc.getNetworkHandler() != null && mc.getNetworkHandler().getPlayerListEntry(player.getUuid()) == null) {
-                                checkAndTrigger(entity);
-                            }
-                        }
+                        checkAndTrigger(entity);
                     }
                 }
             }
@@ -111,12 +109,25 @@ public class KillEffect extends Module {
         if (playersOnly.get() && !(entity instanceof PlayerEntity)) return;
         if (entity == mc.player) return;
 
+        boolean shouldTrigger = false;
+
         Long time = recentAttacks.get(entity.getId());
         if (time != null) {
             if (System.currentTimeMillis() - time < 5000) {
-                triggerEffect(entity, mode.get());
-                recentAttacks.remove(entity.getId());
+                shouldTrigger = true;
             }
+        }
+
+        if (!shouldTrigger) {
+            KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+            if (killAura != null && killAura.isEnabled() && killAura.getCurrentTarget() == entity) {
+                shouldTrigger = true;
+            }
+        }
+
+        if (shouldTrigger) {
+            triggerEffect(entity, mode.get());
+            recentAttacks.remove(entity.getId());
         }
     }
 
