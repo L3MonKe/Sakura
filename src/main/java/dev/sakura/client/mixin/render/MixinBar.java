@@ -13,7 +13,7 @@ public interface MixinBar {
     @Unique
     private static int getVanillaHudYOffset() {
         HotbarHud hotbarHud = Sakura.MODULES.getModule(HotbarHud.class);
-        if (hotbarHud.isEnabled()) hotbarHud.getVanillaHudYOffset();
+        if (hotbarHud.isEnabled()) return hotbarHud.getVanillaHudYOffset();
         return 0;
     }
 
