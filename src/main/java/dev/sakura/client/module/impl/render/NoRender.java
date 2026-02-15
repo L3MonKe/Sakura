@@ -29,8 +29,6 @@ public class NoRender extends Module {
     // World
     public final BoolValue noWeather = new BoolValue("No Weather", "无天气", false);
     public final BoolValue noFog = new BoolValue("No Fog", "无迷雾", false);
-    public final BoolValue noBlindness = new BoolValue("No Blindness", "无失明", false);
-    public final BoolValue noDarkness = new BoolValue("No Darkness", "无黑暗", false);
     public final BoolValue noExplosionParticles = new BoolValue("No Explosion Particles", "无爆炸粒子", false);
 
     public NoRender() {
@@ -111,16 +109,6 @@ public class NoRender extends Module {
 
     public boolean noFog() {
         return isEnabled() && noFog.get();
-    }
-
-    public boolean noBlindness() {
-        //TODO:
-        return isEnabled() && noBlindness.get();
-    }
-
-    public boolean noDarkness() {
-        //TODO:
-        return isEnabled() && noDarkness.get();
     }
 
     public boolean noExplosionParticles() {

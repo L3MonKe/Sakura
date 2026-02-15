@@ -198,9 +198,11 @@ public class Scaffold extends Module {
     }
 
     private boolean validItem(ItemStack itemStack, BlockPos pos) {
-        if (!(itemStack.getItem() instanceof BlockItem)) return false;
+        if (!(itemStack.getItem() instanceof BlockItem blockItem)) return false;
 
-        Block block = ((BlockItem) itemStack.getItem()).getBlock();
+        Block block = blockItem.getBlock();
+
+        if (block instanceof TntBlock) return false;
 
         if (!Block.isShapeFullCube(block.getDefaultState().getCollisionShape(mc.world, pos))) return false;
         return !(block instanceof FallingBlock) || !FallingBlock.canFallThrough(mc.world.getBlockState(pos));
