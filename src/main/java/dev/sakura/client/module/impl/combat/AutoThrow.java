@@ -1,11 +1,11 @@
 package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.Sakura;
+
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
-import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
@@ -31,7 +31,7 @@ public class AutoThrow extends Module {
 
     private final NumberValue<Integer> minRange = new NumberValue<>("Min Range", "最小距离", 3, 0, 6, 1);
     private final NumberValue<Integer> maxRange = new NumberValue<>("Max Range", "最大距离", 10, 6, 20, 1);
-    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 8, 1, 10, 1);
+    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 100, 1, 180, 1);
     private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟(ms)", 100, 0, 1000, 10);
     private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟(ms)", 300, 0, 1000, 10);
     private final NumberValue<Integer> switchDelay = new NumberValue<>("Switch Delay", "切换延迟(ms)", 0, 0, 1000, 10);
@@ -115,36 +115,6 @@ public class AutoThrow extends Module {
         ItemStack currentStack = mc.player.getInventory().getStack(currentSlot);
 
         if (event.getHand() == Hand.MAIN_HAND && (currentStack.getItem() == Items.SNOWBALL || currentStack.getItem() == Items.EGG)) {
-            int bestSlot = -1;
-            for (int i = 0; i < 9; i++) {
-                ItemStack s = mc.player.getInventory().getStack(i);
-                if (!s.isEmpty() && s.getItem() != Items.SNOWBALL && s.getItem() != Items.EGG) {
-                    bestSlot = i;
-                    break;
-                }
-            }
-
-            if (bestSlot != -1) {
-                event.setItem(mc.player.getInventory().getStack(bestSlot));
-            }
-        }
-    }
-
-    @EventHandler
-    public void onUpdateHeldItem(UpdateHeldItemEvent event) {
-        if (!silentSwitch.get()) return;
-        if (mc.player == null) return;
-        if (event.getHand() != Hand.MAIN_HAND) return;
-
-        if (oldSlot != -1) {
-            event.setItem(mc.player.getInventory().getStack(oldSlot));
-            return;
-        }
-
-        int currentSlot = mc.player.getInventory().getSelectedSlot();
-        ItemStack currentStack = mc.player.getInventory().getStack(currentSlot);
-
-        if (currentStack.getItem() == Items.SNOWBALL || currentStack.getItem() == Items.EGG) {
             int bestSlot = -1;
             for (int i = 0; i < 9; i++) {
                 ItemStack s = mc.player.getInventory().getStack(i);
