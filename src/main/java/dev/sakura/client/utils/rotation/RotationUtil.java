@@ -1,5 +1,6 @@
 package dev.sakura.client.utils.rotation;
 
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.mixin.accessor.IEntity;
 import dev.sakura.client.utils.math.MathUtil;
@@ -148,7 +149,7 @@ public class RotationUtil {
     }
 
     public static Rotation smooth(final Rotation targetRotation, final double speed) {
-        return smooth(RotationManager.lastRotations, targetRotation, speed);
+        return smooth(Managers.ROTATION.lastRotations, targetRotation, speed);
     }
 
     public static Rotation smooth(final Rotation lastRotation, final Rotation targetRotation, final double speed) {

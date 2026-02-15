@@ -7,6 +7,7 @@ import dev.sakura.client.event.impl.player.JumpRotationEvent;
 import dev.sakura.client.event.impl.player.SprintEvent;
 import dev.sakura.client.event.impl.player.TravelEvent;
 import dev.sakura.client.event.type.EventType;
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.impl.movement.JumpCooldown;
 import dev.sakura.client.utils.rotation.Rotation;
@@ -65,7 +66,7 @@ public abstract class MixinLivingEntity extends Entity {
 
     @Redirect(method = "turnHead", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getYaw()F"))
     private float modifyHeadYaw(LivingEntity entity) {
-        Rotation animationRotation = RotationManager.animationRotation;
+        Rotation animationRotation = Managers.ROTATION.animationRotation;
         if (entity == mc.player && animationRotation != null) {
             return animationRotation.yaw;
         } else {

@@ -21,21 +21,21 @@ import java.util.function.Function;
 import static dev.sakura.client.Sakura.mc;
 
 public class RotationManager {
-    private static final Rotation offset = new Rotation(0, 0);
-    public static Rotation rotations;
-    public static Rotation lastRotations = new Rotation(0, 0);
-    public static Rotation targetRotations;
-    public static Rotation animationRotation;
-    public static Rotation lastAnimationRotation;
+    private final Rotation offset = new Rotation(0, 0);
+    public Rotation rotations;
+    public Rotation lastRotations = new Rotation(0, 0);
+    public Rotation targetRotations;
+    public Rotation animationRotation;
+    public Rotation lastAnimationRotation;
 
-    private static boolean active;
-    private static boolean smoothed;
-    private static double rotationSpeed;
-    private static MovementFix correctMovement;
-    private static Function<Rotation, Boolean> raycast;
-    private static float randomAngle;
+    private boolean active;
+    private boolean smoothed;
+    private double rotationSpeed;
+    private MovementFix correctMovement;
+    private Function<Rotation, Boolean> raycast;
+    private float randomAngle;
 
-    private static int priority;
+    private int priority;
 
     public RotationManager() {
         Sakura.EVENT_BUS.subscribe(this);
@@ -82,15 +82,15 @@ public class RotationManager {
             return;
         }
 
-        if (active && priority.priority < RotationManager.priority) {
+        if (active && priority.priority < this.priority) {
             return;
         }
 
-        RotationManager.targetRotations = rotations;
-        RotationManager.rotationSpeed = rotationSpeed * 18;
-        RotationManager.correctMovement = correctMovement;
-        RotationManager.raycast = raycast;
-        RotationManager.priority = priority.priority;
+        this.targetRotations = rotations;
+        this.rotationSpeed = rotationSpeed * 18;
+        this.correctMovement = correctMovement;
+        this.raycast = raycast;
+        this.priority = priority.priority;
         active = true;
 
         smooth();
@@ -165,7 +165,7 @@ public class RotationManager {
     }
 
     public void setSmoothed(boolean smoothed) {
-        RotationManager.smoothed = smoothed;
+        this.smoothed = smoothed;
     }
 
     public boolean isActive() {
@@ -173,7 +173,7 @@ public class RotationManager {
     }
 
     public void setActive(boolean active) {
-        RotationManager.active = active;
+        this.active = active;
     }
 
     public float getYaw() {

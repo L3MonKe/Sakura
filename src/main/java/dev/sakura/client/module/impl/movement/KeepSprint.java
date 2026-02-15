@@ -36,7 +36,7 @@ public class KeepSprint extends Module {
             if (packet.getMode() == ClientCommandC2SPacket.Mode.STOP_SPRINTING) {
                 if (attacking) {
                     if (mc.player.forwardSpeed > 0) {
-                        float serverYaw = Managers.ROTATION.isActive() ? RotationManager.rotations.yaw : mc.player.getYaw();
+                        float serverYaw = Managers.ROTATION.isActive() ? Managers.ROTATION.rotations.yaw : mc.player.getYaw();
                         if (Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - serverYaw)) < 45) {
                             event.cancel();
                         }
