@@ -5,7 +5,7 @@
 classpath   "libs\*.jar";
 
 open        openNestedArchives=false
-            "Sakura-1.4.jar";
+            "Sakura-1.5.jar";
 
 exclude     @org.spongepowered.asm.mixin.Mixin *.^* and
             @org.spongepowered.asm.mixin.Mixin *.^*^ * and
@@ -60,8 +60,8 @@ obfuscate   changeLogFileIn=""
             mixedCaseClassNames=ifInArchive
             aggressiveMethodRenaming=true
             randomize=true
-            collapsePackagesWithDefault="Mahiro"
-            newNamesPrefix="Mahiro_"
+            collapsePackagesWithDefault="L3MonKe"
+            newNamesPrefix="L3MonKe_"
             localVariables=delete
             lineNumbers=delete
             obfuscateReferences=normal
