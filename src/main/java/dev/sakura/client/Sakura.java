@@ -110,6 +110,13 @@ public class Sakura {
     public static int skipTicks;
 
     public static void init(MinecraftClient client) {
+        ExitUtil.ensureVerifiedOrExit();
+        if (!AuthState.isAuthed() || AuthState.getExpireAt() <= System.currentTimeMillis()) {
+            AuthState.clear();
+            ExitUtil.exit0();
+            return;
+        }
+
         LOGGER.info("正在开始初始化!");
 
         mc = client;
@@ -131,6 +138,7 @@ public class Sakura {
         CONFIG = new ConfigManager();
 
         COMMAND = new CommandManager();
+
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             LOGGER.info("正在保存配置并且关闭游戏!");
             CONFIG.saveDefaultConfig();
