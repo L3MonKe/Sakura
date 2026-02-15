@@ -4,11 +4,7 @@ import dev.sakura.client.Sakura;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.color.ColorUtil;
-import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.ColorValue;
-import dev.sakura.client.values.impl.EnumValue;
-import dev.sakura.client.values.impl.NumberValue;
-import dev.sakura.client.values.impl.StringValue;
+import dev.sakura.client.values.impl.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.text.CharacterVisitor;
 import net.minecraft.text.OrderedText;
@@ -21,19 +17,19 @@ import java.util.List;
 public class NameProtect extends Module {
     private final StringValue name = new StringValue("Name", "名字", "Sakura");
     private final BoolValue color = new BoolValue("Color", "启用颜色", true);
-    
+
     private enum ColorMode {
         Single,
         Gradient
     }
-    
+
     private final EnumValue<ColorMode> colorMode = new EnumValue<>("ColorMode", "颜色模式", ColorMode.Single, color::get);
-    
+
     private final ColorValue colorValue = new ColorValue("ColorValue", "单色", new Color(255, 255, 255), () -> color.get() && colorMode.is(ColorMode.Single));
-    
+
     private final ColorValue gradientColor1 = new ColorValue("Gradient1", "渐变色1", new Color(255, 183, 197), () -> color.get() && colorMode.is(ColorMode.Gradient));
     private final ColorValue gradientColor2 = new ColorValue("Gradient2", "渐变色2", new Color(255, 133, 161), () -> color.get() && colorMode.is(ColorMode.Gradient));
-    
+
     private final NumberValue<Double> speed = new NumberValue<>("Speed", "速度", 4.0, 1.0, 10.0, 0.5, () -> color.get() && colorMode.is(ColorMode.Gradient));
     private final NumberValue<Double> separation = new NumberValue<>("Separation", "间隔", 20.0, 1.0, 100.0, 1.0, () -> color.get() && colorMode.is(ColorMode.Gradient));
 
@@ -102,10 +98,10 @@ public class NameProtect extends Module {
             }
 
             Style style = characters.get(index).style;
-            
+
             for (int i = 0; i < replacement.length(); i++) {
                 Style charStyle = style;
-                
+
                 if (enableColor) {
                     int charColor;
                     if (mode == ColorMode.Single) {
@@ -116,7 +112,7 @@ public class NameProtect extends Module {
                     }
                     charStyle = style.withColor(charColor);
                 }
-                
+
                 newCharacters.add(new MappedCharacter(charStyle, replacement.codePointAt(i)));
             }
 

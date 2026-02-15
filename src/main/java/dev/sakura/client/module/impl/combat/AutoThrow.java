@@ -77,9 +77,9 @@ public class AutoThrow extends Module {
                 lastRenderPitch = realPitch;
                 renderYaw = realYaw;
                 renderPitch = realPitch;
-                
+
                 isRotating = true;
-                
+
                 realBodyYaw = minecraftClient.player.bodyYaw;
                 realHeadYaw = minecraftClient.player.headYaw;
 

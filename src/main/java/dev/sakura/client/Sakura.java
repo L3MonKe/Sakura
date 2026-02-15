@@ -5,7 +5,6 @@ import dev.sakura.client.command.CommandManager;
 import dev.sakura.client.config.ConfigManager;
 import dev.sakura.client.event.EventBus;
 import dev.sakura.client.event.IEventBus;
-import dev.sakura.client.gui.auth.AuthScreen;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
@@ -13,6 +12,7 @@ import dev.sakura.client.gui.panelgui.PanelGuiScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
 import dev.sakura.client.verify.AuthState;
+import dev.sakura.client.verify.util.ExitUtil;
 import dev.sakura.niurendeobf.ZKMIndy;
 import net.minecraft.client.MinecraftClient;
 import org.apache.logging.log4j.LogManager;
@@ -140,16 +140,12 @@ public class Sakura {
     }
 
     public static void redirectToMainMenu() {
-        if (AuthState.isAuthed()) {
-            long expireAt = AuthState.getExpireAt();
-            long now = System.currentTimeMillis();
-            if (expireAt > now) {
-                mc.setScreen(new MainMenuScreen());
-                return;
-            }
+        if (!AuthState.isAuthed() || AuthState.getExpireAt() <= System.currentTimeMillis()) {
             AuthState.clear();
+            ExitUtil.exit0();
+            return;
         }
-        mc.setScreen(new AuthScreen(new MainMenuScreen()));
+        mc.setScreen(new MainMenuScreen());
     }
 
     public static boolean startIntro() {

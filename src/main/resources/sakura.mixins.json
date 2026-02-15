@@ -3,7 +3,6 @@
   "minVersion": "0.8",
   "package": "dev.sakura.client.mixin",
   "compatibilityLevel": "JAVA_21",
-  "plugin": "dev.sakura.client.mixin.MixinPlugin",
   "client": [
     "MixinMain",
     "accessor.IAccessorBundlePacket",

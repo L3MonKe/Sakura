@@ -1,5 +1,6 @@
 package dev.sakura.client.mixin;
 
+import dev.sakura.client.gui.auth.LoginWindow;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import net.minecraft.client.main.Main;
 import org.spongepowered.asm.mixin.Mixin;
@@ -10,6 +11,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Main.class)
 public class MixinMain {
+    @Inject(method = "main", at = @At("HEAD"))
+    private static void onMain(String[] args, CallbackInfo ci) {
+        LoginWindow.verifyOrExitBlocking();
+    }
+
     @Inject(method = "<init>", at = @At("TAIL"))
     private void onInit(CallbackInfo ci) {
         NanoVGRenderer.INSTANCE.initNanoVG();

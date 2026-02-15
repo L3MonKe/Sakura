@@ -1,7 +1,6 @@
 package dev.sakura.client.utils.rotation;
 
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.mixin.accessor.IEntity;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.vector.Vector3d;

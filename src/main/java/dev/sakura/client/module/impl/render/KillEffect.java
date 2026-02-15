@@ -10,7 +10,6 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.KillAura;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
-
 import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;

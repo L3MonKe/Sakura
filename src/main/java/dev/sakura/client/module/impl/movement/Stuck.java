@@ -7,7 +7,6 @@ import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.PacketUtil;

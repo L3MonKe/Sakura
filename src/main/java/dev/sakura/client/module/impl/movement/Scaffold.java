@@ -2,6 +2,7 @@ package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.input.MouseButtonEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.StrafeEvent;
 import dev.sakura.client.event.type.EventType;
@@ -23,6 +24,7 @@ import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.block.*;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
@@ -94,6 +96,13 @@ public class Scaffold extends Module {
         blockInfo = null;
         if (shouldSwapBack) {
             InvUtil.swapBack();
+        }
+    }
+
+    @EventHandler
+    private void onMouse(MouseButtonEvent event) {
+        if (event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_LEFT || event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_RIGHT) {
+            event.setCancelled(true);
         }
     }
 
