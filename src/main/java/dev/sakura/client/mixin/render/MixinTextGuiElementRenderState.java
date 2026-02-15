@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(TextGuiElementRenderState.class)
 public class MixinTextGuiElementRenderState {
-
+    
     @Inject(method = "<init>", at = @At("RETURN"))
     private void onInit(TextRenderer textRenderer, OrderedText orderedText, Matrix3x2fc matrix, int x, int y, int color, int backgroundColor, boolean shadow, boolean trackEmpty, ScreenRect clipBounds, CallbackInfo ci) {
         OrderedText replaced = NameProtect.replace(orderedText);

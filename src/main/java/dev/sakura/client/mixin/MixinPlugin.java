@@ -1,6 +1,5 @@
 package dev.sakura.client.mixin;
 
-import dev.sakura.client.gui.auth.LoginWindow;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
@@ -11,7 +10,7 @@ import java.util.Set;
 public class MixinPlugin implements IMixinConfigPlugin {
     @Override
     public void onLoad(String mixinPackage) {
-        LoginWindow.verifyOrExit();
+
     }
 
     @Override
