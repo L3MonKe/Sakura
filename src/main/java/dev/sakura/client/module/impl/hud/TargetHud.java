@@ -144,12 +144,21 @@ public class TargetHud extends HudModule {
     private final EnumValue<ImageModeEn> imageMode = new EnumValue<>("Image", "图片模式", ImageModeEn.Anime, () -> style.get() == StyleEn.ThunderHack);
 
     // 3D ESP Settings
-    private final BoolValue espEnabled = new BoolValue("ESP", "3D透视", true);
+    private final BoolValue espEnabled = new BoolValue("ESP", "ESP", true);
+
+    private enum ESPMode {CaptureMark, Firefly}
+
+    private final EnumValue<ESPMode> espMode = new EnumValue<>("ESP Mode", "ESP模式", ESPMode.Firefly, espEnabled::get);
+    private final ColorValue fireflyColor = new ColorValue("Firefly Color", "萤火虫颜色", new Color(149, 149, 149, 80), () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
     private final ColorValue espColor1 = new ColorValue("ESPColor1", "透视颜色1", new Color(255, 183, 197), espEnabled::get);
     private final ColorValue espColor2 = new ColorValue("ESPColor2", "透视颜色2", new Color(255, 133, 161), espEnabled::get);
     private final NumberValue<Double> espSize = new NumberValue<>("ESPSize", "透视大小", 1.2, 0.5, 3.0, 0.1, espEnabled::get);
     private final NumberValue<Double> rotationSpeed = new NumberValue<>("RotSpeed", "旋转速度", 2.0, 0.5, 10.0, 0.1, espEnabled::get);
     private final NumberValue<Double> waveSpeed = new NumberValue<>("WaveSpeed", "波动速度", 3.0, 0.5, 10.0, 0.1, espEnabled::get);
+    private final NumberValue<Integer> fireflyLength = new NumberValue<>("Length", "长度", 14, 8, 128, 1, () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
+    private final NumberValue<Integer> fireflyFactor = new NumberValue<>("Factor", "因子", 8, 1, 10, 1, () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
+    private final NumberValue<Double> fireflyShaking = new NumberValue<>("Shaking", "抖动", 1.8, 0.25, 10.0, 0.25, () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
+    private final NumberValue<Double> fireflyAmplitude = new NumberValue<>("Amplitude", "振幅", 3.0, 0.0, 10.0, 0.25, () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
 
     // Health Bar Settings
     private final ColorValue healthColor = new ColorValue("HealthColor", "血条颜色", new Color(0, 255, 0), () -> true);
@@ -172,6 +181,7 @@ public class TargetHud extends HudModule {
 
     private static final Identifier TARGET_TEX = Identifier.of("sakura", "textures/particles/target.png");
     private static final Identifier THUD_TEX = Identifier.of("sakura", "textures/hudeditor/thud.png");
+    private static final Identifier FIREFLY_TEX = Identifier.of("sakura", "textures/particles/firefly.png");
 
     // Animations
     private final Animation animation = new EaseOutSine(300, 1.0, Direction.BACKWARDS);
@@ -222,6 +232,9 @@ public class TargetHud extends HudModule {
     private RenderLayer targetIcon(Identifier texture) {
         return TARGET_ICON_LAYER.apply(texture);
     }
+
+    private final RenderPipeline fireflyPipeline = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.POSITION_TEX_COLOR_SNIPPET).withLocation("pipeline/sakura_firefly").withBlend(BlendFunction.LIGHTNING).withCull(false).withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false).build());
+    private final RenderLayer fireflyLayer = RenderLayer.of("sakura_firefly_layer", RenderSetup.builder(fireflyPipeline).texture("Sampler0", FIREFLY_TEX).translucent().layeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING).outputTarget(OutputTarget.MAIN_TARGET).build());
 
     @Override
     protected void onEnable() {
@@ -738,14 +751,16 @@ public class TargetHud extends HudModule {
 
     @EventHandler
     public void onRender3D(Render3DEvent event) {
-        if (!espEnabled.get()) return;
-        renderEsp(event.getMatrices(), event.getTickDelta());
-    }
-
-    private void renderEsp(MatrixStack matrices, float tickDelta) {
+        if (!espEnabled.get() || nullCheck()) return;
         LivingEntity target = getCurrentTarget();
         if (target == null) return;
+        switch (espMode.get()) {
+            case CaptureMark -> renderEsp(target, event.getMatrices(), event.getTickDelta());
+            case Firefly -> firefly(target, event.getMatrices(), event.getTickDelta());
+        }
+    }
 
+    private void renderEsp(LivingEntity target, MatrixStack matrices, float tickDelta) {
         rotation -= rotationSpeed.get().floatValue();
         if (rotation <= -360f) rotation += 360f;
 
@@ -797,9 +812,48 @@ public class TargetHud extends HudModule {
         return ColorUtil.interpolateColor(espColor1.get(), espColor2.get(), wave);
     }
 
-    // ====================================================================================
-    //                                  HELPERS
-    // ====================================================================================
+    private void firefly(LivingEntity target, MatrixStack matrices, float tickDelta) {
+        Camera camera = mc.gameRenderer.getCamera();
+
+        double tPosX = MathHelper.lerp(tickDelta, target.lastX, target.getX()) - camera.getCameraPos().x;
+        double tPosY = MathHelper.lerp(tickDelta, target.lastY, target.getY()) - camera.getCameraPos().y;
+        double tPosZ = MathHelper.lerp(tickDelta, target.lastZ, target.getZ()) - camera.getCameraPos().z;
+        float iAge = (float) (target.age - 1) + tickDelta;
+
+        int espLength = fireflyLength.get();
+        int factor = fireflyFactor.get();
+        float shaking = fireflyShaking.get().floatValue();
+        float amplitude = fireflyAmplitude.get().floatValue();
+
+        BufferBuilder buffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_TEXTURE_COLOR);
+
+        for (int j = 0; j < 3; j++) {
+            for (int i = 0; i <= espLength; i++) {
+                double radians = Math.toRadians((((float) i / 1.5f + iAge) * factor + (j * 120)) % (factor * 360));
+                double sinQuad = Math.sin(Math.toRadians(iAge * 2.5f + i * (j + 1)) * amplitude) / shaking;
+
+                float offset = (float) i / (float) espLength;
+
+                matrices.push();
+                matrices.translate(tPosX + Math.cos(radians) * target.getWidth(), tPosY + target.getHeight() * 0.5 + sinQuad, tPosZ + Math.sin(radians) * target.getWidth());
+                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-camera.getYaw()));
+                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(camera.getPitch()));
+
+                Matrix4f matrix = matrices.peek().getPositionMatrix();
+                float scale = Math.max(0.24f * (offset), 0.2f);
+                int color = fireflyColor.get().getRGB();
+
+                buffer.vertex(matrix, -scale, scale, 0).texture(0f, 1f).color(color);
+                buffer.vertex(matrix, scale, scale, 0).texture(1f, 1f).color(color);
+                buffer.vertex(matrix, scale, -scale, 0).texture(1f, 0f).color(color);
+                buffer.vertex(matrix, -scale, -scale, 0).texture(0f, 0f).color(color);
+
+                matrices.pop();
+            }
+        }
+
+        fireflyLayer.draw(buffer.end());
+    }
 
     private void drawPlayerAvatar(PlayerEntity player, float x, float y, float size, float radius, float scale, float damageFactor) {
         if (!(player instanceof AbstractClientPlayerEntity clientPlayer)) {
