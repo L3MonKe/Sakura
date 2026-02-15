@@ -5,7 +5,6 @@ import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.interfaces.IEntityRenderState;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.impl.render.Chams;
 import dev.sakura.client.module.impl.render.NameTags;
 import dev.sakura.client.utils.rotation.Rotation;

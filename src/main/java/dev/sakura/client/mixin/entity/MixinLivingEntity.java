@@ -8,7 +8,6 @@ import dev.sakura.client.event.impl.player.SprintEvent;
 import dev.sakura.client.event.impl.player.TravelEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.impl.movement.JumpCooldown;
 import dev.sakura.client.utils.rotation.Rotation;
 import net.minecraft.client.MinecraftClient;
