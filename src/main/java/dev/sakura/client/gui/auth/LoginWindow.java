@@ -37,6 +37,7 @@ import java.time.Instant;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.lwjgl.glfw.Callbacks.glfwFreeCallbacks;
 import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.nanovg.NanoVG.*;
 
@@ -220,10 +221,13 @@ public final class LoginWindow {
     }
 
     private boolean runBlocking() {
-        initWindow();
-        loop();
-        cleanup();
-        return success;
+        try {
+            initWindow();
+            loop();
+            return success;
+        } finally {
+            cleanup();
+        }
     }
 
     private void initWindow() {
@@ -813,6 +817,7 @@ public final class LoginWindow {
         nvgRestore(vg);
         if (success && transitionTarget >= 0.999f && transitionP >= 0.999f) {
             requestClose = true;
+            glfwSetWindowShouldClose(window, true);
         }
     }
 
@@ -1265,6 +1270,7 @@ public final class LoginWindow {
             vg = 0L;
         }
         if (window != 0L) {
+            glfwFreeCallbacks(window);
             glfwDestroyWindow(window);
             window = 0L;
         }
