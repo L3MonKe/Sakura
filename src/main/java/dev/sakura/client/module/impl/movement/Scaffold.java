@@ -101,6 +101,7 @@ public class Scaffold extends Module {
 
     @EventHandler
     private void onMouse(MouseButtonEvent event) {
+        if (mc.currentScreen != null) return;
         if (event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_LEFT || event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_RIGHT) {
             event.setCancelled(true);
         }

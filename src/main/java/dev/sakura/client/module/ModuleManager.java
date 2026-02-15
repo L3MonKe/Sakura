@@ -73,6 +73,7 @@ public class ModuleManager {
 //        add(new PacketMine());
         add(new Stealer());
         add(new Timer());
+        add(new ViewLock());
         add(new InvManager());
 
         // Render

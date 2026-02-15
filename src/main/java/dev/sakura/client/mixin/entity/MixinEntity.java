@@ -6,6 +6,7 @@ import dev.sakura.client.event.impl.player.MoveEvent;
 import dev.sakura.client.event.impl.player.RayTraceEvent;
 import dev.sakura.client.event.impl.player.StrafeEvent;
 import dev.sakura.client.event.impl.player.UpdateVelocityEvent;
+import dev.sakura.client.module.impl.player.ViewLock;
 import dev.sakura.client.module.impl.render.Shaders;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
@@ -48,6 +49,17 @@ public abstract class MixinEntity {
             return this.getRotationVector(event.getPitch(), event.getYaw());
         }
         return this.getRotationVector(pitch, yaw);
+    }
+
+    @Inject(method = "changeLookDirection", at = @At("HEAD"), cancellable = true)
+    private void onChangeLookDirection(double cursorDeltaX, double cursorDeltaY, CallbackInfo ci) {
+        if ((Object) this != mc.player) return;
+
+        ViewLock viewLock = Sakura.MODULES.getModule(ViewLock.class);
+        if (viewLock.isEnabled()) {
+            viewLock.handleLookDelta(cursorDeltaX, cursorDeltaY);
+            ci.cancel();
+        }
     }
 
     @Inject(method = "updateVelocity", at = @At("HEAD"), cancellable = true)

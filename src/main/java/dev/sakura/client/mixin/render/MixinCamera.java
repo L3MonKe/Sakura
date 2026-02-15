@@ -2,6 +2,7 @@ package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.impl.combat.AutoThrow;
+import dev.sakura.client.module.impl.player.ViewLock;
 import dev.sakura.client.module.impl.render.CameraClip;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
@@ -14,9 +15,12 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
+
+import static dev.sakura.client.Sakura.mc;
 
 @Mixin(Camera.class)
 public abstract class MixinCamera {
@@ -38,6 +42,24 @@ public abstract class MixinCamera {
             float pitch = MathHelper.lerp(tickProgress, AutoThrow.lastRenderPitch, AutoThrow.renderPitch);
             this.setRotation(yaw, pitch);
         }
+    }
+
+    @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getYaw(F)F"))
+    private float redirectGetYaw(Entity instance, float tickProgress) {
+        ViewLock viewLock = Sakura.MODULES.getModule(ViewLock.class);
+        if (viewLock.isEnabled() && instance == mc.player && !AutoThrow.isRotating) {
+            return viewLock.getRenderYaw(tickProgress);
+        }
+        return instance.getYaw(tickProgress);
+    }
+
+    @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getPitch(F)F"))
+    private float redirectGetPitch(Entity instance, float tickProgress) {
+        ViewLock viewLock = Sakura.MODULES.getModule(ViewLock.class);
+        if (viewLock.isEnabled() && instance == mc.player && !AutoThrow.isRotating) {
+            return viewLock.getRenderPitch(tickProgress);
+        }
+        return instance.getPitch(tickProgress);
     }
 
     @ModifyArgs(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;moveBy(FFF)V", ordinal = 0))
