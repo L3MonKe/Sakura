@@ -32,22 +32,10 @@ public abstract class MixinCamera {
     @Shadow
     protected abstract float clipToSpace(float desiredCameraDistance);
 
-    @Shadow
-    protected abstract void setRotation(float yaw, float pitch);
-
-    @Inject(method = "update", at = @At("TAIL"))
-    private void onUpdateTail(World area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickProgress, CallbackInfo ci) {
-        if (AutoThrow.isRotating) {
-            float yaw = MathHelper.lerp(tickProgress, AutoThrow.lastRenderYaw, AutoThrow.renderYaw);
-            float pitch = MathHelper.lerp(tickProgress, AutoThrow.lastRenderPitch, AutoThrow.renderPitch);
-            this.setRotation(yaw, pitch);
-        }
-    }
-
     @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getYaw(F)F"))
     private float redirectGetYaw(Entity instance, float tickProgress) {
         ViewLock viewLock = Sakura.MODULES.getModule(ViewLock.class);
-        if (viewLock.isEnabled() && instance == mc.player && !AutoThrow.isRotating) {
+        if (viewLock.isEnabled() && instance == mc.player) {
             return viewLock.getRenderYaw(tickProgress);
         }
         return instance.getYaw(tickProgress);
@@ -56,7 +44,7 @@ public abstract class MixinCamera {
     @Redirect(method = "update", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;getPitch(F)F"))
     private float redirectGetPitch(Entity instance, float tickProgress) {
         ViewLock viewLock = Sakura.MODULES.getModule(ViewLock.class);
-        if (viewLock.isEnabled() && instance == mc.player && !AutoThrow.isRotating) {
+        if (viewLock.isEnabled() && instance == mc.player) {
             return viewLock.getRenderPitch(tickProgress);
         }
         return instance.getPitch(tickProgress);
