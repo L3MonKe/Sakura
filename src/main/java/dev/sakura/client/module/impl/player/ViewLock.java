@@ -7,10 +7,6 @@ import dev.sakura.client.module.Module;
 import net.minecraft.util.math.MathHelper;
 
 public class ViewLock extends Module {
-    public ViewLock() {
-        super("ViewLock", "视角锁定", Category.Player);
-    }
-
     public float lockYaw;
     public float lockPitch;
 
@@ -19,25 +15,19 @@ public class ViewLock extends Module {
     public float lastCameraYaw;
     public float lastCameraPitch;
 
+    public ViewLock() {
+        super("ViewLock", "视角锁定", Category.Player);
+    }
+
     @Override
     protected void onEnable() {
-        if (nullCheck()) {
-            toggle();
-            return;
-        }
+        if (nullCheck()) return;
 
         lockYaw = mc.player.getYaw();
         lockPitch = mc.player.getPitch();
 
         cameraYaw = lastCameraYaw = lockYaw;
         cameraPitch = lastCameraPitch = lockPitch;
-    }
-
-    @EventHandler
-    private void onPlayerTick(PlayerTickEvent event) {
-        if (nullCheck()) return;
-        mc.player.setYaw(MathHelper.wrapDegrees(lockYaw));
-        mc.player.setPitch(MathHelper.clamp(lockPitch, -90.0f, 90.0f));
     }
 
     public void handleLookDelta(double cursorDeltaX, double cursorDeltaY) {
@@ -57,5 +47,12 @@ public class ViewLock extends Module {
 
     public float getRenderPitch(float tickProgress) {
         return MathHelper.lerp(tickProgress, lastCameraPitch, cameraPitch);
+    }
+
+    @EventHandler
+    private void onPlayerTick(PlayerTickEvent event) {
+        if (nullCheck()) return;
+        mc.player.setYaw(MathHelper.wrapDegrees(lockYaw));
+        mc.player.setPitch(MathHelper.clamp(lockPitch, -90.0f, 90.0f));
     }
 }

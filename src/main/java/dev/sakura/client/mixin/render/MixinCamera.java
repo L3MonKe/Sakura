@@ -1,12 +1,10 @@
 package dev.sakura.client.mixin.render;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.module.impl.combat.AutoThrow;
 import dev.sakura.client.module.impl.player.ViewLock;
 import dev.sakura.client.module.impl.render.CameraClip;
 import net.minecraft.client.render.Camera;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;

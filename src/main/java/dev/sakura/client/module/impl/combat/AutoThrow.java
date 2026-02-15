@@ -1,31 +1,9 @@
 package dev.sakura.client.module.impl.combat;
 
-import dev.sakura.client.Sakura;
-import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.input.MoveInputEvent;
-import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
-import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
-import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.module.impl.movement.Scaffold;
-import dev.sakura.client.utils.math.MathUtil;
-import dev.sakura.client.utils.player.FindItemResult;
-import dev.sakura.client.utils.player.InvUtil;
-import dev.sakura.client.utils.player.MoveUtil;
-import dev.sakura.client.utils.rotation.MovementFix;
-import dev.sakura.client.utils.rotation.Rotation;
-import dev.sakura.client.utils.rotation.RotationUtil;
-import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.util.Hand;
 
 public class AutoThrow extends Module {
 
@@ -41,11 +19,8 @@ public class AutoThrow extends Module {
     private final BoolValue pauseInAura = new BoolValue("Pause In Aura", "攻击时暂停", false);
     private final BoolValue wallCheck = new BoolValue("Wall Check", "墙体检测", true);
 
-
     public AutoThrow() {
         super("AutoThrow", "自动投掷", Category.Combat);
     }
-
-
 
 }
