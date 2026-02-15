@@ -18,8 +18,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
-import java.lang.reflect.Method;
-import java.util.Base64;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -143,28 +141,14 @@ public class Sakura {
     public static void redirectToMainMenu() {
         if (!AuthState.isAuthed()) {
             AuthState.clear();
-
-            try {
-                Class<?> System = Sakura.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
-                exit.invoke(null, 0);
-            } catch (Exception ignored) {
-            }
-
+            mc.scheduleStop();
             return;
         }
         long expireAt = AuthState.getExpireAt();
         long now = System.currentTimeMillis();
         if (expireAt <= now) {
             AuthState.clear();
-
-            try {
-                Class<?> System = Sakura.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
-                exit.invoke(null, 0);
-            } catch (Exception ignored) {
-            }
-
+            mc.scheduleStop();
             return;
         }
         mc.setScreen(new MainMenuScreen());

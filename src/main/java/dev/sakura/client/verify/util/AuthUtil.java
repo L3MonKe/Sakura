@@ -1,11 +1,13 @@
 package dev.sakura.client.verify.util;
 
 import by.radioegor146.nativeobfuscator.Native;
+import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.verify.AuthState;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.client.verify.client.IRCHandler;
 import dev.sakura.client.verify.client.IRCTransport;
 import dev.sakura.niurendeobf.ZKMIndy;
+import net.minecraft.client.MinecraftClient;
 
 import java.io.IOException;
 import java.time.Instant;
@@ -41,6 +43,7 @@ public final class AuthUtil {
         final String phone = p == null ? "" : p;
 
         AtomicBoolean finished = new AtomicBoolean(false);
+        AtomicBoolean authedFlag = new AtomicBoolean(false);
 
         Thread t = new Thread(() -> {
             IRCTransport transport;
@@ -52,10 +55,24 @@ public final class AuthUtil {
 
                     @Override
                     public void onDisconnected(String message) {
-                        VerificationClient.shutdown();
-                        if (!finished.get() && ui != null) {
-                            ui.accept(false, "连接断开: " + (message == null ? "" : message));
+                        boolean duringAuth = !authedFlag.get();
+                        if (duringAuth) {
+                            if (finished.compareAndSet(false, true)) {
+                                MinecraftClient.getInstance().execute(() -> {
+                                    if (ui != null) {
+                                        ui.accept(false, "连接断开: " + (message == null ? "" : message));
+                                    }
+                                });
+                            }
+                            authed.set("");
+                            AuthState.clear();
+                            VerificationClient.shutdown();
+                            ExitUtil.exit0();
+                            return;
                         }
+
+                        VerificationClient.shutdown();
+                        ExitUtil.exit0();
                     }
 
                     @Override
@@ -64,7 +81,9 @@ public final class AuthUtil {
 
                     @Override
                     public String getInGameUsername() {
-                        return username == null ? "" : username;
+                        MinecraftClient mc = MinecraftClient.getInstance();
+                        if (mc.player == null) return mc.getSession().getUsername();
+                        return mc.player.getName().getString();
                     }
 
                     @Override
@@ -74,12 +93,18 @@ public final class AuthUtil {
                         long skew = Math.abs(nowTimeWindow - timeWindow);
                         boolean timeOk = skew <= MAX_TIME_WINDOW_SKEW;
                         if (success) {
+                            authedFlag.set(true);
                             authed.set(AUTH_OK_TOKEN);
                             AuthState.setAuthed(username, expireAt);
                             if (finished.compareAndSet(false, true)) {
-                                if (ui != null) {
-                                    ui.accept(false, timeOk ? "验证成功" : "验证成功，但本地时间偏差较大，建议校准系统时间");
-                                }
+                                MinecraftClient.getInstance().execute(() -> {
+                                    if (!timeOk && ui != null) {
+                                        ui.accept(true, "登录成功，但本地时间偏差较大，建议校准系统时间");
+                                    }
+                                    MainMenuScreen screen = new MainMenuScreen();
+                                    screen.startIntro();
+                                    MinecraftClient.getInstance().setScreen(screen);
+                                });
                             }
                         } else {
                             authed.set("");
@@ -87,9 +112,11 @@ public final class AuthUtil {
                             String m = message == null ? "" : message;
                             String display = "登录失败 " + m;
                             if (finished.compareAndSet(false, true)) {
-                                if (ui != null) {
-                                    ui.accept(false, display.trim());
-                                }
+                                MinecraftClient.getInstance().execute(() -> {
+                                    if (ui != null) {
+                                        ui.accept(false, display.trim());
+                                    }
+                                });
                             }
                         }
                     }
@@ -101,12 +128,18 @@ public final class AuthUtil {
                         long skew = Math.abs(nowTimeWindow - timeWindow);
                         boolean timeOk = skew <= MAX_TIME_WINDOW_SKEW;
                         if (success) {
+                            authedFlag.set(true);
                             authed.set(AUTH_OK_TOKEN);
                             AuthState.setAuthed(username, expireAt);
                             if (finished.compareAndSet(false, true)) {
-                                if (ui != null) {
-                                    ui.accept(false, timeOk ? "验证成功" : "验证成功，但本地时间偏差较大，建议校准系统时间");
-                                }
+                                MinecraftClient.getInstance().execute(() -> {
+                                    if (!timeOk && ui != null) {
+                                        ui.accept(true, "注册成功，但本地时间偏差较大，建议校准系统时间");
+                                    }
+                                    MainMenuScreen screen = new MainMenuScreen();
+                                    screen.startIntro();
+                                    MinecraftClient.getInstance().setScreen(screen);
+                                });
                             }
                             return;
                         }
@@ -115,24 +148,30 @@ public final class AuthUtil {
                         AuthState.clear();
                         String m = message == null ? "" : message;
                         if (finished.compareAndSet(false, true)) {
-                            if (ui != null) {
-                                ui.accept(false, ("注册失败 " + m).trim());
-                            }
+                            MinecraftClient.getInstance().execute(() -> {
+                                if (ui != null) {
+                                    ui.accept(false, ("注册失败 " + m).trim());
+                                }
+                            });
                         }
                     }
                 });
             } catch (IOException e) {
                 if (finished.compareAndSet(false, true)) {
-                    if (ui != null) {
-                        ui.accept(false, "连接失败: " + e.getMessage());
-                    }
+                    MinecraftClient.getInstance().execute(() -> {
+                        if (ui != null) {
+                            ui.accept(false, "连接失败: " + e.getMessage());
+                        }
+                    });
                 }
                 return;
             }
 
-            if (ui != null) {
-                ui.accept(true, mode == Mode.Login ? "正在登录..." : "正在注册...");
-            }
+            MinecraftClient.getInstance().execute(() -> {
+                if (ui != null) {
+                    ui.accept(true, mode == Mode.Login ? "正在登录..." : "正在注册...");
+                }
+            });
 
             if (mode == Mode.Login) {
                 transport.login(username, password, hwid, qqSet, phone);
