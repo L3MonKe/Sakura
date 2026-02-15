@@ -21,7 +21,6 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.block.Block;
 import net.minecraft.block.FallingBlock;
 import net.minecraft.item.BlockItem;
@@ -41,13 +40,6 @@ import java.util.List;
 public class AutoDick extends Module {
     public AutoDick() {
         super("AutoDick", "自动迪克", Category.Player);
-
-        ClientTickEvents.START_CLIENT_TICK.register(minecraftClient -> {
-            if (minecraftClient.player == null || minecraftClient.world == null) return;
-            if (!shouldSwapBack) return;
-            shouldSwapBack = false;
-            InvUtil.swapBack();
-        });
     }
 
     private enum Mode {
@@ -259,7 +251,7 @@ public class AutoDick extends Module {
         } else {
             InvUtil.swap(result.slot(), switchMode.is(SwitchMode.Silent) || swapBack.get());
             if (switchMode.is(SwitchMode.InvSilent) && swapBack.get()) {
-                shouldSwapBack = true;
+                InvUtil.swapBack();
             }
         }
 
