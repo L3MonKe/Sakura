@@ -31,7 +31,7 @@ public class AutoThrow extends Module {
 
     private final NumberValue<Integer> minRange = new NumberValue<>("Min Range", "最小距离", 3, 0, 6, 1);
     private final NumberValue<Integer> maxRange = new NumberValue<>("Max Range", "最大距离", 10, 6, 20, 1);
-    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 8, 1, 10, 1);
+    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 100, 1, 180, 1);
     private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟(ms)", 100, 0, 1000, 10);
     private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟(ms)", 300, 0, 1000, 10);
     private final NumberValue<Integer> switchDelay = new NumberValue<>("Switch Delay", "切换延迟(ms)", 0, 0, 1000, 10);
@@ -46,6 +46,8 @@ public class AutoThrow extends Module {
     private final TimerUtil switchTimer = new TimerUtil();
     private long nextDelay = 0;
 
+    private boolean shouldSwapBack;
+
     private boolean isThrowing = false;
     private int oldSlot = -1;
 
@@ -54,10 +56,15 @@ public class AutoThrow extends Module {
     private float realLastYaw, realLastPitch;
     private float realBodyYaw, realHeadYaw;
 
+    public static float renderYaw, renderPitch;
+    public static float lastRenderYaw, lastRenderPitch;
+    public static boolean isRotating;
+
     public AutoThrow() {
         super("AutoThrow", "自动投掷", Category.Combat);
 
         ClientTickEvents.START_CLIENT_TICK.register(minecraftClient -> {
+            isRotating = false;
             if (minecraftClient.player == null || minecraftClient.world == null) return;
 
             if (isEnabled() && isThrowing && targetRotation != null) {
@@ -65,6 +72,14 @@ public class AutoThrow extends Module {
                 realPitch = minecraftClient.player.getPitch();
                 realLastYaw = minecraftClient.player.lastYaw;
                 realLastPitch = minecraftClient.player.lastPitch;
+
+                lastRenderYaw = realYaw;
+                lastRenderPitch = realPitch;
+                renderYaw = realYaw;
+                renderPitch = realPitch;
+
+                isRotating = true;
+
                 realBodyYaw = minecraftClient.player.bodyYaw;
                 realHeadYaw = minecraftClient.player.headYaw;
 
@@ -77,19 +92,25 @@ public class AutoThrow extends Module {
                 minecraftClient.player.bodyYaw = targetRotation.yaw;
                 minecraftClient.player.headYaw = targetRotation.yaw;
             }
+
+            if (!shouldSwapBack) return;
+
+            shouldSwapBack = false;
+            InvUtil.swapBack();
         });
     }
 
     @Override
     public void onEnable() {
         updateNextDelay();
+        shouldSwapBack = false;
     }
 
     @Override
     public void onDisable() {
         target = null;
         if (silentSwitch.get()) {
-            InvUtil.swapBack();
+            shouldSwapBack = true;
         }
     }
 
@@ -249,11 +270,14 @@ public class AutoThrow extends Module {
             float deltaYaw = currentYaw - targetRotation.yaw;
             float deltaPitch = currentPitch - targetRotation.pitch;
 
-            mc.player.setYaw(realYaw + deltaYaw);
-            mc.player.setPitch(realPitch + deltaPitch);
+            renderYaw = realYaw + deltaYaw;
+            renderPitch = realPitch + deltaPitch;
 
-            mc.player.lastYaw = realLastYaw;
-            mc.player.lastPitch = realLastPitch;
+            mc.player.setYaw(renderYaw);
+            mc.player.setPitch(renderPitch);
+
+            mc.player.lastYaw = lastRenderYaw;
+            mc.player.lastPitch = lastRenderPitch;
 
             mc.player.bodyYaw = realBodyYaw;
             mc.player.headYaw = realHeadYaw;
