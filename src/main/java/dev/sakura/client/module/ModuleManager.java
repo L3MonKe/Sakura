@@ -58,7 +58,6 @@ public class ModuleManager {
         add(new Scaffold());
         add(new Stuck());
         add(new Velocity());
-        add(new VelocityRubberband());
         add(new TargetStrafe());
 
         // Player

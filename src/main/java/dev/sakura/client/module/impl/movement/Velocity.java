@@ -12,7 +12,6 @@ import dev.sakura.client.module.impl.combat.AntiBot;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
-import dev.sakura.client.utils.vector.Vector3d;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -27,6 +26,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Vector3d;
 
 import java.awt.*;
 import java.util.Map;
@@ -120,7 +120,7 @@ public class Velocity extends Module {
             }
         }
 
-        this.setSuffix(mode.get() + (stage == VelocityStage.DELAY ? " Alink " + (System.currentTimeMillis() - velocityTime) / 50 + "Ticks" : ""));
+        this.setSuffix(mode.get() + (stage == VelocityStage.DELAY ? " " + (System.currentTimeMillis() - velocityTime) / 50 + "Ticks" : ""));
     }
 
     @EventHandler
@@ -206,7 +206,7 @@ public class Velocity extends Module {
                                 double dy = movePacket.getDeltaY() / 4096.0D;
                                 double dz = movePacket.getDeltaZ() / 4096.0D;
 
-                                targets.put(entity, new Vector3d(currentPos.getX() + dx, currentPos.getY() + dy, currentPos.getZ() + dz));
+                                targets.put(entity, new Vector3d(currentPos.x + dx, currentPos.y + dy, currentPos.z + dz));
                             }
                         }
                     }

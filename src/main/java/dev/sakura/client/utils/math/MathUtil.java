@@ -1,7 +1,7 @@
 package dev.sakura.client.utils.math;
 
-import dev.sakura.client.utils.vector.Vector3d;
 import net.minecraft.util.math.MathHelper;
+import org.joml.Vector3d;
 
 import java.math.BigDecimal;
 import java.math.MathContext;
@@ -91,9 +91,9 @@ public class MathUtil {
 
     public static Vector3d interpolate(final Vector3d currentVector, final Vector3d previousVector, final double multiplier) {
         return new Vector3d(
-                interpolateReverse(currentVector.getX(), previousVector.getX(), multiplier),
-                interpolateReverse(currentVector.getY(), previousVector.getY(), multiplier),
-                interpolateReverse(currentVector.getZ(), previousVector.getZ(), multiplier)
+                interpolateReverse(currentVector.x, previousVector.x, multiplier),
+                interpolateReverse(currentVector.y, previousVector.y, multiplier),
+                interpolateReverse(currentVector.z, previousVector.z, multiplier)
         );
     }
 

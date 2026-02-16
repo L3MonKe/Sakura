@@ -76,7 +76,7 @@ public abstract class MixinGameRenderer {
         boolean sleeping = mc.getCameraEntity() instanceof LivingEntity living && living.isSleeping();
         Matrix4f positionMatrix = new Matrix4f().rotation(mc.gameRenderer.getCamera().getRotation().conjugate(new Quaternionf()));
 
-        Managers.SHADER.renderShader(() -> ((IGameRenderer) this).sakura$renderHand(tickProgress, sleeping, positionMatrix), shaders.handsMode.get());
+        Managers.SHADER.renderShader(() -> ((IGameRenderer) this).hookRenderHand(tickProgress, sleeping, positionMatrix), shaders.handsMode.get());
         Managers.SHADER.renderShaders(tickProgress, true);
     }
 

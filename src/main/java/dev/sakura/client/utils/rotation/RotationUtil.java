@@ -3,21 +3,21 @@ package dev.sakura.client.utils.rotation;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IEntity;
 import dev.sakura.client.utils.math.MathUtil;
-import dev.sakura.client.utils.vector.Vector3d;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import org.joml.Vector3d;
 
 import static dev.sakura.client.Sakura.mc;
 
 public class RotationUtil {
     public static Rotation calculate(final Vector3d from, final Vector3d to) {
-        final Vector3d diff = to.subtract(from);
-        final double distance = Math.hypot(diff.getX(), diff.getZ());
-        final float yaw = (float) (MathHelper.atan2(diff.getZ(), diff.getX()) * MathUtil.TO_DEGREES) - 90.0F;
-        final float pitch = (float) (-(MathHelper.atan2(diff.getY(), distance) * MathUtil.TO_DEGREES));
+        final Vector3d diff = to.sub(from);
+        final double distance = Math.hypot(diff.x, diff.z);
+        final float yaw = (float) (MathHelper.atan2(diff.z, diff.x) * MathUtil.TO_DEGREES) - 90.0F;
+        final float pitch = (float) (-(MathHelper.atan2(diff.y, distance) * MathUtil.TO_DEGREES));
         return new Rotation(yaw, pitch);
     }
 
@@ -67,9 +67,9 @@ public class RotationUtil {
     }
 
     public static Rotation calculate(Vector3d position, Direction direction) {
-        double x = position.getX() + 0.5;
-        double y = position.getY() + 0.5;
-        double z = position.getZ() + 0.5;
+        double x = position.x + 0.5;
+        double y = position.y + 0.5;
+        double z = position.z + 0.5;
 
         x += (double) direction.getOffsetX() * 0.5;
         y += (double) direction.getOffsetY() * 0.5;
