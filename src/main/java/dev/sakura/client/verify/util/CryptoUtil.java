@@ -2,6 +2,7 @@ package dev.sakura.client.verify.util;
 
 import by.radioegor146.nativeobfuscator.Native;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
@@ -17,6 +18,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public final class CryptoUtil {
     private static final SecureRandom RANDOM = new SecureRandom();

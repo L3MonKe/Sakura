@@ -5,6 +5,7 @@ import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.InputUtil;
 
 public class SafeWalk extends Module {
@@ -13,6 +14,7 @@ public class SafeWalk extends Module {
     }
 
     public static boolean isOnBlockEdge(float sensitivity) {
+        MinecraftClient mc = MinecraftClient.getInstance();
         return !mc.world.getCollisions(mc.player, mc.player.getBoundingBox().offset(0.0, -0.5, 0.0).expand(-sensitivity, 0.0, -sensitivity)).iterator().hasNext();
     }
 

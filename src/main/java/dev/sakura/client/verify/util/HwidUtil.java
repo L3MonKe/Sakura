@@ -2,6 +2,7 @@ package dev.sakura.client.verify.util;
 
 import by.radioegor146.nativeobfuscator.Native;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 import oshi.SystemInfo;
 import oshi.hardware.CentralProcessor;
 import oshi.hardware.ComputerSystem;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public final class HwidUtil {
     private HwidUtil() {

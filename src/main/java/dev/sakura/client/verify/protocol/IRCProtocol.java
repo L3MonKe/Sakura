@@ -8,12 +8,14 @@ import dev.sakura.client.verify.management.PacketManager;
 import dev.sakura.client.verify.packet.IRCPacket;
 import dev.sakura.client.verify.util.CryptoUtil;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public class IRCProtocol {
     private static final byte[] ENC_MAGIC = new byte[]{'E', 'N', 'C', 1};

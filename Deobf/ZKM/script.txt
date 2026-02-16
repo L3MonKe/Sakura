@@ -13,6 +13,9 @@ exclude     @org.spongepowered.asm.mixin.Mixin *.^* and
             dev.sakura.niurendeobf.^* and
             dev.sakura.niurendeobf.^*^ * and
             dev.sakura.niurendeobf.^*^ *(*) and
+            jnic.^* and
+            jnic.^*^ * and
+            jnic.^*^ *(*) and
             dev.sakura.client.mixin.** and
             dev.sakura.client.mixin.**^ * and
             dev.sakura.client.mixin.**^ *(*);

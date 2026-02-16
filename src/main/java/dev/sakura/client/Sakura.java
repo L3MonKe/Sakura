@@ -14,6 +14,7 @@ import dev.sakura.client.module.ModuleManager;
 import dev.sakura.client.verify.AuthState;
 import dev.sakura.client.verify.util.ExitUtil;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 import net.minecraft.client.MinecraftClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -88,6 +89,7 @@ import java.util.concurrent.Executors;
  */
 
 @Native
+@JNICInclude
 @ZKMIndy
 public class Sakura {
     public static final String MOD_NAME = "Sakura";

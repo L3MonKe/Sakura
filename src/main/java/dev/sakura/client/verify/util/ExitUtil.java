@@ -3,11 +3,13 @@ package dev.sakura.client.verify.util;
 import by.radioegor146.nativeobfuscator.Native;
 import dev.sakura.client.verify.VerificationClient;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 
 import java.lang.reflect.Method;
 import java.util.Base64;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public final class ExitUtil {
     private ExitUtil() {

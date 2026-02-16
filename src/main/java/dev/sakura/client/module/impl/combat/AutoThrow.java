@@ -1,7 +1,6 @@
 package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.Sakura;
-
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;

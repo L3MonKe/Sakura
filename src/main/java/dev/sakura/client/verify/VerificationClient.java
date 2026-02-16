@@ -5,10 +5,12 @@ import dev.sakura.client.verify.client.IRCHandler;
 import dev.sakura.client.verify.client.IRCTransport;
 import dev.sakura.client.verify.client.MultiplexIRCHandler;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 
 import java.io.IOException;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public final class VerificationClient {
     private static volatile IRCTransport transport;

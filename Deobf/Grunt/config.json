@@ -1,7 +1,7 @@
 {
   "Settings": {
-    "Input": "Sakura-1.4.jar",
-    "Output": "obfuscated\\Sakura-1.4_obf.jar",
+    "Input": "Sakura-1.5.jar",
+    "Output": "obfuscated\\Sakura-1.5_obf.jar",
     "Libraries": [],
     "Exclusions": [],
     "MixinPackage": [

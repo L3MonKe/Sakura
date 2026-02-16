@@ -6,6 +6,7 @@ import dev.sakura.client.verify.packet.implemention.c2s.*;
 import dev.sakura.client.verify.packet.implemention.s2c.*;
 import dev.sakura.client.verify.protocol.IRCProtocol;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 
 import java.io.*;
 import java.net.Socket;
@@ -18,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public class IRCTransport {
     private final IRCProtocol protocol = new IRCProtocol();

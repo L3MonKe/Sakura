@@ -10,6 +10,7 @@ import dev.sakura.client.verify.util.HwidUtil;
 import dev.sakura.client.verify.util.QQUtils;
 import dev.sakura.client.verify.util.TodeskUtils;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 import org.lwjgl.glfw.*;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -42,6 +43,7 @@ import static org.lwjgl.glfw.GLFW.*;
 import static org.lwjgl.nanovg.NanoVG.*;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public final class LoginWindow {
     private static final long TIME_WINDOW_MS = 30_000L;

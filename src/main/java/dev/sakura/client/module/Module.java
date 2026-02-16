@@ -30,9 +30,10 @@ public class Module {
     public final List<Value<?>> values = new ArrayList<>();
     private final Animation animations = new DecelerateAnimation(250, 1).setDirection(Direction.BACKWARDS);
 
-    protected static final MinecraftClient mc = MinecraftClient.getInstance();
+    protected final MinecraftClient mc;
 
     public Module(String englishName, String chineseName, Category category) {
+        mc = MinecraftClient.getInstance();
         this.englishName = englishName;
         this.chineseName = chineseName;
         this.category = category;

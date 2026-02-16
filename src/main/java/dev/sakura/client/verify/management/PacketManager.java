@@ -6,11 +6,13 @@ import dev.sakura.client.verify.packet.IRCPacket;
 import dev.sakura.client.verify.packet.implemention.c2s.*;
 import dev.sakura.client.verify.packet.implemention.s2c.*;
 import dev.sakura.niurendeobf.ZKMIndy;
+import jnic.JNICInclude;
 
 import java.util.HashMap;
 import java.util.Map;
 
 @Native
+@JNICInclude
 @ZKMIndy
 public class PacketManager {
     private final Map<Integer, Class<? extends IRCPacket>> idToPacketMap = new HashMap<>();
