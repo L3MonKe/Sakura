@@ -9,8 +9,8 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.values.Value;
 import dev.sakura.client.values.impl.*;
-import dev.sakura.client.verify.VerificationClient;
-import dev.sakura.client.verify.client.IRCHandler;
+import dev.sakura.verify.VerificationClient;
+import dev.sakura.verify.client.IRCHandler;
 import net.minecraft.client.MinecraftClient;
 
 import java.io.IOException;

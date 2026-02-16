@@ -9,7 +9,7 @@ import dev.sakura.client.event.impl.client.SendMessageEvent;
 import dev.sakura.client.event.impl.client.SuggestChatEvent;
 import dev.sakura.client.event.impl.key.KeyEvent;
 import dev.sakura.client.event.type.KeyAction;
-import dev.sakura.client.verify.util.ExitUtil;
+import dev.sakura.verify.util.ExitUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.command.CommandSource;

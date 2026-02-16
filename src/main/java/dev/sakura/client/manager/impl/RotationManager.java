@@ -9,8 +9,8 @@ import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
-import dev.sakura.client.verify.VerificationClient;
-import dev.sakura.client.verify.util.AuthUtil;
+import dev.sakura.verify.VerificationClient;
+import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 

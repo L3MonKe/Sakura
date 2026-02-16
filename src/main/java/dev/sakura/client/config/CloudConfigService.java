@@ -1,13 +1,13 @@
 package dev.sakura.client.config;
 
 import dev.sakura.client.utils.client.ChatUtil;
-import dev.sakura.client.verify.AuthState;
-import dev.sakura.client.verify.VerificationClient;
-import dev.sakura.client.verify.client.IRCHandler;
-import dev.sakura.client.verify.client.IRCTransport;
-import dev.sakura.client.verify.packet.implemention.c2s.CloudConfigC2S;
-import dev.sakura.client.verify.protocol.IRCProtocol;
-import dev.sakura.client.verify.util.AuthUtil;
+import dev.sakura.verify.AuthState;
+import dev.sakura.verify.VerificationClient;
+import dev.sakura.verify.client.IRCHandler;
+import dev.sakura.verify.client.IRCTransport;
+import dev.sakura.verify.packet.implemention.c2s.CloudConfigC2S;
+import dev.sakura.verify.protocol.IRCProtocol;
+import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.client.MinecraftClient;
 
 import java.util.List;

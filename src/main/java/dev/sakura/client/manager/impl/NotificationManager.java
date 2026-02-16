@@ -7,7 +7,7 @@ import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.animations.Easing;
-import dev.sakura.client.verify.util.ExitUtil;
+import dev.sakura.verify.util.ExitUtil;
 import org.joml.Matrix3x2fStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;

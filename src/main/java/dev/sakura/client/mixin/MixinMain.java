@@ -1,7 +1,7 @@
 package dev.sakura.client.mixin;
 
-import dev.sakura.client.gui.auth.LoginWindow;
 import dev.sakura.client.nanovg.NanoVGRenderer;
+import dev.sakura.verify.LoginWindow;
 import net.minecraft.client.main.Main;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

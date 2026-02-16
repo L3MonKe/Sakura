@@ -11,11 +11,11 @@ import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.gui.panelgui.PanelGuiScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
-import dev.sakura.client.verify.AuthState;
-import dev.sakura.client.verify.util.ExitUtil;
-import dev.sakura.niurendeobf.ZKMIndy;
+import dev.sakura.verify.AuthState;
+import dev.sakura.verify.util.ExitUtil;
 import jnic.JNICInclude;
 import net.minecraft.client.MinecraftClient;
+import niurendeobf.ZKMIndy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

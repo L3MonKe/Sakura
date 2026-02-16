@@ -1,7 +1,7 @@
 package dev.sakura.client.manager.impl;
 
-import dev.sakura.client.verify.VerificationClient;
-import dev.sakura.client.verify.util.AuthUtil;
+import dev.sakura.verify.VerificationClient;
+import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;

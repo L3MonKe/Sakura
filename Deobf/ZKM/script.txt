@@ -10,9 +10,9 @@ open        openNestedArchives=false
 exclude     @org.spongepowered.asm.mixin.Mixin *.^* and
             @org.spongepowered.asm.mixin.Mixin *.^*^ * and
             @org.spongepowered.asm.mixin.Mixin *.^*^ *(*) and
-            dev.sakura.niurendeobf.^* and
-            dev.sakura.niurendeobf.^*^ * and
-            dev.sakura.niurendeobf.^*^ *(*) and
+            niurendeobf.^* and
+            niurendeobf.^*^ * and
+            niurendeobf.^*^ *(*) and
             jnic.^* and
             jnic.^*^ * and
             jnic.^*^ *(*) and
@@ -25,8 +25,8 @@ obfuscateFlowExclude
     **.mixin.^*^;
 
 obfuscateReferencesInclude 
-    containedIn{ @dev.sakura.niurendeobf.ZKMIndy *.* *(*) } *.* * and
-    containedIn{ @dev.sakura.niurendeobf.ZKMIndy *.* *(*) } *.* *(*);
+    containedIn{ @niurendeobf.ZKMIndy *.* *(*) } *.* * and
+    containedIn{ @niurendeobf.ZKMIndy *.* *(*) } *.* *(*);
 
 stringEncryptionExclude
     *.mixin*.* and

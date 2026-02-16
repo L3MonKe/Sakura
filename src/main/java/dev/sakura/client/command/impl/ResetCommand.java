@@ -7,7 +7,7 @@ import dev.sakura.client.command.ModuleArgumentType;
 import dev.sakura.client.gui.clickgui.panel.CategoryPanel;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;
-import dev.sakura.client.verify.util.ExitUtil;
+import dev.sakura.verify.util.ExitUtil;
 import net.minecraft.command.CommandSource;
 
 public class ResetCommand extends Command {
