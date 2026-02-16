@@ -43,6 +43,10 @@ public class NameProtect extends Module {
         if (module == null || !module.isEnabled()) return text;
 
         String username = MinecraftClient.getInstance().getSession().getUsername();
+        if (MinecraftClient.getInstance().player != null && MinecraftClient.getInstance().player.getGameProfile() != null) {
+            username = MinecraftClient.getInstance().player.getGameProfile().name();
+        }
+
         if (text.contains(username)) {
             return text.replace(username, module.name.get());
         }
@@ -55,6 +59,9 @@ public class NameProtect extends Module {
         if (module == null || !module.isEnabled()) return text;
 
         String username = MinecraftClient.getInstance().getSession().getUsername();
+        if (MinecraftClient.getInstance().player != null && MinecraftClient.getInstance().player.getGameProfile() != null) {
+            username = MinecraftClient.getInstance().player.getGameProfile().name();
+        }
 
         List<MappedCharacter> characters = new ArrayList<>();
         text.accept((index, style, codePoint) -> {
