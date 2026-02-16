@@ -3,17 +3,13 @@ package dev.sakura.client.module.impl.combat;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.entity.EntityUtil;
 import dev.sakura.client.utils.player.EatingUtil;
 import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
-import dev.sakura.client.utils.rotation.MovementFix;
-import dev.sakura.client.utils.rotation.RaytraceUtil;
-import dev.sakura.client.utils.rotation.Rotation;
-import dev.sakura.client.utils.rotation.RotationUtil;
+import dev.sakura.client.utils.rotation.*;
 import dev.sakura.client.utils.world.BlockUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -356,7 +352,7 @@ public class AutoAnchor extends Module {
             rot = RotationUtil.calculate(pos.offset(side), side.getOpposite());
         }
 
-        Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.High);
+        Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, Priority.High);
 
         if (isFacing(rot)) {
             // Relax strict check: allow hitting any side of the neighbor block
@@ -380,7 +376,7 @@ public class AutoAnchor extends Module {
             rot = RotationUtil.calculate(pos, Direction.UP);
         }
 
-        Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, RotationManager.Priority.High);
+        Managers.ROTATION.setRotations(rot, rotateSpeed.get().doubleValue(), MovementFix.OFF, Priority.High);
 
         if (isFacing(rot)) {
             return true;

@@ -53,14 +53,7 @@ public class RaytraceUtil {
         Vec3d endVec = cameraVec.add(rotationVec.x * range, rotationVec.y * range, rotationVec.z * range);
         Box box = entity.getBoundingBox().stretch(rotationVec.multiply(range)).expand(1.0, 1.0, 1.0);
 
-        return ProjectileUtil.raycast(
-                entity,
-                cameraVec,
-                endVec,
-                box,
-                e -> !e.isSpectator() && e.canHit() && filter.test(e),
-                range * range
-        );
+        return ProjectileUtil.raycast(entity, cameraVec, endVec, box, e -> !e.isSpectator() && e.canHit() && filter.test(e), range * range);
     }
 
     public static BlockHitResult rayTraceBlock(double range, Rotation rotation, BlockPos pos, BlockState state) {

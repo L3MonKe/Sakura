@@ -4,17 +4,13 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
-import dev.sakura.client.utils.rotation.MovementFix;
-import dev.sakura.client.utils.rotation.RaytraceUtil;
-import dev.sakura.client.utils.rotation.Rotation;
-import dev.sakura.client.utils.rotation.RotationUtil;
+import dev.sakura.client.utils.rotation.*;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.utils.world.BlockUtil;
 import dev.sakura.client.values.impl.BoolValue;
@@ -132,7 +128,7 @@ public class AutoDick extends Module {
         if (placeData != null) {
             Vec3d vec = getVec3(placeData.neighbor, placeData.opposite);
             Rotation rotation = RotationUtil.calculate(vec);
-            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
+            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, Priority.High);
 
             if (timer.passedMillise(delay.get())) {
                 if (!RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), placeData.opposite, placeData.neighbor, sideCheck.get()))
@@ -233,7 +229,7 @@ public class AutoDick extends Module {
 
     private void breakBlock() {
         Rotation rotation = RotationUtil.calculate(getVec3(supportBlock, breakSide));
-        Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, RotationManager.Priority.High);
+        Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF, Priority.High);
         if (!RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), breakSide, supportBlock, sideCheck.get())) return;
 
         mc.interactionManager.updateBlockBreakingProgress(supportBlock, breakSide);

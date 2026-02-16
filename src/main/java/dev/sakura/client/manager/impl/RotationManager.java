@@ -7,6 +7,7 @@ import dev.sakura.client.event.impl.player.*;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
+import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.verify.VerificationClient;
@@ -39,21 +40,6 @@ public class RotationManager {
 
     public RotationManager() {
         Sakura.EVENT_BUS.subscribe(this);
-    }
-
-    // 婆罗门这一块
-    public enum Priority {
-        Lowest(0),
-        Low(10),
-        Medium(50),
-        High(100),
-        Highest(1000);
-
-        public final int priority;
-
-        Priority(int priority) {
-            this.priority = priority;
-        }
     }
 
     public void setRotations(final Rotation rotations, final double rotationSpeed) {

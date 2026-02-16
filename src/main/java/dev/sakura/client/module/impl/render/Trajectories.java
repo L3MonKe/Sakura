@@ -174,8 +174,11 @@ public class Trajectories extends Module {
         motionY *= pow;
         motionZ *= pow;
 
+        Vec3d shooterMovement = mc.player.getMovement();
+        motionX += shooterMovement.x;
+        motionZ += shooterMovement.z;
         if (!mc.player.isOnGround()) {
-            motionY += mc.player.getVelocity().getY();
+            motionY += shooterMovement.y;
         }
 
         int steps = maxSteps.get();

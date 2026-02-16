@@ -89,7 +89,6 @@ public class ModuleManager {
         add(new JumpCircles());
         add(new KillEffect());
 //        add(new MotionBlur());
-        add(new NameProtect());
         add(new NameTags());
         add(new NoFov());
         add(new NoRender());

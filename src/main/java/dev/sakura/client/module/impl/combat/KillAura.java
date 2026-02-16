@@ -5,13 +5,13 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
+import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.values.impl.BoolValue;
@@ -74,7 +74,7 @@ public class KillAura extends Module {
         if (target != null) {
             if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
                 Rotation calculate = RotationUtil.calculate(target);
-                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, Priority.Medium);
                 if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
                     attackTarget();
                 }

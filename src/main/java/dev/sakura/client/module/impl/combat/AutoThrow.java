@@ -5,13 +5,13 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.module.impl.movement.Stuck;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
+import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
@@ -34,14 +34,15 @@ public class AutoThrow extends Module {
     private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 300, 0, 1000, 10);
     private final BoolValue wallCheck = new BoolValue("Wall Check", "墙体检测", true);
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
+    private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1);
 
-    private int rotationSet;
     private int swapBack = -1;
-    private ThrowPlan pendingPlan;
+    private ThrowInfo pendingPlan;
+    private Rotation pendingRotation;
     private final TimerUtil timer = new TimerUtil();
 
-    private static final double PROJECTILE_SPEED = 0.6;
-    private static final double PROJECTILE_GRAVITY = 0.006;
+    private static final double speed = 1.5;
+    private static final double gravity = 0.03;
 
     @EventHandler
     public void onMotion(MotionEvent event) {
@@ -54,26 +55,26 @@ public class AutoThrow extends Module {
         }
 
         if (Sakura.MODULES.getModule(Scaffold.class).isEnabled() || Sakura.MODULES.getModule(Stuck.class).isEnabled()) {
-            rotationSet = 0;
             pendingPlan = null;
+            pendingRotation = null;
             return;
         }
 
         Rotation rotation;
 
-        ThrowPlan plan = updateThrowPlan();
-        if (plan == null) {
+        if (pendingPlan != null) {
+            if (pendingRotation != null && isFacing(pendingRotation)) {
+                Rotation backRotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+                throwItem(pendingPlan, pendingRotation);
+                pendingPlan = null;
+                pendingRotation = null;
+                Managers.ROTATION.setRotations(backRotation, rotationBackSpeed.get(), MovementFix.NORMAL, Priority.Highest);
+            }
             return;
         }
 
-        if (rotationSet > 0) {
-            rotationSet--;
-            if (rotationSet == 0) {
-                if (pendingPlan != null) {
-                    throwFromPlan(pendingPlan);
-                    pendingPlan = null;
-                }
-            }
+        ThrowInfo plan = updateThrowPlan();
+        if (plan == null) {
             return;
         }
 
@@ -89,14 +90,20 @@ public class AutoThrow extends Module {
 
         if (timer.passedMillise(MathUtil.getRandom(minDelay.get(), maxDelay.get())) && canRotate(plan.hand)) {
             rotation = getRotationToEntity(target);
-            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
-            rotationSet = 2;
+            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.NORMAL, Priority.Highest);
             pendingPlan = plan;
+            pendingRotation = rotation;
             timer.reset();
         }
     }
 
-    private void throwFromPlan(ThrowPlan plan) {
+    private void throwItem(ThrowInfo plan, Rotation rotation) {
+        float originalYaw = mc.player.getYaw();
+        float originalPitch = mc.player.getPitch();
+        if (rotation != null) {
+            mc.player.setYaw(rotation.yaw);
+            mc.player.setPitch(rotation.pitch);
+        }
         if (plan.hand == Hand.MAIN_HAND) {
             int originalHotbar = mc.player.getInventory().getSelectedSlot();
             boolean shouldSwap = originalHotbar != plan.hotbarSlot;
@@ -107,24 +114,28 @@ public class AutoThrow extends Module {
         }
         mc.interactionManager.interactItem(mc.player, plan.hand);
         mc.player.swingHand(plan.hand);
+        if (rotation != null) {
+            mc.player.setYaw(originalYaw);
+            mc.player.setPitch(originalPitch);
+        }
     }
 
-    private ThrowPlan updateThrowPlan() {
+    private ThrowInfo updateThrowPlan() {
         ItemStack offhand = mc.player.getOffHandStack();
         if (isThrowable(offhand)) {
-            return new ThrowPlan(Hand.OFF_HAND, -1);
+            return new ThrowInfo(Hand.OFF_HAND, -1);
         }
 
         int selected = mc.player.getInventory().getSelectedSlot();
         ItemStack mainhand = mc.player.getInventory().getStack(selected);
         if (isThrowable(mainhand)) {
-            return new ThrowPlan(Hand.MAIN_HAND, selected);
+            return new ThrowInfo(Hand.MAIN_HAND, selected);
         }
 
         for (int hotbar = 0; hotbar < 9; hotbar++) {
             ItemStack stack = mc.player.getInventory().getStack(hotbar);
             if (isThrowable(stack)) {
-                return new ThrowPlan(Hand.MAIN_HAND, hotbar);
+                return new ThrowInfo(Hand.MAIN_HAND, hotbar);
             }
         }
         return null;
@@ -151,34 +162,103 @@ public class AutoThrow extends Module {
         return !stack.contains(DataComponentTypes.FOOD);
     }
 
+    private boolean isFacing(Rotation target) {
+        Rotation current = Managers.ROTATION.rotations;
+        if (current == null) {
+            current = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+        }
+        float yawDiff = Math.abs(MathHelper.wrapDegrees(current.yaw - target.yaw));
+        float pitchDiff = Math.abs(MathHelper.wrapDegrees(current.pitch - target.pitch));
+        return yawDiff <= 2.0f && pitchDiff <= 2.0f;
+    }
+
     private Rotation getRotationToEntity(LivingEntity target) {
         Vec3d velocity = target.getVelocity();
-        double targetX = target.getX();
-        double targetY = target.getY() + target.getHeight() * 0.6;
-        double targetZ = target.getZ();
-
-        double time = 0.0;
-        for (int i = 0; i < 3; i++) {
-            double predictX = targetX + velocity.x * time;
-            double predictZ = targetZ + velocity.z * time;
-            double dx = predictX - mc.player.getX();
-            double dz = predictZ - mc.player.getZ();
-            double horizontal = Math.sqrt(dx * dx + dz * dz);
-            time = horizontal / PROJECTILE_SPEED;
+        if (target.isOnGround()) {
+            velocity = new Vec3d(velocity.x, 0.0, velocity.z);
         }
 
-        double predictX = targetX + velocity.x * time;
-        double predictY = targetY + velocity.y * time;
-        double predictZ = targetZ + velocity.z * time;
+        Vec3d shooterPos = new Vec3d(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()), mc.player.getZ());
+        Vec3d baseTarget = new Vec3d(target.getX(), target.getY() + target.getHeight() * 0.6, target.getZ());
+        Vec3d shooterMovement = getShooterMovement();
 
-        double x = predictX - mc.player.getX();
-        double z = predictZ - mc.player.getZ();
-        double h = predictY - (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()));
+        double time = 0.0;
+        ThrowSolution solution = null;
+        for (int i = 0; i < 3; i++) {
+            Vec3d predicted = baseTarget.add(velocity.multiply(time));
+            solution = solveThrowSolution(shooterPos, predicted, shooterMovement);
+            if (solution == null) break;
+            time = solution.time;
+        }
+
+        if (solution != null) {
+            return solution.rotation;
+        }
+
+        double predictX = baseTarget.x + velocity.x * time;
+        double predictY = baseTarget.y + velocity.y * time;
+        double predictZ = baseTarget.z + velocity.z * time;
+
+        double x = predictX - shooterPos.x;
+        double z = predictZ - shooterPos.z;
+        double h = predictY - shooterPos.y;
         double horizontal = Math.sqrt(x * x + z * z);
 
         float yaw = (float) (Math.toDegrees(Math.atan2(z, x)) - 90.0F);
-        float pitch = -getTrajAngleSolutionLow((float) horizontal, (float) h, (float) PROJECTILE_SPEED, (float) PROJECTILE_GRAVITY);
+        float pitch = -getTrajAngleSolutionLow((float) horizontal, (float) h, (float) speed, (float) gravity);
         return new Rotation(yaw, MathHelper.clamp(pitch, -90.0F, 90.0F));
+    }
+
+    private ThrowSolution solveThrowSolution(Vec3d from, Vec3d to, Vec3d shooterMovement) {
+        double dx = to.x - from.x;
+        double dy = to.y - from.y;
+        double dz = to.z - from.z;
+        double horizontal = Math.sqrt(dx * dx + dz * dz);
+        if (horizontal < 1.0E-6) {
+            return null;
+        }
+
+        double vpx = shooterMovement.x;
+        double vpz = shooterMovement.z;
+        double vpy = mc.player.isOnGround() ? 0.0 : shooterMovement.y;
+
+        double tMin = 0.05;
+        double tMax = Math.max(1.0, horizontal / speed * 3.0);
+
+        for (int i = 0; i < 30; i++) {
+            double t = (tMin + tMax) * 0.5;
+            double vx = dx / t - vpx;
+            double vz = dz / t - vpz;
+            double vy = (dy + 0.5 * gravity * t * t) / t - vpy;
+            double requiredSpeedSq = vx * vx + vy * vy + vz * vz;
+            if (requiredSpeedSq > speed * speed) {
+                tMin = t;
+            } else {
+                tMax = t;
+            }
+        }
+
+        double t = tMax;
+        double vx = dx / t - vpx;
+        double vz = dz / t - vpz;
+        double vy = (dy + 0.5 * gravity * t * t) / t - vpy;
+        double requiredSpeedSq = vx * vx + vy * vy + vz * vz;
+        if (requiredSpeedSq > speed * speed * 1.1) {
+            return null;
+        }
+
+        double horizSpeed = Math.sqrt(vx * vx + vz * vz);
+        float yaw = (float) (Math.toDegrees(Math.atan2(vz, vx)) - 90.0F);
+        float pitch = (float) -Math.toDegrees(Math.atan2(vy, horizSpeed));
+        return new ThrowSolution(new Rotation(yaw, MathHelper.clamp(pitch, -90.0F, 90.0F)), t);
+    }
+
+    private Vec3d getShooterMovement() {
+        Vec3d movement = mc.player.getMovement();
+        if (mc.player.isOnGround()) {
+            return new Vec3d(movement.x, 0.0, movement.z);
+        }
+        return movement;
     }
 
     private float getTrajAngleSolutionLow(float distance, float height, float velocity, float gravity) {
@@ -194,6 +274,9 @@ public class AutoThrow extends Module {
         return !stack.isEmpty() && (stack.getItem() == Items.EGG || stack.getItem() == Items.SNOWBALL);
     }
 
-    private record ThrowPlan(Hand hand, int hotbarSlot) {
+    private record ThrowInfo(Hand hand, int hotbarSlot) {
+    }
+
+    private record ThrowSolution(Rotation rotation, double time) {
     }
 }

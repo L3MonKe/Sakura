@@ -6,13 +6,13 @@ import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.player.BlockEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
+import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
@@ -147,7 +147,7 @@ public class PacketMine extends Module {
 
     private void mineTask(BlockData data) {
         if (rotateConfig.get()) {
-            Managers.ROTATION.setRotations(RotationUtil.calculate(data.currentPos()), rotationBackSpeed.get(), MovementFix.OFF, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(RotationUtil.calculate(data.currentPos()), rotationBackSpeed.get(), MovementFix.OFF, Priority.Medium);
             if (grimConfig.get()) {
                 mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(
                         mc.player.getX(), mc.player.getY(), mc.player.getZ(), RotationUtil.calculate(data.currentPos()).yaw, RotationUtil.calculate(data.currentPos()).pitch, mc.player.isOnGround(), mc.player.horizontalCollision));

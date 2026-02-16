@@ -3,10 +3,10 @@ package dev.sakura.client.module.impl.combat;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.rotation.MovementFix;
+import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import net.minecraft.entity.Entity;
@@ -50,7 +50,7 @@ public class AttackCrystal extends Module {
 
         if (target != null) {
             Rotation calculate = RotationUtil.calculate(target);
-            Managers.ROTATION.setRotations(calculate, 100, MovementFix.NORMAL, RotationManager.Priority.Medium);
+            Managers.ROTATION.setRotations(calculate, 100, MovementFix.NORMAL, Priority.Medium);
             if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
                 attackTarget();
             }
