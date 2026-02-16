@@ -9,6 +9,7 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.module.impl.movement.Stuck;
+import dev.sakura.client.mixin.accessor.IMinecraftClient;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Priority;
@@ -16,6 +17,7 @@ import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
+import net.minecraft.client.option.KeyBinding;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.*;
@@ -112,8 +114,9 @@ public class AutoThrow extends Module {
                 swapBack = originalHotbar;
             }
         }
-        mc.interactionManager.interactItem(mc.player, plan.hand);
-        mc.player.swingHand(plan.hand);
+
+        ((IMinecraftClient) mc).hookDoItemUse();
+
         if (rotation != null) {
             mc.player.setYaw(originalYaw);
             mc.player.setPitch(originalPitch);
