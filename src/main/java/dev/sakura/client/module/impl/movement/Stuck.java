@@ -128,6 +128,8 @@ public class Stuck extends Module {
 
     @EventHandler
     public void onPacket(PacketEvent event) {
+        if (nullCheck()) return;
+
         if (event.getPacket() instanceof PlayerMoveC2SPacket) {
             event.setCancelled(true);
         } else if (event.getPacket() instanceof CommonPongC2SPacket) {
