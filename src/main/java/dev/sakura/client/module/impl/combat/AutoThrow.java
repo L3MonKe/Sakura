@@ -2,364 +2,198 @@ package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.input.MoveInputEvent;
-import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
+import dev.sakura.client.event.impl.player.MotionEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
+import dev.sakura.client.module.impl.movement.Stuck;
 import dev.sakura.client.utils.math.MathUtil;
-import dev.sakura.client.utils.player.FindItemResult;
-import dev.sakura.client.utils.player.InvUtil;
-import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Rotation;
-import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
+import net.minecraft.item.*;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 
 public class AutoThrow extends Module {
+    public AutoThrow() {
+        super("AutoThrow", "自动投掷", Category.Combat);
+    }
 
     private final NumberValue<Integer> minRange = new NumberValue<>("Min Range", "最小距离", 3, 0, 6, 1);
     private final NumberValue<Integer> maxRange = new NumberValue<>("Max Range", "最大距离", 10, 6, 20, 1);
-    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 100, 1, 180, 1);
-    private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟(ms)", 100, 0, 1000, 10);
-    private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟(ms)", 300, 0, 1000, 10);
-    private final NumberValue<Integer> switchDelay = new NumberValue<>("Switch Delay", "切换延迟(ms)", 0, 0, 1000, 10);
-    private final BoolValue autoSwitch = new BoolValue("Auto Switch", "自动切换", true);
-    private final BoolValue silentSwitch = new BoolValue("Silent Switch", "静默切换", false, autoSwitch::get);
-    private final BoolValue inCombat = new BoolValue("In Combat", "战斗穿插", false);
-    private final BoolValue pauseInAura = new BoolValue("Pause In Aura", "攻击时暂停", false);
+    private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟", 100, 0, 1000, 10);
+    private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 300, 0, 1000, 10);
     private final BoolValue wallCheck = new BoolValue("Wall Check", "墙体检测", true);
+    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
 
-    private LivingEntity target;
-    private final TimerUtil throwTimer = new TimerUtil();
-    private final TimerUtil switchTimer = new TimerUtil();
-    private long nextDelay = 0;
+    private int rotationSet;
+    private int swapBack = -1;
+    private ThrowPlan pendingPlan;
+    private final TimerUtil timer = new TimerUtil();
 
-    private boolean shouldSwapBack;
-
-    private boolean isThrowing = false;
-    private int oldSlot = -1;
-
-    private Rotation targetRotation;
-    private float realYaw, realPitch;
-    private float realLastYaw, realLastPitch;
-    private float realBodyYaw, realHeadYaw;
-
-    public AutoThrow() {
-        super("AutoThrow", "自动投掷", Category.Combat);
-
-        ClientTickEvents.START_CLIENT_TICK.register(minecraftClient -> {
-            if (minecraftClient.player == null || minecraftClient.world == null) return;
-
-            if (isEnabled() && isThrowing && targetRotation != null) {
-                realYaw = minecraftClient.player.getYaw();
-                realPitch = minecraftClient.player.getPitch();
-                realLastYaw = minecraftClient.player.lastYaw;
-                realLastPitch = minecraftClient.player.lastPitch;
-                realBodyYaw = minecraftClient.player.bodyYaw;
-                realHeadYaw = minecraftClient.player.headYaw;
-
-                minecraftClient.player.setYaw(targetRotation.yaw);
-                minecraftClient.player.setPitch(targetRotation.pitch);
-
-                minecraftClient.player.lastYaw = targetRotation.yaw;
-                minecraftClient.player.lastPitch = targetRotation.pitch;
-
-                minecraftClient.player.bodyYaw = targetRotation.yaw;
-                minecraftClient.player.headYaw = targetRotation.yaw;
-            }
-
-            if (!shouldSwapBack) return;
-
-            shouldSwapBack = false;
-            InvUtil.swapBack();
-        });
-    }
-
-    @Override
-    public void onEnable() {
-        updateNextDelay();
-        shouldSwapBack = false;
-    }
-
-    @Override
-    public void onDisable() {
-        target = null;
-        if (silentSwitch.get()) {
-            shouldSwapBack = true;
-        }
-    }
+    private static final double PROJECTILE_SPEED = 0.6;
+    private static final double PROJECTILE_GRAVITY = 0.006;
 
     @EventHandler
-    public void onHeldItemRender(HeldItemRendererEvent event) {
-        if (!silentSwitch.get()) return;
-        if (mc.player == null) return;
-
-        if (oldSlot != -1 && event.getHand() == Hand.MAIN_HAND) {
-            event.setItem(mc.player.getInventory().getStack(oldSlot));
+    public void onMotion(MotionEvent event) {
+        if (event.getType() != EventType.PRE) {
+            if (swapBack != -1) {
+                mc.player.getInventory().setSelectedSlot(swapBack);
+                swapBack = -1;
+            }
             return;
         }
 
-        int currentSlot = mc.player.getInventory().getSelectedSlot();
-        ItemStack currentStack = mc.player.getInventory().getStack(currentSlot);
+        if (Sakura.MODULES.getModule(Scaffold.class).isEnabled() || Sakura.MODULES.getModule(Stuck.class).isEnabled()) {
+            rotationSet = 0;
+            pendingPlan = null;
+            return;
+        }
 
-        if (event.getHand() == Hand.MAIN_HAND && (currentStack.getItem() == Items.SNOWBALL || currentStack.getItem() == Items.EGG)) {
-            int bestSlot = -1;
-            for (int i = 0; i < 9; i++) {
-                ItemStack s = mc.player.getInventory().getStack(i);
-                if (!s.isEmpty() && s.getItem() != Items.SNOWBALL && s.getItem() != Items.EGG) {
-                    bestSlot = i;
-                    break;
+        Rotation rotation;
+
+        ThrowPlan plan = updateThrowPlan();
+        if (plan == null) {
+            return;
+        }
+
+        if (rotationSet > 0) {
+            rotationSet--;
+            if (rotationSet == 0) {
+                if (pendingPlan != null) {
+                    throwFromPlan(pendingPlan);
+                    pendingPlan = null;
                 }
             }
-
-            if (bestSlot != -1) {
-                event.setItem(mc.player.getInventory().getStack(bestSlot));
-            }
-        }
-    }
-
-    @EventHandler
-    public void onMoveInput(MoveInputEvent event) {
-        if (isThrowing) {
-            float forward = event.getForward();
-            float strafe = event.getStrafe();
-
-            if (forward == 0 && strafe == 0) return;
-
-            double angle = net.minecraft.util.math.MathHelper.wrapDegrees(Math.toDegrees(MoveUtil.getDirection(realYaw, forward, strafe)));
-
-            float closestForward = 0, closestStrafe = 0, closestDifference = Float.MAX_VALUE;
-
-            float currentYaw = mc.player.getYaw();
-
-            for (float predictedForward = -1F; predictedForward <= 1F; predictedForward += 1F) {
-                for (float predictedStrafe = -1F; predictedStrafe <= 1F; predictedStrafe += 1F) {
-                    if (predictedStrafe == 0 && predictedForward == 0) continue;
-
-                    double predictedAngle = net.minecraft.util.math.MathHelper.wrapDegrees(Math.toDegrees(MoveUtil.getDirection(currentYaw, predictedForward, predictedStrafe)));
-                    double difference = MathUtil.wrappedDifference(angle, predictedAngle);
-
-                    if (difference < closestDifference) {
-                        closestDifference = (float) difference;
-                        closestForward = predictedForward;
-                        closestStrafe = predictedStrafe;
-                    }
-                }
-            }
-
-            event.setForward(closestForward);
-            event.setStrafe(closestStrafe);
-        }
-    }
-
-    @EventHandler
-    public void onPreTick(TickEvent.Pre event) {
-        if (nullCheck()) return;
-
-        if (Sakura.MODULES.getModule(Scaffold.class).isEnabled()) return;
-
-        KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
-        if (pauseInAura.get() && killAura.isEnabled() && killAura.getCurrentTarget() != null) {
             return;
         }
 
-        if (silentSwitch.get()) {
-            InvUtil.swapBack();
-        }
+        LivingEntity target = Managers.COMBAT.getClosestEnemy(minRange.get(), maxRange.get());
 
-        if (!throwTimer.passedMillise(nextDelay)) {
-            if (target != null) {
-                target = null;
-            }
+        if (target == null) {
             return;
         }
 
-        FindItemResult result = InvUtil.findInHotbar(itemStack ->
-                itemStack.getItem() == Items.SNOWBALL || itemStack.getItem() == Items.EGG
-        );
-
-        if (!result.found()) {
-            target = null;
+        if (wallCheck.get() && !mc.player.canSee(target)) {
             return;
         }
 
-        findTarget();
-
-        if (target != null) {
-            if (mc.player == null) return;
-            if (inCombat.get() && mc.player.distanceTo(target) <= 3.0) {
-                if (killAura.isEnabled() && killAura.getCurrentTarget() != null) {
-                    float cooldown = mc.player.getAttackCooldownProgress(0.0f);
-
-                    if (cooldown > 0.6f) {
-                        target = null;
-                        return;
-                    }
-                }
-            }
-
-            Rotation targetRotation = RotationUtil.calculate(target);
-
-            Managers.ROTATION.setRotations(targetRotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
+        if (timer.passedMillise(MathUtil.getRandom(minDelay.get(), maxDelay.get())) && canRotate(plan.hand)) {
+            rotation = getRotationToEntity(target);
+            Managers.ROTATION.setRotations(rotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
+            rotationSet = 2;
+            pendingPlan = plan;
+            timer.reset();
         }
     }
 
-    @EventHandler
-    public void onPostTick(TickEvent.Post event) {
-        if (nullCheck()) return;
-
-        if (isThrowing) {
-            float currentYaw = mc.player.getYaw();
-            float currentPitch = mc.player.getPitch();
-
-            float deltaYaw = currentYaw - targetRotation.yaw;
-            float deltaPitch = currentPitch - targetRotation.pitch;
-
-            mc.player.setYaw(realYaw + deltaYaw);
-            mc.player.setPitch(realPitch + deltaPitch);
-
-            mc.player.lastYaw = realLastYaw;
-            mc.player.lastPitch = realLastPitch;
-
-            mc.player.bodyYaw = realBodyYaw;
-            mc.player.headYaw = realHeadYaw;
-
-            mc.options.useKey.setPressed(false);
-            isThrowing = false;
-
-            switchTimer.reset();
-
-            if (switchDelay.get() == 0) {
-                resetThrowState();
-            }
-            return;
-        }
-
-        if (oldSlot != -1) {
-            if (switchTimer.passedMillise(switchDelay.get())) {
-                resetThrowState();
-            }
-            return;
-        }
-
-        if (mc.player == null) return;
-        if (mc.player.isUsingItem()) return;
-
-        if (target != null) {
-            Rotation targetRotation = calculateArc(target);
-
-            targetRotation.yaw += MathUtil.getRandom(-5.0, 5.0);
-            targetRotation.pitch += MathUtil.getRandom(-5.0, 5.0);
-
-            this.targetRotation = targetRotation;
-
-            Managers.ROTATION.setRotations(targetRotation, rotationSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Highest);
-
-            if (throwTimer.passedMillise(nextDelay) && isRotated(targetRotation)) {
-                FindItemResult result = InvUtil.findInHotbar(itemStack ->
-                        itemStack.getItem() == Items.SNOWBALL || itemStack.getItem() == Items.EGG
-                );
-
-                if (result.found()) {
-                    throwItem(result.slot());
-                }
+    private void throwFromPlan(ThrowPlan plan) {
+        if (plan.hand == Hand.MAIN_HAND) {
+            int originalHotbar = mc.player.getInventory().getSelectedSlot();
+            boolean shouldSwap = originalHotbar != plan.hotbarSlot;
+            if (shouldSwap) {
+                mc.player.getInventory().setSelectedSlot(plan.hotbarSlot);
+                swapBack = originalHotbar;
             }
         }
+        mc.interactionManager.interactItem(mc.player, plan.hand);
+        mc.player.swingHand(plan.hand);
     }
 
-    private void resetThrowState() {
-        if (oldSlot != -1 && autoSwitch.get()) {
-            if (mc.player != null) mc.player.getInventory().setSelectedSlot(oldSlot);
+    private ThrowPlan updateThrowPlan() {
+        ItemStack offhand = mc.player.getOffHandStack();
+        if (isThrowable(offhand)) {
+            return new ThrowPlan(Hand.OFF_HAND, -1);
         }
-        oldSlot = -1;
-        throwTimer.reset();
-        updateNextDelay();
-    }
 
-    private void findTarget() {
-        if (target != null) {
-            if (!isInvalid(target)) {
-                return;
+        int selected = mc.player.getInventory().getSelectedSlot();
+        ItemStack mainhand = mc.player.getInventory().getStack(selected);
+        if (isThrowable(mainhand)) {
+            return new ThrowPlan(Hand.MAIN_HAND, selected);
+        }
+
+        for (int hotbar = 0; hotbar < 9; hotbar++) {
+            ItemStack stack = mc.player.getInventory().getStack(hotbar);
+            if (isThrowable(stack)) {
+                return new ThrowPlan(Hand.MAIN_HAND, hotbar);
             }
         }
+        return null;
+    }
 
-        target = null;
-        for (LivingEntity entity : Managers.COMBAT.getEntities(maxRange.get())) {
-            if (isInvalid(entity)) continue;
-            target = entity;
-            break;
+    private boolean canRotate(Hand hand) {
+        if (mc.player.isUsingItem()) {
+            return false;
         }
+        ItemStack stack = hand == Hand.MAIN_HAND ? mc.player.getMainHandStack() : mc.player.getOffHandStack();
+        if (stack.isEmpty()) {
+            return true;
+        }
+        Item item = stack.getItem();
+        if (item instanceof EnderPearlItem) {
+            return false;
+        }
+        if (item instanceof BowItem) {
+            return false;
+        }
+        if (item instanceof PotionItem || item instanceof SplashPotionItem || item instanceof LingeringPotionItem) {
+            return false;
+        }
+        return !stack.contains(DataComponentTypes.FOOD);
     }
 
-    private boolean isInvalid(LivingEntity entity) {
-        if (entity == null || !entity.isAlive()) return true;
-        if (mc.player == null) return true;
+    private Rotation getRotationToEntity(LivingEntity target) {
+        Vec3d velocity = target.getVelocity();
+        double targetX = target.getX();
+        double targetY = target.getY() + target.getHeight() * 0.6;
+        double targetZ = target.getZ();
 
-        if (wallCheck.get() && !mc.player.canSee(entity)) return true;
-
-        float dist = mc.player.distanceTo(entity);
-        return dist > maxRange.get() || dist < minRange.get();
-    }
-
-    private boolean isRotated(Rotation targetRotation) {
-        Rotation current = Managers.ROTATION.getRotation();
-        float yawDiff = Math.abs(current.yaw - targetRotation.yaw) % 360;
-        if (yawDiff > 180) yawDiff = 360 - yawDiff;
-        return yawDiff < 1 && Math.abs(current.pitch - targetRotation.pitch) < 1;
-    }
-
-    private Rotation calculateArc(LivingEntity target) {
-        if (mc.player == null) return new Rotation(0, 0);
-        double posX = target.getX() + (target.getX() - target.lastX) * 2.0 - mc.player.getX();
-        double posY = target.getY() + target.getEyeHeight(target.getPose()) * 0.5 - (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()));
-        double posZ = target.getZ() + (target.getZ() - target.lastZ) * 2.0 - mc.player.getZ();
-
-        double distance = Math.sqrt(posX * posX + posZ * posZ);
-
-        double v = 1.5;
-        double g = 0.03;
-
-        double time = distance / v;
-        double drop = 0.5 * g * time * time;
-
-        posY += drop;
-
-        float pitch = (float) -Math.toDegrees(Math.atan2(posY, distance));
-        float yaw = (float) Math.toDegrees(Math.atan2(posZ, posX)) - 90.0F;
-
-        return new Rotation(yaw, pitch);
-    }
-
-    private void throwItem(int slot) {
-        if (mc.player == null) return;
-        int currentSlot = mc.player.getInventory().getSelectedSlot();
-        if (currentSlot != slot) {
-            oldSlot = currentSlot;
-            mc.player.getInventory().setSelectedSlot(slot);
-        } else {
-            oldSlot = -1;
+        double time = 0.0;
+        for (int i = 0; i < 3; i++) {
+            double predictX = targetX + velocity.x * time;
+            double predictZ = targetZ + velocity.z * time;
+            double dx = predictX - mc.player.getX();
+            double dz = predictZ - mc.player.getZ();
+            double horizontal = Math.sqrt(dx * dx + dz * dz);
+            time = horizontal / PROJECTILE_SPEED;
         }
 
-        mc.options.useKey.setPressed(true);
-        isThrowing = true;
+        double predictX = targetX + velocity.x * time;
+        double predictY = targetY + velocity.y * time;
+        double predictZ = targetZ + velocity.z * time;
+
+        double x = predictX - mc.player.getX();
+        double z = predictZ - mc.player.getZ();
+        double h = predictY - (mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()));
+        double horizontal = Math.sqrt(x * x + z * z);
+
+        float yaw = (float) (Math.toDegrees(Math.atan2(z, x)) - 90.0F);
+        float pitch = -getTrajAngleSolutionLow((float) horizontal, (float) h, (float) PROJECTILE_SPEED, (float) PROJECTILE_GRAVITY);
+        return new Rotation(yaw, MathHelper.clamp(pitch, -90.0F, 90.0F));
     }
 
-    private void updateNextDelay() {
-        if (minDelay.get() >= maxDelay.get()) {
-            nextDelay = minDelay.get();
-        } else {
-            nextDelay = (long) (minDelay.get() + Math.random() * (maxDelay.get() - minDelay.get()));
+    private float getTrajAngleSolutionLow(float distance, float height, float velocity, float gravity) {
+        float v2 = velocity * velocity;
+        float under = v2 * v2 - gravity * (gravity * distance * distance + 2.0f * height * v2);
+        if (under <= 0.0f) {
+            return (float) Math.toDegrees(Math.atan2(height, distance));
         }
+        return (float) Math.toDegrees(Math.atan((v2 - Math.sqrt(under)) / (gravity * distance)));
+    }
+
+    private boolean isThrowable(ItemStack stack) {
+        return !stack.isEmpty() && (stack.getItem() == Items.EGG || stack.getItem() == Items.SNOWBALL);
+    }
+
+    private record ThrowPlan(Hand hand, int hotbarSlot) {
     }
 }

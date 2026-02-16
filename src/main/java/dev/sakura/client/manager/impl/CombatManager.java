@@ -12,7 +12,6 @@ import net.minecraft.entity.passive.AnimalEntity;
 import net.minecraft.entity.passive.PassiveEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -26,6 +25,18 @@ public class CombatManager extends Managers {
         for (Entity entity : mc.world.getEntities()) {
             if (entity instanceof LivingEntity livingEntity) {
                 if (isEnemy(livingEntity, range)) {
+                    list.add(livingEntity);
+                }
+            }
+        }
+        return list;
+    }
+
+    public List<LivingEntity> getEntities(double minRange, double maxRange) {
+        List<LivingEntity> list = new ArrayList<>();
+        for (Entity entity : mc.world.getEntities()) {
+            if (entity instanceof LivingEntity livingEntity) {
+                if (isEnemy(livingEntity, minRange, maxRange)) {
                     list.add(livingEntity);
                 }
             }
@@ -47,9 +58,27 @@ public class CombatManager extends Managers {
         return target;
     }
 
+    public LivingEntity getClosestEnemy(double minRange, double maxRange) {
+        return getClosestEnemy(minRange, maxRange, Sakura.MODULES.getModule(Targets.class).targetBy.get());
+    }
+
+    public LivingEntity getClosestEnemy(double minRange, double maxRange, TargetBy targetBy) {
+        LivingEntity target = null;
+        switch (targetBy) {
+            case FOV -> target = getTargetByFOVRange(minRange, maxRange);
+            case Health -> target = getTargetByHealth(minRange, maxRange);
+            case Distance -> target = getNearestTarget(minRange, maxRange);
+        }
+        return target;
+    }
+
     public boolean isEnemy(LivingEntity entity, double range) {
+        return isEnemy(entity, range, range);
+    }
+
+    public boolean isEnemy(LivingEntity entity, double minRange, double maxRange) {
         Targets targetSetting = Sakura.MODULES.getModule(Targets.class);
-        if (isInvalid(entity, range)) {
+        if (isInvalid(entity, minRange, maxRange)) {
             return false;
         }
         return switch (entity) {
@@ -63,8 +92,18 @@ public class CombatManager extends Managers {
     }
 
     public boolean isInvalid(LivingEntity entity, double range) {
+        return isInvalid(entity, range, range);
+    }
+
+    public boolean isInvalid(LivingEntity entity, double minRange, double maxRange) {
         Targets targetSetting = Sakura.MODULES.getModule(Targets.class);
-        if (Vec3d.of(mc.player.getBlockPos()).distanceTo(Vec3d.of(entity.getBlockPos())) > range) {
+        double min = Math.min(minRange, maxRange);
+        double max = Math.max(minRange, maxRange);
+        if (min == max) {
+            min = 0.0;
+        }
+        double distance = mc.player.distanceTo(entity);
+        if (distance > max || distance < min) {
             return true;
         }
         if (entity.isInvisible() && targetSetting.check.isEnabled("Invisible")) {
@@ -89,9 +128,19 @@ public class CombatManager extends Managers {
     }
 
     public LivingEntity getTargetByFOV(double range, double fov) {
-        return getEntities(range).stream()
-                .filter(entityPlayer -> getFOVAngle(entityPlayer) < fov)
-                .min(Comparator.comparing(this::getFOVAngle)).orElse(null);
+        return getEntities(range).stream().filter(entityPlayer -> getFOVAngle(entityPlayer) < fov).min(Comparator.comparing(this::getFOVAngle)).orElse(null);
+    }
+
+    public LivingEntity getNearestTarget(double minRange, double maxRange) {
+        return getEntities(minRange, maxRange).stream().min(Comparator.comparing(t -> mc.player.distanceTo(t))).orElse(null);
+    }
+
+    public LivingEntity getTargetByHealth(double minRange, double maxRange) {
+        return getEntities(minRange, maxRange).stream().min(Comparator.comparing(t -> (Managers.HEALTH.getHealth(t)))).orElse(null);
+    }
+
+    public LivingEntity getTargetByFOVRange(double minRange, double maxRange) {
+        return getEntities(minRange, maxRange).stream().min(Comparator.comparing(this::getFOVAngle)).orElse(null);
     }
 
     private double getFOVAngle(LivingEntity e) {

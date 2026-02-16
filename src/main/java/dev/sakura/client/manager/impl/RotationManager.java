@@ -156,8 +156,6 @@ public class RotationManager {
         }
 
         smoothed = true;
-
-        mc.gameRenderer.updateCrosshairTarget(1.0f);
     }
 
     public boolean isSmoothed() {

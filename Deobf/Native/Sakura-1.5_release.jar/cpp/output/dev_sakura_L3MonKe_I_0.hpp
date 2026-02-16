@@ -1,0 +1,13 @@
+#include "../native_jvm.hpp"
+
+#ifndef DEV_SAKURA_L3MONKE_I_0_HPP_GUARD
+
+#define DEV_SAKURA_L3MONKE_I_0_HPP_GUARD
+
+// dev/sakura/L3MonKe_I
+namespace native_jvm::classes::__ngen_dev_sakura_L3MonKe_I_0 {
+
+    void __ngen_register_methods(JNIEnv *env, jclass clazz);
+}
+
+#endif

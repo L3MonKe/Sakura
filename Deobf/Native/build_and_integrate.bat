@@ -1,5 +1,5 @@
 @echo off
-cd /d "%～dp0"
+cd /d "%¡«dp0"
 cls
 echo ========================================
 echo Native Library Build and Integration Tool
@@ -13,11 +13,11 @@ mkdir build
 cd build
 
 echo [2/5] Configuring CMake...
-cmake .. -G "Visual Studio 18 2026" -A x64
+cmake .. -G "Visual Studio 17 2022" -A x64
 if errorlevel 1 (
     echo.
     echo ERROR: CMake configuration failed!
-    echo Check: CMakeLists.txt exists, VS2026 installed
+    echo Check: CMakeLists.txt exists, VS2022 installed
     goto end
 )
 echo [OK] CMake configured
