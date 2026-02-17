@@ -377,9 +377,7 @@ public class InvManager extends Module {
             int blockSlot = (int) (this.blockSlot.get() - 1.0F);
             ItemStack currentBlock = mc.player.getInventory().getMainStacks().get(blockSlot);
             ItemStack bestBlock = InvHelper.getBestBlock();
-            if (bestBlock != null
-                    && (bestBlock.getCount() > currentBlock.getCount() || !InvHelper.isValidStack(currentBlock))
-                    && !this.offhandItems.is(OffhandItemMode.Block)) {
+            if (bestBlock != null && (bestBlock.getCount() > currentBlock.getCount() || !InvHelper.isValidStack(currentBlock)) && !this.offhandItems.is(OffhandItemMode.Block)) {
                 this.swapItem(blockSlot, bestBlock);
             }
 

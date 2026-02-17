@@ -66,6 +66,7 @@ public class ModuleManager {
         add(new AutoSoup());
         add(new AutoTool());
         add(new BowBomb());
+        add(new BreakCooldown());
         add(new Disabler());
         add(new MCP());
         add(new FakePlayer());
