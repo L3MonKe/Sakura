@@ -45,9 +45,9 @@ public class PlayerSimulationCache {
 
         SimulatedPlayer.SimulatedPlayerInput input = SimulatedPlayer.SimulatedPlayerInput.fromClientPlayer(directionalInput);
         if (input == null) return;
-        
+
         SimulatedPlayer simulatedPlayer = SimulatedPlayer.fromClientPlayer(input);
-        
+
         if (simulatedPlayer != null) {
             localPlayerCache = new SimulatedPlayerCache(simulatedPlayer);
         }
@@ -57,7 +57,7 @@ public class PlayerSimulationCache {
         if (localPlayerCache != null) {
             return localPlayerCache;
         }
-        
+
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null) return null;
 
@@ -67,7 +67,7 @@ public class PlayerSimulationCache {
         if (simInput == null) return null;
 
         SimulatedPlayer simulatedPlayer = SimulatedPlayer.fromClientPlayer(simInput);
-        
+
         if (simulatedPlayer != null) {
             localPlayerCache = new SimulatedPlayerCache(simulatedPlayer);
         }
@@ -102,16 +102,17 @@ public class PlayerSimulationCache {
         }
 
         public List<SimulatedPlayerSnapshot> getSnapshotsBetween(int start, int end) {
-            if (end >= 60 * 20) throw new IllegalArgumentException("tried to simulate a player for more than a minute!");
+            if (end >= 60 * 20)
+                throw new IllegalArgumentException("tried to simulate a player for more than a minute!");
             simulateUntil(end + 1);
-            
+
             lock.readLock().lock();
             try {
                 // Ensure indices are valid
                 if (start < 0) start = 0;
                 if (end >= simulationSteps.size()) end = simulationSteps.size() - 1;
                 if (start > end) return new ArrayList<>();
-                
+
                 return new ArrayList<>(simulationSteps.subList(start, end + 1));
             } finally {
                 lock.readLock().unlock();

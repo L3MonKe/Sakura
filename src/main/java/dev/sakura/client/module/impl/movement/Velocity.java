@@ -14,7 +14,6 @@ import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.network.blockage.block.BlockHolder;
 import dev.sakura.client.utils.network.blockage.impl.InboundNetworkBlockage;
 import dev.sakura.client.utils.player.MoveUtil;
-import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;

@@ -27,7 +27,7 @@ public final class InboundNetworkBlockage extends DirectionalNetworkBlockage<Cli
                 // Bypass event handling to avoid re-triggering interception
                 // Using handlePacket instead of channelRead0 to simulate packet receiving
                 if (MinecraftClient.getInstance().getNetworkHandler() != null) {
-                   ((Packet) packet).apply(MinecraftClient.getInstance().getNetworkHandler());
+                    ((Packet) packet).apply(MinecraftClient.getInstance().getNetworkHandler());
                 }
             } catch (Exception e) {
                 e.printStackTrace();

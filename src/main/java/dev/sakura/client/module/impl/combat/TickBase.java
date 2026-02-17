@@ -48,7 +48,7 @@ public class TickBase extends Module {
     private final NumberValue<Integer> pause = new NumberValue<>("Pause", "暂停Tick", 0, 0, 20, 1);
     private final NumberValue<Integer> cooldown = new NumberValue<>("Cooldown", "冷却", 0, 0, 100, 1);
     private final BoolValue forceGround = new BoolValue("Force Ground", "强制地面", false);
-    
+
     private final BoolValue requiresKillAura = new BoolValue("Requires KillAura", "依赖KillAura", true);
     private final BoolValue debug = new BoolValue("Debug", "调试信息", false);
 
@@ -61,7 +61,7 @@ public class TickBase extends Module {
     private int cooldownTicksRemaining = 0;
     private int scheduledTicksToRun = 0;
     private Mode scheduledMode = null;
-    
+
     // Flag to prevent recursive calls when calling mc.tick()
     private boolean executingExtraTicks = false;
 
@@ -78,7 +78,7 @@ public class TickBase extends Module {
         cooldownTicksRemaining = 0;
         scheduledTicksToRun = 0;
         scheduledMode = null;
-        
+
         // Ensure simulation cache is initialized
         PlayerSimulationCache.init();
     }
@@ -122,7 +122,7 @@ public class TickBase extends Module {
         if (mc.player.hasVehicle() || Sakura.MODULES.getModule(BlinkNoSlow.class).isEnabled()) {
             return;
         }
-        
+
         if (tickBuffer.isEmpty()) {
             return;
         }
@@ -161,7 +161,7 @@ public class TickBase extends Module {
         }
 
         if (target == null) return;
-        
+
         double currentDistanceSq = mc.player.squaredDistanceTo(target);
         double minRangeSq = minRange.get() * minRange.get();
         double maxRangeSq = maxRange.get() * maxRange.get();
@@ -169,11 +169,11 @@ public class TickBase extends Module {
         // Find the best tick that is able to hit the target and is not too far away
         List<Integer> possibleTicks = new ArrayList<>();
         Vec3d targetPos = target.getEntityPos();
-        
+
         for (int i = 0; i < tickBuffer.size(); i++) {
             TickData tick = tickBuffer.get(i);
             double distSq = tick.position.squaredDistanceTo(targetPos);
-            
+
             // Check if this tick is closer than current position and within range
             if (distSq < currentDistanceSq && distSq >= minRangeSq && distSq <= maxRangeSq) {
                 possibleTicks.add(i);
@@ -183,7 +183,7 @@ public class TickBase extends Module {
         if (forceGround.get()) {
             possibleTicks.removeIf(i -> !tickBuffer.get(i).onGround);
         }
-        
+
         // Ensure we have valid ticks
         if (possibleTicks.isEmpty()) return;
 
@@ -195,7 +195,7 @@ public class TickBase extends Module {
                 break;
             }
         }
-        
+
         // Fallback to the first possible tick if no crit tick found
         if (bestTickIndex == -1) {
             bestTickIndex = possibleTicks.get(0);
@@ -204,7 +204,7 @@ public class TickBase extends Module {
         if (bestTickIndex == 0) {
             return;
         }
-        
+
         // KillAura check: Ensure KillAura is ready to attack
         // Note: Sakura's KillAura might not expose precise tick prediction, 
         // so we check if it has a valid target and is enabled.
@@ -217,9 +217,9 @@ public class TickBase extends Module {
             ticksToSkip = bestTickIndex + pause.get();
             scheduledTicksToRun = bestTickIndex;
             scheduledMode = Mode.Past;
-            
+
             if (debug.get()) {
-                 ChatUtil.clientMessage("TickBase (Past): Scheduled skip " + ticksToSkip + " ticks.");
+                ChatUtil.clientMessage("TickBase (Past): Scheduled skip " + ticksToSkip + " ticks.");
             }
         } else {
             // Future mode: Execute ticks immediately until requirement is broken or limit reached
@@ -229,12 +229,12 @@ public class TickBase extends Module {
                 if (requiresKillAura.get() && (!killAura.isEnabled() || killAura.getCurrentTarget() == null)) {
                     break;
                 }
-                
+
                 runTick(call.get());
                 tickBalance -= 1;
                 totalSkipped++;
             }
-            
+
             if (debug.get()) {
                 ChatUtil.clientMessage("TickBase (Future): Skipped " + totalSkipped + " ticks.");
             }
@@ -254,13 +254,13 @@ public class TickBase extends Module {
         }
 
         tickBuffer.clear();
-        
+
         PlayerSimulationCache.SimulatedPlayerCache cache = PlayerSimulationCache.getSimulationForLocalPlayer();
         if (cache == null) return;
 
         if (tickBalance <= 0) reachedTheLimit = true;
         if (tickBalance * 2 > balanceMaxValue.get()) reachedTheLimit = false;
-        
+
         if (tickBalance <= balanceMaxValue.get()) {
             tickBalance += balanceRecoveryIncrement.get();
         }
@@ -271,14 +271,14 @@ public class TickBase extends Module {
         if (limit <= 0) return;
 
         List<PlayerSimulationCache.SimulatedPlayerSnapshot> snapshots = cache.getSnapshotsBetween(0, limit);
-        
+
         // Populate tick buffer with simulation data
         for (PlayerSimulationCache.SimulatedPlayerSnapshot snapshot : snapshots) {
             tickBuffer.add(new TickData(
-                snapshot.pos(), 
-                snapshot.fallDistance(), 
-                snapshot.velocity(), 
-                snapshot.onGround()
+                    snapshot.pos(),
+                    snapshot.fallDistance(),
+                    snapshot.velocity(),
+                    snapshot.onGround()
             ));
         }
     }
@@ -286,9 +286,9 @@ public class TickBase extends Module {
     @EventHandler
     public void onPacket(PacketEvent event) {
         // Reset balance if we get flagged (teleported back by server)
-        if (event.getType() == EventType.RECEIVE && 
-            event.getPacket() instanceof PlayerPositionLookS2CPacket && 
-            pauseOnFlag.get()) {
+        if (event.getType() == EventType.RECEIVE &&
+                event.getPacket() instanceof PlayerPositionLookS2CPacket &&
+                pauseOnFlag.get()) {
             tickBalance = 0f;
             if (debug.get()) {
                 ChatUtil.clientMessage("TickBase: Flag detected, balance reset.");
@@ -319,7 +319,8 @@ public class TickBase extends Module {
     }
 
     // Data class to store simulated tick information
-    private record TickData(Vec3d position, double fallDistance, Vec3d velocity, boolean onGround) {}
+    private record TickData(Vec3d position, double fallDistance, Vec3d velocity, boolean onGround) {
+    }
 
     public enum Mode {
         Past, Future

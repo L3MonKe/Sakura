@@ -2,22 +2,21 @@ package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.impl.player.MotionEvent;
-import dev.sakura.client.event.type.EventType;
+import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.manager.Managers;
+import dev.sakura.client.mixin.accessor.IMinecraftClient;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.module.impl.movement.Stuck;
-import dev.sakura.client.mixin.accessor.IMinecraftClient;
 import dev.sakura.client.utils.math.MathUtil;
+import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.minecraft.client.option.KeyBinding;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.*;
@@ -38,7 +37,6 @@ public class AutoThrow extends Module {
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1);
 
-    private int swapBack = -1;
     private ThrowInfo pendingPlan;
     private Rotation pendingRotation;
     private final TimerUtil timer = new TimerUtil();
@@ -47,14 +45,8 @@ public class AutoThrow extends Module {
     private static final double gravity = 0.03;
 
     @EventHandler
-    public void onMotion(MotionEvent event) {
-        if (event.getType() != EventType.PRE) {
-            if (swapBack != -1) {
-                mc.player.getInventory().setSelectedSlot(swapBack);
-                swapBack = -1;
-            }
-            return;
-        }
+    public void onTick(TickEvent.Pre event) {
+        if (nullCheck()) return;
 
         if (Sakura.MODULES.getModule(Scaffold.class).isEnabled() || Sakura.MODULES.getModule(Stuck.class).isEnabled()) {
             pendingPlan = null;
@@ -75,7 +67,7 @@ public class AutoThrow extends Module {
             return;
         }
 
-        ThrowInfo plan = updateThrowPlan();
+        ThrowInfo plan = updateThrowInfo();
         if (plan == null) {
             return;
         }
@@ -106,13 +98,8 @@ public class AutoThrow extends Module {
             mc.player.setYaw(rotation.yaw);
             mc.player.setPitch(rotation.pitch);
         }
-        if (plan.hand == Hand.MAIN_HAND) {
-            int originalHotbar = mc.player.getInventory().getSelectedSlot();
-            boolean shouldSwap = originalHotbar != plan.hotbarSlot;
-            if (shouldSwap) {
-                mc.player.getInventory().setSelectedSlot(plan.hotbarSlot);
-                swapBack = originalHotbar;
-            }
+        if (plan.hand == Hand.MAIN_HAND && mc.player.getInventory().getSelectedSlot() != plan.hotbarSlot) {
+            InvUtil.swap(plan.hotbarSlot, true);
         }
 
         ((IMinecraftClient) mc).hookDoItemUse();
@@ -121,9 +108,11 @@ public class AutoThrow extends Module {
             mc.player.setYaw(originalYaw);
             mc.player.setPitch(originalPitch);
         }
+
+        InvUtil.swapBack();
     }
 
-    private ThrowInfo updateThrowPlan() {
+    private ThrowInfo updateThrowInfo() {
         ItemStack offhand = mc.player.getOffHandStack();
         if (isThrowable(offhand)) {
             return new ThrowInfo(Hand.OFF_HAND, -1);

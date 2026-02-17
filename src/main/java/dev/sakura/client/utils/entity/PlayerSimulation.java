@@ -4,5 +4,6 @@ import net.minecraft.util.math.Vec3d;
 
 public interface PlayerSimulation {
     Vec3d getPos();
+
     void tick();
 }
