@@ -45,6 +45,7 @@ public class NameTags extends Module {
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Normal);
     private final NumberValue<Double> scaling = new NumberValue<>("Size", "大小", 4.0, 0.1, 10.0, 0.1);
     private final NumberValue<Double> minScale = new NumberValue<>("MinSize", "最小大小", 0.5, 0.1, 5.0, 0.1);
+    private final NumberValue<Double> range = new NumberValue<>("Range", "范围", 128.0, 16.0, 512.0, 1.0);
     private final BoolValue self = new BoolValue("Self", "自身", false);
     private final BoolValue armor = new BoolValue("Armor", "装备", true);
     private final BoolValue enchants = new BoolValue("Enchants", "附魔", true, armor::get);
@@ -59,6 +60,10 @@ public class NameTags extends Module {
     private final Map<UUID, Integer> popCounts = new HashMap<>();
     private final List<ItemStack> equipmentCache = new ArrayList<>(6);
     private static final Map<String, String> ENCHANT_SHORT_NAMES = new HashMap<>();
+    private static final Map<String, String> ENCHANT_ID_CACHE = new HashMap<>();
+    private static final Map<String, String> ITEM_NAME_CACHE = new HashMap<>();
+    private final Map<UUID, TagCache> tagCaches = new HashMap<>();
+    private long lastCacheCleanupTick;
 
     // Cached Colors
     private static final Color COLOR_GREEN = new Color(100, 255, 100);
@@ -72,6 +77,8 @@ public class NameTags extends Module {
     private static final Color COLOR_ENCHANT_RED = new Color(255, 100, 100);
     private static final Color COLOR_PING_BAR_GRAY = new Color(163, 162, 162, 60);
     private static final Color COLOR_POPS = new Color(255, 80, 80);
+    private static final Color COLOR_HEAD_BORDER = new Color(172, 172, 174, 47);
+    private static final Color COLOR_HEAD_BG = new Color(168, 168, 170, 52);
 
     static {
         ENCHANT_SHORT_NAMES.put("blast_protection", "Bla");
@@ -143,14 +150,25 @@ public class NameTags extends Module {
     public void onRender2D(Render2DEvent event) {
         if (nullCheck()) return;
 
+        float tickProgress = mc.getRenderTickCounter().getTickProgress(true);
+        Vec3d cameraPos = mc.gameRenderer.getCamera().getCameraPos();
+        double maxRange = range.get();
+        double maxRangeSq = maxRange * maxRange;
+        long worldTime = mc.world.getTime();
+        if (worldTime - lastCacheCleanupTick > 40L) {
+            tagCaches.keySet().removeIf(uuid -> mc.world.getPlayerByUuid(uuid) == null);
+            lastCacheCleanupTick = worldTime;
+        }
+
         for (PlayerEntity player : mc.world.getPlayers()) {
             if (player == mc.player && !self.get()) continue;
             if (!player.isAlive()) continue;
             if (AntiBot.isBot(player)) continue;
+            if (player.squaredDistanceTo(cameraPos) > maxRangeSq) continue;
 
-            double x = player.lastX + (player.getX() - player.lastX) * mc.getRenderTickCounter().getTickProgress(true);
-            double y = player.lastY + (player.getY() - player.lastY) * mc.getRenderTickCounter().getTickProgress(true);
-            double z = player.lastZ + (player.getZ() - player.lastZ) * mc.getRenderTickCounter().getTickProgress(true);
+            double x = player.lastX + (player.getX() - player.lastX) * tickProgress;
+            double y = player.lastY + (player.getY() - player.lastY) * tickProgress;
+            double z = player.lastZ + (player.getZ() - player.lastZ) * tickProgress;
 
             Vec3d pos = new Vec3d(x, y + player.getBoundingBox().getLengthY() + 0.5, z);
             Vec3d screenPos = Render3DUtil.worldToScreen(pos);
@@ -178,13 +196,13 @@ public class NameTags extends Module {
             return;
         }
 
-        final String name = player.getName().getString();
         final float hp = Managers.HEALTH.getHealth(player);
         final int playerPops = popCounts.getOrDefault(player.getUuid(), 0);
         final int playerPing = getPlayerPing(player);
 
         List<ItemStack> stacks = getPlayerEquipment(player);
-        final String mainHandName = getPlayerMainHandName(player);
+        TagCache cache = updateCache(player, hp, playerPing, playerPops, stacks);
+        final String mainHandName = cache.mainHandName;
 
         final float headSize = 28;
         final float itemSize = 16;
@@ -196,7 +214,7 @@ public class NameTags extends Module {
         final float durFontSize = 8;
         final float infoFontSize = 11;
 
-        int maxEnchants = calculateMaxEnchants(stacks);
+        int maxEnchants = cache.maxEnchants;
         float enchantHeight = maxEnchants * (enchantFontSize + 1);
         float durHeight = durability.get() ? durFontSize + 4 : 0;
         float nameHeight = (itemName.get() && !mainHandName.isEmpty()) ? 14 : 0;
@@ -215,7 +233,6 @@ public class NameTags extends Module {
         float calculatedScale = posZ * scaling.get().floatValue();
         final float finalScale = Math.max(calculatedScale, minScale.get().floatValue());
 
-        // Draw Blur
         if (blur.get()) {
             float scaledWidth = totalWidth * finalScale;
             float scaledHeight = totalHeight * finalScale;
@@ -223,41 +240,56 @@ public class NameTags extends Module {
             float scaledBoxX = posX - (totalWidth / 2 * finalScale);
             float scaledBoxY = posY - (totalHeight * finalScale);
 
-            BlurShader.drawRoundedBlur(
-                    scaledBoxX, scaledBoxY, scaledWidth, scaledHeight, scaledRadius,
-                    blurStrength.get().floatValue()
-            );
+            if (scaledWidth > 2.0f && scaledHeight > 2.0f) {
+                BlurShader.drawRoundedBlur(
+                        scaledBoxX, scaledBoxY, scaledWidth, scaledHeight, scaledRadius,
+                        blurStrength.get().floatValue()
+                );
+            }
         }
 
-        // Draw Main Panel
-        drawNvg(posX, posY, finalScale, vg -> {
-            drawPanelBackground(boxX, boxY, totalWidth, totalHeight, headerHeight, radius);
-            drawPanelInfo(boxX, boxY, totalWidth, headerHeight, padding, infoFontSize, name, hp, playerPing, playerPops);
-        });
+        PlayerListEntry entry = mc.getNetworkHandler() == null ? null : mc.getNetworkHandler().getPlayerListEntry(player.getUuid());
+        boolean hasSkin = entry != null && entry.getSkinTextures() != null;
 
         float headX = boxX + padding;
         float headY = boxY + headerHeight + padding;
 
-        // Draw Head
-        drawPlayerHead(context, player, posX, posY, finalScale, headX, headY, headSize);
+        drawNvg(posX, posY, finalScale, vg -> {
+            drawPanelBackground(boxX, boxY, totalWidth, totalHeight, headerHeight, radius);
+            drawPanelInfo(boxX, boxY, totalWidth, headerHeight, padding, infoFontSize, cache);
+            drawHeadBackground(headX, headY, headSize, hasSkin);
+        });
 
-        // Draw Items
+        context.getMatrices().pushMatrix();
+        context.getMatrices().translate(posX, posY);
+        context.getMatrices().scale(finalScale, finalScale);
+        context.getMatrices().translate(-posX, -posY);
+
+        if (hasSkin) {
+            drawPlayerHeadTexture(context, entry, headX, headY, headSize);
+        }
+
         if (armor.get()) {
-            drawEquipment(context, stacks, mainHandName, posX, posY, finalScale, headX, headY, headSize, padding, enchantHeight, itemSize, itemSpacing, durHeight, durFontSize, enchantFontSize, itemsWidth);
+            drawEquipmentItems(context, stacks, headX, headY, headSize, padding, enchantHeight, itemSize, itemSpacing);
+        }
+
+        context.getMatrices().popMatrix();
+
+        if (armor.get() || (itemName.get() && !mainHandName.isEmpty())) {
+            drawNvg(posX, posY, finalScale, vg -> drawEquipmentOverlays(stacks, mainHandName, headX, headY, headSize, padding, enchantHeight, itemSize, itemSpacing, durHeight, durFontSize, enchantFontSize, itemsWidth, cache));
         }
     }
 
     private void renderSimple(DrawContext context, PlayerEntity player, float posX, float posY, float posZ) {
-        final String name = player.getName().getString();
         final float hp = Managers.HEALTH.getHealth(player);
 
         final float fontSize = 11;
         final float padding = 4;
         final float spacing = 4;
 
-        String healthStr = String.format("%.1f", hp);
-        float nameWidth = NanoVGHelper.getTextWidth(name, FontLoader.bold(), fontSize);
-        float healthWidth = NanoVGHelper.getTextWidth(healthStr, FontLoader.bold(), fontSize);
+        TagCache cache = updateCache(player, hp, getPlayerPing(player), popCounts.getOrDefault(player.getUuid(), 0), getPlayerEquipment(player));
+        float nameWidth = cache.nameWidthSimple;
+        float healthWidth = cache.healthWidthSimpleBold;
 
         float contentWidth = nameWidth + (health.get() ? (spacing + healthWidth) : 0);
         float totalWidth = contentWidth + padding * 2;
@@ -270,7 +302,6 @@ public class NameTags extends Module {
         float calculatedScale = posZ * scaling.get().floatValue();
         final float finalScale = Math.max(calculatedScale, minScale.get().floatValue());
 
-        // Draw Blur
         if (blur.get()) {
             float scaledWidth = totalWidth * finalScale;
             float scaledHeight = totalHeight * finalScale;
@@ -278,26 +309,24 @@ public class NameTags extends Module {
             float scaledBoxX = posX - (totalWidth / 2 * finalScale);
             float scaledBoxY = posY - (totalHeight * finalScale);
 
-            BlurShader.drawRoundedBlur(
-                    scaledBoxX, scaledBoxY, scaledWidth, scaledHeight, scaledRadius,
-                    blurStrength.get().floatValue()
-            );
+            if (scaledWidth > 2.0f && scaledHeight > 2.0f) {
+                BlurShader.drawRoundedBlur(
+                        scaledBoxX, scaledBoxY, scaledWidth, scaledHeight, scaledRadius,
+                        blurStrength.get().floatValue()
+                );
+            }
         }
 
         drawNvg(posX, posY, finalScale, vg -> {
-            // Background - Black as requested
             NanoVGHelper.drawRoundRect(boxX, boxY, totalWidth, totalHeight, 4, new Color(0, 0, 0, 120));
 
-            // Text vertical alignment adjustment (centered)
             float textY = boxY + totalHeight / 2.0f + 0.5f;
 
-            // Name
-            NanoVGHelper.drawString(name, boxX + padding, textY, FontLoader.bold(), fontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, Color.WHITE);
+            NanoVGHelper.drawString(cache.name, boxX + padding, textY, FontLoader.bold(), fontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, Color.WHITE);
 
-            // Health
             if (health.get()) {
                 Color healthColor = getHealthColor(hp);
-                NanoVGHelper.drawString(healthStr, boxX + padding + nameWidth + spacing, textY, FontLoader.bold(), fontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, healthColor);
+                NanoVGHelper.drawString(cache.healthStr, boxX + padding + nameWidth + spacing, textY, FontLoader.bold(), fontSize, NVG_ALIGN_LEFT | NVG_ALIGN_MIDDLE, healthColor);
             }
         });
     }
@@ -311,11 +340,6 @@ public class NameTags extends Module {
         equipmentCache.add(player.getEquippedStack(EquipmentSlot.FEET));
         equipmentCache.add(player.getOffHandStack());
         return equipmentCache;
-    }
-
-    private String getPlayerMainHandName(PlayerEntity player) {
-        return (itemName.get() && !player.getMainHandStack().isEmpty())
-                ? getEnglishItemName(player.getMainHandStack()) : "";
     }
 
     private int calculateMaxEnchants(List<ItemStack> stacks) {
@@ -342,163 +366,140 @@ public class NameTags extends Module {
         NanoVGHelper.drawRoundRect(x + 2, y + 2, width - 4, headerHeight - 2, radius - 2, COLOR_PANEL_BORDER);
     }
 
-    private void drawPanelInfo(float x, float y, float width, float headerHeight, float padding, float fontSize, String name, float hp, int pingVal, int popsVal) {
+    private void drawPanelInfo(float x, float y, float width, float headerHeight, float padding, float fontSize, TagCache cache) {
         float headerY = y + headerHeight - 5;
 
-        // Name
-        NanoVGHelper.drawString(name, x + padding, headerY, FontLoader.bold(), fontSize, Color.WHITE);
+        NanoVGHelper.drawString(cache.name, x + padding, headerY, FontLoader.bold(), fontSize, Color.WHITE);
 
-        // Health
         if (health.get()) {
-            String healthStr = String.format("%.1f", hp);
-            Color healthColor = getHealthColor(hp);
-            float healthWidth = NanoVGHelper.getTextWidth(healthStr, FontLoader.regular(), fontSize);
-            float healthX = x + width / 2 - healthWidth / 2;
-            NanoVGHelper.drawString(healthStr, healthX, headerY, FontLoader.bold(), fontSize, healthColor);
+            Color healthColor = getHealthColor(cache.healthValue);
+            float healthX = x + width / 2 - cache.healthWidthInfoRegular / 2;
+            NanoVGHelper.drawString(cache.healthStr, healthX, headerY, FontLoader.bold(), fontSize, healthColor);
         }
 
-        // Ping
         if (ping.get()) {
-            String pingStr = pingVal + "ms";
-            Color pingColor = getPingColor(pingVal);
-            float pingWidth = NanoVGHelper.getTextWidth(pingStr, FontLoader.regular(), fontSize - 1);
-            float pingX = x + width - padding - pingWidth;
+            Color pingColor = getPingColor(cache.pingValue);
+            float pingX = x + width - padding - cache.pingWidth;
             float signalX = pingX - 18;
 
-            drawSignalIcon(signalX, y + headerHeight / 2 - 5, 12, pingVal, pingColor);
-            NanoVGHelper.drawString(pingStr, pingX, headerY, FontLoader.regular(), fontSize - 1, pingColor);
+            drawSignalIcon(signalX, y + headerHeight / 2 - 5, 12, cache.pingValue, pingColor);
+            NanoVGHelper.drawString(cache.pingStr, pingX, headerY, FontLoader.regular(), fontSize - 1, pingColor);
         }
 
-        // Pops
-        if (pops.get() && popsVal > 0) {
-            String popStr = "-" + popsVal;
-            float healthWidth = health.get() ? NanoVGHelper.getTextWidth(String.format("%.1f", hp), FontLoader.regular(), fontSize) : 0;
-            float popX = x + width / 2 + healthWidth / 2 + 8;
+        if (pops.get() && cache.popsValue > 0) {
+            String popStr = "-" + cache.popsValue;
+            float popX = x + width / 2 + (health.get() ? cache.healthWidthInfoRegular / 2 : 0) + 8;
             NanoVGHelper.drawString(popStr, popX, headerY, FontLoader.bold(), fontSize, COLOR_POPS);
         }
     }
 
-    private void drawPlayerHead(DrawContext context, PlayerEntity player, float posX, float posY, float scale, float headX, float headY, float headSize) {
-        PlayerListEntry entry = mc.getNetworkHandler() == null ? null : mc.getNetworkHandler().getPlayerListEntry(player.getUuid());
-
-        if (entry != null && entry.getSkinTextures() != null) {
-            drawNvg(posX, posY, scale, vg -> NanoVGHelper.drawRoundRect(headX - 1, headY - 1, headSize + 2, headSize + 2, 4, new Color(172, 172, 174, 47)));
-
-            context.getMatrices().pushMatrix();
-            context.getMatrices().translate(posX, posY);
-            context.getMatrices().scale(scale, scale);
-            context.getMatrices().translate(-posX, -posY);
-
-            /*RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();*/
-
-            context.drawTexture(RenderPipelines.GUI_TEXTURED,
-                    entry.getSkinTextures().body().texturePath(),
-                    (int) headX, (int) headY,
-                    8, 8,
-                    (int) headSize, (int) headSize,
-                    8, 8,
-                    64, 64);
-            context.drawTexture(RenderPipelines.GUI_TEXTURED,
-                    entry.getSkinTextures().body().texturePath(),
-                    (int) headX, (int) headY,
-                    40, 8,
-                    (int) headSize, (int) headSize,
-                    8, 8,
-                    64, 64);
-
-            //GlStateManager._disableBlend();
-            context.getMatrices().popMatrix();
+    private void drawHeadBackground(float headX, float headY, float headSize, boolean hasSkin) {
+        if (hasSkin) {
+            NanoVGHelper.drawRoundRect(headX - 1, headY - 1, headSize + 2, headSize + 2, 4, COLOR_HEAD_BORDER);
         } else {
-            drawNvg(posX, posY, scale, vg -> NanoVGHelper.drawRoundRect(headX, headY, headSize, headSize, 4, new Color(168, 168, 170, 52)));
+            NanoVGHelper.drawRoundRect(headX, headY, headSize, headSize, 4, COLOR_HEAD_BG);
         }
     }
 
-    private void drawEquipment(DrawContext context, List<ItemStack> stacks, String mainHandName, float posX, float posY, float scale, float headX, float headY, float headSize, float padding, float enchantHeight, float itemSize, float itemSpacing, float durHeight, float durFontSize, float enchantFontSize, float itemsWidth) {
+    private void drawPlayerHeadTexture(DrawContext context, PlayerListEntry entry, float headX, float headY, float headSize) {
+        context.drawTexture(RenderPipelines.GUI_TEXTURED,
+                entry.getSkinTextures().body().texturePath(),
+                (int) headX, (int) headY,
+                8, 8,
+                (int) headSize, (int) headSize,
+                8, 8,
+                64, 64);
+        context.drawTexture(RenderPipelines.GUI_TEXTURED,
+                entry.getSkinTextures().body().texturePath(),
+                (int) headX, (int) headY,
+                40, 8,
+                (int) headSize, (int) headSize,
+                8, 8,
+                64, 64);
+    }
+
+    private void drawEquipmentItems(DrawContext context, List<ItemStack> stacks, float headX, float headY, float headSize, float padding, float enchantHeight, float itemSize, float itemSpacing) {
         float itemAreaX = headX + headSize + padding;
         float itemY = headY + enchantHeight;
         float currentItemX = itemAreaX;
-
-        context.getMatrices().pushMatrix();
-        context.getMatrices().translate(posX, posY);
-        context.getMatrices().scale(scale, scale);
-        context.getMatrices().translate(-posX, -posY);
 
         for (ItemStack stack : stacks) {
             final float itemX = currentItemX;
 
             if (!stack.isEmpty()) {
                 context.drawItem(stack, (int) itemX, (int) itemY);
+            }
+            currentItemX += itemSize + itemSpacing;
+        }
+    }
 
-                // Draw Count
+    private void drawEquipmentOverlays(List<ItemStack> stacks, String mainHandName, float headX, float headY, float headSize, float padding, float enchantHeight, float itemSize, float itemSpacing, float durHeight, float durFontSize, float enchantFontSize, float itemsWidth, TagCache cache) {
+        float itemAreaX = headX + headSize + padding;
+        float itemY = headY + enchantHeight;
+        float currentItemX = itemAreaX;
+
+        for (ItemStack stack : stacks) {
+            final float itemX = currentItemX;
+
+            if (!stack.isEmpty()) {
                 if (stack.getCount() > 1) {
-                    drawNvg(posX, posY, scale, vg -> {
-                        String countStr = String.valueOf(stack.getCount());
-                        NanoVGHelper.drawString(countStr, itemX + 9, itemY + 12, FontLoader.bold(), 7, Color.WHITE);
-                    });
+                    String countStr = String.valueOf(stack.getCount());
+                    NanoVGHelper.drawString(countStr, itemX + 9, itemY + 12, FontLoader.bold(), 7, Color.WHITE);
                 }
 
-                // Draw Durability
                 if (durability.get() && stack.getMaxDamage() > 0) {
-                    drawItemDurability(posX, posY, scale, stack, itemX, itemY, itemSize, durFontSize);
+                    drawItemDurability(stack, itemX, itemY, itemSize, durFontSize);
                 }
 
-                // Draw Enchants
                 if (enchants.get()) {
-                    drawItemEnchants(posX, posY, scale, stack, itemX, itemY, enchantFontSize);
+                    drawItemEnchants(stack, itemX, itemY, enchantFontSize);
                 }
             }
             currentItemX += itemSize + itemSpacing;
         }
 
-        context.getMatrices().popMatrix();
-
         if (itemName.get() && !mainHandName.isEmpty()) {
             float nameY = itemY + itemSize + durHeight + 6;
-            drawNvg(posX, posY, scale, vg -> {
-                float nameWidth = NanoVGHelper.getTextWidth(mainHandName, FontLoader.regular(), 10);
-                float nameX = itemAreaX + itemsWidth / 2 - nameWidth / 2;
-                NanoVGHelper.drawString(mainHandName, nameX, nameY + 8, FontLoader.regular(), 10, COLOR_ITEM_NAME);
-            });
+            float nameX = itemAreaX + itemsWidth / 2 - cache.mainHandNameWidth / 2;
+            NanoVGHelper.drawString(mainHandName, nameX, nameY + 8, FontLoader.regular(), 10, COLOR_ITEM_NAME);
         }
     }
 
-    private void drawItemDurability(float posX, float posY, float scale, ItemStack stack, float itemX, float itemY, float itemSize, float durFontSize) {
+    private void drawItemDurability(ItemStack stack, float itemX, float itemY, float itemSize, float durFontSize) {
         float durabilityVal = stack.getMaxDamage() - stack.getDamage();
         int percent = (int) ((durabilityVal / (float) stack.getMaxDamage()) * 100F);
         Color durColor = getDurabilityColor(percent);
 
-        drawNvg(posX, posY, scale, vg -> {
-            String percentStr = String.valueOf(percent);
-            float strWidth = NanoVGHelper.getTextWidth(percentStr, FontLoader.regular(), durFontSize);
-            NanoVGHelper.drawString(percentStr, itemX + 8 - strWidth / 2, itemY + itemSize + durFontSize + 2, FontLoader.regular(), durFontSize, durColor);
-        });
+        String percentStr = String.valueOf(percent);
+        float strWidth = NanoVGHelper.getTextWidth(percentStr, FontLoader.regular(), durFontSize);
+        NanoVGHelper.drawString(percentStr, itemX + 8 - strWidth / 2, itemY + itemSize + durFontSize + 2, FontLoader.regular(), durFontSize, durColor);
     }
 
-    private void drawItemEnchants(float posX, float posY, float scale, ItemStack stack, float itemX, float itemY, float enchantFontSize) {
+    private void drawItemEnchants(ItemStack stack, float itemX, float itemY, float enchantFontSize) {
         var enchantments = stack.get(DataComponentTypes.ENCHANTMENTS);
         if (enchantments != null && !enchantments.isEmpty()) {
-            drawNvg(posX, posY, scale, vg -> {
-                float enchantY = itemY - 2;
-                for (var enchEntry : enchantments.getEnchantments()) {
-                    String shortName = getEnchantShortName(enchEntry);
-                    int level = enchantments.getLevel(enchEntry);
-                    if (shortName.isEmpty()) continue;
+            float enchantY = itemY - 2;
+            for (var enchEntry : enchantments.getEnchantments()) {
+                String shortName = getEnchantShortName(enchEntry);
+                int level = enchantments.getLevel(enchEntry);
+                if (shortName.isEmpty()) continue;
 
-                    String levelStr = level > 1 ? String.valueOf(level) : "";
-                    float shortWidth = NanoVGHelper.getTextWidth(shortName, FontLoader.regular(), enchantFontSize);
-                    NanoVGHelper.drawString(shortName, itemX + 8 - shortWidth / 2, enchantY, FontLoader.regular(), enchantFontSize, new Color(187, 187, 191, 52));
-                    if (!levelStr.isEmpty()) {
-                        NanoVGHelper.drawString(levelStr, itemX + 8 + shortWidth / 2, enchantY, FontLoader.regular(), enchantFontSize, new Color(255, 100, 100));
-                    }
-                    enchantY -= (enchantFontSize + 1);
+                String levelStr = level > 1 ? String.valueOf(level) : "";
+                float shortWidth = NanoVGHelper.getTextWidth(shortName, FontLoader.regular(), enchantFontSize);
+                NanoVGHelper.drawString(shortName, itemX + 8 - shortWidth / 2, enchantY, FontLoader.regular(), enchantFontSize, COLOR_ENCHANT_GRAY);
+                if (!levelStr.isEmpty()) {
+                    NanoVGHelper.drawString(levelStr, itemX + 8 + shortWidth / 2, enchantY, FontLoader.regular(), enchantFontSize, COLOR_ENCHANT_RED);
                 }
-            });
+                enchantY -= (enchantFontSize + 1);
+            }
         }
     }
 
     private String getEnglishItemName(ItemStack stack) {
         String key = stack.getItem().getTranslationKey();
+        String cached = ITEM_NAME_CACHE.get(key);
+        if (cached != null) return cached;
+
         String name = key.substring(key.lastIndexOf('.') + 1);
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < name.length(); i++) {
@@ -511,7 +512,9 @@ public class NameTags extends Module {
                 result.append(c);
             }
         }
-        return result.toString();
+        String finalName = result.toString();
+        ITEM_NAME_CACHE.put(key, finalName);
+        return finalName;
     }
 
     private void drawSignalIcon(float x, float y, float size, int ping, Color color) {
@@ -550,11 +553,16 @@ public class NameTags extends Module {
 
     private String getEnchantShortName(RegistryEntry<Enchantment> enchant) {
         String id = enchant.getIdAsString();
+        String cached = ENCHANT_ID_CACHE.get(id);
+        if (cached != null) return cached;
         for (Map.Entry<String, String> entry : ENCHANT_SHORT_NAMES.entrySet()) {
             if (id.contains(entry.getKey())) {
-                return entry.getValue();
+                String value = entry.getValue();
+                ENCHANT_ID_CACHE.put(id, value);
+                return value;
             }
         }
+        ENCHANT_ID_CACHE.put(id, "");
         return "";
     }
 
@@ -582,5 +590,93 @@ public class NameTags extends Module {
         if (percent >= 70) return COLOR_GREEN;
         if (percent >= 30) return COLOR_YELLOW;
         return COLOR_RED;
+    }
+
+    private TagCache updateCache(PlayerEntity player, float hp, int pingVal, int popsVal, List<ItemStack> stacks) {
+        TagCache cache = tagCaches.computeIfAbsent(player.getUuid(), uuid -> new TagCache());
+
+        String name = player.getName().getString();
+        if (!name.equals(cache.name)) {
+            cache.name = name;
+            cache.nameWidthSimple = NanoVGHelper.getTextWidth(name, FontLoader.bold(), 11);
+        }
+
+        cache.healthValue = hp;
+        int health10 = Math.round(hp * 10f);
+        if (health10 != cache.health10) {
+            cache.health10 = health10;
+            cache.healthStr = formatHealth(health10);
+            cache.healthWidthSimpleBold = NanoVGHelper.getTextWidth(cache.healthStr, FontLoader.bold(), 11);
+            cache.healthWidthInfoRegular = NanoVGHelper.getTextWidth(cache.healthStr, FontLoader.regular(), 11);
+        }
+
+        if (pingVal != cache.pingValue) {
+            cache.pingValue = pingVal;
+            cache.pingStr = pingVal + "ms";
+            cache.pingWidth = NanoVGHelper.getTextWidth(cache.pingStr, FontLoader.regular(), 10);
+        }
+
+        cache.popsValue = popsVal;
+
+        int equipmentHash = computeEquipmentHash(stacks);
+        if (equipmentHash != cache.equipmentHash) {
+            cache.equipmentHash = equipmentHash;
+            cache.maxEnchants = calculateMaxEnchants(stacks);
+        }
+
+        if (itemName.get()) {
+            ItemStack mainHand = player.getMainHandStack();
+            if (!mainHand.isEmpty()) {
+                String key = mainHand.getItem().getTranslationKey();
+                if (!key.equals(cache.mainHandKey)) {
+                    cache.mainHandKey = key;
+                    cache.mainHandName = getEnglishItemName(mainHand);
+                    cache.mainHandNameWidth = NanoVGHelper.getTextWidth(cache.mainHandName, FontLoader.regular(), 10);
+                }
+            } else {
+                cache.mainHandKey = "";
+                cache.mainHandName = "";
+                cache.mainHandNameWidth = 0;
+            }
+        } else {
+            cache.mainHandKey = "";
+            cache.mainHandName = "";
+            cache.mainHandNameWidth = 0;
+        }
+
+        return cache;
+    }
+
+    private int computeEquipmentHash(List<ItemStack> stacks) {
+        int hash = 1;
+        for (ItemStack stack : stacks) {
+            hash = 31 * hash + stack.hashCode();
+        }
+        return hash;
+    }
+
+    private String formatHealth(int health10) {
+        int whole = health10 / 10;
+        int frac = Math.abs(health10 % 10);
+        return whole + "." + frac;
+    }
+
+    private static final class TagCache {
+        private String name = "";
+        private float nameWidthSimple;
+        private float healthValue;
+        private int health10 = Integer.MIN_VALUE;
+        private String healthStr = "0.0";
+        private float healthWidthSimpleBold;
+        private float healthWidthInfoRegular;
+        private int pingValue = Integer.MIN_VALUE;
+        private String pingStr = "";
+        private float pingWidth;
+        private int popsValue;
+        private int equipmentHash = Integer.MIN_VALUE;
+        private int maxEnchants;
+        private String mainHandKey = "";
+        private String mainHandName = "";
+        private float mainHandNameWidth;
     }
 }

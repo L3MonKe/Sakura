@@ -28,7 +28,7 @@ public abstract class MixinClientConnection {
     @Shadow
     protected abstract void sendImmediately(Packet<?> packet, @Nullable ChannelFutureListener listener, boolean flush);
 
-    @Redirect(method = {"send(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/network/ClientConnection;sendImmediately(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V"))
+    @Redirect(method = "send(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/ClientConnection;sendImmediately(Lnet/minecraft/network/packet/Packet;Lio/netty/channel/ChannelFutureListener;Z)V"))
     private void onSend(ClientConnection instance, Packet<?> packet, ChannelFutureListener listener, boolean flush) {
         if (PacketUtil.bypassPackets.contains(packet)) {
             PacketUtil.bypassPackets.remove(packet);
@@ -43,7 +43,7 @@ public abstract class MixinClientConnection {
     }
 
     @Inject(method = "handlePacket", at = @At("HEAD"), cancellable = true, require = 1)
-    private static void receivePacketEvent(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
+    private static void hookHandlePacket(Packet<?> packet, PacketListener listener, CallbackInfo ci) {
         if (packet instanceof BundleS2CPacket bundleS2CPacket) {
             ci.cancel();
             for (Packet<?> packetInBundle : bundleS2CPacket.getPackets()) {
@@ -55,7 +55,7 @@ public abstract class MixinClientConnection {
             return;
         }
 
-        final PacketEvent event = new PacketEvent(EventType.RECEIVE, packet);
+        PacketEvent event = new PacketEvent(EventType.RECEIVE, packet);
         Sakura.EVENT_BUS.post(event);
         if (event.isCancelled()) {
             ci.cancel();
@@ -64,7 +64,6 @@ public abstract class MixinClientConnection {
 
         if (InboundNetworkBlockage.get().isBlocked(packet)) {
             ci.cancel();
-            return;
         }
     }
 }
