@@ -74,21 +74,18 @@ public class NoSlow extends Module {
     private void jump(SlowdownEvent event) {
         if (onGroundTick == 1 && mc.player.getItemUseTimeLeft() <= 30) {
             event.setSlowdown(false);
-            if (!mc.player.isSprinting()) mc.player.setSprinting(true);
         }
     }
 
     private void grim50(SlowdownEvent event) {
         if (mc.player.getItemUseTimeLeft() % 2 == 0 && mc.player.getItemUseTimeLeft() <= 30) {
             event.setSlowdown(false);
-            if (!mc.player.isSprinting()) mc.player.setSprinting(true);
         }
     }
 
     private void grim33(SlowdownEvent event) {
         if (mc.player.getItemUseTimeLeft() % 3 == 0 && (!checkFood() || mc.player.getItemUseTimeLeft() <= 30)) {
             event.setSlowdown(false);
-            if (!mc.player.isSprinting()) mc.player.setSprinting(true);
         }
     }
 
@@ -101,11 +98,6 @@ public class NoSlow extends Module {
     private boolean checkFood() {
         ItemStack mainHandItem = mc.player.getMainHandStack();
         ItemStack offhandItem = mc.player.getOffHandStack();
-        return mainHandItem.isOf(Items.GOLDEN_APPLE)
-                || offhandItem.isOf(Items.GOLDEN_APPLE)
-                || mainHandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE)
-                || offhandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE)
-                || mainHandItem.isOf(Items.POTION)
-                || offhandItem.isOf(Items.POTION);
+        return mainHandItem.isOf(Items.GOLDEN_APPLE) || offhandItem.isOf(Items.GOLDEN_APPLE) || mainHandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE) || offhandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE) || mainHandItem.isOf(Items.POTION) || offhandItem.isOf(Items.POTION);
     }
 }
