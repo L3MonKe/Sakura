@@ -3,11 +3,7 @@ package dev.sakura.client.module.impl.render;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.entity.SwingSpeedEvent;
-import dev.sakura.client.event.impl.packet.PacketEvent;
-import dev.sakura.client.event.impl.player.PlayerTickEvent;
 import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
-import dev.sakura.client.event.type.EventType;
-import dev.sakura.client.interfaces.IHeldItemRenderer;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.KillAura;
@@ -20,396 +16,187 @@ import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.item.ItemRenderState;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.CrossbowItem;
 import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
-import org.jetbrains.annotations.NotNull;
 
 public class Animations extends Module {
     public Animations() {
-        super("Animations", "格挡动画", Category.Render);
+        super("Animations", "物品动画", Category.Render);
     }
 
-    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Default);
-    private final BoolValue onlySword = new BoolValue("Only Sword", "仅持剑", true);
-    private final BoolValue noOffhand = new BoolValue("No Offhand", "隐藏副手", false);
-    public final BoolValue oldAnimationsM = new BoolValue("Disable Swap Main", "禁用主手切换动画", true);
-    public final BoolValue oldAnimationsOff = new BoolValue("Disable Swap Off", "禁用副手切换动画", true);
-    private final BoolValue swingSpeedConfig = new BoolValue("Swing Speed", "挥手速度", false);
-    private final NumberValue<Integer> swingFactorConfig = new NumberValue<>("Swing Factor", "挥手因子", 6, 1, 20, 1, swingSpeedConfig::get);
-    private final BoolValue selfOnlyConfig = new BoolValue("Self Only", "仅自己", true);
+    private final BoolValue onlyWeapon = new BoolValue("OnlyWeapon", "仅武器", true);
+    private final BoolValue rightClick = new BoolValue("RightClick", "右键触发", true);
 
-    private ViewModel viewModel;
-    private KillAura killAura;
+    private final BoolValue mainHand = new BoolValue("MainHand", "主手", false);
+    private final NumberValue<Double> mainHandItemScale = new NumberValue<>("ItemScale", "缩放(Z)", 0.0, -5.0, 5.0, 0.05, mainHand::get);
+    private final NumberValue<Double> mainHandX = new NumberValue<>("X", "X", 0.0, -5.0, 5.0, 0.05, mainHand::get);
+    private final NumberValue<Double> mainHandY = new NumberValue<>("Y", "Y", 0.0, -5.0, 5.0, 0.05, mainHand::get);
+    private final NumberValue<Double> mainHandPositiveRotationX = new NumberValue<>("PositiveRotationX", "旋转X(+)", 0.0, -50.0, 50.0, 1.0, mainHand::get);
+    private final NumberValue<Double> mainHandPositiveRotationY = new NumberValue<>("PositiveRotationY", "旋转Y(+)", 0.0, -50.0, 50.0, 1.0, mainHand::get);
+    private final NumberValue<Double> mainHandPositiveRotationZ = new NumberValue<>("PositiveRotationZ", "旋转Z(+)", 0.0, -50.0, 50.0, 1.0, mainHand::get);
 
-    public boolean flip;
+    private final BoolValue offHand = new BoolValue("OffHand", "副手", false);
+    private final NumberValue<Double> offHandItemScale = new NumberValue<>("ItemScale", "缩放(Z)", 0.0, -5.0, 5.0, 0.05, offHand::get);
+    private final NumberValue<Double> offHandX = new NumberValue<>("X", "X", 0.0, -1.0, 1.0, 0.01, offHand::get);
+    private final NumberValue<Double> offHandY = new NumberValue<>("Y", "Y", 0.0, -1.0, 1.0, 0.01, offHand::get);
+    private final NumberValue<Double> offHandPositiveRotationX = new NumberValue<>("PositiveRotationX", "旋转X(+)", 0.0, -50.0, 50.0, 1.0, offHand::get);
+    private final NumberValue<Double> offHandPositiveRotationY = new NumberValue<>("PositiveRotationY", "旋转Y(+)", 0.0, -50.0, 50.0, 1.0, offHand::get);
+    private final NumberValue<Double> offHandPositiveRotationZ = new NumberValue<>("PositiveRotationZ", "旋转Z(+)", 0.0, -50.0, 50.0, 1.0, offHand::get);
 
-    private enum Mode {
-        Normal, Default, One, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten, Eleven, Twelve, Thirteen, Fourteen
+    private final BoolValue blockingParams = new BoolValue("BlockingParams", "格挡参数", false);
+    private final NumberValue<Double> blockingItemScale = new NumberValue<>("BlockingItemScale", "格挡-缩放(Z)", 0.0, -5.0, 5.0, 0.05, blockingParams::get);
+    private final NumberValue<Double> blockingX = new NumberValue<>("BlockingX", "格挡-X", 0.0, -5.0, 5.0, 0.05, blockingParams::get);
+    private final NumberValue<Double> blockingY = new NumberValue<>("BlockingY", "格挡-Y", 0.0, -5.0, 5.0, 0.05, blockingParams::get);
+    private final NumberValue<Double> blockingRotationX = new NumberValue<>("BlockingRotationX", "格挡-旋转X", 0.0, -50.0, 50.0, 1.0, blockingParams::get);
+    private final NumberValue<Double> blockingRotationY = new NumberValue<>("BlockingRotationY", "格挡-旋转Y", 0.0, -50.0, 50.0, 1.0, blockingParams::get);
+    private final NumberValue<Double> blockingRotationZ = new NumberValue<>("BlockingRotationZ", "格挡-旋转Z", 0.0, -50.0, 50.0, 1.0, blockingParams::get);
+
+    private final EnumValue<SwingMode> swingMode = new EnumValue<>("SwingMode", "挥手模式", SwingMode.VANILLA);
+    private final NumberValue<Integer> swingDuration = new NumberValue<>("SwingDuration", "挥手时长", 6, 1, 20, 1);
+
+    private final EnumValue<BlockingAnimation> blockingAnimation = new EnumValue<>("BlockingAnimation", "格挡动画", BlockingAnimation.V1_7);
+    private final NumberValue<Double> oneSevenTranslateY = new NumberValue<>("Y", "1.7-Y", 0.1, 0.05, 0.3, 0.01, () -> blockingAnimation.is(BlockingAnimation.V1_7));
+    private final NumberValue<Double> oneSevenSwingScale = new NumberValue<>("SwingScale", "1.7-挥手缩放", 0.9, 0.1, 1.0, 0.01, () -> blockingAnimation.is(BlockingAnimation.V1_7));
+
+    private final NumberValue<Double> spinSpeed = new NumberValue<>("SpinSpeed", "Spin-速度", 1.0, 0.1, 20.0, 0.1, () -> blockingAnimation.is(BlockingAnimation.SPIN));
+    private final NumberValue<Double> spinRange = new NumberValue<>("SpinRange", "Spin-范围", 1.0, 0.0, 5.0, 0.1, () -> blockingAnimation.is(BlockingAnimation.SPIN));
+    private final NumberValue<Double> spinX = new NumberValue<>("SpinX", "Spin-旋转X", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.SPIN));
+    private final NumberValue<Double> spinY = new NumberValue<>("SpinY", "Spin-旋转Y", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.SPIN));
+    private final NumberValue<Double> spinZ = new NumberValue<>("SpinZ", "Spin-旋转Z", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.SPIN));
+
+    private enum BlockingAnimation {
+        V1_7,
+        PUSHDOWN,
+        EXHIBITION,
+        SPIN
     }
 
-    private ViewModel getViewModel() {
-        if (viewModel == null) viewModel = Sakura.MODULES.getModule(ViewModel.class);
-        return viewModel;
+    private enum SwingMode {
+        VANILLA,
+        CURRENT
     }
 
-    private KillAura getKillAura() {
-        if (killAura == null) killAura = Sakura.MODULES.getModule(KillAura.class);
-        return killAura;
+    private boolean isWeapon(ItemStack stack) {
+        return stack.isIn(ItemTags.SWORDS) || stack.isIn(ItemTags.AXES);
     }
 
     public boolean shouldAnimate() {
-        if (mc.player.isUsingItem()) return false;
-        if (onlySword.get() && !(mc.player.getMainHandStack().isIn(ItemTags.SWORDS))) return false;
-        KillAura ka = getKillAura();
-        if (ka.isEnabled() && ka.getCurrentTarget() != null && ka.isAutoBlock())
-            return true;
-        return false;
+        if (!isEnabled() || nullCheck()) return false;
+
+        return mc.player == null || !onlyWeapon.get() || isWeapon(mc.player.getMainHandStack());
     }
 
-    @EventHandler
-    public void onTick(PlayerTickEvent event) {
-        if (nullCheck()) return;
-
-        if (oldAnimationsM.get() && ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).getEquippedProgressMainHand() <= 1f) {
-            ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).setEquippedProgressMainHand(1f);
-            ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).setItemStackMainHand(mc.player.getMainHandStack());
+    private boolean isBlocking() {
+        if (rightClick.get()) {
+            KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+            if (killAura.isEnabled() && killAura.isAutoBlock() && killAura.getCurrentTarget() != null) return true;
+            if (mc.player != null) {
+                return mc.options.useKey.isPressed() || mc.player.isUsingItem();
+            }
         }
 
-        if (oldAnimationsOff.get() && ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).getEquippedProgressOffHand() <= 1f) {
-            ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).setEquippedProgressOffHand(1f);
-            ((IHeldItemRenderer) mc.getEntityRenderDispatcher().getHeldItemRenderer()).setItemStackOffHand(mc.player.getOffHandStack());
-        }
-    }
-
-    @EventHandler
-    public void onPacketSend(PacketEvent event) {
-        if (event.getType() == EventType.SEND && event.getPacket() instanceof HandSwingC2SPacket) {
-            flip = !flip;
-        }
+        return true;
     }
 
     @EventHandler
     public void onSwingSpeed(SwingSpeedEvent event) {
-        if (swingSpeedConfig.get()) {
-            event.setCancelled(true);
-            event.setSwingSpeed(swingFactorConfig.get());
-            event.setSelfOnly(selfOnlyConfig.get());
-        }
+        if (!isEnabled()) return;
+
+        event.setCancelled(true);
+        event.setSwingSpeed(swingDuration.get());
+        event.setSelfOnly(true);
     }
-
-    private void renderSwordAnimation(MatrixStack matrices, float f, float swingProgress, float equipProgress, Arm arm) {
-        ViewModel vm = getViewModel();
-        if (arm == Arm.LEFT && (mode.get() == Mode.Eleven || mode.get() == Mode.Ten || mode.get() == Mode.Nine || mode.get() == Mode.Three || mode.get() == Mode.Thirteen || mode.get() == Mode.Fourteen)) {
-            applyEquipOffset(matrices, arm, equipProgress);
-            matrices.translate(-vm.mainX.get(), vm.mainY.get(), vm.mainZ.get());
-            applySwingOffset(matrices, arm, swingProgress);
-            matrices.translate(vm.mainX.get(), -vm.mainY.get(), -vm.mainZ.get());
-            return;
-        }
-
-
-        switch (mode.get()) {
-            case Default -> {
-                applyEquipOffset(matrices, arm, equipProgress);
-                translateToViewModelOff(matrices);
-                applySwingOffset(matrices, arm, swingProgress);
-                translateBacklOff(matrices);
-            }
-            case One -> {
-                float n = -0.4F * MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                applyEquipOffset(matrices, arm, n);
-                int i = arm == Arm.RIGHT ? 1 : -1;
-                translateToViewModel(matrices);
-                float f1 = MathHelper.sin(swingProgress * swingProgress * 3.1415927F);
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * (45.0F + f1 * -20.0F)));
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * g * -20.0F));
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(g * 0.0F));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * -45.0F));
-                translateBack(matrices);
-            }
-            case Two ->
-                    applyEquipOffset(matrices, arm, 0.2F * MathHelper.sin(MathHelper.sqrt(swingProgress) * 6.2831855F));
-            case Three -> {
-                float n = -0.4F * MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                applyEquipOffset(matrices, arm, n);
-                int i = arm == Arm.RIGHT ? 1 : -1;
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * (45.0F + f * -20.0F)));
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * g * -70.0F));
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-70f));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * -45.0F));
-                translateBack(matrices);
-            }
-            case Four -> {
-                applyEquipOffset(matrices, arm, 0);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(swingProgress > 0 ? -MathHelper.sin(swingProgress * 13f) * 37f : 0));
-                translateBack(matrices);
-            }
-            case Five -> {
-                applyEquipOffset(matrices, arm, 0);
-                int i = arm == Arm.RIGHT ? 1 : -1;
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * g * -20.0F));
-                translateBack(matrices);
-            }
-            case Six -> {
-                applyEquipOffset(matrices, arm, equipProgress);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(swingProgress * (flip ? 360.0F : -360)));
-                translateBack(matrices);
-            }
-            case Eight -> {
-                applyEquipOffset(matrices, arm, equipProgress);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(swingProgress * -360));
-                translateBack(matrices);
-            }
-            case Seven -> {
-                applyEquipOffset(matrices, arm, equipProgress);
-                float a = -MathHelper.sin(swingProgress * 3f) / 2f + 1f;
-                matrices.scale(a, a, a);
-            }
-            case Nine -> {
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                applyEquipOffset(matrices, arm, 0);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(50f));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-30f * (1f - g) - 30f));
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(110f));
-                translateBack(matrices);
-            }
-            case Ten -> {
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                matrices.translate(0, 0, 0);
-                applyEquipOffset(matrices, arm, 0);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(50f));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-60f * g - 50));
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(110f));
-                translateBack(matrices);
-            }
-            case Eleven -> {
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                applyEquipOffset(matrices, arm, 0);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(50f));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-60f));
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(110f + 20f * g));
-                translateBack(matrices);
-            }
-            case Twelve -> {
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                applyEquipOffset(matrices, arm, 0);
-                matrices.translate(0, 0, -g / 4f);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-120f));
-                translateBack(matrices);
-            }
-            case Thirteen -> {
-                float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                applyEquipOffset(matrices, arm, 0);
-                translateToViewModel(matrices);
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-MathHelper.sin(swingProgress * 3f) * 60f));
-                matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(-60f * g));
-                translateBack(matrices);
-            }
-            case Fourteen -> {
-                if (swingProgress > 0) {
-                    float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
-                    matrices.translate(0.56F, equipProgress * -0.2f - 0.5F, -0.7F);
-
-                    translateToViewModel(matrices);
-                    matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(45));
-                    matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(g * -85.0F));
-
-                    if (vm.isEnabled())
-                        matrices.translate(-0.1F * vm.scaleMainX.get(), 0.28F * vm.scaleMainX.get(), 0.2F * vm.scaleMainX.get());
-                    else
-                        matrices.translate(-0.1F, 0.28F, 0.2F);
-
-                    matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-85.0F));
-                    translateBack(matrices);
-                } else {
-                    float n = -0.4f * MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
-                    float m = 0.2f * MathHelper.sin(MathHelper.sqrt(swingProgress) * ((float) Math.PI * 2));
-                    float f1 = -0.2f * MathHelper.sin(swingProgress * (float) Math.PI);
-                    matrices.translate(n, m, f1);
-                    applyEquipOffset(matrices, arm, equipProgress);
-                    applySwingOffset(matrices, arm, swingProgress);
-                }
-            }
-        }
-    }
-
 
     public void renderFirstPersonItemCustom(AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
-        if (noOffhand.get() && hand == Hand.OFF_HAND && shouldAnimate()) return;
-        if (!player.isUsingSpyglass()) {
-            boolean bl = hand == Hand.MAIN_HAND;
-            Arm arm = bl ? player.getMainArm() : player.getMainArm().getOpposite();
-            matrices.push();
+        if (hand != Hand.MAIN_HAND) return;
+        if (item.isEmpty()) return;
+        Arm arm = player.getMainArm();
 
-            boolean bl2;
-            float f = 0;
-            float g;
-            float h;
-            float j;
-            if (item.isOf(Items.CROSSBOW)) {
-                bl2 = CrossbowItem.isCharged(item);
-                boolean bl3 = arm == Arm.RIGHT;
-                int i = bl3 ? 1 : -1;
-                if (player.isUsingItem() && player.getItemUseTimeLeft() > 0 && player.getActiveHand() == hand) {
-                    applyEquipOffset(matrices, arm, equipProgress);
-                    matrices.translate((float) i * -0.4785682F, -0.094387F, 0.05731531F);
-                    matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-11.935F));
-                    matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * 65.3F));
-                    matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * -9.785F));
-                    f = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickProgress + 1.0F);
-                    g = f / (float) CrossbowItem.getPullTime(item, mc.player);
-                    if (g > 1.0F) {
-                        g = 1.0F;
-                    }
-
-                    if (g > 0.1F) {
-                        h = MathHelper.sin((f - 0.1F) * 1.3F);
-                        j = g - 0.1F;
-                        float k = h * j;
-                        matrices.translate(k * 0.0F, k * 0.004F, k * 0.0F);
-                    }
-
-                    matrices.translate(g * 0.0F, g * 0.0F, g * 0.04F);
-                    matrices.scale(1.0F, 1.0F, 1.0F + g * 0.2F);
-                    matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees((float) i * 45.0F));
-                } else {
-                    f = -0.4F * MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
-                    g = 0.2F * MathHelper.sin(MathHelper.sqrt(swingProgress) * 6.2831855F);
-                    h = -0.2F * MathHelper.sin(swingProgress * 3.1415927F);
-                    matrices.translate((float) i * f, g, h);
-                    applyEquipOffset(matrices, arm, equipProgress);
-                    applySwingOffset(matrices, arm, swingProgress);
-                    if (bl2 && swingProgress < 0.001F && bl) {
-                        matrices.translate((float) i * -0.641864F, 0.0F, 0.0F);
-                        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * 10.0F));
-                    }
-                }
-
-                HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
-                Sakura.EVENT_BUS.post(event);
-                renderItem(player, item, bl3 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, matrices, orderedRenderCommandQueue, light);
-            } else {
-                bl2 = arm == Arm.RIGHT;
-                int l;
-                float m = 0;
-                if (player.isUsingItem() && player.getItemUseTimeLeft() > 0 && player.getActiveHand() == hand) {
-                    l = bl2 ? 1 : -1;
-                    switch (item.getUseAction()) {
-                        case NONE, BLOCK -> applyEquipOffset(matrices, arm, equipProgress);
-                        case EAT, DRINK -> {
-                            applyEatOrDrinkTransformationCustom(matrices, tickProgress, arm, item);
-                            applyEquipOffset(matrices, arm, equipProgress);
-                        }
-                        case BOW -> {
-                            applyEquipOffset(matrices, arm, equipProgress);
-                            matrices.translate((float) l * -0.2785682F, 0.18344387F, 0.15731531F);
-                            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-13.935F));
-                            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) l * 35.3F));
-                            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) l * -9.785F));
-                            m = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickProgress + 1.0F);
-                            f = m / 20.0F;
-                            f = (f * f + f * 2.0F) / 3.0F;
-                            if (f > 1.0F) {
-                                f = 1.0F;
-                            }
-                            if (f > 0.1F) {
-                                g = MathHelper.sin((m - 0.1F) * 1.3F);
-                                h = f - 0.1F;
-                                j = g * h;
-                                matrices.translate(j * 0.0F, j * 0.004F, j * 0.0F);
-                            }
-                            matrices.translate(f * 0.0F, f * 0.0F, f * 0.04F);
-                            matrices.scale(1.0F, 1.0F, 1.0F + f * 0.2F);
-                            matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees((float) l * 45.0F));
-                        }
-                        case SPEAR -> {
-                            applyEquipOffset(matrices, arm, equipProgress);
-                            matrices.translate((float) l * -0.5F, 0.7F, 0.1F);
-                            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-55.0F));
-                            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) l * 35.3F));
-                            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) l * -9.785F));
-                            m = (float) item.getMaxUseTime(mc.player) - ((float) mc.player.getItemUseTimeLeft() - tickProgress + 1.0F);
-                            f = m / 10.0F;
-                            if (f > 1.0F) {
-                                f = 1.0F;
-                            }
-                            if (f > 0.1F) {
-                                g = MathHelper.sin((m - 0.1F) * 1.3F);
-                                h = f - 0.1F;
-                                j = g * h;
-                                matrices.translate(j * 0.0F, j * 0.004F, j * 0.0F);
-                            }
-                            matrices.translate(0.0F, 0.0F, f * 0.2F);
-                            matrices.scale(1.0F, 1.0F, 1.0F + f * 0.2F);
-                            matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees((float) l * 45.0F));
-                        }
-                        case BRUSH -> applyBrushTransformation(matrices, tickProgress, arm, item, equipProgress);
-                    }
-                } else if (player.isUsingRiptide()) {
-                    applyEquipOffset(matrices, arm, equipProgress);
-                    l = bl2 ? 1 : -1;
-                    matrices.translate((float) l * -0.4F, 0.8F, 0.3F);
-                    matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) l * 65.0F));
-                    matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) l * -85.0F));
-                } else {
-                    renderSwordAnimation(matrices, f, swingProgress, equipProgress, arm);
-                }
-
-                HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
-                Sakura.EVENT_BUS.post(event);
-                renderItem(player, item, bl2 ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, matrices, orderedRenderCommandQueue, light);
-            }
-            matrices.pop();
-        }
-    }
-
-    private void applyBrushTransformation(MatrixStack matrices, float tickDelta, Arm arm, @NotNull ItemStack stack, float equipProgress) {
+        matrices.push();
+        applyViewModelTransformations(matrices, arm);
         applyEquipOffset(matrices, arm, equipProgress);
-        float f = (float) mc.player.getItemUseTimeLeft() - tickDelta + 1.0F;
-        float g = 1.0F - f / (float) stack.getMaxUseTime(mc.player);
-        float m = -15.0F + 75.0F * MathHelper.cos(g * 45.0F * 3.1415927F);
+        
+        boolean blocking = isBlocking();
+        
+        if (blockingAnimation.is(BlockingAnimation.SPIN)) {
+            KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+            if (killAura.isEnabled() && killAura.getCurrentTarget() != null) {
+                blocking = true;
+            }
+        }
 
-        if (arm != Arm.RIGHT) {
-            matrices.translate(0.1, 0.83, 0.35);
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-80.0F));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(-90.0F));
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(m));
-            matrices.translate(-0.3, 0.22, 0.35);
+        if (blocking) {
+            applyBlockingAnimation(matrices, arm, equipProgress, swingProgress);
         } else {
-            matrices.translate(-0.25, 0.22, 0.35);
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-80.0F));
-            matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(90.0F));
-            matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(0.0F));
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(m));
+            if (swingMode.is(SwingMode.VANILLA)) {
+                applySwingOffset(matrices, arm, swingProgress);
+            } else {
+                applyCurrentSwingOffset(matrices, arm, swingProgress);
+            }
+        }
+
+        HeldItemRendererEvent event = new HeldItemRendererEvent(hand, item, equipProgress, matrices);
+        Sakura.EVENT_BUS.post(event);
+        renderItem(player, item, arm == Arm.RIGHT ? ItemDisplayContext.FIRST_PERSON_RIGHT_HAND : ItemDisplayContext.FIRST_PERSON_LEFT_HAND, matrices, orderedRenderCommandQueue, light);
+        matrices.pop();
+    }
+
+    private void applyViewModelTransformations(MatrixStack matrices, Arm arm) {
+        if (arm == Arm.RIGHT) {
+            if (isBlocking() && blockingParams.get()) {
+                applyTransformations(
+                        matrices,
+                        blockingX.get(),
+                        blockingY.get(),
+                        blockingItemScale.get(),
+                        blockingRotationX.get(),
+                        blockingRotationY.get(),
+                        blockingRotationZ.get()
+                );
+            } else if (mainHand.get()) {
+                applyTransformations(
+                        matrices,
+                        mainHandX.get(),
+                        mainHandY.get(),
+                        mainHandItemScale.get(),
+                        mainHandPositiveRotationX.get(),
+                        mainHandPositiveRotationY.get(),
+                        mainHandPositiveRotationZ.get()
+                );
+            }
+        } else {
+            if (offHand.get()) {
+                applyTransformations(
+                        matrices,
+                        offHandX.get(),
+                        offHandY.get(),
+                        offHandItemScale.get(),
+                        offHandPositiveRotationX.get(),
+                        offHandPositiveRotationY.get(),
+                        offHandPositiveRotationZ.get()
+                );
+            }
         }
     }
 
-    private void applyEquipOffset(@NotNull MatrixStack matrices, Arm arm, float equipProgress) {
+    private void applyTransformations(MatrixStack matrices, double translateX, double translateY, double translateZ, double rotateX, double rotateY, double rotateZ) {
+        matrices.translate(translateX, translateY, translateZ);
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees((float) rotateX));
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) rotateY));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) rotateZ));
+    }
+
+    private void applyEquipOffset(MatrixStack matrices, Arm arm, float equipProgress) {
         int i = arm == Arm.RIGHT ? 1 : -1;
         matrices.translate((float) i * 0.56F, -0.52F + equipProgress * -0.6F, -0.72F);
     }
 
-    private void applySwingOffset(@NotNull MatrixStack matrices, Arm arm, float swingProgress) {
+    private void applySwingOffset(MatrixStack matrices, Arm arm, float swingProgress) {
         int i = arm == Arm.RIGHT ? 1 : -1;
         float f = MathHelper.sin(swingProgress * swingProgress * 3.1415927F);
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * (45.0F + f * -20.0F)));
@@ -419,53 +206,68 @@ public class Animations extends Module {
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * -45.0F));
     }
 
-    public void renderItem(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
-        if (!stack.isEmpty()) {
-            ItemRenderState itemRenderState = new ItemRenderState();
-            mc.getItemModelManager().clearAndUpdate(itemRenderState, stack, renderMode, entity.getEntityWorld(), entity, entity.getId() + renderMode.ordinal());
-            itemRenderState.render(matrices, orderedRenderCommandQueue, light, OverlayTexture.DEFAULT_UV, 0);
-        }
-    }
-
-    private void applyEatOrDrinkTransformationCustom(MatrixStack matrices, float tickDelta, Arm arm, @NotNull ItemStack stack) {
-        float f = (float) mc.player.getItemUseTimeLeft() - tickDelta + 1.0F;
-        float g = f / (float) stack.getMaxUseTime(mc.player);
-        float h;
-        if (g < 0.8F) {
-            h = MathHelper.abs(MathHelper.cos(f / 4.0F * 3.1415927F) * 0.005F);
-            matrices.translate(0.0F, h, 0.0F);
-        }
-        h = 1.0F - (float) Math.pow(g, 27.0);
+    private void applyCurrentSwingOffset(MatrixStack matrices, Arm arm, float swingProgress) {
         int i = arm == Arm.RIGHT ? 1 : -1;
-
-        ViewModel vm = getViewModel();
-        matrices.translate(h * 0.6F * (float) i * vm.eatX.get(), h * -0.5F * vm.eatY.get(), h * 0.0F);
-        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * h * 90.0F));
-        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(h * 10.0F));
-        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * h * 30.0F));
+        float f = MathHelper.sin(swingProgress * swingProgress * 3.1415927F);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * (45.0F + f * -20.0F)));
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * 3.1415927F);
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) i * g * -20.0F));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(g * -80.0F));
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) i * -45.0F));
     }
 
-    private void translateToViewModel(MatrixStack matrices) {
-        ViewModel vm = getViewModel();
-        if (vm.isEnabled())
-            matrices.translate(vm.mainX.get(), vm.mainY.get(), vm.mainZ.get());
+    private void applyBlockingAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        if (blockingAnimation.is(BlockingAnimation.V1_7)) {
+            oneSevenTransform(matrices, arm, equipProgress, swingProgress);
+        } else if (blockingAnimation.is(BlockingAnimation.PUSHDOWN)) {
+            pushdownTransform(matrices, arm, equipProgress, swingProgress);
+        } else if (blockingAnimation.is(BlockingAnimation.EXHIBITION)) {
+            exhibitionTransform(matrices, arm, equipProgress, swingProgress);
+        } else if (blockingAnimation.is(BlockingAnimation.SPIN)) {
+            spinTransform(matrices, arm, equipProgress, swingProgress);
+        }
     }
 
-    private void translateToViewModelOff(MatrixStack matrices) {
-        ViewModel vm = getViewModel();
-        if (vm.isEnabled())
-            matrices.translate(-vm.mainX.get(), vm.mainY.get(), vm.mainZ.get());
+    private void oneSevenTransform(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(arm == Arm.RIGHT ? -0.1F : 0.1F, oneSevenTranslateY.get().floatValue(), 0.0F);
+        applySwingOffset(matrices, arm, swingProgress * oneSevenSwingScale.get().floatValue());
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-102.25F));
+        matrices.multiply((arm == Arm.RIGHT ? RotationAxis.POSITIVE_Y : RotationAxis.NEGATIVE_Y).rotationDegrees(13.365F));
+        matrices.multiply((arm == Arm.RIGHT ? RotationAxis.POSITIVE_Z : RotationAxis.NEGATIVE_Z).rotationDegrees(78.05F));
     }
 
-    private void translateBack(MatrixStack matrices) {
-        ViewModel vm = getViewModel();
-        if (vm.isEnabled())
-            matrices.translate(-vm.mainX.get(), -vm.mainY.get(), -vm.mainZ.get());
+    private void pushdownTransform(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(arm == Arm.RIGHT ? -0.1F : 0.1F, 0.1F, 0.0F);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((arm == Arm.RIGHT ? 1 : -1) * g * 10.0F));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(g * -35.0F));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-102.25F));
+        matrices.multiply((arm == Arm.RIGHT ? RotationAxis.POSITIVE_Y : RotationAxis.NEGATIVE_Y).rotationDegrees(13.365F));
+        matrices.multiply((arm == Arm.RIGHT ? RotationAxis.POSITIVE_Z : RotationAxis.NEGATIVE_Z).rotationDegrees(78.05F));
     }
 
-    private void translateBacklOff(MatrixStack matrices) {
-        ViewModel vm = getViewModel();
-        if (vm.isEnabled())
-            matrices.translate(vm.mainX.get(), -vm.mainY.get(), -vm.mainZ.get());
+    private void exhibitionTransform(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(arm == Arm.RIGHT ? -0.1F : 0.1F, 0.15F, 0.0F);
+        applySwingOffset(matrices, arm, swingProgress);
+        matrices.translate(arm == Arm.RIGHT ? -0.5F : 0.5F, 0.2F, 0.0F);
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(arm == Arm.RIGHT ? 30.0F : -30.0F));
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-80.0F));
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(arm == Arm.RIGHT ? 60.0F : -60.0F));
+    }
+
+    private void spinTransform(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0, 0.2, -spinRange.get());
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) (System.currentTimeMillis() * spinSpeed.get() % 360)));
+        matrices.translate(0, 0, spinRange.get());
+        matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(spinX.get().floatValue()));
+        matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(spinY.get().floatValue()));
+        matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(spinZ.get().floatValue()));
+    }
+
+    private void renderItem(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
+        if (stack.isEmpty()) return;
+        ItemRenderState itemRenderState = new ItemRenderState();
+        mc.getItemModelManager().clearAndUpdate(itemRenderState, stack, renderMode, entity.getEntityWorld(), entity, entity.getId() + renderMode.ordinal());
+        itemRenderState.render(matrices, orderedRenderCommandQueue, light, OverlayTexture.DEFAULT_UV, 0);
     }
 }

@@ -17,6 +17,7 @@
     "accessor.IGameRenderer",
     "accessor.IItemRenderState",
     "accessor.ILayerRenderState",
+    "accessor.ILivingEntity",
     "accessor.IMinecraftClient",
     "accessor.IMountScreenHandler",
     "accessor.IPlayerInteractEntityC2SPacket",

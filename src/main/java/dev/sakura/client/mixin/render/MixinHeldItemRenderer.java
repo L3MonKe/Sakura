@@ -164,25 +164,7 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
     private void redirectApplyEatOrDrinkTransformation(HeldItemRenderer instance, MatrixStack matrices, float tickDelta, Arm arm, ItemStack item, PlayerEntity player) {
         Animations animations = Sakura.MODULES.getModule(Animations.class);
         if (animations != null && animations.isEnabled() && animations.shouldAnimate() && cachedHand == Hand.MAIN_HAND) {
-            if (cachedSwingProgress != 0.0f) {
-                float side = cachedHand == Hand.MAIN_HAND ? 1.0f : -1.0f;
-                matrices.translate(side * 0.56f, -0.52f + cachedEquipProgress * -0.6f, -0.72f);
-                float f2 = MathHelper.sin(cachedSwingProgress * cachedSwingProgress * (float) Math.PI);
-                float f1 = MathHelper.sin(MathHelper.sqrt(cachedSwingProgress) * (float) Math.PI);
-                matrices.multiply(RotationAxis.NEGATIVE_Y.rotationDegrees(f2 * 20.0f));
-                matrices.multiply(RotationAxis.NEGATIVE_Z.rotationDegrees(f2 * 20.0f));
-                matrices.multiply(RotationAxis.NEGATIVE_X.rotationDegrees(f2 * 80.0f));
-                matrices.translate(-0.8f, 0.2f, 0f);
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(30.0f));
-                matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(-80.0f));
-                matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(60.0f));
-                matrices.scale(1.4f, 1.4f, 1.4f);
-                return;
-            }
-
             applyEatOrDrinkTransformation(matrices, tickDelta, arm, item, player);
-            applyEquipOffset(matrices, arm, cachedEquipProgress);
-            doSwingAnimation(matrices, cachedSwingProgress);
             return;
         }
 
