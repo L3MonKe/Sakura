@@ -29,8 +29,8 @@ public class AutoThrow extends Module {
         super("AutoThrow", "自动投掷", Category.Combat);
     }
 
-    private final NumberValue<Integer> minRange = new NumberValue<>("Min Range", "最小距离", 3, 0, 6, 1);
-    private final NumberValue<Integer> maxRange = new NumberValue<>("Max Range", "最大距离", 10, 6, 20, 1);
+    private final NumberValue<Double> minRange = new NumberValue<>("Min Range", "最小距离", 4.5, 0.0, 6.0, 0.25);
+    private final NumberValue<Double> maxRange = new NumberValue<>("Max Range", "最大距离", 7.0, 5.0, 20.0, 0.25);
     private final NumberValue<Integer> minDelay = new NumberValue<>("Min Delay", "最小延迟", 100, 0, 1000, 10);
     private final NumberValue<Integer> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 300, 0, 1000, 10);
     private final BoolValue wallCheck = new BoolValue("Wall Check", "墙体检测", true);
