@@ -6,11 +6,15 @@ import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.event.type.EventType;
+import dev.sakura.client.mixin.accessor.ILivingEntity;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.AntiBot;
 import dev.sakura.client.utils.client.ChatUtil;
+import dev.sakura.client.utils.network.blockage.block.BlockHolder;
+import dev.sakura.client.utils.network.blockage.impl.InboundNetworkBlockage;
 import dev.sakura.client.utils.player.MoveUtil;
+import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
@@ -25,6 +29,7 @@ import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.Box;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import org.joml.Vector3d;
 
@@ -41,7 +46,8 @@ public class Velocity extends Module {
 
     private enum Mode {
         Legit,
-        NoXZ
+        NoXZ,
+        Watchdog
     }
 
     private enum VelocityStage {
@@ -57,6 +63,8 @@ public class Velocity extends Module {
     private final NumberValue<Double> alinkTime = new NumberValue<>("Max Alink Time (ms)", "最大Alink时间(ms)", 2500.0, 50.0, 10000.0, 50.0, () -> mode.is(Mode.NoXZ));
     private final BoolValue render = new BoolValue("Render", "渲染", false);
     private final BoolValue debug = new BoolValue("Debug", "调试", false);
+    private final BoolValue delayUntilGround = new BoolValue("Delay until ground", "直到落地", true, () -> mode.is(Mode.Watchdog));
+
     /*public final BoolValue blockPush = new BoolValue("BlockPush", "阻止方块推动", true);
         public final BoolValue entityPush = new BoolValue("EntityPush", "阻止实体推动", true);
         public final BoolValue waterPush = new BoolValue("WaterPush", "阻止水流推动", true);*/
@@ -69,6 +77,9 @@ public class Velocity extends Module {
     private VelocityStage stage;
     private final Map<Entity, Vector3d> targets = new ConcurrentHashMap<>();
     private final Queue<Packet<? super ClientPlayNetworkHandler>> packets = new ConcurrentLinkedQueue<>();
+
+    private final BlockHolder blockHolder = new BlockHolder(InboundNetworkBlockage.get());
+    private int sprintResetTicks;
 
     @Override
     public void onEnable() {
@@ -87,6 +98,7 @@ public class Velocity extends Module {
         target = null;
         stage = VelocityStage.NONE;
         clear(true);
+        blockHolder.release();
     }
 
     @EventHandler
@@ -118,6 +130,23 @@ public class Velocity extends Module {
                     lag = false;
                 }
             }
+            case Watchdog -> {
+                if (this.blockHolder.isBlocking()) {
+                    if (mc.player == null || mc.player.isOnGround() || mc.player.isClimbing() || mc.player.isInFluid() || System.currentTimeMillis() - velocityTime > 1000) {
+                        this.blockHolder.release();
+                        stage = VelocityStage.NONE;
+                        this.sprintResetTicks = 10;
+
+                        if (mc.player.isOnGround() && this.delayUntilGround.get() && velocity != null) {
+                            this.jump = true;
+                        }
+                    }
+                }
+
+                if (this.sprintResetTicks > 0) {
+                    this.sprintResetTicks--;
+                }
+            }
         }
 
         this.setSuffix(mode.get() + (stage == VelocityStage.DELAY ? " " + (System.currentTimeMillis() - velocityTime) / 50 + "Ticks" : ""));
@@ -145,6 +174,7 @@ public class Velocity extends Module {
 
         switch (mode.get()) {
             case NoXZ -> {
+                // ... existing NoXZ logic ...
                 if (event.getPacket() instanceof PlayerPositionLookS2CPacket && stage == VelocityStage.NONE) {
                     lag = true;
                     debug("收到位置包，设置 lag");
@@ -226,9 +256,37 @@ public class Velocity extends Module {
                     jump = true;
                 }
             }
+            case Watchdog -> {
+                if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
+                    if (mc.player == null || !this.delayUntilGround.get()) {
+                        return;
+                    }
+                    if (this.sprintResetTicks > 0) {
+                        // return;
+                    }
+                    // System.out.println("[Velocity] Blocking packet! ID: " + packet.getEntityId());
+                    this.blockHolder.block();
+
+                    velocity = new Vec3d(packet.getVelocity().getX(), packet.getVelocity().getY(), packet.getVelocity().getZ());
+                    stage = VelocityStage.DELAY;
+                    velocityTime = System.currentTimeMillis();
+                }
+                if (event.getPacket() instanceof PlayerPositionLookS2CPacket) {
+                    this.blockHolder.release();
+                    stage = VelocityStage.NONE;
+                }
+                if (event.getPacket() instanceof ExplosionS2CPacket) {
+                    this.blockHolder.release();
+                    stage = VelocityStage.NONE;
+                }
+            }
         }
     }
 
+
+    public boolean isSprintReset() {
+        return this.sprintResetTicks > 0 && Math.abs(MathHelper.wrapDegrees(Math.toDegrees(Math.atan2(velocity.z, velocity.x)) - 90.0F - Math.toDegrees(MoveUtil.getDirection()))) >= 70.0F;
+    }
 
     @EventHandler
     public void onMoveInput(MoveInputEvent event) {
@@ -242,8 +300,19 @@ public class Velocity extends Module {
             }
         }
 
-        if (jump) {
-            if (mc.player.isOnGround() && MoveUtil.isMoving()) event.setJump(true);
+        if (mode.is(Mode.Watchdog)) {
+            if (this.jump) {
+                if (mc.player instanceof ILivingEntity accessor) {
+                    accessor.setJumpingCooldown(0);
+                    // debug("跳跃冷却重置");
+                }
+                event.setJump(true);
+                this.jump = false;
+            }
+        } else if (jump) {
+            if (mc.player.isOnGround() && MoveUtil.isMoving()) {
+                event.setJump(true);
+            }
             jump = false;
         }
     }

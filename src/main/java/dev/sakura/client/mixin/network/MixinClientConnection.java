@@ -4,6 +4,7 @@ import dev.sakura.client.Sakura;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.utils.player.PacketUtil;
+import dev.sakura.client.utils.network.blockage.impl.InboundNetworkBlockage;
 import io.netty.channel.ChannelFutureListener;
 import net.minecraft.network.ClientConnection;
 import net.minecraft.network.OffThreadException;
@@ -58,6 +59,12 @@ public abstract class MixinClientConnection {
         Sakura.EVENT_BUS.post(event);
         if (event.isCancelled()) {
             ci.cancel();
+            return;
+        }
+
+        if (InboundNetworkBlockage.get().isBlocked(packet)) {
+            ci.cancel();
+            return;
         }
     }
 }
