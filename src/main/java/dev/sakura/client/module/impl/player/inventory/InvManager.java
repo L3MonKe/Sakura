@@ -2,7 +2,6 @@ package dev.sakura.client.module.impl.player.inventory;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.EventPriority;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.type.EventType;
@@ -22,8 +21,7 @@ import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
-import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket;
+import net.minecraft.network.packet.c2s.play.*;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.screen.slot.SlotActionType;
 import org.apache.commons.lang3.tuple.Pair;
@@ -55,7 +53,6 @@ public class InvManager extends Module {
     private final NumberValue<Double> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110.0, 0.0, 500.0, 5.0);
     private final EnumValue<OffhandItemMode> offhandItems = new EnumValue<>("Offhand Items", "副手物品", OffhandItemMode.Projectile);
     private final BoolValue autoArmor = new BoolValue("Auto Armor", "自动穿甲", true);
-    private final BoolValue grimBypass = new BoolValue("Grim Bypass", "Grim/ACA绕过", true);
     private final BoolValue inventoryOnly = new BoolValue("Inventory Only", "仅背包界面", true);
     private final BoolValue switchSword = new BoolValue("Switch Sword", "切换剑", true);
     private final NumberValue<Integer> swordSlot = new NumberValue<>("Sword Slot", "剑槽位", 1, 1, 9, 1, switchSword::get);
@@ -172,7 +169,18 @@ public class InvManager extends Module {
                 this.inventoryOpen = false;
             }
 
-
+            if (this.inventoryOpen && !this.inventoryOnly.get()) {
+                if (event.getPacket() instanceof PlayerMoveC2SPacket) {
+                    if (MoveUtil.isMoving()) {
+                        mc.getNetworkHandler().sendPacket(new CloseHandledScreenC2SPacket(mc.player.playerScreenHandler.syncId));
+                    }
+                } else if (event.getPacket() instanceof PlayerInteractBlockC2SPacket
+                        || event.getPacket() instanceof PlayerInteractItemC2SPacket
+                        || event.getPacket() instanceof PlayerInteractEntityC2SPacket
+                        || event.getPacket() instanceof PlayerActionC2SPacket) {
+                    mc.getNetworkHandler().sendPacket(new CloseHandledScreenC2SPacket(mc.player.playerScreenHandler.syncId));
+                }
+            }
         }
     }
 
@@ -221,7 +229,7 @@ public class InvManager extends Module {
         return true;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
@@ -243,14 +251,9 @@ public class InvManager extends Module {
 
         if (Sakura.MODULES.getModule(Stealer.class).isWorking()
                 || Sakura.MODULES.getModule(Scaffold.class).isEnabled()
-                || (this.inventoryOnly.get() && !(mc.currentScreen instanceof InventoryScreen))) {
+                || (this.inventoryOnly.get() ? !(mc.currentScreen instanceof InventoryScreen) : this.noMoveTicks <= 1)) {
             this.clickOffHand = false;
             return;
-        }
-
-        if (!this.inventoryOnly.get() && this.inventoryOpen) {
-            mc.player.setSprinting(false);
-            mc.options.sprintKey.setPressed(false);
         }
 
         if (mc.currentScreen instanceof HandledScreen<?> container && container.getScreenHandler().syncId != mc.player.playerScreenHandler.syncId) {
@@ -297,9 +300,7 @@ public class InvManager extends Module {
         }
 
         if (this.clickOffHand && timer.passedMillise(MathUtil.getRandom(minDelay.get(), maxDelay.get()))) {
-            if (grimBypass.get()) sendInventoryPackets();
             mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, 45, 0, SlotActionType.PICKUP, mc.player);
-            // 不在单次操作后关闭，而是等待所有操作完成后关闭
             this.inventoryOpen = true;
             this.clickOffHand = false;
             timer.reset();
@@ -529,60 +530,14 @@ public class InvManager extends Module {
                 }
             }
         }
-        if (this.inventoryOpen) {
-            // 如果所有任务都已完成（或者这个tick没有进行操作），关闭背包
-            // 这里我们简单地在每次Tick末尾尝试关闭，如果有操作，timer会被reset，下一次tick可能就不会进入操作逻辑
-
-            // 更好的逻辑：检查是否还有需要整理的物品？
-            // 简化版：如果这个Tick没有进行任何操作（即背包已经整理好了），且之前打开了背包，则关闭
-
-            // 但我们需要一个标志位来表示"本Tick是否进行了操作"
-            // 由于代码结构分散，我们可以在onTick最后检查timer
-
-            // 如果距离上次操作已经过了一小段时间（说明整理完毕），发送关闭包
-            if (timer.passedMillise(150)) { // 给一点缓冲时间
-                if (grimBypass.get()) sendClosePackets();
-                this.inventoryOpen = false;
-            }
-        }
-    }
-
-    private boolean wasSprinting = false;
-
-    private void sendInventoryPackets() {
-        if (!this.inventoryOpen) {
-            // Grim requires open inventory packet before click
-            // And we shouldn't be sprinting while "opening" inventory
-            wasSprinting = mc.player.isSprinting();
-            if (wasSprinting) {
-                mc.player.networkHandler.sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.STOP_SPRINTING));
-                // 强制客户端停止疾跑
-                mc.player.setSprinting(false);
-                mc.options.sprintKey.setPressed(false);
-            }
-        }
-    }
-
-    private void sendClosePackets() {
-        // ... (注释省略)
-
-        // 恢复疾跑
-        // 只有当玩家仍然按着前进键且之前是疾跑状态时才恢复
-        if (wasSprinting) {
-            mc.player.networkHandler.sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.START_SPRINTING));
-            mc.player.setSprinting(true); // 恢复客户端疾跑状态
-            wasSprinting = false;
-        }
     }
 
     private void swapOffHand(int slot) {
-        if (grimBypass.get()) sendInventoryPackets();
         if (slot < 9) {
             mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot + 36, 40, SlotActionType.SWAP, mc.player);
         } else {
             mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot, 40, SlotActionType.SWAP, mc.player);
         }
-        // if (grimBypass.get()) sendClosePackets(); // 保持开启状态
 
         this.inventoryOpen = true;
         timer.reset();
@@ -592,13 +547,11 @@ public class InvManager extends Module {
         if (InvHelper.isItemValid(item) && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
             int itemSlot = InvHelper.getItemStackSlot(item);
             if (itemSlot != -1) {
-                if (grimBypass.get()) sendInventoryPackets();
                 if (itemSlot < 9) {
                     mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, itemSlot + 36, 1, SlotActionType.THROW, mc.player);
                 } else {
                     mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, itemSlot, 1, SlotActionType.THROW, mc.player);
                 }
-                // if (grimBypass.get()) sendClosePackets(); // 保持开启状态
 
                 this.inventoryOpen = true;
                 timer.reset();
@@ -611,13 +564,11 @@ public class InvManager extends Module {
         if (InvHelper.isItemValid(currentSlot) && bestItem != currentSlot && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
             int bestItemSlot = InvHelper.getItemStackSlot(bestItem);
             if (bestItemSlot != -1) {
-                if (grimBypass.get()) sendInventoryPackets();
                 if (bestItemSlot < 9) {
                     mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot + 36, targetSlot, SlotActionType.SWAP, mc.player);
                 } else {
                     mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot, targetSlot, SlotActionType.SWAP, mc.player);
                 }
-                // if (grimBypass.get()) sendClosePackets(); // 保持开启状态
 
                 this.inventoryOpen = true;
                 timer.reset();
@@ -632,13 +583,11 @@ public class InvManager extends Module {
             if (bestItemSlot != -1) {
                 ItemStack bestItemStack = mc.player.getInventory().getMainStacks().get(bestItemSlot);
                 if (currentSlot.getItem() != item || currentSlot.getCount() < bestItemStack.getCount()) {
-                    if (grimBypass.get()) sendInventoryPackets();
                     if (bestItemSlot < 9) {
                         mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot + 36, targetSlot, SlotActionType.SWAP, mc.player);
                     } else {
                         mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot, targetSlot, SlotActionType.SWAP, mc.player);
                     }
-                    // if (grimBypass.get()) sendClosePackets(); // 保持开启状态
 
                     this.inventoryOpen = true;
                     timer.reset();
