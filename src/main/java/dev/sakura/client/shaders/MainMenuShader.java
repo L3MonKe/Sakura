@@ -43,8 +43,7 @@ public class MainMenuShader {
     private MappableRingBuffer uniforms;
     private float timeSeconds;
     private float transitionValue = 1.0f;
-    private float mouseX;
-    private float mouseY;
+    private float mouseOffsetX;
 
     public MainMenuShader(MainMenuShaderType shaderType) {
         this.currentShaderType = shaderType;
@@ -74,7 +73,7 @@ public class MainMenuShader {
             builder.putVec2(pxWidth, pxHeight);
             builder.putFloat(this.timeSeconds);
             builder.putFloat(transition);
-            builder.putVec2(this.mouseX, this.mouseY);
+            builder.putVec2(this.mouseOffsetX, 0.5f);
             builder.putVec2(pxWidth, pxHeight);
         }
 
@@ -101,9 +100,8 @@ public class MainMenuShader {
         return this.transitionValue;
     }
 
-    public void setMouse(float x, float y) {
-        this.mouseX = x;
-        this.mouseY = y;
+    public void setMouseOffset(float x) {
+        this.mouseOffsetX = x;
     }
 
     public void switchShaderType(MainMenuShaderType newType) {

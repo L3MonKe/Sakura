@@ -361,9 +361,9 @@ public class WelcomeScreen extends Screen {
 
             float prevOffset = (currentStep - direction) * 0.3f;
             float currentShaderOffset = prevOffset + (targetShaderOffset - prevOffset) * animProgress;
-            // MainMenuShader.getSharedInstance().setMouseOffset(currentShaderOffset * width);
+            MainMenuShader.getSharedInstance().setMouseOffset(currentShaderOffset * width);
         } else {
-            // MainMenuShader.getSharedInstance().setMouseOffset(targetShaderOffset * width);
+            MainMenuShader.getSharedInstance().setMouseOffset(targetShaderOffset * width);
         }
 
         int centerY = height / 2;
