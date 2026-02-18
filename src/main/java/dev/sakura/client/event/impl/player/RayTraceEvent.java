@@ -9,7 +9,6 @@ import net.minecraft.entity.Entity;
  * @Filename：RayTraceEvent
  */
 public class RayTraceEvent extends Cancellable {
-
     public Entity entity;
     public float yaw;
     public float pitch;

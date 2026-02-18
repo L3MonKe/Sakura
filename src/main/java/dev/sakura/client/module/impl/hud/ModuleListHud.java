@@ -96,7 +96,6 @@ public class ModuleListHud extends HudModule {
     private final NumberValue<Double> newStyleX = new NumberValue<>("Pos X", "X轴距离", 0.0, 0.0, 1000.0, 1.0, () -> mode.is(ListMode.NewStyle));
     private final NumberValue<Double> newStyleY = new NumberValue<>("Pos Y", "Y轴距离", 0.0, -100.0, 1000.0, 1.0, () -> mode.is(ListMode.NewStyle));
 
-    // --- 渐变模式设置 (Gradient Mode) ---
     // 1. 文本与字体 (Text & Font)
     private final NumberValue<Double> customFontSize = new NumberValue<>("Font Size", "字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
     private final NumberValue<Double> textOffsetX = new NumberValue<>("Text Offset X", "文字X偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
@@ -442,7 +441,7 @@ public class ModuleListHud extends HudModule {
         boolean isGradient = mode.is(ListMode.Gradient);
         boolean isNewStyle = mode.is(ListMode.NewStyle);
         double spacing = itemSpacing.get();
-        boolean showCat = (isGradient || isNewStyle) ? false : normalShowCategory.get();
+        boolean showCat = !isGradient && !isNewStyle && normalShowCategory.get();
 
         if (moduleEntries.isEmpty()) {
             targetWidth = 50;
@@ -566,10 +565,7 @@ public class ModuleListHud extends HudModule {
             if (y < 0) y = 0;
         }
 
-        boolean clamped = x != oldX || y != oldY;
-        if (!clamped) {
-            updateAnchors(screenWidth, screenHeight, scaledWidth, scaledHeight);
-        }
+        updateAnchors(screenWidth, screenHeight, scaledWidth, scaledHeight);
         lastScaledScreenWidth = screenWidth;
         lastScaledScreenHeight = screenHeight;
     }
@@ -621,7 +617,8 @@ public class ModuleListHud extends HudModule {
             float moduleNameWidth = NanoVGHelper.getTextWidth(moduleName, font, 10 * scale);
             float suffixWidth = NanoVGHelper.getTextWidth(formattedSuffix, font, 10 * scale);
             float textHeight = NanoVGHelper.getFontHeight(font, 10 * scale);
-            float totalTextWidth = moduleNameWidth + (suffix.isEmpty() ? 0 : suffixWidth + (2 * scale));
+            float v = suffix.isEmpty() ? 0 : suffixWidth + (2 * scale);
+            float totalTextWidth = moduleNameWidth + v;
             String categoryIcon = "";
             float iconWidth = 0;
             float iconHeight = 0;
@@ -640,17 +637,15 @@ public class ModuleListHud extends HudModule {
             float iconX = 0;
             if (alignRight.get() && normalShowCategory.get()) {
                 iconBgX = x + (currentWidth * scale) - (PADDING_X * scale) - (ICON_BACKGROUND_WIDTH * scale);
-                textX = iconBgX - (CATEGORY_ICON_SPACING * scale) - moduleNameWidth - (suffix.isEmpty() ? 0 : suffixWidth + (2 * scale));
+                textX = iconBgX - (CATEGORY_ICON_SPACING * scale) - moduleNameWidth - v;
             } else if (!alignRight.get() && normalShowCategory.get()) {
                 iconBgX = itemX + (6 * scale);
                 textX = iconBgX + (ICON_BACKGROUND_WIDTH * scale) + (CATEGORY_ICON_SPACING * scale);
             } else {
-                textX = alignRight.get() ? x + (currentWidth * scale) - (PADDING_X * scale) - moduleNameWidth - (suffix.isEmpty() ? 0 : suffixWidth + (2 * scale)) : itemX + (PADDING_X * scale);
+                textX = alignRight.get() ? x + (currentWidth * scale) - (PADDING_X * scale) - moduleNameWidth - v : itemX + (PADDING_X * scale);
             }
 
-            // Use renderY instead of currentY for drawing
-            float drawY = renderY;
-            float textY = drawY + textHeight / 2 + (2 * scale);
+            float textY = renderY + textHeight / 2 + (2 * scale);
 
             int alpha = (int) (BACKGROUND_COLOR.getAlpha() * animationValue);
             Color animatedBackgroundColor = new Color(
@@ -668,7 +663,7 @@ public class ModuleListHud extends HudModule {
                     alignRight.get() && normalShowCategory.get() ?
                             (itemX + (4 * scale) + (itemWidth - animatedItemWidth)) :
                             (itemX + (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING + 4) * scale : (4 * scale)) + (itemWidth - animatedItemWidth)),
-                    drawY - (3 * scale),
+                    renderY - (3 * scale),
                     (itemWidth - (normalShowCategory.get() ? (ICON_BACKGROUND_WIDTH + CATEGORY_ICON_SPACING) * scale : 0) - (7 * scale)) * (float) animationValue,
                     itemHeight + (3 * scale),
                     normalRadius.get().floatValue() * scale,
@@ -682,13 +677,13 @@ public class ModuleListHud extends HudModule {
 
                 NanoVGHelper.drawRoundRect(
                         animatedIconBgX,
-                        drawY - (3 * scale),
+                        renderY - (3 * scale),
                         ICON_BACKGROUND_WIDTH * scale,
                         ICON_BACKGROUND_HEIGHT * scale,
                         normalRadius.get().floatValue() * scale,
                         animatedBackgroundColor
                 );
-                float iconY = drawY + ((ICON_BACKGROUND_HEIGHT * scale) - iconHeight) / 2;
+                float iconY = renderY + ((ICON_BACKGROUND_HEIGHT * scale) - iconHeight) / 2;
                 iconX = animatedIconBgX + ((ICON_BACKGROUND_WIDTH * scale) - iconWidth) / 2;
                 int iconFont = FontLoader.icons();
                 NanoVGHelper.drawGlowingString(categoryIcon, iconX + (0.5f * scale), iconY + (5 * scale), iconFont, 10 * scale, Color.WHITE, 2.0f * scale);
@@ -845,10 +840,8 @@ public class ModuleListHud extends HudModule {
             tmpSegmentRects[base + 3] = segment.h + overlap * 2.0f;
             tmpSegmentRadii[i] = 0.0f;
         }
-        if (count > 0) {
-            tmpSegmentRadii[0] = r;
-            tmpSegmentRadii[count - 1] = r;
-        }
+        tmpSegmentRadii[0] = r;
+        tmpSegmentRadii[count - 1] = r;
 
         BlurShader.drawSegmentedBlur(blurX, blurY, blurW, blurH, 0.0f, new Color(0, 0, 0, 0), blurStrength.get().floatValue(), 1.0f, tmpSegmentRects, tmpSegmentRadii, count);
     }
@@ -894,10 +887,8 @@ public class ModuleListHud extends HudModule {
             tmpSegmentRadii[i] = 0.0f;
         }
         float r = backgroundRadius.get().floatValue() * scale;
-        if (count > 0) {
-            tmpSegmentRadii[0] = r;
-            tmpSegmentRadii[count - 1] = r;
-        }
+        tmpSegmentRadii[0] = r;
+        tmpSegmentRadii[count - 1] = r;
 
         if (shadowMode.is(ShadowMode.Gradient)) {
             ensureFrameGradient();
@@ -905,9 +896,8 @@ public class ModuleListHud extends HudModule {
             Color c2 = frameGradientC2;
             double offset = frameGradientOffset;
             int lastIndex = Math.max(0, count - 1);
-            double topOffset = offset;
             double bottomOffset = offset + (lastIndex * colorStep.get());
-            double topFactor = (Math.sin(Math.toRadians(topOffset)) + 1) / 2;
+            double topFactor = (Math.sin(Math.toRadians(offset)) + 1) / 2;
             double bottomFactor = (Math.sin(Math.toRadians(bottomOffset)) + 1) / 2;
 
             Color start = interpolateColor(c1, c2, (float) topFactor);
@@ -915,19 +905,7 @@ public class ModuleListHud extends HudModule {
             start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
             end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
 
-            ShadowShader.drawStairShadowGradient(
-                    shadowX,
-                    shadowY,
-                    shadowW,
-                    shadowH,
-                    shadowRange.get().floatValue(),
-                    shadowStrength.get().floatValue(),
-                    start,
-                    end,
-                    tmpSegmentRects,
-                    tmpSegmentRadii,
-                    count
-            );
+            ShadowShader.drawStairShadowGradient(shadowX, shadowY, shadowW, shadowH, shadowRange.get().floatValue(), shadowStrength.get().floatValue(), start, end, tmpSegmentRects, tmpSegmentRadii, count);
             return;
         }
 
@@ -1008,8 +986,9 @@ public class ModuleListHud extends HudModule {
             );
 
             if (!fontMode.is(FontMode.Minecraft)) {
+                float y1 = textY - (fontSize * scale / 2) + (1 * scale);
                 if (textGlow.get()) {
-                    NanoVGHelper.drawGlowingString(moduleName, animatedTextX, textY - (fontSize * scale / 2) + (1 * scale), font, fontSize * scale, animatedTextColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
+                    NanoVGHelper.drawGlowingString(moduleName, animatedTextX, y1, font, fontSize * scale, animatedTextColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
                 } else {
                     NanoVGHelper.drawString(moduleName, animatedTextX, textY, font, fontSize * scale, animatedTextColor);
                 }
@@ -1023,7 +1002,7 @@ public class ModuleListHud extends HudModule {
                             (int) (SUFFIX_COLOR.getAlpha() * animationValue)
                     );
                     if (textGlow.get()) {
-                        NanoVGHelper.drawGlowingString(formattedSuffix, suffixX, textY - (fontSize * scale / 2) + (1 * scale), font, fontSize * scale, animatedSuffixColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
+                        NanoVGHelper.drawGlowingString(formattedSuffix, suffixX, y1, font, fontSize * scale, animatedSuffixColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
                     } else {
                         NanoVGHelper.drawString(formattedSuffix, suffixX, textY, font, fontSize * scale, animatedSuffixColor);
                     }
@@ -1248,36 +1227,6 @@ public class ModuleListHud extends HudModule {
         }
 
         nvgLineTo(vg, rightX, bottomY);
-        nvgClosePath(vg);
-    }
-
-    private void buildStaircaseBackgroundPath(long vg, List<BackgroundSegment> segments, float r) {
-        if (segments.isEmpty()) return;
-
-        BackgroundSegment first = segments.get(0);
-        BackgroundSegment last = segments.get(segments.size() - 1);
-
-        float rightX = first.x + first.w;
-        float topY = first.y;
-        float bottomY = last.y + last.h;
-
-        nvgMoveTo(vg, rightX, topY);
-
-        for (int i = 0; i < segments.size(); i++) {
-            BackgroundSegment seg = segments.get(i);
-
-
-            if (i == 0) {
-                nvgLineTo(vg, seg.x, seg.y);
-            } else {
-                nvgLineTo(vg, seg.x, seg.y);
-            }
-
-            nvgLineTo(vg, seg.x, seg.y + seg.h);
-        }
-
-        nvgLineTo(vg, rightX, bottomY);
-
         nvgClosePath(vg);
     }
 
