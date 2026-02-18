@@ -261,12 +261,11 @@ public class RotationManager {
                 event.setYaw(yaw);
                 event.setPitch(pitch);
 
-                /*if (Math.abs((rotations.yaw - mc.player.getYaw()) % 360) < 1 && Math.abs((rotations.pitch - mc.player.getPitch())) < 1) {
+                if (Math.abs((rotations.yaw - mc.player.getYaw()) % 360) < 1 && Math.abs((rotations.pitch - mc.player.getPitch())) < 1) {
                     active = false;
                     priority = 0;
-
-                    this.correctDisabledRotations();
-                }*/
+                    correctDisabledRotations();
+                }
 
                 lastRotations = rotations;
             } else {
@@ -281,7 +280,7 @@ public class RotationManager {
     }
 
     private void correctDisabledRotations() {
-        if (mc.player == null || lastRotations == null) return;
+        if (lastRotations == null) return;
         final Rotation rotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
         final Rotation fixedRotations = RotationUtil.resetRotation(RotationUtil.applySensitivityPatch(rotations, lastRotations));
 

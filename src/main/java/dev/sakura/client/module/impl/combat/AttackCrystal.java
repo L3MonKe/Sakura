@@ -6,7 +6,9 @@ import dev.sakura.client.event.impl.input.ClickEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.utils.rotation.*;
+import dev.sakura.client.utils.rotation.RaytraceUtil;
+import dev.sakura.client.utils.rotation.Rotation;
+import dev.sakura.client.utils.rotation.RotationUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.EndCrystalEntity;
 import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
@@ -15,7 +17,6 @@ import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class AttackCrystal extends Module {
