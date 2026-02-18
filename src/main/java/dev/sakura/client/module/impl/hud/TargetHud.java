@@ -65,7 +65,7 @@ public class TargetHud extends HudModule {
     }
 
     public enum StyleEn {
-        ThunderHack, Modern, Sakura, Hanabi
+        ThunderHack, Sakura, Hanabi
     }
 
     public enum ImageModeEn {
@@ -119,10 +119,6 @@ public class TargetHud extends HudModule {
     private static final float HANABI_INFO_X = 0f;
     private static final float HANABI_INFO_Y = 6f;
 
-    private static final float HANABI_BLOCK_SIZE = 8f;
-    private static final float HANABI_BLOCK_X = 0f;
-    private static final float HANABI_BLOCK_Y = 6f;
-
     private static final float HANABI_HEALTH_SIZE = 9f;
     private static final float HANABI_HEALTH_TEXT_RIGHT_PAD = 6f;
     private static final float HANABI_HEALTH_TEXT_Y = 33f;
@@ -133,10 +129,6 @@ public class TargetHud extends HudModule {
     private static final Color HANABI_HP_TEXT_COLOR = new Color(240, 240, 240, 230);
     private static final Color HANABI_HEART_NORMAL_COLOR = new Color(200, 200, 200, 200);
     private static final Color HANABI_HEART_HURT_COLOR = new Color(195, 0, 255, 230);
-
-    // Modern Settings
-    private final NumberValue<Integer> modernBgAlpha = new NumberValue<>("BgAlpha", "背景透明度", 100, 0, 255, 1, () -> style.get() == StyleEn.Modern);
-    private final NumberValue<Double> modernBlur = new NumberValue<>("ModernBlur", "背景模糊", 10.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Modern);
 
     private final EnumValue<HPmodeEn> hpMode = new EnumValue<>("HP Mode", "血量模式", HPmodeEn.HP);
     private final EnumValue<ImageModeEn> imageMode = new EnumValue<>("Image", "图片模式", ImageModeEn.Anime, () -> style.get() == StyleEn.ThunderHack);
@@ -178,7 +170,7 @@ public class TargetHud extends HudModule {
 
 
     private static final Identifier TARGET_TEX = Identifier.of("sakura", "textures/particles/target.png");
-    private static final Identifier THUD_TEX = Identifier.of("sakura", "textures/hudeditor/thud.png");
+    private static final Identifier THUD_TEX = Identifier.of("sakura", "textures/hud/thud.png");
     private static final Identifier FIREFLY_TEX = Identifier.of("sakura", "textures/particles/firefly.png");
 
     // Animations
@@ -357,10 +349,6 @@ public class TargetHud extends HudModule {
         final float finalMaxHealth = maxHealth;
         final float damageFactor = damageAnim.getOutput().floatValue();
 
-        /*
-        renderKawaseBloom(context, animValue);
-        */
-
         if (style.get() == StyleEn.Sakura) {
             renderMahiroBackground(animValue);
         }
@@ -379,14 +367,12 @@ public class TargetHud extends HudModule {
                 NanoVGHelper.translate(vg, -centerX, -centerY);
             }
 
-            if (style.get() == StyleEn.Modern) {
-                renderModern(vg, renderTarget, finalHealth, finalMaxHealth, damageFactor);
-            } else if (style.get() == StyleEn.Sakura) {
-                renderMahiro(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
+            if (style.get() == StyleEn.Sakura) {
+                renderMahiro(vg, renderTarget, finalHealth, finalMaxHealth, damageFactor);
             } else if (style.get() == StyleEn.Hanabi) {
                 renderHanabi(vg, renderTarget, finalHealth, finalMaxHealth);
             } else {
-                renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, animValue, damageFactor);
+                renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, damageFactor);
             }
 
             NanoVGHelper.restore();
@@ -449,116 +435,7 @@ public class TargetHud extends HudModule {
         }
     }
 
-    private void renderModern(long vg, LivingEntity target, float health, float maxHealth, float damageFactor) {
-        this.width = 150;
-        this.height = 50;
-
-        int alpha = modernBgAlpha.get();
-        float blur = modernBlur.get().floatValue();
-        Color bgColor = new Color(0, 0, 0, alpha);
-
-        if (blur > 0) {
-            NanoVGHelper.drawRoundRectBloom(x, y, width, height, blur, bgColor);
-        } else {
-            NanoVGHelper.drawRoundRect(x, y, width, height, 8, bgColor);
-        }
-
-        // Particles Logic (reuse)
-        updateParticles(vg);
-
-        if (target instanceof PlayerEntity player) {
-            // Damage Effect: Shrink scale
-            float damageScale = 1.0f - (damageFactor * 0.15f);
-            drawPlayerAvatar(player, x + 5, y + 5, 40, 5, damageScale, damageFactor);
-        }
-
-        // Adjust Y positions based on showArmor
-        float yOffset = showArmor.get() ? 0 : 5;
-
-        // Health Bar
-        float healthWidth = MathHelper.clamp(90 * (health / maxHealth), 3, 90);
-
-        // Background for health bar
-        NanoVGHelper.drawGradientRRect(x + 50, y + 25 + yOffset, 90, 8, 4, new Color(20, 20, 20), new Color(40, 40, 40));
-
-        // Calculate gradient colors
-        Color c1 = healthColor.get();
-        Color c2 = healthColor.get().darker();
-
-        if (healthGradient.get()) {
-            double speed = gradientSpeed.get();
-            // Use System.nanoTime() for higher precision, but millis is usually fine.
-            // Ensure speed is actually used correctly.
-            float time = (float) ((System.currentTimeMillis() % 2000000) * speed / 1000.0);
-
-            // Adjust length factor: larger colorLength -> smaller frequency -> longer waves
-            float length = colorLength.get().floatValue();
-            // Default frequency is 1.0 (for sine). Divide by length to stretch the wave.
-            float frequency = 1.0f / length;
-
-            // Use sine wave for smooth transition 0 -> 1 -> 0
-            float t1 = (float) ((Math.sin(time) + 1.0) / 2.0);
-            // Phase shift for gradient end color.
-            // The phase difference determines how "fast" the color changes across the bar length visually.
-            // If we want to adjust the "length" of one color segment, we are essentially adjusting the wavelength.
-            // Here we are interpolating two points in time/space.
-            float t2 = (float) ((Math.sin(time + frequency) + 1.0) / 2.0);
-
-            c1 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t1);
-            c2 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t2);
-        }
-
-        // Health Bar Glow
-        if (hpGlow.get()) {
-            float strength = glowStrength.get().floatValue();
-
-            // Optimization: Increase step size from 0.5f to 1.0f to reduce draw calls
-            for (float i = 1.0f; i <= strength; i += 1.0f) {
-                float normalizedDist = i / (strength + 2);
-                float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
-                // Adjusted alpha multiplier to compensate for fewer layers (0.15f -> 0.25f)
-                float a = alphaFactor * 0.25f;
-                int alphaInt = MathHelper.clamp((int) (a * 255), 0, 255);
-
-                if (alphaInt > 0) {
-                    if (healthGradient.get()) {
-                        // Use gradient glow
-                        Color gc1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt);
-                        Color gc2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alphaInt);
-
-                        NanoVGHelper.drawGradientRRect2(x + 50 - i, y + 25 + yOffset - i, healthWidth + i * 2, 8 + i * 2, 4 + i, gc1, gc2);
-                    } else {
-                        // Use static color glow (c1)
-                        Color baseGlow = c1;
-                        Color c = new Color(baseGlow.getRed(), baseGlow.getGreen(), baseGlow.getBlue(), alphaInt);
-                        NanoVGHelper.drawRoundRect(x + 50 - i, y + 25 + yOffset - i, healthWidth + i * 2, 8 + i * 2, 4 + i, c);
-                    }
-                }
-            }
-        }
-
-        // Draw Health Bar
-        if (healthGradient.get()) {
-            NanoVGHelper.drawGradientRRect2(x + 50, y + 25 + yOffset, healthWidth, 8, 4, c1, c2);
-        } else {
-            NanoVGHelper.drawGradientRRect(x + 50, y + 25 + yOffset, healthWidth, 8, 4, c1, c2);
-        }
-
-        // HP Text
-        String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
-        // Moved down from 26f to 29f
-        NanoVGHelper.drawCenteredString(hpText, x + 95, y + 29f + yOffset, FontLoader.bold(), 10, Color.WHITE);
-
-        // Name
-        if (nameGlow.get()) {
-            float strength = glowStrength.get().floatValue();
-            NanoVGHelper.drawGlowingString(target.getName().getString(), x + 50, y + 15 + yOffset, FontLoader.bold(), 14, Color.WHITE, strength, 2);
-        } else {
-            NanoVGHelper.drawString(target.getName().getString(), x + 50, y + 15 + yOffset, FontLoader.bold(), 14, -1, Color.WHITE);
-        }
-    }
-
-    private void renderThunderHack(long vg, LivingEntity target, float health, float maxHealth, float animationFactor, float damageFactor) {
+    private void renderThunderHack(long vg, LivingEntity target, float health, float maxHealth, float damageFactor) {
         NanoVGHelper.drawRoundRect(x, y, 70, 50, 6, new Color(0, 0, 0, 139));
         NanoVGHelper.drawRoundRect(x + 50, y, 100, 50, 6, new Color(0, 0, 0, 255));
         this.width = 150;
@@ -592,7 +469,7 @@ public class TargetHud extends HudModule {
         }
 
         // Particles Logic
-        updateParticles(vg);
+        updateParticles();
 
         if (target instanceof PlayerEntity player) {
             // Damage Effect: Shrink scale (1.0 -> 0.85 -> 1.0)
@@ -696,7 +573,7 @@ public class TargetHud extends HudModule {
         }
     }
 
-    private void updateParticles(long vg) {
+    private void updateParticles() {
         if (timer.passedMillise(1000.0 / 60.0)) {
             ticks += 0.1f;
             for (int i = 0; i < particles.size(); i++) {
@@ -727,7 +604,7 @@ public class TargetHud extends HudModule {
 
         for (Particles p : particles) {
             if (p.opacity > 4) {
-                p.render(vg);
+                p.render();
             }
         }
     }
@@ -964,7 +841,7 @@ public class TargetHud extends HudModule {
         BlurShader.drawRoundedBlur(rx, ry, w, h, r, blur);
     }
 
-    private void renderMahiro(long vg, LivingEntity target, float health, float maxHealth, float animationFactor, float damageFactor) {
+    private void renderMahiro(long vg, LivingEntity target, float health, float maxHealth, float damageFactor) {
         float globalScale = MahiroScale.get().floatValue();
 
         NanoVGHelper.save();
@@ -1309,7 +1186,7 @@ public class TargetHud extends HudModule {
             this.opacity -= 0.5f; // Decay
         }
 
-        public void render(long vg) {
+        public void render() {
             if (opacity <= 0) return;
             // Map opacity 0-20 to alpha 0-255 roughly
             int alpha = (int) MathHelper.clamp(opacity * 12, 0, 255);
