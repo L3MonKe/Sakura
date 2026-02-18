@@ -236,23 +236,9 @@ public class PotionHud extends HudModule {
 
             float baseX = info.xTimer.value;
             float y = info.yTimer.value;
-            float iconX = baseX;
             float infoX = baseX + iconW + gap;
 
-            out.add(new RenderEntry(
-                    effect,
-                    baseX, y,
-                    iconX, infoX,
-                    iconW, iconH,
-                    infoW, iconH,
-                    totalW,
-                    clampProgress(info.durationTimer.value, totalW),
-                    name, duration,
-                    nameFont, durationFont,
-                    nameFontSize, durationFontSize,
-                    nameW,
-                    durationW
-            ));
+            out.add(new RenderEntry(effect, baseX, y, baseX, infoX, iconW, iconH, infoW, iconH, totalW, clampProgress(info.durationTimer.value, totalW), name, duration, nameFont, durationFont, nameFontSize, durationFontSize, nameW, durationW));
 
             startY += 28f * s;
         }
