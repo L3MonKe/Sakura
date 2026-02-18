@@ -120,9 +120,9 @@ public class Animations extends Module {
         matrices.push();
         applyViewModelTransformations(matrices, arm);
         applyEquipOffset(matrices, arm, equipProgress);
-        
+
         boolean blocking = isBlocking();
-        
+
         if (blockingAnimation.is(BlockingAnimation.SPIN)) {
             KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
             if (killAura.isEnabled() && killAura.getCurrentTarget() != null) {

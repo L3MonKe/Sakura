@@ -1,6 +1,5 @@
 package dev.sakura.client.mixin.network;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.impl.entity.AttackBlockEvent;
 import dev.sakura.client.event.impl.entity.AttackEntityEvent;

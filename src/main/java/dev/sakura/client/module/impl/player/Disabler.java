@@ -5,7 +5,6 @@ import dev.sakura.client.event.impl.client.GameJoinEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.PlayerTickEvent;
 import dev.sakura.client.event.type.EventType;
-import dev.sakura.client.mixin.accessor.ICloseHandledScreenC2SPacket;
 import dev.sakura.client.mixin.accessor.IPlayerMoveC2SPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -19,14 +18,11 @@ import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.network.packet.BrandCustomPayload;
 import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.c2s.common.CommonPongC2SPacket;
 import net.minecraft.network.packet.c2s.common.CustomPayloadC2SPacket;
-import net.minecraft.network.packet.c2s.common.KeepAliveC2SPacket;
 import net.minecraft.network.packet.c2s.play.*;
 import net.minecraft.network.packet.s2c.common.CommonPingS2CPacket;
 import net.minecraft.network.packet.s2c.common.KeepAliveS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
-import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.PlayerInput;
 import net.minecraft.util.math.Vec3d;
@@ -47,7 +43,7 @@ public class Disabler extends Module {
     private final BoolValue grimOffset = new BoolValue("Grim Offset", "Grim偏移", true, grim::get);
 
     private final BoolValue watchdog = new BoolValue("Watchdog", "Watchdog", false);
-//    private final BoolValue watchdogInvMove = new BoolValue("Inventory Move", "背包移动", true, watchdog::get);
+    //    private final BoolValue watchdogInvMove = new BoolValue("Inventory Move", "背包移动", true, watchdog::get);
     private final BoolValue cubecraft = new BoolValue("Cubecraft", "Cubecraft", false);
 
     // Watchdog Queue (Outbound)

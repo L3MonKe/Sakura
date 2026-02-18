@@ -611,7 +611,7 @@ public class ModuleListHud extends HudModule {
                 continue;
             }
 
-            String moduleName = entry.module.getEnglishName();
+            String moduleName = entry.module.getDisplayName();
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
             float moduleNameWidth = NanoVGHelper.getTextWidth(moduleName, font, 10 * scale);
@@ -950,7 +950,7 @@ public class ModuleListHud extends HudModule {
                 continue;
             }
 
-            String moduleName = entry.module.getEnglishName();
+            String moduleName = entry.module.getDisplayName();
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
             float moduleNameWidth = getModuleTextWidth(moduleName);
@@ -1038,7 +1038,7 @@ public class ModuleListHud extends HudModule {
             float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
             float renderY = moduleYPositions.getOrDefault(entry.module, currentBgY);
 
-            String moduleName = entry.module.getEnglishName();
+            String moduleName = entry.module.getDisplayName();
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
             float moduleNameWidth = getModuleTextWidth(moduleName);
@@ -1258,7 +1258,7 @@ public class ModuleListHud extends HudModule {
                 continue;
             }
 
-            String moduleName = entry.module.getEnglishName();
+            String moduleName = entry.module.getDisplayName();
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
 
@@ -1346,7 +1346,7 @@ public class ModuleListHud extends HudModule {
             float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
             float renderY = moduleYPositions.getOrDefault(entry.module, currentY);
 
-            String moduleName = entry.module.getEnglishName();
+            String moduleName = entry.module.getDisplayName();
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
 
@@ -1431,7 +1431,7 @@ public class ModuleListHud extends HudModule {
             float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
             float renderY = moduleYPositions.getOrDefault(entry.module, segmentsY);
 
-            String moduleName = entry.module.getEnglishName();
+            String moduleName = entry.module.getDisplayName();
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
 
@@ -1498,7 +1498,7 @@ public class ModuleListHud extends HudModule {
             float itemFullHeight = (fontSize + itemSpacing.get().floatValue()) * scale;
             float renderY = moduleYPositions.getOrDefault(entry.module, currentY);
 
-            String moduleName = entry.module.getEnglishName();
+            String moduleName = entry.module.getDisplayName();
             String suffix = entry.module.getSuffix();
             String formattedSuffix = getFormattedSuffix(suffix);
 
