@@ -2,97 +2,72 @@ package dev.sakura.client.module.impl.combat;
 
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.input.ClickEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.utils.rotation.MovementFix;
-import dev.sakura.client.utils.rotation.Priority;
-import dev.sakura.client.utils.rotation.Rotation;
-import dev.sakura.client.utils.rotation.RotationUtil;
+import dev.sakura.client.utils.rotation.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.decoration.EndCrystalEntity;
+import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class AttackCrystal extends Module {
-
     public AttackCrystal() {
         super("AttackCrystal", "水晶光环", Category.Combat);
     }
 
-    private List<Entity> targets;
-    private Entity target;
+    public Entity entity;
 
-    private long lastAttackTime = 0;
+    @EventHandler
+    public void onTick(TickEvent.Pre event) {
+        if (nullCheck()) return;
 
-    @Override
-    protected void onDisable() {
-        target = null;
-        targets = null;
-    }
+        double range = 4.0;
+        double rangeSq = range * range;
 
-    public Entity getCurrentTarget() {
-        return target;
+        Entity closestCrystal = null;
+        double closestDistSq = Double.MAX_VALUE;
+
+        Box searchBox = mc.player.getBoundingBox().expand(range);
+        List<EndCrystalEntity> crystals = mc.world.getNonSpectatingEntities(EndCrystalEntity.class, searchBox);
+
+        for (EndCrystalEntity crystal : crystals) {
+            if (!crystal.isAlive()) continue;
+
+            double distSq = mc.player.squaredDistanceTo(crystal);
+
+            if (distSq < closestDistSq && distSq <= rangeSq) {
+                closestDistSq = distSq;
+                closestCrystal = crystal;
+            }
+        }
+
+        if (closestCrystal != null) {
+            Rotation targetRot = RotationUtil.calculate(closestCrystal);
+            Entity finalClosestCrystal = closestCrystal;
+            HitResult hitResult = RaytraceUtil.rayTraceEntity(3.0, targetRot, entity -> entity == finalClosestCrystal);
+            if (hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(closestCrystal)) {
+                Managers.ROTATION.setRotations(targetRot, 10);
+                this.entity = closestCrystal;
+            }
+        }
     }
 
     @EventHandler
-    public void onPreTick(TickEvent.Pre event) {
-        if (nullCheck()) return;
-
-        //boolean blinkEnable = Sakura.MODULES.getModule(Blink.class).isEnabled();
-        //if (blinkEnable) return;
-
-        findTarget();
-
-        if (target != null) {
-            Rotation calculate = RotationUtil.calculate(target);
-            Managers.ROTATION.setRotations(calculate, 100, MovementFix.NORMAL, Priority.Medium);
-            if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
-                attackTarget();
-            }
-        }
-    }
-
-    private void attackTarget() {
-        long time = System.currentTimeMillis();
-        double baseDelay = 1000.0 / 20.0;
-        long delay = (long) (baseDelay + (Math.random() - 0.5) * baseDelay * 0.4);
-        if (time - lastAttackTime >= delay) {
-            mc.interactionManager.attackEntity(mc.player, target);
+    public void onClick(ClickEvent event) {
+        if (entity == null) return;
+        HitResult hitResult = mc.crosshairTarget;
+        if (hitResult instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(entity)) {
+            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, false));
             mc.player.swingHand(Hand.MAIN_HAND);
-            lastAttackTime = time;
+            entity = null;
         }
-    }
-
-    private void findTarget() {
-        double range = 3.5;
-        double rangeSq = range * range;
-
-        this.target = null;
-        double minDstSq = Double.MAX_VALUE;
-
-        Box searchBox = mc.player.getBoundingBox().expand(range);
-
-        List<EndCrystalEntity> crystals = mc.world.getEntitiesByClass(
-                EndCrystalEntity.class,
-                searchBox,
-                crystal -> crystal != null && crystal.isAlive()
-        );
-
-        targets = new ArrayList<>(crystals);
-
-        for (Entity entity : targets) {
-            double distSq = mc.player.squaredDistanceTo(entity);
-            if (distSq < minDstSq && distSq <= rangeSq) {
-                minDstSq = distSq;
-                this.target = entity;
-            }
-        }
-
-        this.setSuffix(targets.size() + "");
     }
 }

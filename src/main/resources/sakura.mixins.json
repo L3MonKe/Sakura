@@ -8,7 +8,6 @@
     "accessor.IAccessorBundlePacket",
     "accessor.IBillboardParticle",
     "accessor.IChatInputSuggestor",
-    "accessor.ICloseHandledScreenC2SPacket",
     "accessor.IEntity",
     "accessor.IEntityFlag",
     "accessor.IEntityTrackingSection",

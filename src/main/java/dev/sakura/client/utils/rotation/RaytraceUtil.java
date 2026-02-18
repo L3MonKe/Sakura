@@ -73,12 +73,10 @@ public class RaytraceUtil {
     }
 
     public static BlockHitResult rayCast(Rotation rotation, double range, boolean includeFluids, float tickDelta) {
-        if (mc.player == null) return null;
         return rayCast(range, includeFluids, mc.player.getCameraPosVec(tickDelta), getRotationVector(rotation), mc.getCameraEntity());
     }
 
     public static BlockHitResult rayCast(double range, boolean includeFluids, Vec3d start, Vec3d direction, Entity entity) {
-        if (mc.world == null) return null;
         Vec3d end = start.add(direction.x * range, direction.y * range, direction.z * range);
 
         return mc.world.raycast(

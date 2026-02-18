@@ -11,7 +11,7 @@ public class TranslationManager {
 
     static {
         register("welcome.title", "Welcome to " + Sakura.MOD_NAME, "欢迎使用 " + Sakura.MOD_NAME);
-        register("welcome.subtitle", "The best utility mod for BJD", "布吉岛最强辅助模组");
+        register("welcome.subtitle", "The best utility mod for heypixel", "布吉岛最强辅助模组");
 
         register("nav.prev", "Previous", "上一步");
         register("nav.next", "Next", "下一步");

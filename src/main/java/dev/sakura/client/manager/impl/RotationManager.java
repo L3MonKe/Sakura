@@ -261,12 +261,12 @@ public class RotationManager {
                 event.setYaw(yaw);
                 event.setPitch(pitch);
 
-                if (Math.abs((rotations.yaw - mc.player.getYaw()) % 360) < 1 && Math.abs((rotations.pitch - mc.player.getPitch())) < 1) {
+                /*if (Math.abs((rotations.yaw - mc.player.getYaw()) % 360) < 1 && Math.abs((rotations.pitch - mc.player.getPitch())) < 1) {
                     active = false;
                     priority = 0;
 
                     this.correctDisabledRotations();
-                }
+                }*/
 
                 lastRotations = rotations;
             } else {
