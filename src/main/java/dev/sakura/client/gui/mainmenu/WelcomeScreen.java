@@ -36,6 +36,10 @@ public class WelcomeScreen extends Screen {
     private final List<MenuButton> buttons = new ArrayList<>();
     private AdvancedColorPicker mainColorPicker;
     private final List<CategoryPanel> previewPanels = new ArrayList<>();
+    private float previewScale = 0.80f;
+    private float previewRawWidth = 0f;
+    private float previewCenterX = 140f;
+    private float previewOffsetY = -160f;
 
     private boolean exiting = false;
     private long exitTime = 0;
@@ -146,8 +150,26 @@ public class WelcomeScreen extends Screen {
         int pickerWidth = 230;
         int pickerHeight = new AdvancedColorPicker("", ClickGui.mainColor, 0, 0).getHeight();
 
-        int pickerX = -180 - pickerWidth;
+        float totalWidth = 0;
+        for (CategoryPanel panel : previewPanels) {
+            totalWidth += panel.getWidth() + 10;
+        }
+        if (totalWidth > 0) totalWidth -= 10;
+        previewRawWidth = totalWidth;
+
+        float previewWidth = previewRawWidth * previewScale;
+        float availableWidth = width / contentScale;
+        float defaultGap = 40f;
+        float minMargin = 24f;
+        float maxGap = availableWidth - pickerWidth - previewWidth - 2 * minMargin;
+        float gap = Math.min(defaultGap, maxGap);
+        if (gap < 10f) gap = 10f;
+        float totalContent = pickerWidth + previewWidth + gap;
+        float margin = (availableWidth - totalContent) / 2f;
+
+        int pickerX = Math.round(-availableWidth / 2f + margin);
         int pickerY = -((pickerHeight + 20 + 35) / 2);
+        previewCenterX = pickerX + pickerWidth + gap + previewWidth / 2f;
 
         if (mainColorPicker == null) {
             mainColorPicker = new AdvancedColorPicker("theme.main_color", ClickGui.mainColor, pickerX, pickerY);
@@ -403,7 +425,7 @@ public class WelcomeScreen extends Screen {
                 NanoVGHelper.translate(width / 2f, height / 2f);
                 NanoVGHelper.scale(contentScale, contentScale);
 
-                drawPreviewPanel(context, 180, -160);
+                drawPreviewPanel(context, previewCenterX, previewOffsetY);
 
                 double localMouseX = (mouseX - width / 2.0) / contentScale;
                 double localMouseY = (mouseY - height / 2.0) / contentScale;
@@ -527,12 +549,15 @@ public class WelcomeScreen extends Screen {
     private void drawPreviewPanel(DrawContext context, float x, float y) {
         if (previewPanels.isEmpty()) return;
 
-        float scale = 0.80f;
-        float totalWidth = 0;
-        for (CategoryPanel panel : previewPanels) {
-            totalWidth += panel.getWidth() + 10;
+        float scale = previewScale;
+        float totalWidth = previewRawWidth;
+        if (totalWidth <= 0f) {
+            for (CategoryPanel panel : previewPanels) {
+                totalWidth += panel.getWidth() + 10;
+            }
+            if (totalWidth > 0) totalWidth -= 10;
+            previewRawWidth = totalWidth;
         }
-        totalWidth -= 10;
 
         NanoVGHelper.save();
         NanoVGHelper.translate(x - (totalWidth * scale) / 2f, y);

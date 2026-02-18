@@ -116,7 +116,7 @@ val copyJarToMinecraftMods = tasks.register<Copy>("copyJarToMinecraftMods") {
 }
 
 tasks.named("build") {
-    finalizedBy(copyJarToMinecraftMods)
+    //finalizedBy(copyJarToMinecraftMods)
 }
 
 tasks.jar {
