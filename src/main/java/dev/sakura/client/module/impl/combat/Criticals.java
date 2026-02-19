@@ -43,9 +43,9 @@ public class Criticals extends Module {
     }
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Packet);
-    private final BoolValue groundOnly = new BoolValue("GroundOnly", "仅地面", false);
-    private final NumberValue<Integer> grimDelay = new NumberValue<>("GrimDelay", "Grim延迟", 3, 0, 20, 1);
-    private final NumberValue<Integer> maxPackets = new NumberValue<>("MaxPackets", "最大包数", 15, 5, 50, 1);
+    private final BoolValue groundOnly = new BoolValue("GroundOnly", "仅地面", false, () -> mode.is(Mode.Packet));
+    private final NumberValue<Integer> grimDelay = new NumberValue<>("Delay", "延迟", 3, 0, 20, 1, () -> mode.is(Mode.Grim));
+    private final NumberValue<Integer> maxPackets = new NumberValue<>("Max Packets", "最大包数", 15, 5, 50, 1, () -> mode.is(Mode.Grim));
 
     // Stuck variables for Grim mode
     private int stage = 0;

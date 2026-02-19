@@ -15,6 +15,7 @@ import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.values.impl.BoolValue;
+import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
@@ -29,14 +30,19 @@ public class KillAura extends Module {
         Fake
     }
 
+    public enum AttackMode {
+        v1_8, v1_9
+    }
+
     public KillAura() {
         super("KillAura", "杀戮光环", Category.Combat);
     }
 
+    private final EnumValue<AttackMode> mode = new EnumValue<>("Mode", "模式", AttackMode.v1_8);
     private final NumberValue<Double> aimRange = new NumberValue<>("Aim Range", "瞄准范围", 5.0, 1.0, 6.0, 0.1);
     private final NumberValue<Double> searchRange = new NumberValue<>("Search Range", "搜索范围", 10.0, 1.0, 20.0, 0.1);
-    private final NumberValue<Double> minCps = new NumberValue<>("Min CPS", "最小攻击速度", 10.0, 1.0, 20.0, 1.0);
-    private final NumberValue<Double> maxCps = new NumberValue<>("Max CPS", "最大攻击速度", 10.0, 1.0, 20.0, 1.0);
+    private final NumberValue<Double> minCps = new NumberValue<>("Min CPS", "最小攻击速度", 10.0, 1.0, 20.0, 1.0, () -> mode.is(AttackMode.v1_8));
+    private final NumberValue<Double> maxCps = new NumberValue<>("Max CPS", "最大攻击速度", 10.0, 1.0, 20.0, 1.0, () -> mode.is(AttackMode.v1_8));
     private final NumberValue<Integer> rotateSpeed = new NumberValue<>("Rotation Speed", "转向速度", 10, 1, 10, 1);
     private final BoolValue autoBlock = new BoolValue("Auto Block", "自动格挡", true);
     private final BoolValue debugRender = new BoolValue("Debug Render", "调试渲染", false);
@@ -98,13 +104,20 @@ public class KillAura extends Module {
     }
 
     private void attackTarget() {
-        long time = System.currentTimeMillis();
-        double baseDelay = 1000.0 / MathUtil.getRandom(minCps.get(), maxCps.get());
-        long delay = (long) (baseDelay + (Math.random() - 0.5) * baseDelay * 0.4);
-        if (time - lastAttackTime >= delay) {
-            mc.interactionManager.attackEntity(mc.player, target);
-            mc.player.swingHand(Hand.MAIN_HAND);
-            lastAttackTime = time;
+        if (mode.is(AttackMode.v1_9)) {
+            if (mc.player.getAttackCooldownProgress(0.5f) >= 1.0f) {
+                mc.interactionManager.attackEntity(mc.player, target);
+                mc.player.swingHand(Hand.MAIN_HAND);
+            }
+        } else {
+            long time = System.currentTimeMillis();
+            double baseDelay = 1000.0 / MathUtil.getRandom(minCps.get(), maxCps.get());
+            long delay = (long) (baseDelay + (Math.random() - 0.5) * baseDelay * 0.4);
+            if (time - lastAttackTime >= delay) {
+                mc.interactionManager.attackEntity(mc.player, target);
+                mc.player.swingHand(Hand.MAIN_HAND);
+                lastAttackTime = time;
+            }
         }
     }
 

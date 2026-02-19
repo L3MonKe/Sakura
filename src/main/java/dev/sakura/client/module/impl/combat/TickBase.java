@@ -25,27 +25,16 @@ import net.minecraft.util.math.Vec3d;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * TickBase
- * <p>
- * Calls tick function to speed up, when needed
- * Ported from LiquidBounce
- */
 public class TickBase extends Module {
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Past, Mode.class);
-    private final EnumValue<CallMode> call = new EnumValue<>("Call", "调用", CallMode.Game, CallMode.class);
 
-    /**
-     * The range defines where we want to tickbase into. The first value is the minimum range, which we can
-     * tick into, and the second value is the range where we cannot tickbase at all.
-     */
     private final NumberValue<Double> minRange = new NumberValue<>("Min Range", "最小范围", 2.5, 0.0, 8.0, 0.1);
     private final NumberValue<Double> maxRange = new NumberValue<>("Max Range", "最大范围", 4.0, 0.0, 8.0, 0.1);
 
     private final NumberValue<Double> balanceRecoveryIncrement = new NumberValue<>("Balance Recovery", "平衡恢复", 1.0, 0.0, 2.0, 0.1);
     private final NumberValue<Integer> balanceMaxValue = new NumberValue<>("Balance Max", "最大平衡", 20, 0, 200, 1);
-    private final NumberValue<Integer> maxTicksAtATime = new NumberValue<>("Max Ticks", "单次最大Tick", 4, 1, 20, 1);
+    private final NumberValue<Integer> maxTicksAtATime = new NumberValue<>("Max Ticks", "最大Tick", 4, 1, 20, 1);
     private final BoolValue pauseOnFlag = new BoolValue("Pause On Flag", "被拉回暂停", true);
     private final NumberValue<Integer> pause = new NumberValue<>("Pause", "暂停Tick", 0, 0, 20, 1);
     private final NumberValue<Integer> cooldown = new NumberValue<>("Cooldown", "冷却", 0, 0, 100, 1);
@@ -53,7 +42,6 @@ public class TickBase extends Module {
     private final NumberValue<Integer> pauseHitTicks = new NumberValue<>("Hit Pause Ticks", "受击暂停时长", 10, 1, 40, 1);
     private final BoolValue forceGround = new BoolValue("Force Ground", "强制地面", false);
 
-    private final BoolValue requiresKillAura = new BoolValue("Requires KillAura", "依赖KillAura", true);
     private final BoolValue debug = new BoolValue("Debug", "调试信息", false);
 
     private int ticksToSkip = 0;
@@ -148,7 +136,7 @@ public class TickBase extends Module {
         if (scheduledTicksToRun > 0 && scheduledMode == Mode.Past) {
             executeExtraTicks(scheduledTicksToRun);
             if (debug.get()) {
-                ChatUtil.clientMessage("TickBase (Past): Executed " + scheduledTicksToRun + " ticks.");
+                ChatUtil.clientMessage("TickBase: Executed " + scheduledTicksToRun + " ticks.");
             }
             scheduledTicksToRun = 0;
             scheduledMode = null;
@@ -157,12 +145,8 @@ public class TickBase extends Module {
         }
 
         LivingEntity target;
-        if (requiresKillAura.get()) {
-            if (!killAura.isEnabled()) return;
-            target = killAura.getCurrentTarget();
-        } else {
-            target = Managers.COMBAT.getClosestEnemy(maxRange.get());
-        }
+        if (!killAura.isEnabled()) return;
+        target = killAura.getCurrentTarget();
 
         if (target == null) return;
 
@@ -209,10 +193,7 @@ public class TickBase extends Module {
             return;
         }
 
-        // KillAura check: Ensure KillAura is ready to attack
-        // Note: Sakura's KillAura might not expose precise tick prediction, 
-        // so we check if it has a valid target and is enabled.
-        if (requiresKillAura.get() && (!killAura.isEnabled() || killAura.getCurrentTarget() == null)) {
+        if (!killAura.isEnabled() || killAura.getCurrentTarget() == null) {
             return;
         }
 
@@ -223,24 +204,24 @@ public class TickBase extends Module {
             scheduledMode = Mode.Past;
 
             if (debug.get()) {
-                ChatUtil.clientMessage("TickBase (Past): Scheduled skip " + ticksToSkip + " ticks.");
+                ChatUtil.clientMessage("TickBase: Scheduled skip " + ticksToSkip + " ticks.");
             }
         } else {
             // Future mode: Execute ticks immediately until requirement is broken or limit reached
             int totalSkipped = 0;
             for (int i = 0; i < bestTickIndex; i++) {
                 // Check if KillAura requirement is still met during simulation
-                if (requiresKillAura.get() && (!killAura.isEnabled() || killAura.getCurrentTarget() == null)) {
+                if (!killAura.isEnabled() || killAura.getCurrentTarget() == null) {
                     break;
                 }
 
-                runTick(call.get());
+                runTick();
                 tickBalance -= 1;
                 totalSkipped++;
             }
 
             if (debug.get()) {
-                ChatUtil.clientMessage("TickBase (Future): Skipped " + totalSkipped + " ticks.");
+                ChatUtil.clientMessage("TickBase: Skipped " + totalSkipped + " ticks.");
             }
 
             ticksToSkip = totalSkipped + pause.get();
@@ -319,24 +300,14 @@ public class TickBase extends Module {
 
     private void executeExtraTicks(int ticks) {
         for (int i = 0; i < ticks; i++) {
-            runTick(call.get());
+            runTick();
             tickBalance -= 1;
         }
     }
 
-    private void runTick(CallMode mode) {
-        if (mode == CallMode.Game) {
-            if (mc.world == null) return;
-            executingExtraTicks = true;
-            try {
-                mc.tick();
-            } finally {
-                executingExtraTicks = false;
-            }
-        } else {
-            if (mc.player == null) return;
-            mc.player.tick();
-        }
+    private void runTick() {
+        if (mc.player == null) return;
+        mc.player.tick();
     }
 
     // Data class to store simulated tick information
@@ -345,9 +316,5 @@ public class TickBase extends Module {
 
     public enum Mode {
         Past, Future
-    }
-
-    public enum CallMode {
-        Game, Player
     }
 }
