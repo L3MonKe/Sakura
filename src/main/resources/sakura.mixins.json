@@ -7,6 +7,7 @@
     "MixinMain",
     "accessor.IBillboardParticle",
     "accessor.IChatInputSuggestor",
+    "accessor.IClientPlayerEntity",
     "accessor.IEntity",
     "accessor.IEntityFlag",
     "accessor.IEntityTrackingSection",

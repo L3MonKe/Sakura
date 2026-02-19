@@ -1,8 +1,10 @@
 package dev.sakura.client.module.impl.movement;
 
+import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.player.PlayerTickEvent;
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.MoveUtil;
@@ -69,7 +71,11 @@ public class Speed extends Module {
     private void handleVanilla() {
         double speed = vanillaSpeed.get();
         if (MoveUtil.isMoving()) {
-            MoveUtil.strafe(speed);
+            if (Sakura.MODULES.getModule(Scaffold.class).isEnabled()) {
+                MoveUtil.strafe(speed, Managers.ROTATION.getYaw());
+            } else {
+                MoveUtil.strafe(speed);
+            }
         } else {
             MoveUtil.setMotionX(0);
             MoveUtil.setMotionZ(0);
@@ -78,7 +84,11 @@ public class Speed extends Module {
 
     private void handleStrafe() {
         if (MoveUtil.isMoving()) {
-            MoveUtil.strafe(MoveUtil.getSpeed());
+            if (Sakura.MODULES.getModule(Scaffold.class).isEnabled()) {
+                MoveUtil.strafe(MoveUtil.getSpeed(), Managers.ROTATION.getYaw());
+            } else {
+                MoveUtil.strafe(MoveUtil.getSpeed());
+            }
         } else if (strafeFastStop.get()) {
             MoveUtil.setMotionX(0);
             MoveUtil.setMotionZ(0);
@@ -89,8 +99,6 @@ public class Speed extends Module {
     public void onDisable() {
         if (nullCheck()) return;
         if (mode.is(Mode.Vanilla)) {
-            // 0.221 is the base speed value used in Opal's VanillaSpeed onDisable
-            // MoveUtil.getBaseSpeed(false, 0.221) should replicate getSwiftnessSpeed(0.221D)
             double maxSpeed = MoveUtil.getBaseSpeed(false, 0.221);
             double targetSpeed = Math.min(MoveUtil.getSpeed(), maxSpeed);
             

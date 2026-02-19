@@ -104,6 +104,13 @@ public class MoveUtil {
         mc.player.setVelocity(-Math.sin(yaw) * speed, mc.player.getVelocity().y, Math.cos(yaw) * speed);
     }
 
+    public static void strafe(double speed, float yaw) {
+        if (!isMoving()) return;
+
+        double direction = getDirection(yaw, mc.player.forwardSpeed, mc.player.sidewaysSpeed);
+        mc.player.setVelocity(-Math.sin(direction) * speed, mc.player.getVelocity().y, Math.cos(direction) * speed);
+    }
+
     public static double getDirection() {
         float yaw = mc.player.getYaw();
         float forward = mc.player.forwardSpeed;

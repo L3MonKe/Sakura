@@ -353,6 +353,10 @@ public class Velocity extends Module {
         }
     }
 
+    public boolean isActive() {
+        return stage != VelocityStage.NONE;
+    }
+
     private void debug(String message) {
         if (debug.get()) {
             ChatUtil.clientMessage("§7[Velocity] §f" + message);

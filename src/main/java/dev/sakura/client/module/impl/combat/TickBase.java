@@ -17,6 +17,8 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.ExplosionS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.util.math.Vec3d;
 
@@ -47,6 +49,8 @@ public class TickBase extends Module {
     private final BoolValue pauseOnFlag = new BoolValue("Pause On Flag", "被拉回暂停", true);
     private final NumberValue<Integer> pause = new NumberValue<>("Pause", "暂停Tick", 0, 0, 20, 1);
     private final NumberValue<Integer> cooldown = new NumberValue<>("Cooldown", "冷却", 0, 0, 100, 1);
+    private final BoolValue pauseOnHit = new BoolValue("Pause On Hit", "受击暂停", true);
+    private final NumberValue<Integer> pauseHitTicks = new NumberValue<>("Hit Pause Ticks", "受击暂停时长", 10, 1, 40, 1);
     private final BoolValue forceGround = new BoolValue("Force Ground", "强制地面", false);
 
     private final BoolValue requiresKillAura = new BoolValue("Requires KillAura", "依赖KillAura", true);
@@ -285,13 +289,30 @@ public class TickBase extends Module {
 
     @EventHandler
     public void onPacket(PacketEvent event) {
-        // Reset balance if we get flagged (teleported back by server)
-        if (event.getType() == EventType.RECEIVE &&
-                event.getPacket() instanceof PlayerPositionLookS2CPacket &&
-                pauseOnFlag.get()) {
-            tickBalance = 0f;
-            if (debug.get()) {
-                ChatUtil.clientMessage("TickBase: Flag detected, balance reset.");
+        if (nullCheck()) return;
+
+        if (event.getType() == EventType.RECEIVE) {
+            if (pauseOnHit.get()) {
+                if ((event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) ||
+                        event.getPacket() instanceof ExplosionS2CPacket) {
+
+                    cooldownTicksRemaining = pauseHitTicks.get();
+                    ticksToSkip = 0;
+                    scheduledTicksToRun = 0;
+                    scheduledMode = null;
+
+                    if (debug.get()) {
+                        ChatUtil.clientMessage("TickBase: Paused due to hit.");
+                    }
+                }
+            }
+
+            // Reset balance if we get flagged (teleported back by server)
+            if (event.getPacket() instanceof PlayerPositionLookS2CPacket && pauseOnFlag.get()) {
+                tickBalance = 0f;
+                if (debug.get()) {
+                    ChatUtil.clientMessage("TickBase: Flag detected, balance reset.");
+                }
             }
         }
     }

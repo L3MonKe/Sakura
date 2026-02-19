@@ -35,6 +35,7 @@ public class ModuleManager {
         add(new AntiBot());
         add(new AttackCrystal());
         add(new AutoWeapon());
+        add(new Criticals());
         add(new KillAura());
         add(new AttackCrystal());
         add(new AutoAnchor());
@@ -50,6 +51,7 @@ public class ModuleManager {
         add(new AutoStuck());
         add(new BlinkNoSlow());
         add(new ElytraFly());
+        add(new Flight());
         add(new FastWeb());
         add(new JumpCooldown());
         add(new KeepSprint());
