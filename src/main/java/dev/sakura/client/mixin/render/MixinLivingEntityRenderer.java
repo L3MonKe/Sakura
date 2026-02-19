@@ -83,7 +83,7 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
     private float hookPitch(float original, LivingEntity entity, S state, float tickDelta) {
         Rotation rotation = Managers.ROTATION.animationRotation;
         Rotation lastRotation = Managers.ROTATION.lastAnimationRotation;
-        if (entity == mc.player &&  Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
+        if (entity == mc.player && Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
             float lastPitch = lastRotation.pitch;
             float currentPitch = rotation.pitch;
             float diff = currentPitch - lastPitch;
