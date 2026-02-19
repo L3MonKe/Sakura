@@ -60,6 +60,7 @@ public class ModuleManager {
         add(new Stuck());
         add(new Velocity());
         add(new TargetStrafe());
+        add(new Speed());
 
         // Player
         add(new AntiHunger());
