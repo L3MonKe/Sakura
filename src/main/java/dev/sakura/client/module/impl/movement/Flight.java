@@ -6,6 +6,7 @@ import dev.sakura.client.event.impl.player.PlayerTickEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.MoveUtil;
+import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 
@@ -18,6 +19,7 @@ public class Flight extends Module {
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Vanilla);
     private final NumberValue<Double> speed = new NumberValue<>("Speed", "速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(Mode.Vanilla));
+    private final BoolValue onlyParallel = new BoolValue("Parallel", "平行", false);
 
     public Flight() {
         super("Flight", "飞行", Category.Movement);
@@ -55,10 +57,12 @@ public class Flight extends Module {
         double moveSpeed = speed.get();
         double motionY = 0;
 
-        if (mc.options.jumpKey.isPressed()) {
-            motionY = moveSpeed;
-        } else if (mc.options.sneakKey.isPressed()) {
-            motionY = -moveSpeed;
+        if (!onlyParallel.get()) {
+            if (mc.options.jumpKey.isPressed()) {
+                motionY = moveSpeed;
+            } else if (mc.options.sneakKey.isPressed()) {
+                motionY = -moveSpeed;
+            }
         }
 
         if (MoveUtil.isMoving()) {
@@ -73,10 +77,12 @@ public class Flight extends Module {
     private void handleAirWalk() {
         double motionY = 0;
         
-        if (mc.options.jumpKey.isPressed()) {
-            motionY = 0.42; 
-        } else if (mc.options.sneakKey.isPressed()) {
-            motionY = -0.42;
+        if (!onlyParallel.get()) {
+            if (mc.options.jumpKey.isPressed()) {
+                motionY = 0.42; 
+            } else if (mc.options.sneakKey.isPressed()) {
+                motionY = -0.42;
+            }
         }
         
         MoveUtil.setMotionY(motionY);
