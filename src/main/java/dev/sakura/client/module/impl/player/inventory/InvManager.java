@@ -53,7 +53,7 @@ public class InvManager extends Module {
     private final NumberValue<Double> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110.0, 0.0, 500.0, 5.0);
     private final EnumValue<OffhandItemMode> offhandItems = new EnumValue<>("Offhand Items", "副手物品", OffhandItemMode.Projectile);
     private final BoolValue autoArmor = new BoolValue("Auto Armor", "自动穿甲", true);
-    private final BoolValue inventoryOnly = new BoolValue("Inventory Only", "仅背包界面", true);
+    private final BoolValue inventoryOnly = new BoolValue("Inventory Only", "仅背包界面", true, () -> false);
     private final BoolValue switchSword = new BoolValue("Switch Sword", "切换剑", true);
     private final NumberValue<Integer> swordSlot = new NumberValue<>("Sword Slot", "剑槽位", 1, 1, 9, 1, switchSword::get);
     private final BoolValue switchBlock = new BoolValue("Switch Block", "切换方块", true, () -> !offhandItems.is(OffhandItemMode.Block));

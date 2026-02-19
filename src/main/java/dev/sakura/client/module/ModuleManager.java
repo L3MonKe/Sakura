@@ -36,13 +36,14 @@ public class ModuleManager {
         add(new AttackCrystal());
         add(new AutoWeapon());
         add(new KillAura());
-        add(new TpAura());
         add(new AttackCrystal());
         add(new AutoAnchor());
         add(new AutoTotem());
         add(new AutoThrow());
         add(new LegitCrystal());
         add(new SafeHotbar());
+        add(new TickBase());
+        add(new TpAura());
 
         // Movement
         add(new AutoSprint());
