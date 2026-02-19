@@ -67,37 +67,29 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
 
     @ModifyExpressionValue(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;lerpAngleDegrees(FFF)F"))
     private float hookHeadYaw(float original, LivingEntity entity, S state, float tickDelta) {
-        if (entity != mc.player) {
-            return original;
-        }
-
         Rotation rotation = Managers.ROTATION.animationRotation;
         Rotation lastRotation = Managers.ROTATION.lastAnimationRotation;
-        if (rotation != null && lastRotation != null) {
+        if (entity == mc.player && Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
             float lastYaw = lastRotation.yaw;
             float currentYaw = rotation.yaw;
             float diff = MathHelper.wrapDegrees(currentYaw - lastYaw);
             return MathHelper.wrapDegrees(lastYaw + diff * tickDelta);
+        } else {
+            return original;
         }
-
-        return original;
     }
 
     @ModifyExpressionValue(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;getLerpedPitch(F)F"))
     private float hookPitch(float original, LivingEntity entity, S state, float tickDelta) {
-        if (entity != mc.player) {
-            return original;
-        }
-
         Rotation rotation = Managers.ROTATION.animationRotation;
         Rotation lastRotation = Managers.ROTATION.lastAnimationRotation;
-        if (rotation != null && lastRotation != null) {
+        if (entity == mc.player &&  Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
             float lastPitch = lastRotation.pitch;
             float currentPitch = rotation.pitch;
             float diff = currentPitch - lastPitch;
             return lastPitch + diff * tickDelta;
+        } else {
+            return original;
         }
-
-        return original;
     }
 }
