@@ -56,29 +56,29 @@ public class Animations extends Module {
     private final NumberValue<Double> blockingRotationY = new NumberValue<>("BlockingRotationY", "格挡-旋转Y", 0.0, -50.0, 50.0, 1.0, blockingParams::get);
     private final NumberValue<Double> blockingRotationZ = new NumberValue<>("BlockingRotationZ", "格挡-旋转Z", 0.0, -50.0, 50.0, 1.0, blockingParams::get);
 
-    private final EnumValue<SwingMode> swingMode = new EnumValue<>("SwingMode", "挥手模式", SwingMode.VANILLA);
+    private final EnumValue<SwingMode> swingMode = new EnumValue<>("SwingMode", "挥手模式", SwingMode.Vanilla);
     private final NumberValue<Integer> swingDuration = new NumberValue<>("SwingDuration", "挥手时长", 6, 1, 20, 1);
 
     private final EnumValue<BlockingAnimation> blockingAnimation = new EnumValue<>("BlockingAnimation", "格挡动画", BlockingAnimation.V1_7);
     private final NumberValue<Double> oneSevenTranslateY = new NumberValue<>("Y", "1.7-Y", 0.1, 0.05, 0.3, 0.01, () -> blockingAnimation.is(BlockingAnimation.V1_7));
     private final NumberValue<Double> oneSevenSwingScale = new NumberValue<>("SwingScale", "1.7-挥手缩放", 0.9, 0.1, 1.0, 0.01, () -> blockingAnimation.is(BlockingAnimation.V1_7));
 
-    private final NumberValue<Double> spinSpeed = new NumberValue<>("SpinSpeed", "Spin-速度", 1.0, 0.1, 20.0, 0.1, () -> blockingAnimation.is(BlockingAnimation.SPIN));
-    private final NumberValue<Double> spinRange = new NumberValue<>("SpinRange", "Spin-范围", 1.0, 0.0, 5.0, 0.1, () -> blockingAnimation.is(BlockingAnimation.SPIN));
-    private final NumberValue<Double> spinX = new NumberValue<>("SpinX", "Spin-旋转X", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.SPIN));
-    private final NumberValue<Double> spinY = new NumberValue<>("SpinY", "Spin-旋转Y", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.SPIN));
-    private final NumberValue<Double> spinZ = new NumberValue<>("SpinZ", "Spin-旋转Z", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.SPIN));
+    private final NumberValue<Double> spinSpeed = new NumberValue<>("SpinSpeed", "Spin-速度", 1.0, 0.1, 20.0, 0.1, () -> blockingAnimation.is(BlockingAnimation.Spin));
+    private final NumberValue<Double> spinRange = new NumberValue<>("SpinRange", "Spin-范围", 1.0, 0.0, 5.0, 0.1, () -> blockingAnimation.is(BlockingAnimation.Spin));
+    private final NumberValue<Double> spinX = new NumberValue<>("SpinX", "Spin-旋转X", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.Spin));
+    private final NumberValue<Double> spinY = new NumberValue<>("SpinY", "Spin-旋转Y", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.Spin));
+    private final NumberValue<Double> spinZ = new NumberValue<>("SpinZ", "Spin-旋转Z", 0.0, -180.0, 180.0, 1.0, () -> blockingAnimation.is(BlockingAnimation.Spin));
 
     private enum BlockingAnimation {
         V1_7,
-        PUSHDOWN,
-        EXHIBITION,
-        SPIN
+        Pushdown,
+        Exhibition,
+        Spin
     }
 
     private enum SwingMode {
-        VANILLA,
-        CURRENT
+        Vanilla,
+        Current
     }
 
     private boolean isWeapon(ItemStack stack) {
@@ -105,8 +105,6 @@ public class Animations extends Module {
 
     @EventHandler
     public void onSwingSpeed(SwingSpeedEvent event) {
-        if (!isEnabled()) return;
-
         event.setCancelled(true);
         event.setSwingSpeed(swingDuration.get());
         event.setSelfOnly(true);
@@ -123,7 +121,7 @@ public class Animations extends Module {
 
         boolean blocking = isBlocking();
 
-        if (blockingAnimation.is(BlockingAnimation.SPIN)) {
+        if (blockingAnimation.is(BlockingAnimation.Spin)) {
             KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
             if (killAura.isEnabled() && killAura.getCurrentTarget() != null) {
                 blocking = true;
@@ -133,7 +131,7 @@ public class Animations extends Module {
         if (blocking) {
             applyBlockingAnimation(matrices, arm, equipProgress, swingProgress);
         } else {
-            if (swingMode.is(SwingMode.VANILLA)) {
+            if (swingMode.is(SwingMode.Vanilla)) {
                 applySwingOffset(matrices, arm, swingProgress);
             } else {
                 applyCurrentSwingOffset(matrices, arm, swingProgress);
@@ -149,37 +147,13 @@ public class Animations extends Module {
     private void applyViewModelTransformations(MatrixStack matrices, Arm arm) {
         if (arm == Arm.RIGHT) {
             if (isBlocking() && blockingParams.get()) {
-                applyTransformations(
-                        matrices,
-                        blockingX.get(),
-                        blockingY.get(),
-                        blockingItemScale.get(),
-                        blockingRotationX.get(),
-                        blockingRotationY.get(),
-                        blockingRotationZ.get()
-                );
+                applyTransformations(matrices, blockingX.get(), blockingY.get(), blockingItemScale.get(), blockingRotationX.get(), blockingRotationY.get(), blockingRotationZ.get());
             } else if (mainHand.get()) {
-                applyTransformations(
-                        matrices,
-                        mainHandX.get(),
-                        mainHandY.get(),
-                        mainHandItemScale.get(),
-                        mainHandPositiveRotationX.get(),
-                        mainHandPositiveRotationY.get(),
-                        mainHandPositiveRotationZ.get()
-                );
+                applyTransformations(matrices, mainHandX.get(), mainHandY.get(), mainHandItemScale.get(), mainHandPositiveRotationX.get(), mainHandPositiveRotationY.get(), mainHandPositiveRotationZ.get());
             }
         } else {
             if (offHand.get()) {
-                applyTransformations(
-                        matrices,
-                        offHandX.get(),
-                        offHandY.get(),
-                        offHandItemScale.get(),
-                        offHandPositiveRotationX.get(),
-                        offHandPositiveRotationY.get(),
-                        offHandPositiveRotationZ.get()
-                );
+                applyTransformations(matrices, offHandX.get(), offHandY.get(), offHandItemScale.get(), offHandPositiveRotationX.get(), offHandPositiveRotationY.get(), offHandPositiveRotationZ.get());
             }
         }
     }
@@ -219,11 +193,11 @@ public class Animations extends Module {
     private void applyBlockingAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
         if (blockingAnimation.is(BlockingAnimation.V1_7)) {
             oneSevenTransform(matrices, arm, equipProgress, swingProgress);
-        } else if (blockingAnimation.is(BlockingAnimation.PUSHDOWN)) {
+        } else if (blockingAnimation.is(BlockingAnimation.Pushdown)) {
             pushdownTransform(matrices, arm, equipProgress, swingProgress);
-        } else if (blockingAnimation.is(BlockingAnimation.EXHIBITION)) {
+        } else if (blockingAnimation.is(BlockingAnimation.Exhibition)) {
             exhibitionTransform(matrices, arm, equipProgress, swingProgress);
-        } else if (blockingAnimation.is(BlockingAnimation.SPIN)) {
+        } else if (blockingAnimation.is(BlockingAnimation.Spin)) {
             spinTransform(matrices, arm, equipProgress, swingProgress);
         }
     }

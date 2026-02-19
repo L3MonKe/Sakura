@@ -172,11 +172,11 @@ public class MoveUtil {
         return new double[]{x, z};
     }
 
-    public static void fixMovement(final MoveInputEvent event, final float yaw) {
-        final float forward = event.getForward();
-        final float strafe = event.getStrafe();
+    public static void fixMovement(MoveInputEvent event, float yaw) {
+        float forward = event.getForward();
+        float strafe = event.getStrafe();
 
-        final double angle = MathHelper.wrapDegrees(Math.toDegrees(getDirection(mc.player.getYaw(), forward, strafe)));
+        double angle = MathHelper.wrapDegrees(Math.toDegrees(getDirection(mc.player.getYaw(), forward, strafe)));
 
         if (forward == 0 && strafe == 0) {
             return;

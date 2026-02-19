@@ -26,8 +26,8 @@ public class RotationManager {
     public Rotation rotations;
     public Rotation lastRotations = new Rotation(0, 0);
     public Rotation targetRotations;
-    public Rotation animationRotation;
-    public Rotation lastAnimationRotation;
+    public Rotation animationRotation = null;
+    public Rotation lastAnimationRotation = null;
 
     private boolean active;
     private boolean smoothed;
@@ -273,7 +273,28 @@ public class RotationManager {
             }
 
             lastAnimationRotation = animationRotation;
-            animationRotation = new Rotation(event.getYaw(), event.getPitch());
+            Rotation currentAnimationRotation;
+            if (active && rotations != null) {
+                currentAnimationRotation = rotations;
+            } else {
+                currentAnimationRotation = new Rotation(event.getYaw(), event.getPitch());
+            }
+
+            if (lastAnimationRotation == null) {
+                animationRotation = currentAnimationRotation;
+            } else {
+                float targetYaw = currentAnimationRotation.yaw;
+                float targetPitch = currentAnimationRotation.pitch;
+                float lastYaw = lastAnimationRotation.yaw;
+                float lastPitch = lastAnimationRotation.pitch;
+                float yawDiff = MathHelper.wrapDegrees(targetYaw - lastYaw);
+                float pitchDiff = targetPitch - lastPitch;
+
+                float smoothYaw = lastYaw + yawDiff * 0.5f;
+                float smoothPitch = lastPitch + pitchDiff * 0.5f;
+                animationRotation = new Rotation(MathHelper.wrapDegrees(smoothYaw), MathHelper.clamp(smoothPitch, -90.0f, 90.0f));
+            }
+
             targetRotations = new Rotation(mc.player.getYaw(), mc.player.getPitch());
             smoothed = false;
         }

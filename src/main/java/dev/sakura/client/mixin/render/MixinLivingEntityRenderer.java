@@ -65,21 +65,6 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
         }
     }
 
-    @ModifyExpressionValue(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/entity/LivingEntityRenderer;clampBodyYaw(Lnet/minecraft/entity/LivingEntity;FF)F"))
-    private float hookBodyYaw(float original, LivingEntity entity, S state, float tickDelta) {
-        if (entity != mc.player) {
-            return original;
-        }
-
-        Rotation rotation = Managers.ROTATION.animationRotation;
-        Rotation lastRotation = Managers.ROTATION.lastAnimationRotation;
-        if (Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
-            return MathHelper.lerpAngleDegrees(tickDelta, lastRotation.yaw, rotation.yaw);
-        }
-
-        return original;
-    }
-
     @ModifyExpressionValue(method = "updateRenderState(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/client/render/entity/state/LivingEntityRenderState;F)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;lerpAngleDegrees(FFF)F"))
     private float hookHeadYaw(float original, LivingEntity entity, S state, float tickDelta) {
         if (entity != mc.player) {
@@ -88,8 +73,11 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
 
         Rotation rotation = Managers.ROTATION.animationRotation;
         Rotation lastRotation = Managers.ROTATION.lastAnimationRotation;
-        if (Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
-            return MathHelper.lerpAngleDegrees(tickDelta, lastRotation.yaw, rotation.yaw);
+        if (rotation != null && lastRotation != null) {
+            float lastYaw = lastRotation.yaw;
+            float currentYaw = rotation.yaw;
+            float diff = MathHelper.wrapDegrees(currentYaw - lastYaw);
+            return MathHelper.wrapDegrees(lastYaw + diff * tickDelta);
         }
 
         return original;
@@ -103,8 +91,11 @@ public abstract class MixinLivingEntityRenderer<T extends LivingEntity, S extend
 
         Rotation rotation = Managers.ROTATION.animationRotation;
         Rotation lastRotation = Managers.ROTATION.lastAnimationRotation;
-        if (Managers.ROTATION.isActive() && rotation != null && lastRotation != null) {
-            return MathHelper.lerp(tickDelta, lastRotation.pitch, rotation.pitch);
+        if (rotation != null && lastRotation != null) {
+            float lastPitch = lastRotation.pitch;
+            float currentPitch = rotation.pitch;
+            float diff = currentPitch - lastPitch;
+            return lastPitch + diff * tickDelta;
         }
 
         return original;
