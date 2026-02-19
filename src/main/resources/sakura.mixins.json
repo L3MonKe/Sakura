@@ -5,7 +5,6 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "MixinMain",
-    "accessor.IAccessorBundlePacket",
     "accessor.IBillboardParticle",
     "accessor.IChatInputSuggestor",
     "accessor.IEntity",
@@ -18,7 +17,6 @@
     "accessor.IItemRenderState",
     "accessor.ILayerRenderState",
     "accessor.ILivingEntity",
-    "accessor.IMinecraftClient",
     "accessor.IMountScreenHandler",
     "accessor.IPlayerInteractEntityC2SPacket",
     "accessor.IPlayerMoveC2SPacket",

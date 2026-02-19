@@ -3,7 +3,7 @@ package dev.sakura.client.module;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.EventPriority;
-import dev.sakura.client.event.impl.input.MouseButtonEvent;
+import dev.sakura.client.event.impl.input.MouseClickEvent;
 import dev.sakura.client.event.impl.key.KeyEvent;
 import dev.sakura.client.event.impl.render.Render2DEvent;
 import dev.sakura.client.event.type.KeyAction;
@@ -236,7 +236,7 @@ public class ModuleManager {
     }
 
     @EventHandler
-    public void onKey(MouseButtonEvent event) {
+    public void onKey(MouseClickEvent event) {
         if (event.getAction() == KeyAction.Press) {
             if (event.getButton() == 3 || event.getButton() == 4) {
                 for (Module module : modules.values()) {

@@ -150,7 +150,11 @@ public class InvUtil {
 
     public static void swapBack() {
         if (previousSlot == -1) return;
+        if (previousSlot == SlotUtil.OFFHAND) return;
+        if (previousSlot < 0 || previousSlot > 8) return;
+
         mc.player.getInventory().setSelectedSlot(previousSlot);
+        previousSlot = -1;
     }
 
     public static boolean invSwap(int slot) {

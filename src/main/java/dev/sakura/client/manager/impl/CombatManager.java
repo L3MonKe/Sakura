@@ -82,9 +82,9 @@ public class CombatManager extends Managers {
             return false;
         }
         return switch (entity) {
-            case AnimalEntity animalEntity when targetSetting.targets.isEnabled("Animals") -> true;
-            case PassiveEntity passiveEntity when targetSetting.targets.isEnabled("Passive") -> true;
-            case MobEntity mobEntity when targetSetting.targets.isEnabled("Mobs") -> true;
+            case AnimalEntity ignored when targetSetting.targets.isEnabled("Animals") -> true;
+            case PassiveEntity ignored when targetSetting.targets.isEnabled("Passive") -> true;
+            case MobEntity ignored when targetSetting.targets.isEnabled("Mobs") -> true;
             case PlayerEntity player when targetSetting.targets.isEnabled("Player") ->
                     !AntiBot.isBot(player) && !Teams.isSameTeam(player);
             default -> false;
@@ -136,7 +136,7 @@ public class CombatManager extends Managers {
     }
 
     public LivingEntity getTargetByHealth(double minRange, double maxRange) {
-        return getEntities(minRange, maxRange).stream().min(Comparator.comparing(t -> (Managers.HEALTH.getHealth(t)))).orElse(null);
+        return getEntities(minRange, maxRange).stream().min(Comparator.comparing(t -> Managers.HEALTH.getHealth(t))).orElse(null);
     }
 
     public LivingEntity getTargetByFOVRange(double minRange, double maxRange) {

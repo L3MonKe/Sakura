@@ -32,13 +32,6 @@ public interface IPlayerMoveC2SPacket {
     @Accessor("onGround")
     void setOnGround(boolean onGround);
 
-    @Accessor("horizontalCollision")
-    boolean getHorizontalCollision();
-
-    @Mutable
-    @Accessor("horizontalCollision")
-    void setHorizontalCollision(boolean horizontalCollision);
-
     @Accessor("pitch")
     float getPitch();
 
@@ -52,9 +45,6 @@ public interface IPlayerMoveC2SPacket {
     @Mutable
     @Accessor("yaw")
     void setYaw(float yaw);
-
-    @Accessor("changePosition")
-    boolean getChangePosition();
 
     @Mutable
     @Accessor("changePosition")

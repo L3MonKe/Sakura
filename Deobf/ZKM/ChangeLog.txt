@@ -873,12 +873,12 @@ Class: public dev.sakura.client.event.impl.input.ClickEvent	=>	dev.sakura.client
 	MethodsOf: dev.sakura.client.event.impl.input.ClickEvent
 		public void <init>()	=>	<init>() :VDR4ijCMV8kZNv
 
-Class: public dev.sakura.client.event.impl.input.MouseButtonEvent	=>	dev.sakura.client.L3MonKe_wM
+Class: public dev.sakura.client.event.impl.input.MouseClickEvent	=>	dev.sakura.client.L3MonKe_wM
 	Source: "MouseButtonEvent.java"
-	FieldsOf: dev.sakura.client.event.impl.input.MouseButtonEvent
+	FieldsOf: dev.sakura.client.event.impl.input.MouseClickEvent
 		private final dev.sakura.client.event.type.KeyAction action	=>	L3MonKe_L
 		private final int button	=>	L3MonKe_b
-	MethodsOf: dev.sakura.client.event.impl.input.MouseButtonEvent
+	MethodsOf: dev.sakura.client.event.impl.input.MouseClickEvent
 		public void <init>(int, dev.sakura.client.event.type.KeyAction)	=>	<init>(int, dev.sakura.client.L3MonKe_wO) :yKgzf9nfV8kZNv
 		public dev.sakura.client.event.type.KeyAction getAction()	=>	L3MonKe__(java.lang.Object[])* :nah$Dzm-V8kZNv
 		public int getButton()	=>	L3MonKe_b(java.lang.Object[])* :zFuZSYPFV8kZNv
@@ -4132,7 +4132,7 @@ Class: public dev.sakura.client.module.ModuleManager	=>	dev.sakura.client.L3MonK
 		public dev.sakura.client.module.Module getModuleByString(java.lang.String)	=>	L3MonKe_I(long, java.lang.String)	=>	L3MonKe_I(java.lang.Object[])* :zaMt-BRRVyta6S
 		private void init()	=>	L3MonKe_v(long)	=>	L3MonKe_v(java.lang.Object[])* :-Z4U4YpoVyta6S
 		private static boolean lambda$getModsByCategory$0(dev.sakura.client.module.Category, dev.sakura.client.module.Module)	=>	lambda$getModsByCategory$0(dev.sakura.client.L3MonKe_wx, dev.sakura.client.L3MonKe_g) :-Pkr$$SbV8kZNv
-		public void onKey(dev.sakura.client.event.impl.input.MouseButtonEvent)	=>	L3MonKe_v(dev.sakura.client.L3MonKe_wM) :Y2GUgaREV8kZNv
+		public void onKey(dev.sakura.client.event.impl.input.MouseClickEvent)	=>	L3MonKe_v(dev.sakura.client.L3MonKe_wM) :Y2GUgaREV8kZNv
 		public void onKey(dev.sakura.client.event.impl.key.KeyEvent)	=>	L3MonKe_R(dev.sakura.client.L3MonKe_wX) :kmf6_vPhV8kZNv
 		public void onRender2D(dev.sakura.client.event.impl.render.Render2DEvent)	=>	L3MonKe_l(dev.sakura.client.L3MonKe_nv) :8HGlE$M4V8kZNv
 		private void sendToggleNotification(dev.sakura.client.module.Module, boolean, java.lang.String)	=>	L3MonKe_d(long, dev.sakura.client.L3MonKe_g, boolean, java.lang.String)	=>	L3MonKe_d(java.lang.Object[])* :IXS0ljWJVyta6S
@@ -7102,7 +7102,7 @@ Class: public dev.sakura.client.module.impl.movement.Scaffold	=>	dev.sakura.clie
 		protected void onDisable()	=>	L3MonKe_F() :gQvSNB5kV8kZNv
 		protected void onEnable()	=>	L3MonKe_r(long)	=>	L3MonKe_r(java.lang.Object[])* :XLNEXzsDVyta6S
 		public void onMotion(dev.sakura.client.event.impl.player.MotionEvent)	=>	L3MonKe_g(dev.sakura.client.L3MonKe_wS) :eTC6eF-hV8kZNv
-		private void onMouse(dev.sakura.client.event.impl.input.MouseButtonEvent)	=>	L3MonKe_k(dev.sakura.client.L3MonKe_wM) :GA1QoUGJV8kZNv
+		private void onMouse(dev.sakura.client.event.impl.input.MouseClickEvent)	=>	L3MonKe_k(dev.sakura.client.L3MonKe_wM) :GA1QoUGJV8kZNv
 		private void onStrafe(dev.sakura.client.event.impl.player.StrafeEvent)	=>	L3MonKe_e(dev.sakura.client.L3MonKe_wJ) :ylMscEInV8kZNv
 		public void onTick(dev.sakura.client.event.impl.client.TickEvent$Pre)	=>	L3MonKe_L(dev.sakura.client.L3MonKe_Yd) :tnQnfUJtV8kZNv
 		private void place(dev.sakura.client.utils.player.FindItemResult)	=>	L3MonKe_M(dev.sakura.client.L3MonKe_Xm, long)	=>	L3MonKe_M(java.lang.Object[])* :VgHLHIQqVyIj9W
@@ -11993,7 +11993,7 @@ MemberClass: dev.sakura.client.event.impl.entity.EntitySpawnEvent	Data: 2652
 MemberClass: dev.sakura.client.event.impl.entity.EntityVelocityUpdateEvent	Data: 2641
 MemberClass: dev.sakura.client.event.impl.entity.SwingSpeedEvent	Data: 2689
 MemberClass: dev.sakura.client.event.impl.input.ClickEvent	Data: 2654
-MemberClass: dev.sakura.client.event.impl.input.MouseButtonEvent	Data: 2650
+MemberClass: dev.sakura.client.event.impl.input.MouseClickEvent	Data: 2650
 MemberClass: dev.sakura.client.event.impl.input.MoveInputEvent	Data: 2695 Ob
 MemberClass: dev.sakura.client.event.impl.key.KeyEvent	Data: 2662 F
 MemberClass: dev.sakura.client.event.impl.packet.PacketEvent	Data: 2630 U

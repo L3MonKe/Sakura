@@ -2,7 +2,7 @@ package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.input.MouseButtonEvent;
+import dev.sakura.client.event.impl.input.MouseClickEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.StrafeEvent;
 import dev.sakura.client.event.type.EventType;
@@ -100,7 +100,7 @@ public class Scaffold extends Module {
     }
 
     @EventHandler
-    private void onMouse(MouseButtonEvent event) {
+    private void onMouse(MouseClickEvent event) {
         if (mc.currentScreen != null) return;
         if (event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_LEFT || event.getButton() == InputUtil.GLFW_MOUSE_BUTTON_RIGHT) {
             event.setCancelled(true);
