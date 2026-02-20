@@ -10,28 +10,27 @@ import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import dev.sakura.verify.VerificationClient;
 import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.decoration.ArmorStandEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.s2c.play.EntitiesDestroyS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityAnimationS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.decoration.ArmorStandEntity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.world.GameMode;
-import dev.sakura.client.values.impl.EnumValue;
 
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 public class AntiBot extends Module {
 
@@ -117,15 +116,15 @@ public class AntiBot extends Module {
 
             final UUID uuid = player.getUuid();
             if (uuid.version() == 2) {
-                 return true;
+                return true;
             }
         } else {
-             // Non-player living entities (like Villagers acting as NPCs)
-             if (livingEntity.getUuid().version() != 4) {
-                 return true;
-             }
+            // Non-player living entities (like Villagers acting as NPCs)
+            if (livingEntity.getUuid().version() != 4) {
+                return true;
+            }
         }
-        
+
         return false;
     }
 

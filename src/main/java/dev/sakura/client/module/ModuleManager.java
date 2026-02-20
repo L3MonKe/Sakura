@@ -50,7 +50,6 @@ public class ModuleManager {
         add(new AutoSprint());
         add(new AutoStuck());
         add(new BlinkNoSlow());
-        add(new ElytraFly());
         add(new Flight());
         add(new FastWeb());
         add(new JumpCooldown());

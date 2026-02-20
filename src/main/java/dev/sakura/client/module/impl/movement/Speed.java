@@ -101,7 +101,7 @@ public class Speed extends Module {
         if (mode.is(Mode.Vanilla)) {
             double maxSpeed = MoveUtil.getBaseSpeed(false, 0.221);
             double targetSpeed = Math.min(MoveUtil.getSpeed(), maxSpeed);
-            
+
             if (MoveUtil.isMoving()) {
                 MoveUtil.strafe(targetSpeed);
             } else {

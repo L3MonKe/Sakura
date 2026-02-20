@@ -29,8 +29,8 @@ import net.minecraft.network.packet.c2s.common.CommonPongC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 
@@ -91,7 +91,7 @@ public class Criticals extends Module {
                 return;
             }
 
-            final Box box = mc.player.getBoundingBox().offset(0.0D, 0.0625D, 0.0D);
+            final Box box = mc.player.getBoundingBox().offset(0.0D, 0.0625, 0.0D);
             if (!isBoxEmpty(box)) {
                 return;
             }
@@ -105,7 +105,7 @@ public class Criticals extends Module {
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
-        
+
         if (attackTimer > 0) {
             attackTimer--;
         }
@@ -122,10 +122,10 @@ public class Criticals extends Module {
                 isBacking = false;
                 startY = mc.player.getY();
             } else if (mc.player.input.playerInput.backward() && !isBacking) {
-                 if (startY - mc.player.getY() > 0.5) {
-                     isBacking = true;
-                     disableStuck();
-                 }
+                if (startY - mc.player.getY() > 0.5) {
+                    isBacking = true;
+                    disableStuck();
+                }
             }
 
             if (isBacking) {
@@ -202,13 +202,13 @@ public class Criticals extends Module {
             }
         } else {
             // Ensure packets are cleared if manually disabled
-             while (!packets.isEmpty()) {
-                 PacketUtil.sendPacketNoEvent(packets.poll());
-             }
-             stuckEnabled = false;
+            while (!packets.isEmpty()) {
+                PacketUtil.sendPacketNoEvent(packets.poll());
+            }
+            stuckEnabled = false;
         }
     }
-    
+
     private void resetStuck() {
         stuckEnabled = false;
         stage = 0;
@@ -225,24 +225,24 @@ public class Criticals extends Module {
 
         // Process disable logic even if stuckEnabled is false, to flush packets
         if (!stuckEnabled && !tryDisable) return;
-        
+
         // If tryDisable is true, we need to flush one last time then actually disable
         if (!stuckEnabled && tryDisable) {
-             // Let the logic below handle the flushing
+            // Let the logic below handle the flushing
         }
 
         Module scaffold = Sakura.MODULES.getModule(Scaffold.class);
         if (scaffold.isEnabled()) {
             // Don't interfere with scaffold
-            if(stuckEnabled) disableStuck(); 
+            if (stuckEnabled) disableStuck();
             return;
         }
 
         if (e.getType() == EventType.PRE) {
             if (stuckEnabled) {
-                 mc.player.setVelocity(0.0, 0.0, 0.0);
+                mc.player.setVelocity(0.0, 0.0, 0.0);
             }
-            
+
             if (stage == 1) {
                 stage = 2;
                 float rotationYaw = mc.player.getYaw();
@@ -282,7 +282,7 @@ public class Criticals extends Module {
             boolean isBowlFood = item.contains(DataComponentTypes.FOOD) && item.get(DataComponentTypes.USE_REMAINDER) != null && item.get(DataComponentTypes.USE_REMAINDER).convertInto().isOf(Items.BOWL);
             return !isBowlFood && !(item.getItem() instanceof BowItem);
         } else if (packet instanceof PlayerActionC2SPacket playerDigging) {
-             return playerDigging.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM && mc.player.getActiveItem().getItem() instanceof BowItem;
+            return playerDigging.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM && mc.player.getActiveItem().getItem() instanceof BowItem;
         }
         return false;
     }
@@ -310,7 +310,7 @@ public class Criticals extends Module {
     public void onPacket(PacketEvent event) {
         if (nullCheck()) return;
         if (!mode.is(Mode.Grim)) return;
-        
+
         // Always listen for PositionLook to unlock
         if (event.getPacket() instanceof PlayerPositionLookS2CPacket) {
             while (!packets.isEmpty()) {
@@ -357,11 +357,11 @@ public class Criticals extends Module {
         final boolean ground = mc.player.isOnGround();
         final IClientPlayerEntity accessor = (IClientPlayerEntity) mc.player;
 
-        mc.player.setPosition(pos.add(0.0D, 0.0625D, 0.0D));
+        mc.player.setPosition(pos.add(0.0, 0.0625, 0.0));
         mc.player.setOnGround(false);
         accessor.invokeSendMovementPackets();
 
-        mc.player.setPosition(pos.add(0.0D, 0.00125D, 0.0D));
+        mc.player.setPosition(pos.add(0.0, 0.00125, 0.0));
         mc.player.setOnGround(false);
         accessor.invokeSendMovementPackets();
 

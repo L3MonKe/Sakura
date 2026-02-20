@@ -76,15 +76,15 @@ public class Flight extends Module {
 
     private void handleAirWalk() {
         double motionY = 0;
-        
+
         if (!onlyParallel.get()) {
             if (mc.options.jumpKey.isPressed()) {
-                motionY = 0.42; 
+                motionY = 0.42;
             } else if (mc.options.sneakKey.isPressed()) {
                 motionY = -0.42;
             }
         }
-        
+
         MoveUtil.setMotionY(motionY);
         mc.player.setOnGround(true);
     }
@@ -92,17 +92,17 @@ public class Flight extends Module {
     @Override
     public void onDisable() {
         if (nullCheck()) return;
-        
+
         double maxSpeed = MoveUtil.getBaseSpeed(false, 0.221);
         double targetSpeed = Math.min(MoveUtil.getSpeed(), maxSpeed);
-        
+
         if (MoveUtil.isMoving()) {
             MoveUtil.strafe(targetSpeed);
         } else {
             MoveUtil.setMotionX(0);
             MoveUtil.setMotionZ(0);
         }
-        
+
         MoveUtil.setMotionY(0);
     }
 }
