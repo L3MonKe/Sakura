@@ -111,7 +111,7 @@ public class Criticals extends Module {
         }
 
         if (mode.is(Mode.Grim)) {
-            if (mc.player.hurtTime > 0) {
+            if (attackTimer > 0 || mc.player.hurtTime > 0) {
                 if (stuckEnabled) {
                     disableStuck();
                 }
@@ -264,7 +264,7 @@ public class Criticals extends Module {
             }
 
             if (tryDisable) {
-                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(mc.player.getX() + 1337.0, mc.player.getY(), mc.player.getZ() + 1337.0, mc.player.isOnGround(), mc.player.horizontalCollision));
+                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.isOnGround(), mc.player.horizontalCollision));
 
                 while (!packets.isEmpty()) {
                     PacketUtil.sendPacketNoEvent(packets.poll());
@@ -325,7 +325,7 @@ public class Criticals extends Module {
         if (event.getPacket() instanceof EntityStatusS2CPacket) {
             EntityStatusS2CPacket statusPacket = (EntityStatusS2CPacket) event.getPacket();
             if (statusPacket.getEntity(mc.world) == mc.player && statusPacket.getStatus() == 2) {
-                attackTimer = 2; // Disable stuck for a few ticks to allow knockback
+                attackTimer = 20; // Disable stuck for a few ticks to allow knockback
                 disableStuck();
                 return;
             }

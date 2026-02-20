@@ -7,6 +7,7 @@ import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.PlayerTickEvent;
 import dev.sakura.client.event.type.EventType;
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.BlinkNoSlow;
@@ -53,7 +54,6 @@ public class TickBase extends Module {
     private int scheduledTicksToRun = 0;
     private Mode scheduledMode = null;
 
-    // Flag to prevent recursive calls when calling mc.tick()
     private boolean executingExtraTicks = false;
 
     public TickBase() {
@@ -89,7 +89,6 @@ public class TickBase extends Module {
     public void onPlayerTick(PlayerTickEvent event) {
         if (nullCheck()) return;
 
-        // We do not want this module to conflict with blink
         if (mc.player.hasVehicle() || Sakura.MODULES.getModule(BlinkNoSlow.class).isEnabled()) {
             return;
         }
@@ -104,12 +103,10 @@ public class TickBase extends Module {
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        // Prevent recursive execution if we are calling mc.tick() ourselves
         if (executingExtraTicks) {
             return;
         }
 
-        // We do not want this module to conflict with blink
         if (mc.player.hasVehicle() || Sakura.MODULES.getModule(BlinkNoSlow.class).isEnabled()) {
             return;
         }
@@ -135,7 +132,7 @@ public class TickBase extends Module {
         if (scheduledTicksToRun > 0 && scheduledMode == Mode.Past) {
             executeExtraTicks(scheduledTicksToRun);
             if (debug.get()) {
-                ChatUtil.clientMessage("TickBase: Executed " + scheduledTicksToRun + " ticks.");
+                ChatUtil.clientMessage("TickBase (Past): Executed " + scheduledTicksToRun + " ticks.");
             }
             scheduledTicksToRun = 0;
             scheduledMode = null;
@@ -305,8 +302,13 @@ public class TickBase extends Module {
     }
 
     private void runTick() {
-        if (mc.player == null) return;
-        mc.player.tick();
+        if (mc.world == null) return;
+        executingExtraTicks = true;
+        try {
+            mc.tick();
+        } finally {
+            executingExtraTicks = false;
+        }
     }
 
     // Data class to store simulated tick information
