@@ -1,10 +1,17 @@
 package dev.sakura.client.mixin.client;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.ClickEvent;
+import dev.sakura.client.mixin.accessor.IKeyBinding;
+import dev.sakura.client.module.ModuleManager;
+import dev.sakura.client.module.impl.movement.GuiMove;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.RunArgs;
+import net.minecraft.client.option.GameOptions;
+import net.minecraft.client.option.KeyBinding;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,6 +39,35 @@ public class MixinMinecraftClient {
         ClickEvent event = Sakura.EVENT_BUS.post(new ClickEvent());
         if (event.isCancelled()) {
             ci.cancel();
+        }
+    }
+
+    @WrapOperation(method = "setScreen", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/option/KeyBinding;unpressAll()V"))
+    private void onSetScreenKeyBindingUnpressAll(Operation<Void> operation) {
+        ModuleManager moduleManager = Sakura.MODULES;
+        if (moduleManager == null) {
+            operation.call();
+            return;
+        }
+
+        GuiMove guiMove = moduleManager.getModule(GuiMove.class);
+        if (guiMove == null || !guiMove.isEnabled() || guiMove.skip()) {
+            operation.call();
+            return;
+        }
+
+        MinecraftClient mc = (MinecraftClient) (Object) this;
+        GameOptions options = mc.options;
+
+        for (KeyBinding kb : IKeyBinding.getKeysById().values()) {
+            if (kb == options.forwardKey) continue;
+            if (kb == options.leftKey) continue;
+            if (kb == options.rightKey) continue;
+            if (kb == options.backKey) continue;
+            if (guiMove.sneak.get() && kb == options.sneakKey) continue;
+            if (guiMove.sprint.get() && kb == options.sprintKey) continue;
+            if (guiMove.jump.get() && kb == options.jumpKey) continue;
+            ((IKeyBinding) kb).invokeReset();
         }
     }
 }

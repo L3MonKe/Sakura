@@ -7,7 +7,6 @@ import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.PlayerTickEvent;
 import dev.sakura.client.event.type.EventType;
-import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.BlinkNoSlow;

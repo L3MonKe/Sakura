@@ -51,6 +51,7 @@ public class ModuleManager {
         add(new AutoStuck());
         add(new BlinkNoSlow());
         add(new Flight());
+        add(new GuiMove());
         add(new FastWeb());
         add(new JumpCooldown());
         add(new KeepSprint());

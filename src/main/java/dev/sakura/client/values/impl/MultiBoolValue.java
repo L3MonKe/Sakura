@@ -11,7 +11,7 @@ public class MultiBoolValue extends Value<List<BoolValue>> {
     public List<BoolValue> options;
     public int index;
 
-    public MultiBoolValue(String name, String chineseName, Dependency dependency, List<BoolValue> options) {
+    public MultiBoolValue(String name, String chineseName, List<BoolValue> options, Dependency dependency) {
         super(name, chineseName, dependency);
         this.options = options;
         index = options.size();
