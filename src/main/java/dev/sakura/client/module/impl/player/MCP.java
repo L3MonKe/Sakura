@@ -2,8 +2,6 @@ package dev.sakura.client.module.impl.player;
 
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.input.MouseClickEvent;
-import dev.sakura.client.event.type.KeyAction;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.FindItemResult;
@@ -14,7 +12,6 @@ import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.util.Hand;
-import org.lwjgl.glfw.GLFW;
 
 public class MCP extends Module {
     public MCP() {
@@ -25,54 +22,42 @@ public class MCP extends Module {
     private final BoolValue swapBack = new BoolValue("Swap Back", "切换回原槽位", true);
     private final NumberValue<Integer> delay = new NumberValue<>("Swap Back Delay", "切换延迟", 200, 0, 500, 10);
 
-    private boolean clicked = false;
     private boolean pendingSwapBack = false;
     private final TimerUtil swapTimer = new TimerUtil();
 
     @EventHandler
-    private void onMouseClick(MouseClickEvent event) {
-        if (event.getAction() != KeyAction.Press || event.getButton() != GLFW.GLFW_MOUSE_BUTTON_MIDDLE || mc.currentScreen != null) {
-            return;
-        }
-        clicked = true;
-    }
-
-    @EventHandler
     private void onTick(TickEvent.Pre event) {
-        if (nullCheck() || mc.currentScreen != null) return;
+        if (mc.currentScreen != null) return;
 
         if (pendingSwapBack && swapTimer.passedMillise(delay.get())) {
             InvUtil.swapBack();
             pendingSwapBack = false;
         }
 
-        if (!clicked) return;
+        if (mc.mouse.wasMiddleButtonClicked()) {
+            if (mc.player.getItemCooldownManager().isCoolingDown(Items.ENDER_PEARL.getDefaultStack())) {
+                return;
+            }
 
-        if (mc.player.getItemCooldownManager().isCoolingDown(Items.ENDER_PEARL.getDefaultStack())) {
-            clicked = false;
-            return;
+            boolean shouldSwapBack = swapBack.get();
+            FindItemResult result = InvUtil.findInHotbar(Items.ENDER_PEARL);
+            if (!result.found()) return;
+
+            boolean swapped = InvUtil.swap(result.slot(), shouldSwapBack);
+            Hand hand = result.getHand();
+
+            mc.interactionManager.interactItem(mc.player, hand);
+
+            if (swingHand.get()) {
+                mc.player.swingHand(hand);
+            } else {
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
+            }
+
+            if (shouldSwapBack && swapped) {
+                pendingSwapBack = true;
+                swapTimer.reset();
+            }
         }
-
-        boolean shouldSwapBack = swapBack.get();
-        FindItemResult result = InvUtil.findInHotbar(Items.ENDER_PEARL);
-        if (!result.found()) return;
-
-        boolean swapped = InvUtil.swap(result.slot(), shouldSwapBack);
-        Hand hand = result.getHand();
-
-        mc.interactionManager.interactItem(mc.player, hand);
-
-        if (swingHand.get()) {
-            mc.player.swingHand(hand);
-        } else {
-            mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(hand));
-        }
-
-        if (shouldSwapBack && swapped) {
-            pendingSwapBack = true;
-            swapTimer.reset();
-        }
-
-        clicked = false;
     }
 }
