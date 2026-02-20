@@ -24,7 +24,6 @@
     "accessor.IPostEffectProcessor",
     "accessor.ISuggestionWindow",
     "accessor.ITextFieldWidget",
-    "accessor.IMinecraftClient",
     "client.MixinAbstractClientPlayerEntity",
     "client.MixinChatInputSuggestor",
     "client.MixinGameOptions",
