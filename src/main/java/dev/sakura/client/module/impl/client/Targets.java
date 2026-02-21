@@ -18,11 +18,7 @@ public class Targets extends Module {
                     new BoolValue("Passive", "被动实体", false)
             );
 
-    public final List<BoolValue> ignoreOptions =
-            List.of(
-                    new BoolValue("Invisible", "隐形", true),
-                    new BoolValue("Dead", "死亡", true)
-            );
+    public final List<BoolValue> ignoreOptions = List.of(new BoolValue("Invisible", "隐形", true), new BoolValue("Dead", "死亡", true));
 
     public Targets() {
         super("Targets", "目标设置", Category.Client);
