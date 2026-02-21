@@ -1,5 +1,6 @@
 package dev.sakura.client.module.impl.movement;
 
+import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
@@ -10,6 +11,7 @@ import dev.sakura.client.mixin.accessor.ILivingEntity;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.AntiBot;
+import dev.sakura.client.module.impl.combat.KillAura;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.network.blockage.block.BlockHolder;
 import dev.sakura.client.utils.network.blockage.impl.InboundNetworkBlockage;
@@ -131,7 +133,9 @@ public class Velocity extends Module {
             }
             case Watchdog -> {
                 if (this.blockHolder.isBlocking()) {
-                    if (mc.player == null || mc.player.isOnGround() || mc.player.isClimbing() || mc.player.isInFluid() || System.currentTimeMillis() - velocityTime > 1000) {
+                    if (mc.player == null || mc.player.isOnGround() || mc.player.isClimbing() || mc.player.isInFluid() || System.currentTimeMillis() - velocityTime > 1000
+                            || mc.options.attackKey.isPressed()
+                            || (Sakura.MODULES.getModule(KillAura.class).isEnabled() && Sakura.MODULES.getModule(KillAura.class).getCurrentTarget() != null)) {
                         this.blockHolder.release();
                         stage = VelocityStage.NONE;
                         this.sprintResetTicks = 10;
