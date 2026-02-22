@@ -7,7 +7,6 @@ import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
@@ -116,7 +115,7 @@ public class KillAura extends Module {
 
     private void flushPackets() {
         if (blockedPackets.isEmpty()) return;
-        
+
         isFlushing = true;
         while (!blockedPackets.isEmpty()) {
             Packet<?> packet = blockedPackets.poll();
@@ -148,7 +147,7 @@ public class KillAura extends Module {
         if (target != null) {
             if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
                 Rotation calculate = RotationUtil.calculate(target);
-                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
+                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, Priority.Medium);
                 if (rayTrace.get()) {
                     if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
                         attackTarget();
@@ -159,7 +158,7 @@ public class KillAura extends Module {
                     }
                 }
             }
-            
+
             if (autoBlock.get()) {
                 startBlocking();
             }
@@ -224,7 +223,7 @@ public class KillAura extends Module {
         if (!autoBlock.get() || mc.player.isUsingItem()) {
             return;
         }
-        
+
         if (!isHoldingBlockingItem()) {
             return;
         }
@@ -254,7 +253,7 @@ public class KillAura extends Module {
         if (blockingStateEnforced) {
             blockingStateEnforced = false;
         }
-        
+
         if (!pauses) {
             blockVisual = false;
             if (mc.options != null) {
@@ -278,13 +277,13 @@ public class KillAura extends Module {
         Rotation rotation = Managers.ROTATION.isActive() ? Managers.ROTATION.rotations : new Rotation(mc.player.getYaw(), mc.player.getPitch());
 
         EntityHitResult entityHitResult = RaytraceUtil.rayTraceEntity(aimRange.get(), rotation, entity -> entity == target);
-        
+
         if (entityHitResult != null) {
-             Vec3d entityPos = new Vec3d(entityHitResult.getEntity().getX(), entityHitResult.getEntity().getY(), entityHitResult.getEntity().getZ());
-             Vec3d hitVec = entityHitResult.getPos().subtract(entityPos);
-             mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND, hitVec));
-             mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interact(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND));
-             return;
+            Vec3d entityPos = new Vec3d(entityHitResult.getEntity().getX(), entityHitResult.getEntity().getY(), entityHitResult.getEntity().getZ());
+            Vec3d hitVec = entityHitResult.getPos().subtract(entityPos);
+            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND, hitVec));
+            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interact(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND));
+            return;
         }
 
         HitResult hitResult = RaytraceUtil.rayCast(rotation, aimRange.get(), false, 1.0f);

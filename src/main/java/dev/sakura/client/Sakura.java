@@ -11,6 +11,7 @@ import dev.sakura.client.gui.mainmenu.MainMenuScreen;
 import dev.sakura.client.gui.panelgui.PanelGuiScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
+import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.verify.AuthState;
 import dev.sakura.verify.util.ExitUtil;
 import jnic.JNICInclude;
@@ -111,6 +112,8 @@ public class Sakura {
     public static int skipTicks;
 
     public static void init(MinecraftClient client) {
+        NanoVGRenderer.INSTANCE.initNanoVG();
+
         ExitUtil.ensureVerifiedOrExit();
         if (!AuthState.isAuthed() || AuthState.getExpireAt() <= System.currentTimeMillis()) {
             AuthState.clear();

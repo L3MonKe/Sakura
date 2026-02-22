@@ -1,13 +1,11 @@
 package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.SlowdownEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import net.minecraft.item.Item;
