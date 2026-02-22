@@ -148,7 +148,7 @@ public class KillAura extends Module {
         if (target != null) {
             if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
                 Rotation calculate = RotationUtil.calculate(target);
-                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, Priority.Medium);
+                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
                 if (rayTrace.get()) {
                     if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
                         attackTarget();
