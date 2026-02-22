@@ -7,6 +7,7 @@ import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
+import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
@@ -26,6 +27,7 @@ import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Vec3d;
 
 import java.awt.*;
 import java.util.LinkedList;
@@ -146,7 +148,7 @@ public class KillAura extends Module {
         if (target != null) {
             if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
                 Rotation calculate = RotationUtil.calculate(target);
-                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, Priority.Medium);
+                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, RotationManager.Priority.Medium);
                 if (rayTrace.get()) {
                     if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
                         attackTarget();
@@ -278,9 +280,9 @@ public class KillAura extends Module {
         EntityHitResult entityHitResult = RaytraceUtil.rayTraceEntity(aimRange.get(), rotation, entity -> entity == target);
         
         if (entityHitResult != null) {
-             net.minecraft.util.math.Vec3d entityPos = new net.minecraft.util.math.Vec3d(entityHitResult.getEntity().getX(), entityHitResult.getEntity().getY(), entityHitResult.getEntity().getZ());
-              net.minecraft.util.math.Vec3d hitVec = entityHitResult.getPos().subtract(entityPos);
-              mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND, hitVec));
+             Vec3d entityPos = new Vec3d(entityHitResult.getEntity().getX(), entityHitResult.getEntity().getY(), entityHitResult.getEntity().getZ());
+             Vec3d hitVec = entityHitResult.getPos().subtract(entityPos);
+             mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND, hitVec));
              mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interact(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND));
              return;
         }
