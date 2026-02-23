@@ -46,6 +46,11 @@ public class ChestESP extends Module {
     private final BoolValue chams = new BoolValue("Chams", "模型透视", true);
     private final BoolValue chamsColorOverlay = new BoolValue("Chams Color", "模型颜色覆盖", false, chams::get);
 
+    private final BoolValue glow = new BoolValue("Glow", "发光", false);
+    public final NumberValue<Integer> glowRadius = new NumberValue<>("Glow Radius", "发光半径", 4, 2, 30, 1, glow::get);
+    public final NumberValue<Double> glowExposure = new NumberValue<>("Glow Exposure", "发光曝光", 2.2, 0.5, 3.5, 0.1, glow::get);
+    public final ColorValue glowColor = new ColorValue("Glow Color", "发光颜色", new Color(255, 183, 197), glow::get);
+
     private final BoolValue fill = new BoolValue("Fill", "填充", true);
     private final NumberValue<Double> fillOpacity = new NumberValue<>("Fill Opacity", "填充透明度", 0.12, 0.0, 1.0, 0.01, fill::get);
 
@@ -157,5 +162,9 @@ public class ChestESP extends Module {
             return -1;
         }
         return color.get().getRGB();
+    }
+
+    public boolean isGlowEnabled() {
+        return glow.get();
     }
 }

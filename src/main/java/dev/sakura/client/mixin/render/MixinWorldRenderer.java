@@ -3,6 +3,8 @@ package dev.sakura.client.mixin.render;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.manager.Managers;
+import dev.sakura.client.module.impl.render.ChestESP;
+import dev.sakura.client.module.impl.render.GlowESP;
 import dev.sakura.client.module.impl.render.NoRender;
 import dev.sakura.client.module.impl.render.Shaders;
 import dev.sakura.client.module.impl.render.WorldTweaks;
@@ -66,7 +68,10 @@ public class MixinWorldRenderer {
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/ShaderLoader;loadPostEffect(Lnet/minecraft/util/Identifier;Ljava/util/Set;)Lnet/minecraft/client/gl/PostEffectProcessor;"))
     private PostEffectProcessor onRender(ShaderLoader shaderLoader, Identifier id, Set<Identifier> availableExternalTargets) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        if (shaders != null && shaders.isEnabled() && vanillaOutline.equals(id)) {
+        GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
+        ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
+        
+        if ((shaders != null && shaders.isEnabled() || glowESP != null && glowESP.isEnabled() || chestESP != null && chestESP.isEnabled() && chestESP.isGlowEnabled()) && vanillaOutline.equals(id)) {
             return null;
         }
         return shaderLoader.loadPostEffect(id, availableExternalTargets);
@@ -75,10 +80,26 @@ public class MixinWorldRenderer {
     @Inject(method = "drawEntityOutlinesFramebuffer", at = @At("HEAD"), cancellable = true)
     private void onDrawEntityOutlinesFramebuffer(CallbackInfo ci) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        if (shaders == null || !shaders.isEnabled()) return;
+        GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
+        ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
+        
         if (entityOutlineFramebuffer == null) return;
 
-        Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, shaders.mode.get(), Sakura.mc.getRenderTickCounter().getTickProgress(true));
-        ci.cancel();
+        if (glowESP != null && glowESP.isEnabled()) {
+            Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, dev.sakura.client.manager.impl.ShaderManager.Shader.Glow, Sakura.mc.getRenderTickCounter().getTickProgress(true));
+            ci.cancel();
+            return;
+        }
+
+        if (chestESP != null && chestESP.isEnabled() && chestESP.isGlowEnabled()) {
+             Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, dev.sakura.client.manager.impl.ShaderManager.Shader.Glow, Sakura.mc.getRenderTickCounter().getTickProgress(true));
+             ci.cancel();
+             return;
+        }
+
+        if (shaders != null && shaders.isEnabled()) {
+            Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, shaders.mode.get(), Sakura.mc.getRenderTickCounter().getTickProgress(true));
+            ci.cancel();
+        }
     }
 }

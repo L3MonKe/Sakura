@@ -15,7 +15,17 @@ public class ChatUtil {
     }
 
     public static void clientMessage(boolean prefix, String message) {
-        mc.inGameHud.getChatHud().addMessage(Text.literal((prefix ? CLIENT_PREFIX : "") + message));
+        if (mc.player == null || mc.world == null) return;
+        
+        // Ensure this runs on the main thread (Render thread)
+        if (!mc.isOnThread()) {
+            mc.execute(() -> clientMessage(prefix, message));
+            return;
+        }
+        
+        // Replace & with § for color codes support
+        String formattedMessage = message.replace('&', '§');
+        mc.inGameHud.getChatHud().addMessage(Text.literal((prefix ? CLIENT_PREFIX : "") + formattedMessage));
     }
 
     public static void serverMessage(String message) {

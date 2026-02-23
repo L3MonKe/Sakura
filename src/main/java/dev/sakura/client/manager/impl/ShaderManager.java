@@ -14,6 +14,8 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import dev.sakura.client.Sakura;
+import dev.sakura.client.module.impl.render.ChestESP;
+import dev.sakura.client.module.impl.render.GlowESP;
 import dev.sakura.client.module.impl.render.Shaders;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
@@ -33,6 +35,8 @@ import static dev.sakura.client.Sakura.mc;
 public class ShaderManager {
     private static final Identifier SHADER_SCREENQUAD = Identifier.of("sakura", "post/screenquad");
     private static final Identifier OUTLINE_FSH = Identifier.of("sakura", "post/outline");
+    private static final Identifier GLOW_FSH = Identifier.of("sakura", "post/glow");
+    private static final Identifier MASK_FSH = Identifier.of("sakura", "post/mask");
     private static final Identifier GRADIENT_FSH = Identifier.of("sakura", "post/gradient");
     private static final Identifier SMOKE_FSH = Identifier.of("sakura", "post/smoke");
     private static final Identifier SNOW_FSH = Identifier.of("sakura", "post/snow");
@@ -40,6 +44,7 @@ public class ShaderManager {
 
     private static final int CLEAR_COLOR_TRANSPARENT = 0x00000000;
     private static final BlendFunction REPLACE_BLEND = new BlendFunction(SourceFactor.ONE, DestFactor.ZERO);
+    private static final BlendFunction MASK_BLEND = new BlendFunction(SourceFactor.ZERO, DestFactor.ONE_MINUS_SRC_ALPHA);
 
     private final List<RenderTask> tasks = new ArrayList<>();
 
@@ -50,6 +55,8 @@ public class ShaderManager {
     private SimpleFramebuffer genericOutput;
 
     private RenderPipeline pipelineOutline;
+    private RenderPipeline pipelineGlow;
+    private RenderPipeline pipelineMask;
     private RenderPipeline pipelineGradient;
     private RenderPipeline pipelineSmoke;
     private RenderPipeline pipelineSnow;
@@ -96,7 +103,32 @@ public class ShaderManager {
             encoder.clearDepthTexture(genericOutput.getDepthAttachment(), 1.0);
         }
 
-        renderPostPass(encoder, inColorView, outColorView, mode, tickDelta, entityOutlineFramebuffer.textureWidth, entityOutlineFramebuffer.textureHeight, false);
+        // Check if GlowESP is enabled to use the 2-pass blur
+        boolean useGlowLogic = mode == Shader.Glow && Sakura.MODULES.getModule(GlowESP.class).isEnabled();
+
+        ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
+        boolean useChestGlow = mode == Shader.Glow && chestESP.isEnabled() && chestESP.isGlowEnabled();
+        
+        if (useGlowLogic || useChestGlow) {
+            ensureHandFramebuffers();
+            GpuTexture handInColor = handInput.getColorAttachment();
+            GpuTextureView handInColorView = handInput.getColorAttachmentView();
+
+            if (handInColor != null && handInColorView != null) {
+                encoder.clearColorTexture(handInColor, CLEAR_COLOR_TRANSPARENT);
+
+                // Pass 1: Horizontal
+                renderPostPass(encoder, inColorView, handInColorView, mode, tickDelta, entityOutlineFramebuffer.textureWidth, entityOutlineFramebuffer.textureHeight, false, new Vector4f(1, 0, 0, 0));
+
+                // Pass 2: Vertical
+                renderPostPass(encoder, handInColorView, outColorView, mode, tickDelta, entityOutlineFramebuffer.textureWidth, entityOutlineFramebuffer.textureHeight, false, new Vector4f(0, 1, 0, 0));
+                
+                // Pass 3: Masking (Subtract Entity)
+                renderPostPass(encoder, inColorView, outColorView, Shader.Mask, tickDelta, entityOutlineFramebuffer.textureWidth, entityOutlineFramebuffer.textureHeight, false, new Vector4f(0, 0, 0, 0));
+            }
+        } else {
+            renderPostPass(encoder, inColorView, outColorView, mode, tickDelta, entityOutlineFramebuffer.textureWidth, entityOutlineFramebuffer.textureHeight, false, new Vector4f(0, 0, 0, 0));
+        }
 
         GpuTextureView mainColorView = mc.getFramebuffer().getColorAttachmentView();
         if (mainColorView != null) {
@@ -124,7 +156,18 @@ public class ShaderManager {
             RenderSystem.outputColorTextureOverride = prevColor;
         }
 
-        renderPostPass(encoder, handInColorView, handOutColorView, mode, tickDelta, handInput.textureWidth, handInput.textureHeight, true);
+        if (mode == Shader.Glow) {
+            ensureGenericOutput(handInput.textureWidth, handInput.textureHeight);
+            GpuTextureView tempView = genericOutput.getColorAttachmentView();
+            if (tempView != null) {
+                encoder.clearColorTexture(genericOutput.getColorAttachment(), CLEAR_COLOR_TRANSPARENT);
+
+                renderPostPass(encoder, handInColorView, tempView, mode, tickDelta, handInput.textureWidth, handInput.textureHeight, true, new Vector4f(1, 0, 0, 0));
+                renderPostPass(encoder, tempView, handOutColorView, mode, tickDelta, handInput.textureWidth, handInput.textureHeight, true, new Vector4f(0, 1, 0, 0));
+            }
+        } else {
+            renderPostPass(encoder, handInColorView, handOutColorView, mode, tickDelta, handInput.textureWidth, handInput.textureHeight, true, new Vector4f(0, 0, 0, 0));
+        }
 
         GpuTextureView mainColorView = mc.getFramebuffer().getColorAttachmentView();
         if (mainColorView != null) {
@@ -132,13 +175,22 @@ public class ShaderManager {
         }
     }
 
-    private void renderPostPass(CommandEncoder encoder, GpuTextureView inColorView, GpuTextureView outColorView, Shader mode, float tickDelta, int inW, int inH, boolean isHands) {
+    private void renderPostPass(CommandEncoder encoder, GpuTextureView inColorView, GpuTextureView outColorView, Shader mode, float tickDelta, int inW, int inH, boolean isHands, Vector4f direction) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
+        GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
 
         RenderPipeline pipeline = getPipeline(mode);
         if (pipeline == null) return;
 
-        ShaderParams params = ShaderParams.from(shaders, mode, tickDelta, inW, inH, time, isHands);
+        ShaderParams params;
+        if (mode == Shader.Glow && glowESP.isEnabled()) {
+            params = ShaderParams.fromGlow(glowESP, tickDelta, inW, inH, time, isHands, direction);
+        } else if (mode == Shader.Glow && Sakura.MODULES.getModule(ChestESP.class).isEnabled() && Sakura.MODULES.getModule(ChestESP.class).isGlowEnabled()) {
+             params = ShaderParams.fromChestGlow(Sakura.MODULES.getModule(ChestESP.class), tickDelta, inW, inH, time, isHands, direction);
+        } else {
+            params = ShaderParams.from(shaders, mode, tickDelta, inW, inH, time, isHands, direction);
+        }
+        
         time = params.nextTime;
         GpuTextureView depth = null;
         GpuBuffer paramsBuffer = shaderParamsBuffer.write(encoder, params);
@@ -157,6 +209,8 @@ public class ShaderManager {
             case Smoke -> pipelineSmoke;
             case Snow -> pipelineSnow;
             case Fade -> pipelineFade;
+            case Glow -> pipelineGlow;
+            case Mask -> pipelineMask;
             default -> pipelineOutline;
         };
     }
@@ -165,6 +219,8 @@ public class ShaderManager {
         if (pipelineOutline != null) return;
 
         pipelineOutline = createPipeline("pipeline/sakura_shader_outline", OUTLINE_FSH);
+        pipelineGlow = createPipeline("pipeline/sakura_shader_glow", GLOW_FSH);
+        pipelineMask = createPipeline("pipeline/sakura_shader_mask", MASK_FSH, MASK_BLEND);
         pipelineGradient = createPipeline("pipeline/sakura_shader_gradient", GRADIENT_FSH);
         pipelineSmoke = createPipeline("pipeline/sakura_shader_smoke", SMOKE_FSH);
         pipelineSnow = createPipeline("pipeline/sakura_shader_snow", SNOW_FSH);
@@ -174,13 +230,17 @@ public class ShaderManager {
     }
 
     private RenderPipeline createPipeline(String location, Identifier fragmentShader) {
+        return createPipeline(location, fragmentShader, REPLACE_BLEND);
+    }
+
+    private RenderPipeline createPipeline(String location, Identifier fragmentShader, BlendFunction blend) {
         return RenderPipelines.register(RenderPipeline.builder(RenderPipelines.POST_EFFECT_PROCESSOR_SNIPPET)
                 .withLocation(location)
                 .withVertexShader(SHADER_SCREENQUAD)
                 .withFragmentShader(fragmentShader)
                 .withSampler("DiffuseSampler")
                 .withUniform("ShaderParams", net.minecraft.client.gl.UniformType.UNIFORM_BUFFER)
-                .withBlend(REPLACE_BLEND)
+                .withBlend(blend)
                 .build());
     }
 
@@ -214,7 +274,9 @@ public class ShaderManager {
         Smoke,
         Gradient,
         Snow,
-        Fade
+        Fade,
+        Glow,
+        Mask
     }
 
     private static final class ShaderParams {
@@ -254,7 +316,55 @@ public class ShaderManager {
             this.nextTime = nextTime;
         }
 
-        static ShaderParams from(Shaders s, Shader shader, float tickDelta, int inW, int inH, float time, boolean isHands) {
+        static ShaderParams fromChestGlow(ChestESP c, float tickDelta, int inW, int inH, float time, boolean isHands, Vector4f direction) {
+            int scaledW = MinecraftClient.getInstance().getWindow().getScaledWidth();
+            int scaledH = MinecraftClient.getInstance().getWindow().getScaledHeight();
+
+            Color color = c.glowColor.get();
+            Vector4f colorV = toVec4(color);
+            Vector4f outlineV = colorV;
+
+            float exposure = c.glowExposure.get().floatValue();
+            float radius = c.glowRadius.get().floatValue();
+            
+            Vector4f zero = new Vector4f(0, 0, 0, 0);
+            Vector4f params1 = new Vector4f(-1.0f, 0.0f, 0.0f, 0.0f); 
+            Vector4f params2 = new Vector4f(time, exposure, 0.0f, 3.0f);
+            Vector4f params3 = new Vector4f(radius, 10.0f, direction.x, direction.y);
+
+            Vector4f inSize = new Vector4f(inW, inH, 0.0f, 0.0f);
+            Vector4f res = new Vector4f(scaledW, scaledH, 0.0f, 0.0f);
+
+            return new ShaderParams(inSize, res, colorV, outlineV, zero, zero, colorV, zero, zero, colorV, zero, params1, params2, params3, time);
+        }
+
+        static ShaderParams fromGlow(GlowESP g, float tickDelta, int inW, int inH, float time, boolean isHands, Vector4f direction) {
+            int scaledW = MinecraftClient.getInstance().getWindow().getScaledWidth();
+            int scaledH = MinecraftClient.getInstance().getWindow().getScaledHeight();
+
+            Color color = g.color.get();
+            Vector4f colorV = toVec4(color);
+            // Reusing OutlineColor for Glow Color
+            Vector4f outlineV = colorV;
+
+            // Glow specific params
+            float exposure = g.exposure.get().floatValue();
+            float radius = g.radius.get().floatValue();
+            
+            // Dummy values for others
+            Vector4f zero = new Vector4f(0, 0, 0, 0);
+            Vector4f params1 = new Vector4f(-1.0f, 0.0f, 0.0f, 0.0f); // alpha0 = -1 for glow mode in shader logic? No, let's check.
+            
+            Vector4f params2 = new Vector4f(time, exposure, 0.0f, 3.0f); // Quality 3
+            Vector4f params3 = new Vector4f(radius, 10.0f, direction.x, direction.y); // Octaves 10
+
+            Vector4f inSize = new Vector4f(inW, inH, 0.0f, 0.0f);
+            Vector4f res = new Vector4f(scaledW, scaledH, 0.0f, 0.0f);
+
+            return new ShaderParams(inSize, res, colorV, outlineV, zero, zero, colorV, zero, zero, colorV, zero, params1, params2, params3, time);
+        }
+
+        static ShaderParams from(Shaders s, Shader shader, float tickDelta, int inW, int inH, float time, boolean isHands, Vector4f direction) {
             int scaledW = MinecraftClient.getInstance().getWindow().getScaledWidth();
             int scaledH = MinecraftClient.getInstance().getWindow().getScaledHeight();
 
@@ -289,7 +399,7 @@ public class ShaderManager {
             Vector4f params1 = new Vector4f(alpha0, alpha1, alpha2, fillAlpha);
             float shaderTime = shader == Shader.Fade ? (System.currentTimeMillis() % 100000L) / 1000.0f : time;
             Vector4f params2 = new Vector4f(shaderTime, factor, moreGradient, quality);
-            Vector4f params3 = new Vector4f(lineWidth, oct, 0.0f, 0.0f);
+            Vector4f params3 = new Vector4f(lineWidth, oct, direction.x, direction.y);
 
             float nextTime = time;
             if (shader == Shader.Gradient || shader == Shader.Smoke || shader == Shader.Snow) {
