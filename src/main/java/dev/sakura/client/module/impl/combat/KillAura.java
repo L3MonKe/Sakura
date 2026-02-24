@@ -3,9 +3,7 @@ package dev.sakura.client.module.impl.combat;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
-import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -18,33 +16,25 @@ import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.item.ShieldItem;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Vec3d;
 
 import java.awt.*;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.Random;
 
 public class KillAura extends Module {
+    public enum AutoBlockMode {
+        Fake
+    }
 
     public enum AttackMode {
         v1_8, v1_9
     }
 
-    public enum BlockMode {
-        Interact, Fake
+    public KillAura() {
+        super("KillAura", "杀戮光环", Category.Combat);
     }
 
-    // KillAura Settings
     private final EnumValue<AttackMode> mode = new EnumValue<>("Mode", "模式", AttackMode.v1_8);
     private final NumberValue<Double> aimRange = new NumberValue<>("Aim Range", "瞄准范围", 5.0, 1.0, 6.0, 0.1);
     private final NumberValue<Double> searchRange = new NumberValue<>("Search Range", "搜索范围", 10.0, 1.0, 20.0, 0.1);
@@ -55,39 +45,15 @@ public class KillAura extends Module {
     private final BoolValue autoBlock = new BoolValue("Auto Block", "自动格挡", true);
     private final BoolValue debugRender = new BoolValue("Debug Render", "调试渲染", false);
 
-    // AutoBlock Settings
-    public final EnumValue<BlockMode> blockMode = new EnumValue<>("Block Mode", "格挡模式", BlockMode.Interact, () -> autoBlock.get());
-
     private List<LivingEntity> targets;
     private LivingEntity target;
+
     private long lastAttackTime = 0;
-
-    private final Random random = new Random();
-    private int currentTickOff;
-    private int currentTickOn;
-    private int blockingTicks = 0;
-    private boolean blockingStateEnforced = false;
-    private boolean blockVisual = false;
-    private int flushTicks = 0;
-
-    private final Queue<Packet<?>> blockedPackets = new LinkedList<>();
-    private boolean isFlushing = false;
-
-    public KillAura() {
-        super("KillAura", "杀戮光环", Category.Combat);
-        resetTicks();
-    }
 
     @Override
     protected void onDisable() {
         target = null;
         targets = null;
-        blockingStateEnforced = false;
-        if (mc.options != null) {
-            mc.options.useKey.setPressed(false);
-        }
-        stopBlocking(false);
-        flushPackets();
     }
 
     public boolean isAutoBlock() {
@@ -99,47 +65,12 @@ public class KillAura extends Module {
     }
 
     @EventHandler
-    public void onPacket(PacketEvent event) {
-        if (event.getType() == EventType.RECEIVE) return;
-
-        Packet<?> packet = event.getPacket();
-
-        if (packet instanceof UpdateSelectedSlotC2SPacket) {
-            blockVisual = false;
-            blockingStateEnforced = false;
-            flushPackets();
-        }
-        if (isFlushing) {
-        }
-    }
-
-    private void flushPackets() {
-        if (blockedPackets.isEmpty()) return;
-
-        isFlushing = true;
-        while (!blockedPackets.isEmpty()) {
-            Packet<?> packet = blockedPackets.poll();
-            if (mc.getNetworkHandler() != null) {
-                mc.getNetworkHandler().sendPacket(packet);
-            }
-        }
-        isFlushing = false;
-        flushTicks = 0;
-    }
-
-    @EventHandler
     public void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if (autoBlock.get()) {
-            flushTicks++;
-            if (blockingStateEnforced) {
-                blockingTicks++;
-                mc.options.useKey.setPressed(true);
-            }
-        }
-
         boolean scaffoldEnable = Sakura.MODULES.getModule(Scaffold.class).isEnabled();
+        //boolean blinkEnable = Sakura.MODULES.getModule(Blink.class).isEnabled();
+        //if (scaffoldEnable || blinkEnable) return;
         if (scaffoldEnable) return;
 
         findTarget();
@@ -157,14 +88,6 @@ public class KillAura extends Module {
                         attackTarget();
                     }
                 }
-            }
-
-            if (autoBlock.get()) {
-                startBlocking();
-            }
-        } else {
-            if (autoBlock.get()) {
-                stopBlocking(false);
             }
         }
     }
@@ -207,92 +130,5 @@ public class KillAura extends Module {
         this.target = null;
         this.targets = Managers.COMBAT.getEntities(range);
         this.target = Managers.COMBAT.getClosestEnemy(range);
-    }
-
-    private void resetTicks() {
-        currentTickOff = randomInRange(0, 5);
-        currentTickOn = randomInRange(0, 5);
-    }
-
-    private int randomInRange(int min, int max) {
-        if (min >= max) return min;
-        return random.nextInt(max - min + 1) + min;
-    }
-
-    private void startBlocking() {
-        if (!autoBlock.get() || mc.player.isUsingItem()) {
-            return;
-        }
-
-        if (!isHoldingBlockingItem()) {
-            return;
-        }
-
-        switch (blockMode.get()) {
-            case Fake:
-                blockVisual = true;
-                return;
-            default:
-                break;
-        }
-
-        if (blockMode.is(BlockMode.Interact)) {
-            interactWithFront();
-        }
-
-        mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
-
-        currentTickOn = randomInRange(0, 5);
-        mc.player.swingHand(Hand.MAIN_HAND);
-
-        blockVisual = true;
-        blockingStateEnforced = true;
-    }
-
-    private boolean stopBlocking(boolean pauses) {
-        if (blockingStateEnforced) {
-            blockingStateEnforced = false;
-        }
-
-        if (!pauses) {
-            blockVisual = false;
-            if (mc.options != null) {
-                if (mc.options.useKey.isPressed()) {
-                }
-                mc.options.useKey.setPressed(false);
-            }
-        }
-
-        if (mc.player != null && !mc.player.isUsingItem()) {
-            return false;
-        }
-
-        currentTickOff = randomInRange(0, 5);
-
-        mc.interactionManager.stopUsingItem(mc.player);
-        return true;
-    }
-
-    private void interactWithFront() {
-        Rotation rotation = Managers.ROTATION.isActive() ? Managers.ROTATION.rotations : new Rotation(mc.player.getYaw(), mc.player.getPitch());
-
-        EntityHitResult entityHitResult = RaytraceUtil.rayTraceEntity(aimRange.get(), rotation, entity -> entity == target);
-
-        if (entityHitResult != null) {
-            Vec3d entityPos = new Vec3d(entityHitResult.getEntity().getX(), entityHitResult.getEntity().getY(), entityHitResult.getEntity().getZ());
-            Vec3d hitVec = entityHitResult.getPos().subtract(entityPos);
-            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interactAt(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND, hitVec));
-            mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.interact(entityHitResult.getEntity(), mc.player.isSneaking(), Hand.MAIN_HAND));
-            return;
-        }
-
-        HitResult hitResult = RaytraceUtil.rayCast(rotation, aimRange.get(), false, 1.0f);
-        if (hitResult != null && hitResult.getType() == HitResult.Type.BLOCK) {
-            mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
-        }
-    }
-
-    private boolean isHoldingBlockingItem() {
-        return mc.player.getMainHandStack().isIn(ItemTags.SWORDS) || mc.player.getMainHandStack().getItem() instanceof ShieldItem;
     }
 }

@@ -89,6 +89,7 @@ public class ModuleManager {
         add(new Chams());
         add(new ChestESP());
         add(new Fullbright());
+        add(new GlowESP());
         add(new Hat());
         add(new ItemPhysics());
         add(new JumpCircles());

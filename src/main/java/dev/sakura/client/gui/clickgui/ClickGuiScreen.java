@@ -27,7 +27,6 @@ public class ClickGuiScreen extends Screen {
     public static Animation openingAnimation = new EaseOutSine(400, 1);
     private final List<CategoryPanel> panels = new ArrayList<>();
     public int scroll;
-    private DrawContext currentContext;
 
     public ClickGuiScreen() {
         super(Text.literal("ClickGui"));
@@ -59,7 +58,6 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float deltaTicks) {
-        this.currentContext = context;
         final float wheel = getDWheel();
         if (wheel != 0) {
             scroll += wheel > 0 ? 15 : -15;
@@ -80,7 +78,6 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
-        if (currentContext != null) {
             boolean handled = false;
             for (CategoryPanel panel : panels) {
                 if (panel.mouseClicked(click, doubled)) {
@@ -88,13 +85,10 @@ public class ClickGuiScreen extends Screen {
                 }
             }
             return handled || super.mouseClicked(click, doubled);
-        }
-        return super.mouseClicked(click, doubled);
     }
 
     @Override
     public boolean mouseReleased(Click click) {
-        if (currentContext != null) {
             boolean handled = false;
             for (CategoryPanel panel : panels) {
                 if (panel.mouseReleased(click)) {
@@ -102,8 +96,6 @@ public class ClickGuiScreen extends Screen {
                 }
             }
             return handled || super.mouseReleased(click);
-        }
-        return super.mouseReleased(click);
     }
 
     @Override
