@@ -118,9 +118,9 @@ public abstract class MixinEntity {
     private void hookIsGlowing(CallbackInfoReturnable<Boolean> cir) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
         GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
-        
+
         if ((shaders != null && shaders.isEnabled() && shaders.shouldRender((Entity) (Object) this)) ||
-            (glowESP != null && glowESP.isEnabled() && glowESP.shouldRender((Entity) (Object) this))) {
+                (glowESP != null && glowESP.isEnabled() && glowESP.shouldRender((Entity) (Object) this))) {
             cir.setReturnValue(true);
         }
     }

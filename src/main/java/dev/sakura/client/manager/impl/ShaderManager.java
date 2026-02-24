@@ -108,7 +108,7 @@ public class ShaderManager {
 
         ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
         boolean useChestGlow = mode == Shader.Glow && chestESP.isEnabled() && chestESP.isGlowEnabled();
-        
+
         if (useGlowLogic || useChestGlow) {
             ensureHandFramebuffers();
             GpuTexture handInColor = handInput.getColorAttachment();
@@ -122,7 +122,7 @@ public class ShaderManager {
 
                 // Pass 2: Vertical
                 renderPostPass(encoder, handInColorView, outColorView, mode, tickDelta, entityOutlineFramebuffer.textureWidth, entityOutlineFramebuffer.textureHeight, false, new Vector4f(0, 1, 0, 0));
-                
+
                 // Pass 3: Masking (Subtract Entity)
                 renderPostPass(encoder, inColorView, outColorView, Shader.Mask, tickDelta, entityOutlineFramebuffer.textureWidth, entityOutlineFramebuffer.textureHeight, false, new Vector4f(0, 0, 0, 0));
             }
@@ -186,11 +186,11 @@ public class ShaderManager {
         if (mode == Shader.Glow && glowESP.isEnabled()) {
             params = ShaderParams.fromGlow(glowESP, tickDelta, inW, inH, time, isHands, direction);
         } else if (mode == Shader.Glow && Sakura.MODULES.getModule(ChestESP.class).isEnabled() && Sakura.MODULES.getModule(ChestESP.class).isGlowEnabled()) {
-             params = ShaderParams.fromChestGlow(Sakura.MODULES.getModule(ChestESP.class), tickDelta, inW, inH, time, isHands, direction);
+            params = ShaderParams.fromChestGlow(Sakura.MODULES.getModule(ChestESP.class), tickDelta, inW, inH, time, isHands, direction);
         } else {
             params = ShaderParams.from(shaders, mode, tickDelta, inW, inH, time, isHands, direction);
         }
-        
+
         time = params.nextTime;
         GpuTextureView depth = null;
         GpuBuffer paramsBuffer = shaderParamsBuffer.write(encoder, params);
@@ -326,9 +326,9 @@ public class ShaderManager {
 
             float exposure = c.glowExposure.get().floatValue();
             float radius = c.glowRadius.get().floatValue();
-            
+
             Vector4f zero = new Vector4f(0, 0, 0, 0);
-            Vector4f params1 = new Vector4f(-1.0f, 0.0f, 0.0f, 0.0f); 
+            Vector4f params1 = new Vector4f(-1.0f, 0.0f, 0.0f, 0.0f);
             Vector4f params2 = new Vector4f(time, exposure, 0.0f, 3.0f);
             Vector4f params3 = new Vector4f(radius, 10.0f, direction.x, direction.y);
 
@@ -350,11 +350,11 @@ public class ShaderManager {
             // Glow specific params
             float exposure = g.exposure.get().floatValue();
             float radius = g.radius.get().floatValue();
-            
+
             // Dummy values for others
             Vector4f zero = new Vector4f(0, 0, 0, 0);
             Vector4f params1 = new Vector4f(-1.0f, 0.0f, 0.0f, 0.0f); // alpha0 = -1 for glow mode in shader logic? No, let's check.
-            
+
             Vector4f params2 = new Vector4f(time, exposure, 0.0f, 3.0f); // Quality 3
             Vector4f params3 = new Vector4f(radius, 10.0f, direction.x, direction.y); // Octaves 10
 

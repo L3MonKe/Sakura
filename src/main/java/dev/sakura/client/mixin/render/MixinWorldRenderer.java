@@ -3,11 +3,7 @@ package dev.sakura.client.mixin.render;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.manager.Managers;
-import dev.sakura.client.module.impl.render.ChestESP;
-import dev.sakura.client.module.impl.render.GlowESP;
-import dev.sakura.client.module.impl.render.NoRender;
-import dev.sakura.client.module.impl.render.Shaders;
-import dev.sakura.client.module.impl.render.WorldTweaks;
+import dev.sakura.client.module.impl.render.*;
 import net.minecraft.client.gl.Framebuffer;
 import net.minecraft.client.gl.PostEffectProcessor;
 import net.minecraft.client.gl.ShaderLoader;
@@ -70,7 +66,7 @@ public class MixinWorldRenderer {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
         GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
         ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
-        
+
         if ((shaders != null && shaders.isEnabled() || glowESP != null && glowESP.isEnabled() || chestESP != null && chestESP.isEnabled() && chestESP.isGlowEnabled()) && vanillaOutline.equals(id)) {
             return null;
         }
@@ -82,7 +78,7 @@ public class MixinWorldRenderer {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
         GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
         ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
-        
+
         if (entityOutlineFramebuffer == null) return;
 
         if (glowESP != null && glowESP.isEnabled()) {
@@ -92,9 +88,9 @@ public class MixinWorldRenderer {
         }
 
         if (chestESP != null && chestESP.isEnabled() && chestESP.isGlowEnabled()) {
-             Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, dev.sakura.client.manager.impl.ShaderManager.Shader.Glow, Sakura.mc.getRenderTickCounter().getTickProgress(true));
-             ci.cancel();
-             return;
+            Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, dev.sakura.client.manager.impl.ShaderManager.Shader.Glow, Sakura.mc.getRenderTickCounter().getTickProgress(true));
+            ci.cancel();
+            return;
         }
 
         if (shaders != null && shaders.isEnabled()) {

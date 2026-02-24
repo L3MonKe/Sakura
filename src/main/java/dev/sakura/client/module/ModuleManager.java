@@ -105,12 +105,11 @@ public class ModuleManager {
         add(new ViewModel());
         add(new GlowESP());
 
-                // Client
+        // Client
         add(new AutoHeypixel());
         add(new Capes());
 //        add(new Chat());
         add(new ClickGui());
-        add(new PanelGui());
         add(new HudEditor());
         add(new Targets());
         add(new Teams());

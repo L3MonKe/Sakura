@@ -78,24 +78,24 @@ public class ClickGuiScreen extends Screen {
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
-            boolean handled = false;
-            for (CategoryPanel panel : panels) {
-                if (panel.mouseClicked(click, doubled)) {
-                    handled = true;
-                }
+        boolean handled = false;
+        for (CategoryPanel panel : panels) {
+            if (panel.mouseClicked(click, doubled)) {
+                handled = true;
             }
-            return handled || super.mouseClicked(click, doubled);
+        }
+        return handled || super.mouseClicked(click, doubled);
     }
 
     @Override
     public boolean mouseReleased(Click click) {
-            boolean handled = false;
-            for (CategoryPanel panel : panels) {
-                if (panel.mouseReleased(click)) {
-                    handled = true;
-                }
+        boolean handled = false;
+        for (CategoryPanel panel : panels) {
+            if (panel.mouseReleased(click)) {
+                handled = true;
             }
-            return handled || super.mouseReleased(click);
+        }
+        return handled || super.mouseReleased(click);
     }
 
     @Override

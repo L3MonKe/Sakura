@@ -8,7 +8,6 @@ import dev.sakura.client.event.IEventBus;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
-import dev.sakura.client.gui.panelgui.PanelGuiScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -106,7 +105,6 @@ public class Sakura {
     public static ConfigManager CONFIG;
     public static CommandManager COMMAND;
     public static ClickGuiScreen CLICKGUI;
-    public static PanelGuiScreen PANELGUI;
     public static HudEditorScreen HUDEDITOR;
 
     public static int skipTicks;
@@ -134,8 +132,6 @@ public class Sakura {
         MODULES = new ModuleManager();
 
         CLICKGUI = new ClickGuiScreen();
-
-        PANELGUI = new PanelGuiScreen();
 
         HUDEDITOR = new HudEditorScreen();
 

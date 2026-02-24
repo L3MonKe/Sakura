@@ -1,7 +1,6 @@
 package dev.sakura.client.module.impl.hud;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.exception.UsernameEmptyNullPointerException;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -528,7 +527,7 @@ public class WatermarkHud extends HudModule {
         } else {
             username = AuthState.getCurrentUser();
             if (username == null || username.isBlank()) {
-                UsernameEmptyNullPointerException e = new UsernameEmptyNullPointerException();
+                NullPointerException e = new NullPointerException("路几把");
                 Sakura.LOGGER.error("哎呦我去你真牛逼你咋裂的？", e);
                 throw e;
             }

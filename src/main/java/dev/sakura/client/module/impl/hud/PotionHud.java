@@ -2,7 +2,6 @@ package dev.sakura.client.module.impl.hud;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.gui.hudeditor.HudEditorScreen;
-import dev.sakura.client.gui.panelgui.SmoothAnimationTimer;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.client.HudEditor;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -303,6 +302,63 @@ public class PotionHud extends HudModule {
         }
         return minutesTotal + ":" + String.format("%02d", seconds);
     }
+
+    public static class SmoothAnimationTimer {
+        public float target;
+        public float speed = 0.4f;
+        public float value;
+
+        private long lastUpdateMs = System.currentTimeMillis();
+
+        public SmoothAnimationTimer(float target) {
+            this.target = target;
+            this.value = target;
+        }
+
+        public SmoothAnimationTimer(float target, float value) {
+            this.target = target;
+            this.value = value;
+        }
+
+        public SmoothAnimationTimer(float target, float value, float speed) {
+            this.target = target;
+            this.value = value;
+            this.speed = speed;
+        }
+
+        public void update(boolean increment) {
+            float desired = increment ? target : 0.0f;
+            long now = System.currentTimeMillis();
+            int deltaMs = (int) (now - lastUpdateMs);
+            if (deltaMs < 0) {
+                deltaMs = 0;
+            }
+            lastUpdateMs = now;
+            float dynamicSpeed = Math.max(10.0f, Math.abs(value - desired) * 40.0f) * speed;
+            value = getAnimationState(value, desired, dynamicSpeed, deltaMs);
+        }
+
+        public boolean isAnimationDone(boolean increment) {
+            return increment ? value == target : value == 0.0f;
+        }
+
+        public static float getAnimationState(float animation, float finalState, float speed, int deltaMs) {
+            float add = deltaMs * (speed / 1000.0f);
+            if (animation < finalState) {
+                if (animation + add < finalState) {
+                    animation += add;
+                } else {
+                    animation = finalState;
+                }
+            } else if (animation - add > finalState) {
+                animation -= add;
+            } else {
+                animation = finalState;
+            }
+            return animation;
+        }
+    }
+
 
     private static final class EffectInfo {
         final SmoothAnimationTimer xTimer;
