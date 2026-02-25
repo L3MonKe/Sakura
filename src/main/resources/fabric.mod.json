@@ -2,16 +2,15 @@
   "schemaVersion": 1,
   "id": "sakura",
   "version": "${version}",
-  "name": "MZC",
-  "description": "MZCMod which can allow you to use fullbright",
-  "icon": "icon.png",
+  "name": "Sakura",
+  "description": "Sakura Minecraft cheat client.",
   "authors": [
-    "MZC8865"
+    "Fin_LemonKe"
   ],
   "environment": "client",
   "entrypoints": {
     "client": [
-      "dev.mzc.client.Sakura"
+      "dev.sakura.client.Sakura"
     ]
   },
   "mixins": [
