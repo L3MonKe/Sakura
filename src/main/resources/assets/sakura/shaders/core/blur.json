@@ -6,7 +6,7 @@
   },
   "vertex": "sakura:core/position",
   "fragment": "sakura:core/blur",
-  "attributes": [],
+  "attributes": ["Position"],
   "samplers": [
     { "name": "InputSampler" }
   ],
