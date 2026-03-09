@@ -351,6 +351,7 @@ public class TargetHud extends HudModule {
 
         if (style.get() == StyleEn.Sakura) {
             renderMahiroBackground(animValue);
+            renderMahiroGlow(renderTarget, finalHealth, finalMaxHealth, animValue);
         }
 
         // 1. Render NanoVG elements (Backgrounds, Bars, Text)
@@ -377,6 +378,9 @@ public class TargetHud extends HudModule {
 
             NanoVGHelper.restore();
         });
+
+        //     renderMahiroGlow(renderTarget, finalHealth, finalMaxHealth, animValue);
+        // }
 
         if (style.get() == StyleEn.Hanabi) {
             if (target != null && hanabiHudHeight > 0.5f && hanabiHealthBarWidth > 0.5f) {
@@ -749,6 +753,11 @@ public class TargetHud extends HudModule {
                 NanoVG.nvgFillPaint(vg, paint);
                 NanoVG.nvgFill(vg);
 
+                // Smooth edges
+                NanoVG.nvgStrokeWidth(vg, 1.0f);
+                NanoVG.nvgStrokePaint(vg, paint);
+                NanoVG.nvgStroke(vg);
+
                 // Red Damage Overlay
                 if (damageFactor > 0.01f) {
                     NanoVG.nvgBeginPath(vg);
@@ -922,7 +931,20 @@ public class TargetHud extends HudModule {
 
         // Delay Bar
         if (MahiroDelay.get() && delayHealth > health) {
-            NanoVGHelper.drawRoundRect(contentX, barY, delayBarW, barH, barRadius, MahiroDelayColor.get());
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                org.lwjgl.nanovg.NVGColor col = org.lwjgl.nanovg.NVGColor.malloc(stack);
+                Color c = MahiroDelayColor.get();
+                NanoVG.nvgRGBA((byte) c.getRed(), (byte) c.getGreen(), (byte) c.getBlue(), (byte) c.getAlpha(), col);
+
+                NanoVG.nvgBeginPath(vg);
+                NanoVG.nvgRoundedRect(vg, contentX, barY, delayBarW, barH, barRadius);
+                NanoVG.nvgFillColor(vg, col);
+                NanoVG.nvgFill(vg);
+
+                NanoVG.nvgStrokeWidth(vg, 1.0f);
+                NanoVG.nvgStrokeColor(vg, col);
+                NanoVG.nvgStroke(vg);
+            }
         }
 
         // Bar Gradient Logic
@@ -940,30 +962,30 @@ public class TargetHud extends HudModule {
         }
 
         // Bar Glow
-        if (hpGlow.get()) {
-            float strength = glowStrength.get().floatValue();
-            for (float i = 1.0f; i <= strength; i += 1.0f) {
-                float normalizedDist = i / (strength + 2);
-                float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
-                float a = alphaFactor * 0.25f;
-                int alphaInt = MathHelper.clamp((int) (a * 255), 0, 255);
 
-                if (alphaInt > 0) {
-                    if (healthGradient.get()) {
-                        Color gc1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt);
-                        Color gc2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alphaInt);
-                        NanoVGHelper.drawGradientRRect2(contentX - i, barY - i, barW + i * 2, barH + i * 2, barRadius + i, gc1, gc2);
-                    } else {
-                        NanoVGHelper.drawRoundRect(contentX - i, barY - i, barW + i * 2, barH + i * 2, barRadius + i, new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt));
-                    }
-                }
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+            org.lwjgl.nanovg.NVGColor col1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+            org.lwjgl.nanovg.NVGColor col2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+
+            NanoVG.nvgRGBA((byte) c1.getRed(), (byte) c1.getGreen(), (byte) c1.getBlue(), (byte) c1.getAlpha(), col1);
+            NanoVG.nvgRGBA((byte) c2.getRed(), (byte) c2.getGreen(), (byte) c2.getBlue(), (byte) c2.getAlpha(), col2);
+
+            if (healthGradient.get()) {
+                NanoVG.nvgLinearGradient(vg, contentX, barY, contentX + barW, barY, col1, col2, paint);
+            } else {
+                NanoVG.nvgLinearGradient(vg, contentX, barY, contentX, barY + barH, col1, col2, paint);
             }
-        }
 
-        if (healthGradient.get()) {
-            NanoVGHelper.drawGradientRRect2(contentX, barY, barW, barH, barRadius, c1, c2);
-        } else {
-            NanoVGHelper.drawGradientRRect(contentX, barY, barW, barH, barRadius, c1, c2);
+            NanoVG.nvgBeginPath(vg);
+            NanoVG.nvgRoundedRect(vg, contentX, barY, barW, barH, barRadius);
+            NanoVG.nvgFillPaint(vg, paint);
+            NanoVG.nvgFill(vg);
+
+            // Smooth edges
+            NanoVG.nvgStrokeWidth(vg, 1.0f);
+            NanoVG.nvgStrokePaint(vg, paint);
+            NanoVG.nvgStroke(vg);
         }
 
         if (target instanceof PlayerEntity player) {
@@ -974,6 +996,95 @@ public class TargetHud extends HudModule {
         }
 
         NanoVGHelper.restore();
+    }
+
+    private void renderMahiroGlow(LivingEntity target, float health, float maxHealth, float animValue) {
+        if (!hpGlow.get()) return;
+
+        float globalScale = MahiroScale.get().floatValue();
+        float baseW = MahiroWidth.get().floatValue();
+        float baseH = MahiroHeight.get().floatValue();
+        float barRadius = MahiroBarRadius.get().floatValue();
+        float barH = MahiroBarHeight.get().floatValue();
+
+        float padding = 6f;
+        float avatarSize = baseH - padding * 2;
+
+        float heightIncrease = 0;
+
+        if (MahiroAvatarPos.get() == AvatarPosEn.OnBar) {
+            heightIncrease = MahiroOnBarHeight.get().floatValue();
+        }
+
+        float totalH = baseH + heightIncrease;
+
+        float contentX = x + padding + avatarSize + padding;
+        float contentW = baseW - (padding + avatarSize + padding + padding);
+
+        if (MahiroAvatarPos.get() == AvatarPosEn.OnBar) {
+            contentX = x + padding;
+            contentW = baseW - (padding + padding);
+        }
+
+        float barY = y + totalH - padding - barH;
+        float healthPct = MathHelper.clamp(health / maxHealth, 0f, 1f);
+        float barW = contentW * healthPct;
+
+        float sx = x + (contentX - x) * globalScale;
+        float sy = y + (barY - y + 0.5f) * globalScale;
+        float sw = barW * globalScale;
+        float sh = barH * globalScale;
+
+        // Apply Glow Offset (Shrink/Expand)
+        float glowOffset = -0.5f * globalScale;
+        sx -= glowOffset;
+        sy -= glowOffset;
+        sw += glowOffset * 2;
+        sh += glowOffset * 2;
+
+        float sr = barRadius * globalScale;
+
+        float centerX = x + this.width / 2f;
+        float centerY = y + this.height / 2f;
+
+        float finalX = centerX + (sx - centerX) * animValue;
+        float finalY = centerY + (sy - centerY) * animValue;
+        float finalW = sw * animValue;
+        float finalH = sh * animValue;
+        float finalR = sr * animValue;
+
+        if (finalW <= 0 || finalH <= 0) return;
+
+        Color c1 = healthColor.get();
+        Color c2 = healthColor.get().darker();
+        if (healthGradient.get()) {
+            double speed = gradientSpeed.get();
+            float time = (float) ((System.currentTimeMillis() % 2000000) * speed / 1000.0);
+            float length = colorLength.get().floatValue();
+            float frequency = 1.0f / length;
+            float t1 = (float) ((Math.sin(time) + 1.0) / 2.0);
+            float t2 = (float) ((Math.sin(time + frequency) + 1.0) / 2.0);
+            c1 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t1);
+            c2 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t2);
+        }
+
+        float[] rects = new float[]{finalX, finalY, finalW, finalH};
+        float[] radii = new float[]{finalR};
+
+        float range = glowStrength.get().floatValue() * globalScale;
+        float strength = 1.0f;
+
+        Color start = c1;
+        Color end = healthGradient.get() ? c2 : c1;
+
+        start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
+        end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
+
+        if (healthGradient.get()) {
+            ShadowShader.drawStairShadowGradient(finalX, finalY, finalW, finalH, range, strength, start, end, rects, radii, 1);
+        } else {
+            ShadowShader.drawStairShadow(finalX, finalY, finalW, finalH, range, strength, start, rects, radii, 1);
+        }
     }
 
     private void renderHanabi(long vg, LivingEntity target, float health, float maxHealth) {

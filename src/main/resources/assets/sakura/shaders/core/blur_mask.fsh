@@ -29,6 +29,6 @@ void main() {
         d = min(d, di);
     }
 
-    float mask = (1.0 - smoothstep(0.0, 1.0, d));
+    float mask = (1.0 - smoothstep(-1.0, 1.0, d));
     fragColor = vec4(mask, mask, mask, 1.0);
 }
