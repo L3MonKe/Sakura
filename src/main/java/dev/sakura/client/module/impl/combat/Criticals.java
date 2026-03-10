@@ -13,7 +13,6 @@ import dev.sakura.client.mixin.accessor.IClientPlayerEntity;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
-import dev.sakura.client.module.impl.movement.Velocity;
 import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
@@ -146,14 +145,6 @@ public class Criticals extends Module {
             }
 
             Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
-            Velocity velocity = Sakura.MODULES.getModule(Velocity.class);
-
-            if (velocity != null && velocity.isEnabled() && velocity.isActive()) {
-                if (stuckEnabled) {
-                    disableStuck();
-                }
-                return;
-            }
 
             if (killAura != null && killAura.isEnabled() && !mc.player.isOnGround() && (scaffold == null || !scaffold.isEnabled())) {
                 // Prevent stuck when close to ground to avoid rubberband on landing/jumping
