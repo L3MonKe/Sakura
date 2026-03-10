@@ -35,7 +35,7 @@ public class ModuleManager {
         add(new AntiBot());
         add(new AttackCrystal());
         add(new AutoWeapon());
-        //add(new Criticals());
+        add(new Criticals());
         add(new KillAura());
         add(new AttackCrystal());
         add(new AutoAnchor());

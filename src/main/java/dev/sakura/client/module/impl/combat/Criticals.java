@@ -26,6 +26,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.common.CommonPongC2SPacket;
+import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
@@ -33,6 +34,7 @@ import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.shape.VoxelShape;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -44,8 +46,8 @@ public class Criticals extends Module {
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Packet);
     private final BoolValue groundOnly = new BoolValue("GroundOnly", "仅地面", false, () -> mode.is(Mode.Packet));
-    private final NumberValue<Integer> grimDelay = new NumberValue<>("Delay", "延迟", 3, 0, 20, 1, () -> mode.is(Mode.Grim));
-    private final NumberValue<Integer> maxPackets = new NumberValue<>("Max Packets", "最大包数", 15, 5, 50, 1, () -> mode.is(Mode.Grim));
+    private final NumberValue<Integer> grimDelay = new NumberValue<>("Delay", "延迟", 0, 0, 20, 1, () -> mode.is(Mode.Grim));
+    private final NumberValue<Integer> maxPackets = new NumberValue<>("Max Packets", "最大包数", 10, 5, 50, 1, () -> mode.is(Mode.Grim));
 
     // Stuck variables for Grim mode
     private int stage = 0;
@@ -53,12 +55,10 @@ public class Criticals extends Module {
     private float lastYaw;
     private float lastPitch;
     private boolean tryDisable = false;
-    private final Queue<CommonPongC2SPacket> packets = new ConcurrentLinkedQueue<>();
+    private final Queue<Packet<?>> packets = new ConcurrentLinkedQueue<>();
     private boolean stuckEnabled = false;
     private int grimTimer = 0;
-    private int packetCount = 0;
 
-    private int attackTimer = 0;
     private double startY = 0;
     private boolean isBacking = false;
 
@@ -74,7 +74,6 @@ public class Criticals extends Module {
     @Override
     public void onEnable() {
         resetStuck();
-        attackTimer = 0;
         isBacking = false;
     }
 
@@ -102,30 +101,41 @@ public class Criticals extends Module {
         }
     }
 
+    private boolean isMovingBackwards() {
+        if (mc.player.getVelocity().x == 0 && mc.player.getVelocity().z == 0) return false;
+
+        float yaw = mc.player.getYaw();
+        // Calculate motion yaw from velocity
+        double motionYaw = Math.toDegrees(Math.atan2(mc.player.getVelocity().z, mc.player.getVelocity().x)) - 90;
+        
+        // Normalize angle difference to -180 to 180
+        double diff = Math.abs(yaw - motionYaw);
+        diff = diff % 360;
+        if (diff > 180) diff = 360 - diff;
+        
+        // If angle difference is > 135, player is moving backwards (180 is straight back)
+        return diff > 135;
+    }
+
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
-        if (attackTimer > 0) {
-            attackTimer--;
-        }
-
         if (mode.is(Mode.Grim)) {
-            if (attackTimer > 0 || mc.player.hurtTime > 0) {
-                if (stuckEnabled) {
-                    disableStuck();
-                }
-                return;
+            // Force disable sprinting if off-ground with target
+            KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+            if (!mc.player.isOnGround() && killAura != null && killAura.isEnabled() && killAura.getCurrentTarget() != null) {
+                mc.player.setSprinting(false);
             }
 
             if (mc.player.isOnGround()) {
                 isBacking = false;
                 startY = mc.player.getY();
-            } else if (mc.player.input.playerInput.backward() && !isBacking) {
-                if (startY - mc.player.getY() > 0.5) {
-                    isBacking = true;
+            } else if (isMovingBackwards()) { // Check velocity direction instead of input
+                if (stuckEnabled) {
                     disableStuck();
                 }
+                return;
             }
 
             if (isBacking) {
@@ -135,7 +145,6 @@ public class Criticals extends Module {
                 return;
             }
 
-            KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
             Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
             Velocity velocity = Sakura.MODULES.getModule(Velocity.class);
 
@@ -156,21 +165,39 @@ public class Criticals extends Module {
                 }
 
                 LivingEntity target = killAura.getCurrentTarget();
-                if (target != null && mc.player.getVelocity().y < 0) { // Only trigger when falling
-                    if (grimTimer > 0 || attackTimer > 0) { // Check attackTimer
-                        if (attackTimer > 0 && stuckEnabled) {
-                            disableStuck();
-                        } else if (grimTimer > 0) {
+                if (target != null) {
+                    mc.player.setSprinting(false);
+                    // Check if we should enable stuck or are already stuck
+                    if (stuckEnabled || mc.player.getVelocity().y < 0) {
+                        // If we are moving UP (positive Y), temporarily disable stuck to allow knockback
+                        if (mc.player.getVelocity().y > 0) {
+                            if (stuckEnabled) {
+                                disableStuck();
+                            }
+                            return;
+                        }
+
+                        // If backing, disable stuck
+                        if (isMovingBackwards()) {
+                            if (stuckEnabled) {
+                                disableStuck();
+                            }
+                            return;
+                        }
+
+                        if (grimTimer > 0) {
                             grimTimer--;
-                        }
-                    } else {
-                        if (stuckEnabled) {
-                            disableStuck();
-                            grimTimer = 1; // Short cooldown before re-enabling
                         } else {
-                            enableStuck();
-                            grimTimer = grimDelay.get();
+                            if (stuckEnabled) {
+                                disableStuck();
+                                grimTimer = 1; // Short cooldown before re-enabling
+                            } else {
+                                enableStuck();
+                                grimTimer = grimDelay.get();
+                            }
                         }
+                    } else if (stuckEnabled) {
+                        disableStuck();
                     }
                 } else {
                     if (stuckEnabled) {
@@ -190,7 +217,6 @@ public class Criticals extends Module {
         lastYaw = Managers.ROTATION.rotations.yaw;
         lastPitch = Managers.ROTATION.rotations.pitch;
         tryDisable = false;
-        packetCount = 0;
     }
 
     private void disableStuck() {
@@ -201,7 +227,6 @@ public class Criticals extends Module {
                 this.tryDisable = true;
             }
         } else {
-            // Ensure packets are cleared if manually disabled
             while (!packets.isEmpty()) {
                 PacketUtil.sendPacketNoEvent(packets.poll());
             }
@@ -215,7 +240,6 @@ public class Criticals extends Module {
         packet = null;
         tryDisable = false;
         packets.clear();
-        packetCount = 0;
     }
 
     @EventHandler
@@ -240,7 +264,11 @@ public class Criticals extends Module {
 
         if (e.getType() == EventType.PRE) {
             if (stuckEnabled) {
-                mc.player.setVelocity(0.0, 0.0, 0.0);
+                // Allow positive Y velocity (knockback), block negative Y (falling)
+                if (mc.player.getVelocity().y < 0) {
+                    mc.player.setVelocity(mc.player.getVelocity().x, 0.0, mc.player.getVelocity().z);
+                }
+                mc.player.setSprinting(false);
             }
 
             if (stage == 1) {
@@ -264,7 +292,7 @@ public class Criticals extends Module {
             }
 
             if (tryDisable) {
-                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(mc.player.getX(), mc.player.getY(), mc.player.getZ(), mc.player.isOnGround(), mc.player.horizontalCollision));
+                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.PositionAndOnGround(mc.player.getX() + 1337.0, mc.player.getY(), mc.player.getZ() + 1337.0, mc.player.isOnGround(), mc.player.horizontalCollision));
 
                 while (!packets.isEmpty()) {
                     PacketUtil.sendPacketNoEvent(packets.poll());
@@ -289,11 +317,23 @@ public class Criticals extends Module {
 
     @EventHandler
     public void onMoveInput(MoveInputEvent event) {
-        if (!mode.is(Mode.Grim) || !stuckEnabled) return;
-        event.setForward(0.0F);
-        event.setStrafe(0.0F);
-        event.setJump(false);
-        event.setSneak(false);
+        if (!mode.is(Mode.Grim)) return;
+
+        if (stuckEnabled) {
+            event.setForward(0.0F);
+            event.setStrafe(0.0F);
+            event.setJump(false);
+            event.setSneak(false);
+            event.setSprint(false); // Double check
+        }
+
+        if (!mc.player.isOnGround()) {
+            KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+            if (killAura != null && killAura.isEnabled() && killAura.getCurrentTarget() != null) {
+                event.setSprint(false);
+                mc.player.setSprinting(false);
+            }
+        }
     }
 
     @EventHandler
@@ -321,32 +361,24 @@ public class Criticals extends Module {
             return;
         }
 
-        // Detect if player is hurt (EntityStatus 2)
-        if (event.getPacket() instanceof EntityStatusS2CPacket) {
-            EntityStatusS2CPacket statusPacket = (EntityStatusS2CPacket) event.getPacket();
-            if (statusPacket.getEntity(mc.world) == mc.player && statusPacket.getStatus() == 2) {
-                attackTimer = 20; // Disable stuck for a few ticks to allow knockback
-                disableStuck();
-                return;
-            }
-        }
-
         if (!stuckEnabled) return;
 
         if (event.getPacket() instanceof PlayerMoveC2SPacket) {
-            packetCount++;
-            if (packetCount > maxPackets.get()) {
-                disableStuck();
-                return;
-            }
             event.setCancelled(true);
         } else if (event.getPacket() instanceof CommonPongC2SPacket) {
-            packets.offer((CommonPongC2SPacket) event.getPacket());
+            packets.offer(event.getPacket());
             event.setCancelled(true);
         } else if (event.getPacket() instanceof PlayerInteractItemC2SPacket || event.getPacket() instanceof PlayerActionC2SPacket) {
             packet = event.getPacket();
             stage = 1;
             event.setCancelled(true);
+        } else if (event.getPacket() instanceof ClientCommandC2SPacket command) {
+            if (command.getMode() == ClientCommandC2SPacket.Mode.START_SPRINTING) {
+                KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+                if (killAura != null && killAura.isEnabled() && killAura.getCurrentTarget() != null && !mc.player.isOnGround()) {
+                    event.setCancelled(true);
+                }
+            }
         }
     }
 
