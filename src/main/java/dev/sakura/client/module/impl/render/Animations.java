@@ -56,7 +56,7 @@ public class Animations extends Module {
     private final NumberValue<Double> blockingRotationY = new NumberValue<>("BlockingRotationY", "格挡-旋转Y", 0.0, -50.0, 50.0, 1.0, blockingParams::get);
     private final NumberValue<Double> blockingRotationZ = new NumberValue<>("BlockingRotationZ", "格挡-旋转Z", 0.0, -50.0, 50.0, 1.0, blockingParams::get);
 
-    private final EnumValue<SwingMode> swingMode = new EnumValue<>("SwingMode", "挥手模式", SwingMode.Vanilla);
+    private final EnumValue<SwingMode> swingMode = new EnumValue<>("SwingAnimation", "挥手动画", SwingMode.Vanilla);
     private final NumberValue<Integer> swingDuration = new NumberValue<>("SwingDuration", "挥手时长", 6, 1, 20, 1);
 
     private final EnumValue<BlockingAnimation> blockingAnimation = new EnumValue<>("BlockingAnimation", "格挡动画", BlockingAnimation.V1_7);
@@ -87,6 +87,7 @@ public class Animations extends Module {
 
     public boolean shouldAnimate() {
         if (!isEnabled() || nullCheck()) return false;
+        if (swingMode.is(SwingMode.Vanilla) && !isBlocking()) return false;
 
         return mc.player == null || !onlyWeapon.get() || isWeapon(mc.player.getMainHandStack());
     }
