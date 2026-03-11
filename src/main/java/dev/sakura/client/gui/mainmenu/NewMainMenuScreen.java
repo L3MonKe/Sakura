@@ -13,6 +13,7 @@ import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
@@ -32,6 +33,8 @@ public class NewMainMenuScreen extends Screen {
     private static final float DESIGN_W = 1920f;
     private static final float DESIGN_H = 1080f;
     private static final int FIRST_ROW_COUNT = 4;
+    private static final long EXIT_WARNING_ANIM_MS = 240L;
+    private static boolean playReturnCancelNext;
     private final List<MenuEntry> entries = new ArrayList<>();
     private final List<AdjustButton> adjustButtons = new ArrayList<>();
     private int backgroundTexture = -1;
@@ -40,7 +43,7 @@ public class NewMainMenuScreen extends Screen {
     private float logoCenterXRatio = 0.765f;
     private float logoCenterYRatio = 0.650f;
     private float logoSizeScale = 0.850f;
-    private float row1XRatio = 0.555f;
+    private float row1XRatio = 0.550f;
     private float row1YRatio = 0.825f;
     private float row1FontScale = 1.400f;
     private float row1GapScale = 1.000f;
@@ -61,9 +64,26 @@ public class NewMainMenuScreen extends Screen {
     private float panelY;
     private float panelW;
     private float panelH;
+    private float exitWarningProgress;
+    private float exitWarningAnimFrom;
+    private float exitWarningAnimTo;
+    private long exitWarningAnimStartMs;
+    private boolean exitWarningCloseToQuit;
+    private float exitConfirmX;
+    private float exitConfirmY;
+    private float exitConfirmW;
+    private float exitConfirmH;
+    private float exitCancelX;
+    private float exitCancelY;
+    private float exitCancelW;
+    private float exitCancelH;
 
     public NewMainMenuScreen() {
         super(Text.of("NewMainMenuScreen"));
+    }
+
+    public static void requestReturnCancelOnce() {
+        playReturnCancelNext = true;
     }
 
     @Override
@@ -77,21 +97,32 @@ public class NewMainMenuScreen extends Screen {
         if (ScreenWhiteTransition.consumeNewMenuFadeRequest()) {
             ScreenWhiteTransition.startFromWhite(800L);
         }
+        if (playReturnCancelNext) {
+            playReturnCancelNext = false;
+            mc.getSoundManager().stopSounds(Identifier.of("minecraft", "ui.button.click"), null);
+            Managers.SOUND.playSound(Managers.SOUND.MENU_CANCEL, 1.0f, 1.0f);
+        }
         entries.clear();
         entries.add(new MenuEntry("Singleplayer", () -> {
+            Managers.SOUND.playSound(Managers.SOUND.MENU_CONFIRM, 1.0f, 1.0f);
             ScreenWhiteTransition.markFadeOnNextNewMenuOpen();
             ScreenWhiteTransition.startToScreen(new SelectWorldScreen(this), 800L);
         }));
         entries.add(new MenuEntry("Multiplayer", () -> {
+            Managers.SOUND.playSound(Managers.SOUND.MENU_CONFIRM, 1.0f, 1.0f);
             ScreenWhiteTransition.markFadeOnNextNewMenuOpen();
             ScreenWhiteTransition.startToScreen(new MultiplayerScreen(this), 800L);
         }));
         entries.add(new MenuEntry("Start", () -> Managers.SOUND.playSound(Managers.SOUND.START_JI, 1.0f, 1.0f)));
-        entries.add(new MenuEntry("Config", () -> {
+        entries.add(new MenuEntry("Settings", () -> {
+            Managers.SOUND.playSound(Managers.SOUND.MENU_CONFIRM, 1.0f, 1.0f);
             ScreenWhiteTransition.markFadeOnNextNewMenuOpen();
             ScreenWhiteTransition.startToScreen(new OptionsScreen(this, mc.options), 800L);
         }));
-        entries.add(new MenuEntry("Exit", () -> ScreenWhiteTransition.startToAction(mc::scheduleStop, 800L)));
+        entries.add(new MenuEntry("Exit", () -> {
+            Managers.SOUND.playSound(Managers.SOUND.MENU_CONFIRM, 1.0f, 1.0f);
+            openExitWarning();
+        }));
     }
 
     @Override
@@ -110,6 +141,7 @@ public class NewMainMenuScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+        updateExitWarningAnimation();
         NanoVGRenderer.INSTANCE.draw(vg -> {
             float scale = Math.min(width / DESIGN_W, height / DESIGN_H);
             if (scale <= 0f) {
@@ -217,12 +249,30 @@ public class NewMainMenuScreen extends Screen {
             );
 
             drawEditor(vg, scale);
+            drawExitWarning(vg, scale, mouseX, mouseY);
         });
     }
 
     @Override
     public boolean mouseClicked(Click click, boolean doubled) {
         if (ScreenWhiteTransition.isActive()) {
+            return true;
+        }
+        if (exitWarningProgress > 0f) {
+            if (click.button() == 0) {
+                float mx = (float) click.x();
+                float my = (float) click.y();
+                if (isHovered(mx, my, exitConfirmX, exitConfirmY, exitConfirmW, exitConfirmH)) {
+                    Managers.SOUND.playSound(Managers.SOUND.MENU_CONFIRM, 1.0f, 1.0f);
+                    closeExitWarning(true);
+                    return true;
+                }
+                if (isHovered(mx, my, exitCancelX, exitCancelY, exitCancelW, exitCancelH)) {
+                    Managers.SOUND.playSound(Managers.SOUND.MENU_CANCEL, 1.0f, 1.0f);
+                    closeExitWarning(false);
+                    return true;
+                }
+            }
             return true;
         }
         if (click.button() == 0) {
@@ -267,11 +317,158 @@ public class NewMainMenuScreen extends Screen {
         if (ScreenWhiteTransition.isActive()) {
             return true;
         }
+        if (exitWarningProgress > 0f) {
+            if (input.getKeycode() == GLFW.GLFW_KEY_ESCAPE) {
+                Managers.SOUND.playSound(Managers.SOUND.MENU_CANCEL, 1.0f, 1.0f);
+                closeExitWarning(false);
+            }
+            return true;
+        }
         if (input.getKeycode() == GLFW.GLFW_KEY_F6) {
             editorOpen = !editorOpen;
             return true;
         }
         return super.keyPressed(input);
+    }
+
+    private void openExitWarning() {
+        startExitWarningAnimation(1f, false);
+    }
+
+    private void closeExitWarning(boolean quit) {
+        startExitWarningAnimation(0f, quit);
+    }
+
+    private void startExitWarningAnimation(float target, boolean quit) {
+        if (exitWarningAnimTo == target && exitWarningProgress == target) {
+            return;
+        }
+        exitWarningAnimFrom = exitWarningProgress;
+        exitWarningAnimTo = target;
+        exitWarningAnimStartMs = System.currentTimeMillis();
+        exitWarningCloseToQuit = target <= 0f && quit;
+    }
+
+    private void updateExitWarningAnimation() {
+        if (exitWarningAnimFrom == exitWarningAnimTo) {
+            return;
+        }
+        float t = Math.min(1f, (System.currentTimeMillis() - exitWarningAnimStartMs) / (float) EXIT_WARNING_ANIM_MS);
+        float eased = t * t * (3f - 2f * t);
+        exitWarningProgress = exitWarningAnimFrom + (exitWarningAnimTo - exitWarningAnimFrom) * eased;
+        if (t >= 1f) {
+            exitWarningProgress = exitWarningAnimTo;
+            exitWarningAnimFrom = exitWarningAnimTo;
+            if (exitWarningProgress <= 0f && exitWarningCloseToQuit) {
+                exitWarningCloseToQuit = false;
+                mc.scheduleStop();
+            }
+        }
+    }
+
+    private void drawExitWarning(long vg, float scale, int mouseX, int mouseY) {
+        if (exitWarningProgress <= 0f) {
+            exitConfirmW = 0f;
+            exitCancelW = 0f;
+            return;
+        }
+        float alpha = exitWarningProgress;
+        NanoVGHelper.drawRect(0f, 0f, width, height, new Color(0, 0, 0, (int) (90f * alpha)));
+        float panelW = width;
+        float panelH = 190f * scale;
+        float panelX = 0f;
+        float panelY = (height - panelH) * 0.5f;
+        float centerW = Math.min(width * 0.64f, 980f * scale);
+        float centerX = (width - centerW) * 0.5f;
+        int centerAlpha = (int) (196f * alpha);
+        NanoVGHelper.drawRect(centerX, panelY, centerW, panelH, new Color(255, 255, 255, centerAlpha));
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            NVGPaint paint = NVGPaint.malloc(stack);
+            NVGColor transparent = NVGColor.malloc(stack);
+            NVGColor solid = NVGColor.malloc(stack);
+            NanoVG.nvgRGBA((byte) 255, (byte) 255, (byte) 255, (byte) 0, transparent);
+            NanoVG.nvgRGBA((byte) 255, (byte) 255, (byte) 255, (byte) centerAlpha, solid);
+            NanoVG.nvgLinearGradient(vg, 0f, 0f, centerX, 0f, transparent, solid, paint);
+            NanoVG.nvgBeginPath(vg);
+            NanoVG.nvgRect(vg, panelX, panelY, centerX, panelH);
+            NanoVG.nvgFillPaint(vg, paint);
+            NanoVG.nvgFill(vg);
+            NanoVG.nvgLinearGradient(vg, centerX + centerW, 0f, width, 0f, solid, transparent, paint);
+            NanoVG.nvgBeginPath(vg);
+            NanoVG.nvgRect(vg, centerX + centerW, panelY, width - (centerX + centerW), panelH);
+            NanoVG.nvgFillPaint(vg, paint);
+            NanoVG.nvgFill(vg);
+        }
+
+        Color pinkGlow = new Color(255, 142, 196, (int) (240f * alpha));
+        drawGlowCenterText(vg, "⚠", width * 0.5f, panelY + 6f * scale, 42f * scale, pinkGlow, alpha, FontLoader.monaBold());
+        drawGlowCenterText(vg, "即 将 退 出 游 戏", width * 0.5f, panelY + 50f * scale, 34f * scale, pinkGlow, alpha, FontLoader.monaBold());
+        drawGlowCenterText(vg, "End the gameplay?", width * 0.5f, panelY + 90f * scale, 16f * scale, pinkGlow, alpha, FontLoader.ax());
+
+        float buttonY = panelY + 142f * scale;
+        String confirmText = "○  确  定";
+        String cancelText = "◆  取  消";
+        NanoVG.nvgFontFaceId(vg, FontLoader.monaBold());
+        NanoVG.nvgFontSize(vg, 52f * scale * 0.5f);
+        NanoVG.nvgTextLetterSpacing(vg, 1.8f * scale);
+        float[] bounds = new float[4];
+        float confirmTextW = NanoVG.nvgTextBounds(vg, 0f, 0f, confirmText, bounds);
+        float cancelTextW = NanoVG.nvgTextBounds(vg, 0f, 0f, cancelText, bounds);
+        NanoVG.nvgTextLetterSpacing(vg, 0f);
+        float groupGap = 140f * scale;
+        float confirmCenterX = width * 0.5f - groupGap * 0.5f;
+        float cancelCenterX = width * 0.5f + groupGap * 0.5f;
+        float confirmTextX = confirmCenterX - confirmTextW * 0.5f;
+        float cancelTextX = cancelCenterX - cancelTextW * 0.5f;
+
+        exitConfirmX = confirmTextX - 8f * scale;
+        exitConfirmY = buttonY - 4f * scale;
+        exitConfirmW = confirmTextW + 16f * scale;
+        exitConfirmH = 30f * scale;
+        exitCancelX = cancelTextX - 8f * scale;
+        exitCancelY = buttonY - 4f * scale;
+        exitCancelW = cancelTextW + 16f * scale;
+        exitCancelH = 30f * scale;
+
+        boolean confirmHovered = isHovered(mouseX, mouseY, exitConfirmX, exitConfirmY, exitConfirmW, exitConfirmH);
+        boolean cancelHovered = isHovered(mouseX, mouseY, exitCancelX, exitCancelY, exitCancelW, exitCancelH);
+        NanoVGHelper.drawString(
+                confirmText,
+                confirmCenterX,
+                buttonY,
+                FontLoader.monaBold(),
+                52f * scale * 0.5f,
+                NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
+                new Color(255, 255, 255, (int) ((confirmHovered ? 255f : 225f) * alpha))
+        );
+        NanoVGHelper.drawString(
+                cancelText,
+                cancelCenterX,
+                buttonY,
+                FontLoader.monaBold(),
+                52f * scale * 0.5f,
+                NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP,
+                new Color(255, 255, 255, (int) ((cancelHovered ? 255f : 225f) * alpha))
+        );
+    }
+
+    private void drawGlowCenterText(long vg, String text, float x, float y, float fontSize, Color glowColor, float alpha, int fontId) {
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            NanoVG.nvgFontFaceId(vg, fontId);
+            NanoVG.nvgFontSize(vg, fontSize);
+            NanoVG.nvgTextAlign(vg, NanoVG.NVG_ALIGN_CENTER | NanoVG.NVG_ALIGN_TOP);
+            NVGColor nvgGlow = NVGColor.malloc(stack);
+            NanoVG.nvgRGBA((byte) glowColor.getRed(), (byte) glowColor.getGreen(), (byte) glowColor.getBlue(), (byte) glowColor.getAlpha(), nvgGlow);
+            NanoVG.nvgFontBlur(vg, 3.2f);
+            NanoVG.nvgFillColor(vg, nvgGlow);
+            NanoVG.nvgText(vg, x, y, text);
+            NanoVG.nvgText(vg, x, y, text);
+            NanoVG.nvgFontBlur(vg, 0f);
+            NVGColor white = NVGColor.malloc(stack);
+            NanoVG.nvgRGBA((byte) 255, (byte) 255, (byte) 255, (byte) (255f * alpha), white);
+            NanoVG.nvgFillColor(vg, white);
+            NanoVG.nvgText(vg, x, y, text);
+        }
     }
 
     private void drawEditor(long vg, float scale) {
@@ -403,7 +600,7 @@ public class NewMainMenuScreen extends Screen {
                 NanoVG.nvgText(vg, x, y, text);
 
                 // 下划线
-                float lineY = y + fontSize + 3f * scale;
+                float lineY = y + fontSize + 7f * scale;
                 float lineHeight = 2.0f * scale;
                 
                 NVGPaint glowPaint = NVGPaint.calloc(stack);

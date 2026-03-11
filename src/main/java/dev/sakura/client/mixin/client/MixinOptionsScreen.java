@@ -2,6 +2,7 @@ package dev.sakura.client.mixin.client;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.utils.render.ScreenWhiteTransition;
+import dev.sakura.client.utils.render.NewMenuMusicController;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -28,6 +29,7 @@ public class MixinOptionsScreen extends Screen {
                 Sakura.CONFIG.saveDefaultConfig();
                 button.setMessage(Text.of(Sakura.CONFIG.getClientConfig().useNewMainMenu ? "MainMenu: Sakuranotoki" : "MainMenu: Sakura"));
                 if (!wasNew && Sakura.CONFIG.getClientConfig().useNewMainMenu && this.client != null && this.client.world == null) {
+                    NewMenuMusicController.requestDelayNextStart();
                     ScreenWhiteTransition.clearNewMenuFadeRequest();
                     ScreenWhiteTransition.startToAction(Sakura::redirectToMainMenu, 800L);
                     return;

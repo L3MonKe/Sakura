@@ -154,7 +154,15 @@ public class Sakura {
             ExitUtil.exit0();
             return;
         }
+        boolean fromOtherScreenToHome = mc != null
+                && mc.world == null
+                && mc.currentScreen != null
+                && !(mc.currentScreen instanceof MainMenuScreen)
+                && !(mc.currentScreen instanceof NewMainMenuScreen);
         if (CONFIG.getClientConfig().useNewMainMenu) {
+            if (fromOtherScreenToHome) {
+                NewMainMenuScreen.requestReturnCancelOnce();
+            }
             mc.setScreen(new NewMainMenuScreen());
         } else {
             mc.setScreen(new MainMenuScreen());

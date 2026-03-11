@@ -54,5 +54,29 @@
         "stream": false
       }
     ]
+  },
+  "new_menu_music": {
+    "sounds": [
+      {
+        "name": "sakura:music/ap1000_us0_pi409_s2244017232",
+        "stream": true
+      }
+    ]
+  },
+  "menu_confirm": {
+    "sounds": [
+      {
+        "name": "sakura:menu/confirm",
+        "stream": false
+      }
+    ]
+  },
+  "menu_cancel": {
+    "sounds": [
+      {
+        "name": "sakura:menu/cancel",
+        "stream": false
+      }
+    ]
   }
 }

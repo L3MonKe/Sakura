@@ -3,6 +3,7 @@ package dev.sakura.client.manager.impl;
 import dev.sakura.verify.VerificationClient;
 import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.client.sound.PositionedSoundInstance;
+import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;
@@ -21,6 +22,10 @@ public class SoundManager {
     public SoundEvent ACTIVATE = registerSound("activate");
     public SoundEvent DEACTIVATE = registerSound("deactivate");
     public SoundEvent START_JI = registerSound("start_ji");
+    public SoundEvent NEW_MENU_MUSIC = registerSound("new_menu_music");
+    public SoundEvent MENU_CONFIRM = registerSound("menu_confirm");
+    public SoundEvent MENU_CANCEL = registerSound("menu_cancel");
+    private SoundInstance newMenuMusicInstance;
 
     private SoundEvent registerSound(String name) {
         Identifier id = Identifier.of("sakura", name);
@@ -55,5 +60,37 @@ public class SoundManager {
             }
             mc.getSoundManager().play(PositionedSoundInstance.master(sound, pitch));
         });
+    }
+
+    public void playNewMenuMusic() {
+        if (mc == null || NEW_MENU_MUSIC == null) {
+            return;
+        }
+        mc.executeSync(() -> {
+            if (newMenuMusicInstance != null) {
+                mc.getSoundManager().stop(newMenuMusicInstance);
+            }
+            newMenuMusicInstance = PositionedSoundInstance.master(NEW_MENU_MUSIC, 1.0f);
+            mc.getSoundManager().play(newMenuMusicInstance);
+        });
+    }
+
+    public void stopNewMenuMusic() {
+        if (mc == null) {
+            return;
+        }
+        mc.executeSync(() -> {
+            if (newMenuMusicInstance != null) {
+                mc.getSoundManager().stop(newMenuMusicInstance);
+                newMenuMusicInstance = null;
+            }
+        });
+    }
+
+    public boolean isNewMenuMusicPlaying() {
+        if (mc == null || newMenuMusicInstance == null) {
+            return false;
+        }
+        return mc.getSoundManager().isPlaying(newMenuMusicInstance);
     }
 }
