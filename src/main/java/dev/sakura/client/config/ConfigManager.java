@@ -234,9 +234,17 @@ public final class ConfigManager {
         }
     }
 
+    public ClientConfig getClientConfig() {
+        return current;
+    }
+
     private void updateFromRuntime() {
         ClientConfig cfg = new ClientConfig();
         cfg.version = 1;
+        if (current != null) {
+            cfg.customMainMenu = current.customMainMenu;
+            cfg.useNewMainMenu = current.useNewMainMenu;
+        }
         String prefixValue = current == null ? null : current.prefix;
         cfg.prefix = prefixValue == null || prefixValue.isBlank() ? "." : prefixValue;
 

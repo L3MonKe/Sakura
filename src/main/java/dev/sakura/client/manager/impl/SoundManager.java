@@ -2,6 +2,7 @@ package dev.sakura.client.manager.impl;
 
 import dev.sakura.verify.VerificationClient;
 import dev.sakura.verify.util.AuthUtil;
+import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;
@@ -19,6 +20,7 @@ public class SoundManager {
     public SoundEvent DISABLE = registerSound("disable");
     public SoundEvent ACTIVATE = registerSound("activate");
     public SoundEvent DEACTIVATE = registerSound("deactivate");
+    public SoundEvent START_JI = registerSound("start_ji");
 
     private SoundEvent registerSound(String name) {
         Identifier id = Identifier.of("sakura", name);
@@ -35,7 +37,7 @@ public class SoundManager {
     }
 
     public void playSound(SoundEvent sound, float volume, float pitch) {
-        if (sound == null || mc.player == null) return;
+        if (sound == null || mc == null) return;
 
         if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
             try {
@@ -46,6 +48,12 @@ public class SoundManager {
             }
         }
 
-        mc.executeSync(() -> mc.player.playSound(sound, volume, pitch));
+        mc.executeSync(() -> {
+            if (mc.player != null) {
+                mc.player.playSound(sound, volume, pitch);
+                return;
+            }
+            mc.getSoundManager().play(PositionedSoundInstance.master(sound, pitch));
+        });
     }
 }

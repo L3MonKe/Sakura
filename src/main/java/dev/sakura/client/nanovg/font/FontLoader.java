@@ -52,4 +52,8 @@ public class FontLoader {
     public static int tenacity() {
         return FontManager.fontWithCJK("tenacity-bold.ttf");
     }
+
+    public static int monaBold() {
+        return FontManager.fontWithCJK("Mona-Bold-2.ttf");
+    }
 }

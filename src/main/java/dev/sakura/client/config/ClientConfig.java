@@ -9,6 +9,8 @@ import java.util.Map;
 
 public final class ClientConfig {
     public int version = 1;
+    public boolean customMainMenu = true;
+    public boolean useNewMainMenu = true;
     public String prefix = ".";
     public Gui gui = new Gui();
     public Map<String, ModuleData> modules = new LinkedHashMap<>();

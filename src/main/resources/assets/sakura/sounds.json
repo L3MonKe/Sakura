@@ -46,5 +46,13 @@
         "stream": false
       }
     ]
+  },
+  "start_ji": {
+    "sounds": [
+      {
+        "name": "sakura:start/ji",
+        "stream": false
+      }
+    ]
   }
 }

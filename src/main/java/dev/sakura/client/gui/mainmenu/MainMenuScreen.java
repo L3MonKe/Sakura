@@ -51,8 +51,8 @@ public class MainMenuScreen extends Screen {
             "Minecraft 1.21.11",
             "Changelog :",
             "* 你知道吗",
-            "* 这是第一个版本",
-            "* 可是大部分外挂都打不过这个外挂",
+            "* 这是好像不是第一个版本了",
+            "* 但是别的外挂好像就是打不过这个外挂",
             "* 包括Zen"
     );
 
@@ -119,7 +119,8 @@ public class MainMenuScreen extends Screen {
         entries.clear();
         entries.add(new MainMenuEntry("Single Player", "A", () -> mc.setScreen(new SelectWorldScreen(this))));
         entries.add(new MainMenuEntry("Multi Player", "P", () -> mc.setScreen(new MultiplayerScreen(this))));
-        entries.add(new MainMenuEntry("Alt Manager", "C", null));
+        entries.add(new MainMenuEntry("Alt Manager", "C", () -> {
+        }));
         entries.add(new MainMenuEntry("Options", "D", () -> mc.setScreen(new OptionsScreen(this, mc.options))));
         entries.add(new MainMenuEntry("Shut down", "E", mc::scheduleStop));
     }
@@ -350,8 +351,6 @@ public class MainMenuScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         long now = Util.getMeasuringTimeMs();
         if (postAuthIntroActive) {
-            // TODO: 验证动画渲染逻辑
-            // 这里处理从 AuthScreen 过渡到 MainMenuScreen 的动画效果
             if (postAuthIntroStartTime <= 0L) postAuthIntroStartTime = now;
             float t = MathHelper.clamp((float) (now - postAuthIntroStartTime) / (float) POST_AUTH_INTRO_DURATION_MS, 0f, 1f);
             float shaderT = AnimationUtil.smoothstep(0.0f, 1.0f, t);
@@ -416,6 +415,7 @@ public class MainMenuScreen extends Screen {
             float logoAlpha = AnimationUtil.smoothstep(0.10f, 0.45f, p);
             drawLogo(layout, logoLift, logoAlpha);
         });
+
     }
 
     private void renderSocialLinks(float centerX, float centerY, float scale, Color color, float opacity) {

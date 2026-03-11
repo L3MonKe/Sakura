@@ -8,6 +8,7 @@ import dev.sakura.client.event.IEventBus;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.gui.hudeditor.HudEditorScreen;
 import dev.sakura.client.gui.mainmenu.MainMenuScreen;
+import dev.sakura.client.gui.mainmenu.NewMainMenuScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
 import dev.sakura.client.nanovg.NanoVGRenderer;
@@ -153,7 +154,11 @@ public class Sakura {
             ExitUtil.exit0();
             return;
         }
-        mc.setScreen(new MainMenuScreen());
+        if (CONFIG.getClientConfig().useNewMainMenu) {
+            mc.setScreen(new NewMainMenuScreen());
+        } else {
+            mc.setScreen(new MainMenuScreen());
+        }
     }
 
     public static boolean startIntro() {

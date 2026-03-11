@@ -17,6 +17,7 @@ import dev.sakura.client.module.impl.render.Shaders;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.shaders.SplashShader;
 import dev.sakura.client.utils.math.FrameRateCounter;
+import dev.sakura.client.utils.render.ScreenWhiteTransition;
 import net.minecraft.client.gui.screen.SplashOverlay;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.RenderTickCounter;
@@ -53,6 +54,7 @@ public abstract class MixinGameRenderer {
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;applyCursorTo(Lnet/minecraft/client/util/Window;)V"))
     private void sakura$renderScreenNanoVgOnTop(RenderTickCounter tickCounter, boolean tick, CallbackInfo ci) {
         NanoVGRenderer.INSTANCE.flushScreenQueue();
+        NanoVGRenderer.INSTANCE.draw(vg -> ScreenWhiteTransition.renderNanoVg(vg, mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight()));
 
         if (mc.getOverlay() instanceof SplashOverlay && mc.getOverlay() instanceof ISplashOverlayState sakuraSplashOverlay && sakuraSplashOverlay.sakura$shouldRenderSplash()) {
             SplashShader.getInstance().render(mc.getWindow().getScaledWidth(), mc.getWindow().getScaledHeight(), sakuraSplashOverlay.sakura$getSplashProgress(), sakuraSplashOverlay.sakura$getSplashFadeOut(), sakuraSplashOverlay.sakura$getSplashZoom());

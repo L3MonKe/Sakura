@@ -30,6 +30,7 @@
     "client.MixinChatInputSuggestor",
     "client.MixinGameOptions",
     "client.MixinMinecraftClient",
+    "client.MixinOptionsScreen",
     "client.MixinPlayerListHud",
     "entity.MixinClientPlayerEntity",
     "entity.MixinEntity",
