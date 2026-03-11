@@ -160,7 +160,6 @@ public class NoFall extends Module {
                         }
                     }
                 } else {
-                     mc.options.useKey.setPressed(false);
                      if (InvUtil.testInHands(Items.WATER_BUCKET)) {
                          mlgCompleted = true;
                          placedWaterPos = null;
@@ -241,8 +240,6 @@ public class NoFall extends Module {
                         }
                     }
                 }
-            } else {
-                mc.options.useKey.setPressed(false);
             }
             return;
         }
