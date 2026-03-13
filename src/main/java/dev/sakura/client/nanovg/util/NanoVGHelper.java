@@ -454,15 +454,37 @@ public class NanoVGHelper {
             imageBuffer.put(bytes);
             imageBuffer.flip();
 
-            try (MemoryStack stack = MemoryStack.stackPush()) {
-                IntBuffer w = stack.mallocInt(1);
-                IntBuffer h = stack.mallocInt(1);
-                IntBuffer comp = stack.mallocInt(1);
-
-                return nvgCreateImageMem(getContext(), 0, imageBuffer);
-            }
+            return nvgCreateImageMem(getContext(), 0, imageBuffer);
         } catch (Exception e) {
             return -1;
+        }
+    }
+
+    /**
+     * 从 ByteBuffer 加载图片
+     */
+    public static int loadTexture(ByteBuffer buffer) {
+        return nvgCreateImageMem(getContext(), 0, buffer);
+    }
+
+    /**
+     * 绘制图片
+     */
+    public static void drawImage(int image, float x, float y, float w, float h, float r, float alpha) {
+        if (image == -1) return;
+        long vg = getContext();
+
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            NVGPaint paint = NVGPaint.malloc(stack);
+            nvgImagePattern(vg, x, y, w, h, 0, image, alpha, paint);
+            nvgBeginPath(vg);
+            if (r > 0) {
+                nvgRoundedRect(vg, x, y, w, h, r);
+            } else {
+                nvgRect(vg, x, y, w, h);
+            }
+            nvgFillPaint(vg, paint);
+            nvgFill(vg);
         }
     }
 
