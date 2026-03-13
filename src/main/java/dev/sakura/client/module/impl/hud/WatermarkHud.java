@@ -27,8 +27,9 @@ public class WatermarkHud extends HudModule {
     public enum ListMode {
         Normal,
         Gradient,
-        Sakura,
-        Xylitol
+        Sakura1,
+        Xylitol,
+        Sakura
     }
 
     private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Xylitol);
@@ -57,33 +58,33 @@ public class WatermarkHud extends HudModule {
     private final NumberValue<Double> gradientGlowRadius = new NumberValue<>("GradientGlowRadius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && gradientTextGlow.get());
     private final NumberValue<Integer> gradientGlowIntensity = new NumberValue<>("GradientGlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && gradientTextGlow.get());
 
-    // Sakura Mode Settings
-    private final NumberValue<Double> sakuraSize = new NumberValue<>("Size", "大小", 40.0, 5.0, 100.0, 1.0, () -> mode.is(ListMode.Sakura));
-    private final ColorValue sakuraTextColor1 = new ColorValue("TextColor1", "文本色1", new Color(255, 192, 203), () -> mode.is(ListMode.Sakura));
-    private final ColorValue sakuraTextColor2 = new ColorValue("TextColor2", "文本色2", new Color(255, 105, 180), () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraGradientSpeed = new NumberValue<>("AnimSpeed", "渐变速度", 2.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Sakura));
-    private final BoolValue sakuraTextGlow = new BoolValue("TextGlow", "-发光", true, () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraGlowRadius = new NumberValue<>("GlowRadius", "发光半径", 5.0, 1.0, 20.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraTextGlow.get());
-    private final NumberValue<Integer> sakuraGlowIntensity = new NumberValue<>("GlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Sakura) && sakuraTextGlow.get());
-    private final BoolValue sakuraBlur = new BoolValue("Blur", "背景模糊", true, () -> mode.is(ListMode.Sakura));
-    private final ColorValue sakuraBackgroundColor = new ColorValue("BgColor", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraBackgroundRadius = new NumberValue<>("BgRadius", "背景圆角", 5.0, 0.0, 20.0, 1.0, () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraPaddingX = new NumberValue<>("PaddingX", "宽(间距)", 5.0, 0.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraPaddingY = new NumberValue<>("PaddingY", "高(间距)", 2.0, 0.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraTextOffsetX = new NumberValue<>("TextOffsetX", "文字X偏移", 0.0, -50.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraTextOffsetY = new NumberValue<>("TextOffsetY", "文字Y偏移", 0.0, -50.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura));
-    private final BoolValue sakuraTopLine = new BoolValue("TopLine", "顶部线条", false, () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraLineHeight = new NumberValue<>("LineHeight", "线条高度", 2.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
-    private final ColorValue sakuraLineColor1 = new ColorValue("LineColor1", "线条色1", new Color(0, 255, 255), () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
-    private final ColorValue sakuraLineColor2 = new ColorValue("LineColor2", "线条色2", new Color(255, 0, 255), () -> mode.is(ListMode.Sakura) && sakuraTopLine.get());
+    // Sakura1 Mode Settings
+    private final NumberValue<Double> sakuraSize = new NumberValue<>("Size", "大小", 40.0, 5.0, 100.0, 1.0, () -> mode.is(ListMode.Sakura1));
+    private final ColorValue sakuraTextColor1 = new ColorValue("TextColor1", "文本色1", new Color(255, 192, 203), () -> mode.is(ListMode.Sakura1));
+    private final ColorValue sakuraTextColor2 = new ColorValue("TextColor2", "文本色2", new Color(255, 105, 180), () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraGradientSpeed = new NumberValue<>("AnimSpeed", "渐变速度", 2.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Sakura1));
+    private final BoolValue sakuraTextGlow = new BoolValue("TextGlow", "-发光", true, () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraGlowRadius = new NumberValue<>("GlowRadius", "发光半径", 5.0, 1.0, 20.0, 0.5, () -> mode.is(ListMode.Sakura1) && sakuraTextGlow.get());
+    private final NumberValue<Integer> sakuraGlowIntensity = new NumberValue<>("GlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Sakura1) && sakuraTextGlow.get());
+    private final BoolValue sakuraBlur = new BoolValue("Blur", "背景模糊", true, () -> mode.is(ListMode.Sakura1));
+    private final ColorValue sakuraBackgroundColor = new ColorValue("BgColor", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraBackgroundRadius = new NumberValue<>("BgRadius", "背景圆角", 5.0, 0.0, 20.0, 1.0, () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraPaddingX = new NumberValue<>("PaddingX", "宽(间距)", 5.0, 0.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraPaddingY = new NumberValue<>("PaddingY", "高(间距)", 2.0, 0.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraTextOffsetX = new NumberValue<>("TextOffsetX", "文字X偏移", 0.0, -50.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraTextOffsetY = new NumberValue<>("TextOffsetY", "文字Y偏移", 0.0, -50.0, 50.0, 0.5, () -> mode.is(ListMode.Sakura1));
+    private final BoolValue sakuraTopLine = new BoolValue("TopLine", "顶部线条", false, () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraLineHeight = new NumberValue<>("LineHeight", "线条高度", 2.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura1) && sakuraTopLine.get());
+    private final ColorValue sakuraLineColor1 = new ColorValue("LineColor1", "线条色1", new Color(0, 255, 255), () -> mode.is(ListMode.Sakura1) && sakuraTopLine.get());
+    private final ColorValue sakuraLineColor2 = new ColorValue("LineColor2", "线条色2", new Color(255, 0, 255), () -> mode.is(ListMode.Sakura1) && sakuraTopLine.get());
 
-    private final BoolValue sakuraShadow = new BoolValue("Shadow", "阴影", false, () -> mode.is(ListMode.Sakura));
-    private final NumberValue<Double> sakuraShadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
-    private final NumberValue<Double> sakuraShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
+    private final BoolValue sakuraShadow = new BoolValue("Shadow", "阴影", false, () -> mode.is(ListMode.Sakura1));
+    private final NumberValue<Double> sakuraShadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Sakura1) && sakuraShadow.get());
+    private final NumberValue<Double> sakuraShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Sakura1) && sakuraShadow.get());
 
     public enum SakuraShadowMode {Solid, Gradient}
 
-    private final EnumValue<SakuraShadowMode> sakuraShadowMode = new EnumValue<>("ShadowMode", "阴影模式", SakuraShadowMode.Solid, () -> mode.is(ListMode.Sakura) && sakuraShadow.get());
+    private final EnumValue<SakuraShadowMode> sakuraShadowMode = new EnumValue<>("ShadowMode", "阴影模式", SakuraShadowMode.Solid, () -> mode.is(ListMode.Sakura1) && sakuraShadow.get());
 
     public enum XylitolSakuraFontMode {
         Regular,
@@ -101,34 +102,36 @@ public class WatermarkHud extends HudModule {
     private static final String XYLITOL_MAIN_TEXT = "Sakura";
     private final BoolValue xylitolAnimateText = new BoolValue("Animate", "-文字动画", true, () -> mode.is(ListMode.Xylitol));
     private final NumberValue<Integer> xylitolAnimDelayMs = new NumberValue<>("AnimDelay", "动画间隔", 90, 20, 600, 10, () -> mode.is(ListMode.Xylitol) && xylitolAnimateText.get());
-    private final NumberValue<Double> xylitolMainFontSize = new NumberValue<>("MainSize", "主文字大小", 14.0, 8.0, 32.0, 0.5, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolInfoFontSize = new NumberValue<>("InfoSize", "信息文字大小", 10.0, 6.0, 24.0, 0.5, () -> mode.is(ListMode.Xylitol));
-    private final EnumValue<XylitolSakuraFontMode> xylitolSakuraFontMode = new EnumValue<>("Font", "字体", XylitolSakuraFontMode.Bold, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolSakuraTextOffsetY = new NumberValue<>("OffsetY", "文字Y偏移", -1.0, -30.0, 30.0, 0.5, () -> mode.is(ListMode.Xylitol));
-    private final ColorValue xylitolSakuraColor1 = new ColorValue("Color1", "渐变色1", new Color(255, 192, 203), () -> mode.is(ListMode.Xylitol));
-    private final ColorValue xylitolSakuraColor2 = new ColorValue("Color2", "渐变色2", new Color(255, 105, 180), () -> mode.is(ListMode.Xylitol));
+    private final NumberValue<Double> xylitolMainFontSize = new NumberValue<>("MainSize", "主文字大小", 14.0, 8.0, 32.0, 0.5, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Double> xylitolInfoFontSize = new NumberValue<>("InfoSize", "信息文字大小", 10.0, 6.0, 24.0, 0.5, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final EnumValue<XylitolSakuraFontMode> xylitolSakuraFontMode = new EnumValue<>("Font", "字体", XylitolSakuraFontMode.Bold, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Double> xylitolSakuraTextOffsetY = new NumberValue<>("OffsetY", "文字Y偏移", -1.0, -30.0, 30.0, 0.5, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final ColorValue xylitolSakuraColor1 = new ColorValue("Color1", "渐变色1", new Color(255, 192, 203), () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final ColorValue xylitolSakuraColor2 = new ColorValue("Color2", "渐变色2", new Color(255, 105, 180), () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
     private final BoolValue xylitolSakuraUseLineGradient = new BoolValue("UseLineGrad", "使用线渐变", true, () -> mode.is(ListMode.Xylitol));
     private final BoolValue xylitolSakuraGradientMove = new BoolValue("GradMove", "渐变移动", true, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolSakuraGradientMoveSpeed = new NumberValue<>("GradMoveSpeed", "移动速度", 0.6, 0.0, 5.0, 0.05, () -> mode.is(ListMode.Xylitol) && xylitolSakuraGradientMove.get());
-    private final NumberValue<Integer> xylitolSakuraGradientSpread = new NumberValue<>("GradSpread", "颜色跨度", 15, 1, 400, 1, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Integer> xylitolSakuraBlockDistance = new NumberValue<>("BlockDistance", "色块距离", 100, 1, 100, 1, () -> mode.is(ListMode.Xylitol));
-    private final BoolValue xylitolSakuraGlow = new BoolValue("Glow", "发光", true, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolSakuraGlowRadius = new NumberValue<>("GlowRadius", "发光半径", 5.0, 1.0, 20.0, 0.5, () -> mode.is(ListMode.Xylitol) && xylitolSakuraGlow.get());
-    private final NumberValue<Integer> xylitolSakuraGlowIntensity = new NumberValue<>("GlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Xylitol) && xylitolSakuraGlow.get());
-    private final NumberValue<Double> xylitolPaddingX = new NumberValue<>("PaddingX", "宽(间距)", 6.0, 0.0, 30.0, 0.5, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolPaddingY = new NumberValue<>("PaddingY", "高(间距)", 4.0, 0.0, 30.0, 0.5, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolGap = new NumberValue<>("Gap", "文字间距", 2.0, 0.0, 20.0, 0.5, () -> mode.is(ListMode.Xylitol));
+    private final NumberValue<Double> animationSpeed = new NumberValue<>("AnimationSpeed", "动画速度", 0.6, 0.0, 5.0, 0.05, () -> (mode.is(ListMode.Xylitol) && xylitolSakuraGradientMove.get()) || mode.is(ListMode.Sakura));
+    private final NumberValue<Integer> xylitolSakuraGradientSpread = new NumberValue<>("GradSpread", "颜色跨度", 15, 1, 400, 1, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Integer> xylitolSakuraBlockDistance = new NumberValue<>("BlockDistance", "色块距离", 100, 1, 100, 1, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final BoolValue xylitolSakuraGlow = new BoolValue("Glow", "发光", true, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Double> xylitolSakuraGlowRadius = new NumberValue<>("GlowRadius", "发光半径", 5.0, 1.0, 20.0, 0.5, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolSakuraGlow.get());
+    private final NumberValue<Integer> xylitolSakuraGlowIntensity = new NumberValue<>("GlowIntensity", "发光强度", 2, 1, 10, 1, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolSakuraGlow.get());
+    private final NumberValue<Double> xylitolPaddingX = new NumberValue<>("PaddingX", "宽(间距)", 6.0, 0.0, 30.0, 0.5, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Double> xylitolPaddingY = new NumberValue<>("PaddingY", "高(间距)", 4.0, 0.0, 30.0, 0.5, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Double> xylitolGap = new NumberValue<>("Gap", "文字间距", 2.0, 0.0, 20.0, 0.5, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
     private final NumberValue<Double> xylitolRadius = new NumberValue<>("Radius", "圆角", 0.0, 0.0, 20.0, 0.5, () -> mode.is(ListMode.Xylitol));
-    private final BoolValue xylitolBlur = new BoolValue("Blur", "背景模糊", true, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolBlurStrength = new NumberValue<>("BlurStrength", "模糊强度", 10.0, 1.0, 20.0, 0.5, () -> mode.is(ListMode.Xylitol) && xylitolBlur.get());
-    private final BoolValue xylitolShadow = new BoolValue("Shadow", "阴影", true, () -> mode.is(ListMode.Xylitol));
-    private final NumberValue<Double> xylitolShadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Xylitol) && xylitolShadow.get());
-    private final NumberValue<Double> xylitolShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Xylitol) && xylitolShadow.get());
+    private final BoolValue xylitolBlur = new BoolValue("Blur", "背景模糊", true, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Double> xylitolBlurStrength = new NumberValue<>("BlurStrength", "模糊强度", 10.0, 1.0, 20.0, 0.5, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolBlur.get());
+    private final BoolValue xylitolShadow = new BoolValue("Shadow", "阴影", true, () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
+    private final NumberValue<Double> xylitolShadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolShadow.get());
+    private final NumberValue<Double> xylitolShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolShadow.get());
+    private final BoolValue sakuraTextShadow = new BoolValue("TextShadow", "文本阴影", false, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> sakuraTextShadowDistance = new NumberValue<>("TextShadowDist", "阴影间距", 1.0, 0.0, 5.0, 0.1, () -> mode.is(ListMode.Sakura) && sakuraTextShadow.get());
 
     public enum XylitolShadowMode {Solid, Gradient}
 
-    private final EnumValue<XylitolShadowMode> xylitolShadowMode = new EnumValue<>("ShadowMode", "阴影模式", XylitolShadowMode.Solid, () -> mode.is(ListMode.Xylitol) && xylitolShadow.get());
-    private final ColorValue xylitolBackgroundColor = new ColorValue("BgColor", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Xylitol));
+    private final EnumValue<XylitolShadowMode> xylitolShadowMode = new EnumValue<>("ShadowMode", "阴影模式", XylitolShadowMode.Solid, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolShadow.get());
+    private final ColorValue xylitolBackgroundColor = new ColorValue("BgColor", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura));
 
     private int iconImage = -1;
     private float rotationAngle = 0.0f;
@@ -149,13 +152,13 @@ public class WatermarkHud extends HudModule {
     @Override
     public void onRender(DrawContext context) {
         update();
-        if (mode.is(ListMode.Sakura) && sakuraBlur.get()) {
+        if (mode.is(ListMode.Sakura1) && sakuraBlur.get()) {
             renderSakuraBlur();
         }
-        if (mode.is(ListMode.Xylitol) && xylitolBlur.get()) {
+        if ((mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolBlur.get()) {
             renderXylitolBlur();
         }
-        if (mode.is(ListMode.Xylitol) && xylitolShadow.get()) {
+        if ((mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolShadow.get()) {
             renderXylitolShadow();
         }
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
@@ -269,6 +272,11 @@ public class WatermarkHud extends HudModule {
         }
 
         if (mode.is(ListMode.Sakura)) {
+            renderNewSakura(vg, s);
+            return;
+        }
+
+        if (mode.is(ListMode.Sakura1)) {
             String text = "Sakura";
             float fontSize = sakuraSize.get().floatValue() * s;
             int font = FontLoader.bold();
@@ -440,7 +448,7 @@ public class WatermarkHud extends HudModule {
 
         double offsetDeg = 0.0;
         if (xylitolSakuraGradientMove.get()) {
-            offsetDeg = (System.currentTimeMillis() / 20.0) * xylitolSakuraGradientMoveSpeed.get();
+            offsetDeg = (System.currentTimeMillis() / 20.0) * animationSpeed.get();
         }
         int colorStepDeg = xylitolSakuraGradientSpread.get();
         float blockW = Math.max(1.0f, xylitolSakuraBlockDistance.get() * s);
@@ -448,7 +456,7 @@ public class WatermarkHud extends HudModule {
         drawXylitolTopLine(vg, m, offsetDeg, colorStepDeg, blockW);
         NanoVGHelper.drawRoundRect(m.bgX, m.bgY, m.bgW, m.bgH, m.radius * s, xylitolBackgroundColor.get());
 
-        String displayName = xylitolAnimateText.get() ? xylitolMarkStr : XYLITOL_MAIN_TEXT;
+        String displayName = XYLITOL_MAIN_TEXT;
         if (displayName == null) displayName = "";
 
         int mainFont = getXylitolSakuraFont();
@@ -493,11 +501,77 @@ public class WatermarkHud extends HudModule {
         this.height = m.totalH;
     }
 
+    private void renderNewSakura(long vg, float s) {
+        XylitolMetrics m = calculateXylitolMetrics(s);
+
+        double offsetDeg = (System.currentTimeMillis() / 20.0) * animationSpeed.get();
+        int colorStepDeg = xylitolSakuraGradientSpread.get();
+        float blockW = Math.max(1.0f, xylitolSakuraBlockDistance.get() * s);
+
+        NanoVGHelper.drawRoundRect(m.bgX, m.bgY, m.bgW, m.bgH, m.radius * s, xylitolBackgroundColor.get());
+
+        String displayName = xylitolAnimateText.get() ? xylitolMarkStr : XYLITOL_MAIN_TEXT;
+        if (displayName == null) displayName = "";
+
+        int mainFont = getXylitolSakuraFont();
+        int infoFont = FontLoader.regular();
+        float mainSize = xylitolMainFontSize.get().floatValue() * s;
+        float infoSize = xylitolInfoFontSize.get().floatValue() * s;
+
+        float mainH = NanoVGHelper.getFontHeight(mainFont, mainSize);
+        float infoH = NanoVGHelper.getFontHeight(infoFont, infoSize);
+        float maxH = Math.max(mainH, infoH);
+
+        float mainBaseY = m.bgY + m.padY + (maxH - mainH) / 2f + mainH + (xylitolSakuraTextOffsetY.get().floatValue() * s);
+        float infoBaseY = m.bgY + m.padY + (maxH - infoH) / 2f + infoH;
+
+        float mainX = m.bgX + m.padX;
+        float textW = NanoVGHelper.getTextWidth(displayName, mainFont, mainSize);
+        if (textW <= 0.0f) {
+            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(XYLITOL_MAIN_TEXT, mainFont, mainSize));
+        }
+
+        if (xylitolSakuraGlow.get()) {
+            int glowIndex = (int) Math.max(0, Math.floor((textW * 0.5f) / blockW));
+            Color glowC = getXylitolSakuraStepColor(offsetDeg + (double) glowIndex * colorStepDeg);
+            glowC = new Color(glowC.getRed(), glowC.getGreen(), glowC.getBlue(), 220);
+            NanoVGHelper.drawGlowingString(displayName, mainX, mainBaseY, mainFont, mainSize, glowC, xylitolSakuraGlowRadius.get().floatValue() * s, xylitolSakuraGlowIntensity.get());
+        }
+
+        if (sakuraTextShadow.get()) {
+             Color c1 = xylitolSakuraColor1.get();
+             Color c2 = xylitolSakuraColor2.get();
+             Color avgColor = new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2, (c1.getBlue() + c2.getBlue()) / 2);
+             Color coloredShadow = new Color((int)(avgColor.getRed() * 0.5), (int)(avgColor.getGreen() * 0.5), (int)(avgColor.getBlue() * 0.5), 255);
+             
+             float dist = sakuraTextShadowDistance.get().floatValue() * s;
+             NanoVGHelper.drawString(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
+        }
+
+        renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);
+
+        NanoVGHelper.drawString(m.infoText, m.bgX + m.padX + m.mainW + m.gap, infoBaseY, infoFont, infoSize, new Color(255, 255, 255, 255));
+
+        this.width = m.totalW;
+        this.height = m.totalH;
+    }
+
     private void renderXylitolShadow() {
         float s = hudScale.get().floatValue();
         XylitolMetrics m = calculateXylitolMetrics(s);
         float r = m.radius * s;
-        float[] rects = new float[]{m.bgX, m.bgY, m.bgW, m.bgH};
+
+        float shadowY = m.bgY;
+        float shadowH = m.bgH;
+
+        if (mode.is(ListMode.Sakura)) {
+            float topOffset = 1.0f * s;
+            float bottomOffset = 0.0f * s;
+            shadowY += topOffset;
+            shadowH = shadowH + bottomOffset - topOffset;
+        }
+
+        float[] rects = new float[]{m.bgX, shadowY, m.bgW, shadowH};
         float[] radii = new float[]{r};
 
         if (xylitolShadowMode.is(XylitolShadowMode.Gradient)) {
@@ -505,11 +579,11 @@ public class WatermarkHud extends HudModule {
             Color end = ClickGui.color(20);
             start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
             end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
-            ShadowShader.drawStairShadowGradient(m.bgX, m.bgY, m.bgW, m.bgH, xylitolShadowRange.get().floatValue() * s, xylitolShadowStrength.get().floatValue(), start, end, rects, radii, 1);
+            ShadowShader.drawStairShadowGradient(m.bgX, shadowY, m.bgW, shadowH, xylitolShadowRange.get().floatValue() * s, xylitolShadowStrength.get().floatValue(), start, end, rects, radii, 1);
             return;
         }
 
-        ShadowShader.drawStairShadow(m.bgX, m.bgY, m.bgW, m.bgH, xylitolShadowRange.get().floatValue() * s, xylitolShadowStrength.get().floatValue(), new Color(0, 0, 0), rects, radii, 1);
+        ShadowShader.drawStairShadow(m.bgX, shadowY, m.bgW, shadowH, xylitolShadowRange.get().floatValue() * s, xylitolShadowStrength.get().floatValue(), new Color(0, 0, 0), rects, radii, 1);
     }
 
     private XylitolMetrics calculateXylitolMetrics(float s) {
@@ -534,7 +608,7 @@ public class WatermarkHud extends HudModule {
         }
         int fps = mc.getCurrentFps();
         String ver = Sakura.MOD_VER;
-        String info = " | " + username + " | fps:" + fps + " | " + ver;
+        String info = " | " + username + " | fps:" + fps + (mode.is(ListMode.Sakura) ? "" : " | " + ver);
 
         float mainW = NanoVGHelper.getTextWidth(clientName, mainFont, mainSize);
         float infoW = NanoVGHelper.getTextWidth(info, infoFont, infoSize);
@@ -544,7 +618,7 @@ public class WatermarkHud extends HudModule {
         float padX = xylitolPaddingX.get().floatValue() * s;
         float padY = xylitolPaddingY.get().floatValue() * s;
         float gap = xylitolGap.get().floatValue() * s;
-        float radius = xylitolRadius.get().floatValue();
+        float radius = mode.is(ListMode.Sakura) ? 10.0f : xylitolRadius.get().floatValue();
 
         float maxH = Math.max(mainH, infoH);
         float lineH = Math.max(1f, 1f * s);
