@@ -510,7 +510,7 @@ public class WatermarkHud extends HudModule {
 
         NanoVGHelper.drawRoundRect(m.bgX, m.bgY, m.bgW, m.bgH, m.radius * s, xylitolBackgroundColor.get());
 
-        String displayName = xylitolAnimateText.get() ? xylitolMarkStr : XYLITOL_MAIN_TEXT;
+        String displayName = XYLITOL_MAIN_TEXT;
         if (displayName == null) displayName = "";
 
         int mainFont = getXylitolSakuraFont();
@@ -592,7 +592,7 @@ public class WatermarkHud extends HudModule {
         float mainSize = xylitolMainFontSize.get().floatValue() * s;
         float infoSize = xylitolInfoFontSize.get().floatValue() * s;
 
-        String clientName = xylitolAnimateText.get() ? xylitolMarkStr : XYLITOL_MAIN_TEXT;
+        String clientName = mode.is(ListMode.Sakura) ? XYLITOL_MAIN_TEXT : (xylitolAnimateText.get() ? xylitolMarkStr : XYLITOL_MAIN_TEXT);
         if (clientName == null) clientName = "";
 
         String username;
