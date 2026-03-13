@@ -111,6 +111,7 @@ public class ModuleManager {
 //        add(new Chat());
         add(new ClickGui());
         add(new HudEditor());
+//        add(new MusicGuiModule());
         add(new Targets());
         add(new Teams());
 
@@ -127,6 +128,7 @@ public class ModuleManager {
         add(new NotificationHud());
         add(new NotifyHud());
         add(new PotionHud());
+        add(new ScaffoldBlocksHud());
         add(new TargetHud());
         add(new ScoreBoardHud());
         add(new TimeChargeHud());

@@ -13,18 +13,25 @@ import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.imageio.ImageIO;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 
+import dev.sakura.client.Sakura;
+import dev.sakura.client.module.impl.hud.NotificationHud;
+
 public class NotificationManager {
     public enum RenderMode {
-        Xylitol3,
-        Xylitol4,
-        Legacy
+        Xylitol,
+        Xylitol1,
+        Sakura,
+        Trollhack
     }
 
     public enum Alignment {
@@ -33,6 +40,7 @@ public class NotificationManager {
     }
 
     private static final long DEFAULT_TIMEOUT = 2000L;
+    private static final long MAX_TIMEOUT = 10000L;
     private static final List<Notification> notifications = new ArrayList<>();
     private static final Map<Long, Notification> notificationMap = new HashMap<>();
     private static final long ANIMATION_TIME_MS = 200L;
@@ -87,8 +95,86 @@ public class NotificationManager {
     private static final float HARD_SHADOW_RANGE = 8.0f;
     private static final float HARD_SHADOW_STRENGTH = 0.6f;
 
-    public record ShadowSettings(boolean enabled, float range, float strength) {
-        public static final ShadowSettings DEFAULT = new ShadowSettings(true, HARD_SHADOW_RANGE, HARD_SHADOW_STRENGTH);
+    public enum ShadowMode {
+        Solid,
+        Gradient
+    }
+
+    public record ShadowSettings(boolean enabled, float range, float strength, ShadowMode mode) {
+        public static final ShadowSettings DEFAULT = new ShadowSettings(true, HARD_SHADOW_RANGE, HARD_SHADOW_STRENGTH, ShadowMode.Solid);
+    }
+
+    public enum SakuraAnimationMode {
+        Classic,
+        Enhanced
+    }
+
+    public record SimpleIconSettings(
+            SakuraAnimationMode animationMode,
+            float textShadowDistance,
+            boolean iconGlowEnabled,
+            float iconGlowRange,
+            int iconGlowIntensity,
+            boolean line1GlowEnabled,
+            float line1GlowRange,
+            int line1GlowIntensity,
+            boolean line2GlowEnabled,
+            float line2GlowRange,
+            int line2GlowIntensity,
+            boolean imageEnabled
+    ) {
+        public static final SimpleIconSettings DEFAULT = new SimpleIconSettings(SakuraAnimationMode.Enhanced, 1.0f, false, 4.0f, 2, false, 4.0f, 2, false, 4.0f, 2, true);
+    }
+
+    private static int SIMPLE_IMAGE_ID = -1;
+    private static final float SAKURA_ICON_SIZE = 21.5f;
+    private static final float SAKURA_ICON_OFFSET_X = 0.0f;
+    private static final float SAKURA_ICON_OFFSET_Y = 1.5f;
+    private static final float SAKURA_LINE1_SIZE = 11.5f;
+    private static final float SAKURA_LINE1_OFFSET_X = 0.0f;
+    private static final float SAKURA_LINE1_OFFSET_Y = 0.0f;
+    private static final float SAKURA_LINE2_SIZE = 10.5f;
+    private static final float SAKURA_LINE2_OFFSET_X = 0.0f;
+    private static final float SAKURA_LINE2_OFFSET_Y = 2.0f;
+    private static final float SAKURA_IMAGE_WIDTH = 77.0f;
+    private static final float SAKURA_IMAGE_HEIGHT = 214.0f;
+    private static final float SAKURA_IMAGE_OFFSET_X = 47.0f;
+    private static final float SAKURA_IMAGE_OFFSET_Y = 0.0f;
+    private static float SIMPLE_IMAGE_SOURCE_WIDTH = 1.0f;
+    private static float SIMPLE_IMAGE_SOURCE_HEIGHT = 1.0f;
+    private static boolean SIMPLE_IMAGE_SOURCE_SIZE_LOADED = false;
+
+    private static void ensureSimpleImageSourceSize() {
+        if (SIMPLE_IMAGE_SOURCE_SIZE_LOADED) return;
+        SIMPLE_IMAGE_SOURCE_SIZE_LOADED = true;
+        try (InputStream in = NotificationManager.class.getResourceAsStream("/assets/sakura/textures/hud/noti.png")) {
+            if (in == null) return;
+            BufferedImage image = ImageIO.read(in);
+            if (image == null) return;
+            SIMPLE_IMAGE_SOURCE_WIDTH = Math.max(1.0f, image.getWidth());
+            SIMPLE_IMAGE_SOURCE_HEIGHT = Math.max(1.0f, image.getHeight());
+        } catch (Exception ignored) {
+        }
+    }
+
+    private static int getSimpleImageId() {
+        if (SIMPLE_IMAGE_ID != -1) return SIMPLE_IMAGE_ID;
+        ensureSimpleImageSourceSize();
+        SIMPLE_IMAGE_ID = NanoVGHelper.loadTexture("/assets/sakura/textures/hud/noti.png");
+        return SIMPLE_IMAGE_ID;
+    }
+
+    private static long normalizeTimeout(long length) {
+        return Math.max(1L, Math.min(MAX_TIMEOUT, length));
+    }
+
+    private static boolean isSakuraModeActive() {
+        try {
+            NotificationHud hud = Sakura.MODULES.getModule(NotificationHud.class);
+            return hud != null && hud.isSakuraMode();
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     public static void send(String message) {
@@ -105,13 +191,16 @@ public class NotificationManager {
 
     public static void send(long id, String message, long length) {
         ExitUtil.ensureVerifiedOrExit();
+        long safeLength = normalizeTimeout(length);
+        boolean forceNew = isSakuraModeActive();
+        long finalId = forceNew ? (id ^ System.nanoTime()) : id;
         synchronized (notificationMap) {
-            Notification existing = notificationMap.get(id);
-            if (existing != null && !existing.isTimeout()) {
-                existing.update(message, length);
+            Notification existing = notificationMap.get(finalId);
+            if (!forceNew && existing != null && !existing.isTimeout()) {
+                existing.update(message, safeLength);
             } else {
-                Notification notification = new Notification(message, length, id);
-                notificationMap.put(id, notification);
+                Notification notification = new Notification(message, safeLength, finalId);
+                notificationMap.put(finalId, notification);
                 notifications.add(notification);
             }
         }
@@ -130,8 +219,15 @@ public class NotificationManager {
     }
 
     public static float[] renderPreview(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
-        if (mode == RenderMode.Legacy) {
+        return renderPreview(matrices, x, y, mode, primaryColor, backgroundColor, maxWidth, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius, SimpleIconSettings.DEFAULT);
+    }
+
+    public static float[] renderPreview(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius, SimpleIconSettings simpleIconSettings) {
+        if (mode == RenderMode.Trollhack) {
             return renderPreviewLegacy(x, y, alignment == Alignment.LEFT, primaryColor, backgroundColor, maxWidth, blur, blurStrength);
+        }
+        if (mode == RenderMode.Sakura) {
+            return renderPreviewSimple(x, y, maxWidth, backgroundColor, blur, blurStrength, scale, alignment, cornerRadius, shadowSettings, simpleIconSettings);
         }
         return renderPreviewXylitol(x, y, maxWidth, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius);
     }
@@ -149,8 +245,16 @@ public class NotificationManager {
     }
 
     public static void render(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
-        if (mode == RenderMode.Legacy) {
+        render(matrices, x, y, mode, primaryColor, backgroundColor, maxWidth, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius, SimpleIconSettings.DEFAULT);
+    }
+
+    public static void render(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius, SimpleIconSettings simpleIconSettings) {
+        if (mode == RenderMode.Trollhack) {
             renderLegacy(x, y, alignment == Alignment.LEFT, primaryColor, backgroundColor, maxWidth, blur, blurStrength);
+            return;
+        }
+        if (mode == RenderMode.Sakura) {
+            renderSimple(x, y, maxWidth, backgroundColor, blur, blurStrength, scale, alignment, cornerRadius, shadowSettings, simpleIconSettings);
             return;
         }
         renderXylitol(x, y, maxWidth, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius);
@@ -267,11 +371,23 @@ public class NotificationManager {
         return 1.0f - (1.0f - t) * (1.0f - t);
     }
 
+    private static float easeOutBack(float t) {
+        t = Math.max(0.0f, Math.min(1.0f, t));
+        float c1 = 1.70158f;
+        float c3 = c1 + 1.0f;
+        float p = t - 1.0f;
+        return 1.0f + c3 * p * p * p + c1 * p * p;
+    }
+
+    private static float clamp01(float v) {
+        return Math.max(0.0f, Math.min(1.0f, v));
+    }
+
     private static float[] computeXylitolSize(RenderMode mode, String title, String description, float scale, float fontSize) {
         scale = Math.max(0.1f, scale);
         fontSize = Math.max(6.0f, fontSize);
 
-        if (mode == RenderMode.Xylitol3) {
+        if (mode == RenderMode.Xylitol) {
             int font = FontLoader.medium();
             float textW = NanoVGHelper.getTextWidth(description, font, fontSize);
             float textH = NanoVGHelper.getFontHeight(font, fontSize);
@@ -294,13 +410,353 @@ public class NotificationManager {
         return new float[]{w, h};
     }
 
+    private static String simpleIcon(XylitolType type) {
+        if (type == XylitolType.DISABLE) return "C";
+        if (type == XylitolType.SUCCESS) return "D";
+        return "D";
+    }
+
+    private static String simpleTitle(XylitolType type) {
+        return type == XylitolType.DISABLE ? "Disabled Module" : "Enabled Module";
+    }
+
+    private static Color interpolateColor(Color c1, Color c2, float t) {
+        t = Math.max(0.0f, Math.min(1.0f, t));
+        int r = (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * t);
+        int g = (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * t);
+        int b = (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * t);
+        int a = (int) (c1.getAlpha() + (c2.getAlpha() - c1.getAlpha()) * t);
+        return new Color(Math.max(0, Math.min(255, r)), Math.max(0, Math.min(255, g)), Math.max(0, Math.min(255, b)), Math.max(0, Math.min(255, a)));
+    }
+
+    private static void renderSimpleGradientStringTwoColor(long vg, float x, float y, int font, float size, String text, Color c1, Color c2) {
+        if (text == null || text.isEmpty()) return;
+        float textW = Math.max(1.0f, NanoVGHelper.getTextWidth(text, font, size));
+        int segments = (int) Math.max(16, Math.min(260, Math.ceil(textW / 6.0f)));
+        float segW = textW / segments;
+        float fontH = NanoVGHelper.getFontHeight(font, size);
+        float overlap = 0.75f;
+
+        nvgFontFaceId(vg, font);
+        nvgFontSize(vg, size);
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+
+        for (int i = 0; i < segments; i++) {
+            float segX = x + i * segW;
+            float mid = (segX - x) + (segW * 0.5f);
+            float t = mid / textW;
+            Color col = interpolateColor(c1, c2, t);
+            col = new Color(col.getRed(), col.getGreen(), col.getBlue(), 255);
+            nvgSave(vg);
+            nvgScissor(vg, segX - overlap, y - 1.0f, segW + overlap * 2.0f, fontH + 2.0f);
+            nvgFillColor(vg, NanoVGHelper.nvgColor(col));
+            nvgText(vg, x, y, text);
+            nvgRestore(vg);
+        }
+    }
+
+    private static void drawSimpleGlowString(long vg, String text, float x, float y, int font, float size, Color color, float glowRange, int intensity) {
+        if (text == null || text.isEmpty()) return;
+        nvgFontFaceId(vg, font);
+        nvgFontSize(vg, size);
+        nvgTextAlign(vg, NVG_ALIGN_LEFT | NVG_ALIGN_TOP);
+        nvgFontBlur(vg, Math.max(0.0f, glowRange));
+        nvgFillColor(vg, NanoVGHelper.nvgColor(color));
+        for (int i = 0; i < Math.max(1, intensity); i++) {
+            nvgText(vg, x, y, text);
+        }
+        nvgFontBlur(vg, 0.0f);
+    }
+
+    private static class SimpleMetrics {
+        float width;
+        float height;
+        float iconX;
+        float iconY;
+        float iconSize;
+        float line1X;
+        float line1Y;
+        float line1Size;
+        float line2X;
+        float line2Y;
+        float line2Size;
+        float line1W;
+        float line2W;
+    }
+
+    private static SimpleMetrics computeSimpleMetrics(String line1, String line2, float maxWidth, float scale) {
+        float safeScale = Math.max(0.1f, scale);
+        int iconFont = FontLoader.ico();
+        int textFont = FontLoader.medium();
+        float iconSize = Math.max(6.0f, SAKURA_ICON_SIZE) * safeScale;
+        float line1Size = Math.max(6.0f, SAKURA_LINE1_SIZE) * safeScale;
+        float line2Size = Math.max(6.0f, SAKURA_LINE2_SIZE) * safeScale;
+
+        float iconW = NanoVGHelper.getTextWidth("D", iconFont, iconSize);
+        float iconH = NanoVGHelper.getFontHeight(iconFont, iconSize);
+        float line1W = NanoVGHelper.getTextWidth(line1, textFont, line1Size);
+        float line1H = NanoVGHelper.getFontHeight(textFont, line1Size);
+        float line2W = NanoVGHelper.getTextWidth(line2, textFont, line2Size);
+        float line2H = NanoVGHelper.getFontHeight(textFont, line2Size);
+
+        float padX = 6.0f * safeScale;
+        float padY = 4.0f * safeScale;
+        float gapX = 4.0f * safeScale;
+        float lineGapY = 2.0f * safeScale;
+        float textBaseX = padX + iconW + gapX;
+
+        float iconXRaw = padX + SAKURA_ICON_OFFSET_X * safeScale;
+        float iconYRaw = padY + SAKURA_ICON_OFFSET_Y * safeScale;
+        float line1XRaw = textBaseX + SAKURA_LINE1_OFFSET_X * safeScale;
+        float line1YRaw = padY + SAKURA_LINE1_OFFSET_Y * safeScale;
+        float line2XRaw = textBaseX + SAKURA_LINE2_OFFSET_X * safeScale;
+        float line2YRaw = line1YRaw + line1H + lineGapY + SAKURA_LINE2_OFFSET_Y * safeScale;
+
+        float minX = Math.min(iconXRaw, Math.min(line1XRaw, line2XRaw));
+        float minY = Math.min(iconYRaw, Math.min(line1YRaw, line2YRaw));
+        float maxX = Math.max(iconXRaw + iconW, Math.max(line1XRaw + line1W, line2XRaw + line2W));
+        float maxY = Math.max(iconYRaw + iconH, Math.max(line1YRaw + line1H, line2YRaw + line2H));
+
+        float shiftX = padX - minX;
+        float shiftY = padY - minY;
+
+        SimpleMetrics m = new SimpleMetrics();
+        m.iconX = iconXRaw + shiftX;
+        m.iconY = iconYRaw + shiftY;
+        m.iconSize = iconSize;
+        m.line1X = line1XRaw + shiftX;
+        m.line1Y = line1YRaw + shiftY;
+        m.line1Size = line1Size;
+        m.line2X = line2XRaw + shiftX;
+        m.line2Y = line2YRaw + shiftY;
+        m.line2Size = line2Size;
+        m.line1W = line1W;
+        m.line2W = line2W;
+
+        float rawW = (maxX + shiftX) + padX;
+        float rawH = (maxY + shiftY) + padY;
+        float minW = 120.0f * safeScale;
+        m.width = Math.min(Math.max(minW, rawW), Math.max(minW, maxWidth));
+        m.height = Math.max(30.0f * safeScale, rawH);
+        return m;
+    }
+
+    private static float[] renderPreviewSimple(float x, float y, float maxWidth, Color backgroundColor, boolean blur, float blurStrength, float scale, Alignment alignment, float cornerRadius, ShadowSettings shadowSettings, SimpleIconSettings settings) {
+        String message = "KillAura §a enabled";
+        String plain = Notification.stripFormatting(message);
+        Notification.ParsedLines lines = Notification.parseLines(plain);
+        String moduleName = lines.title == null || lines.title.isBlank() ? plain : lines.title;
+        XylitolType type = inferXylitolType(message);
+        String line1Text = simpleTitle(type);
+        SimpleMetrics metrics = computeSimpleMetrics(line1Text, moduleName, maxWidth, scale);
+        float w = metrics.width;
+        float h = metrics.height;
+        float output = 1.0f;
+        float drawX;
+        if (alignment == Alignment.RIGHT) {
+            float anchorRight = x + Math.max(0.0f, maxWidth);
+            drawX = anchorRight - w * output;
+        } else {
+            drawX = x - w * (1.0f - output);
+        }
+        float drawY = y;
+        float r = Math.max(0.0f, cornerRadius) * Math.max(0.1f, scale);
+        r = Math.min(r, Math.min(w, h) * 0.5f);
+        if (shadowSettings != null && shadowSettings.enabled) {
+            float[] rects = new float[]{drawX, drawY, w, h};
+            float[] radii = new float[]{r};
+            float range = Math.max(0.0f, shadowSettings.range) * Math.max(0.1f, scale);
+            float strength = shadowSettings.strength;
+            if (shadowSettings.mode == ShadowMode.Gradient) {
+                Color start = ClickGui.color(1);
+                Color end = ClickGui.color2(1);
+                start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
+                end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
+                ShadowShader.drawStairShadowGradient(drawX, drawY, w, h, range, strength, start, end, rects, radii, 1);
+            } else {
+                Color c = new Color(128, 128, 128, 255);
+                ShadowShader.drawStairShadow(drawX, drawY, w, h, range, strength, c, rects, radii, 1);
+            }
+        }
+        if (blur) {
+            BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength);
+        }
+        NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, drawX, drawY, line1Text, moduleName, backgroundColor, type, scale, cornerRadius, metrics, settings, 1.0f, 1.0f));
+        return new float[]{w, h};
+    }
+
+    private static void renderSimple(float x, float y, float maxWidth, Color backgroundColor, boolean blur, float blurStrength, float scale, Alignment alignment, float cornerRadius, ShadowSettings shadowSettings, SimpleIconSettings settings) {
+        float yOffset = 0.0f;
+        float safeScale = Math.max(0.1f, scale);
+        float spacing = 6.0f * safeScale;
+        for (int i = 0; i < notifications.size(); i++) {
+            Notification notification = notifications.get(i);
+            if (notification.startTime == -1L) {
+                notification.startTime = System.currentTimeMillis();
+            }
+            long now = System.currentTimeMillis();
+            long elapsed = now - notification.startTime;
+            boolean hide = elapsed >= notification.length;
+            float enterT = clamp01(elapsed / (float) ANIMATION_TIME_MS);
+            float exitT = hide ? clamp01((elapsed - notification.length) / (float) ANIMATION_TIME_MS) : 0.0f;
+            boolean classicMode = settings.animationMode() == SakuraAnimationMode.Classic;
+            float output;
+            float drawAlpha;
+            float contentAlpha;
+            if (classicMode) {
+                output = hide ? (1.0f - easeOutDecelerate(exitT)) : easeOutDecelerate(enterT);
+                output = clamp01(output);
+                drawAlpha = 1.0f;
+                contentAlpha = 1.0f;
+            } else {
+                output = hide ? (1.0f - easeOutDecelerate(exitT)) : easeOutBack(enterT);
+                output = clamp01(output);
+                drawAlpha = hide ? (1.0f - easeOutDecelerate(exitT)) : easeOutDecelerate(enterT);
+                drawAlpha = clamp01(drawAlpha);
+                float delayedT = hide ? drawAlpha : clamp01((elapsed - 30.0f) / (float) ANIMATION_TIME_MS);
+                contentAlpha = hide ? drawAlpha : easeOutDecelerate(delayedT);
+                contentAlpha = clamp01(contentAlpha);
+            }
+            if (hide && exitT >= 1.0f && (classicMode ? output : drawAlpha) <= 0.001f) {
+                synchronized (notificationMap) {
+                    if (notificationMap.get(notification.id) == notification) {
+                        notificationMap.remove(notification.id);
+                    }
+                }
+                notifications.remove(i);
+                i--;
+                continue;
+            }
+            String plain = Notification.stripFormatting(notification.message);
+            Notification.ParsedLines lines = Notification.parseLines(plain);
+            String moduleName = lines.title == null || lines.title.isBlank() ? plain : lines.title;
+            XylitolType type = inferXylitolType(notification.message);
+            String line1Text = simpleTitle(type);
+            SimpleMetrics metrics = computeSimpleMetrics(line1Text, moduleName, maxWidth, scale);
+            float w = metrics.width;
+            float h = metrics.height;
+            float drawX;
+            if (alignment == Alignment.RIGHT) {
+                float anchorRight = x + Math.max(0.0f, maxWidth);
+                drawX = anchorRight - w * output;
+            } else {
+                drawX = x - w * (1.0f - output);
+            }
+            float enterLift = classicMode ? 0.0f : (hide ? 0.0f : (1.0f - enterT) * (6.0f * safeScale));
+            float drawY = y - yOffset + enterLift;
+            float r = Math.max(0.0f, cornerRadius) * safeScale;
+            r = Math.min(r, Math.min(w, h) * 0.5f);
+            if (shadowSettings != null && shadowSettings.enabled) {
+                float[] rects = new float[]{drawX, drawY, w, h};
+                float[] radii = new float[]{r};
+                float range = Math.max(0.0f, shadowSettings.range) * safeScale;
+                float strength = shadowSettings.strength;
+                if (shadowSettings.mode == ShadowMode.Gradient) {
+                    Color start = ClickGui.color(1);
+                    Color end = ClickGui.color2(1);
+                    start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
+                    end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
+                    ShadowShader.drawStairShadowGradient(drawX, drawY, w, h, range, strength, start, end, rects, radii, 1);
+                } else {
+                    Color c = new Color(128, 128, 128, 255);
+                    ShadowShader.drawStairShadow(drawX, drawY, w, h, range, strength, c, rects, radii, 1);
+                }
+            }
+            if (blur) {
+                float blurFactor = classicMode ? 1.0f : (0.6f + 0.4f * drawAlpha);
+                BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength * blurFactor);
+            }
+            float finalX = drawX;
+            float finalY = drawY;
+            String finalLine1Text = line1Text;
+            String finalModuleName = moduleName;
+            SimpleMetrics finalMetrics = metrics;
+            float finalDrawAlpha = drawAlpha;
+            float finalContentAlpha = contentAlpha;
+            NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, finalX, finalY, finalLine1Text, finalModuleName, backgroundColor, type, scale, cornerRadius, finalMetrics, settings, finalDrawAlpha, finalContentAlpha));
+            yOffset += (h + spacing) * (hide ? output : 1.0f);
+        }
+    }
+
+    private static void drawSimpleNotification(long vg, float x, float y, String line1Text, String moduleName, Color backgroundColor, XylitolType type, float scale, float cornerRadius, SimpleMetrics metrics, SimpleIconSettings settings, float drawAlpha, float contentAlpha) {
+        scale = Math.max(0.1f, scale);
+        drawAlpha = clamp01(drawAlpha);
+        contentAlpha = clamp01(contentAlpha);
+        float width = metrics.width;
+        float height = metrics.height;
+        float r = Math.max(0.0f, cornerRadius) * scale;
+        r = Math.min(r, Math.min(width, height) * 0.5f);
+        nvgSave(vg);
+        nvgGlobalAlpha(vg, drawAlpha);
+        Color fill = backgroundColor != null ? backgroundColor : new Color(0, 0, 0, 140);
+        if (r > 0.001f) {
+            NanoVGHelper.drawRoundRect(x, y, width, height, r, fill);
+        } else {
+            NanoVGHelper.drawRect(x, y, width, height, fill);
+        }
+        if (settings.imageEnabled()) {
+            int imageId = getSimpleImageId();
+            if (imageId != -1) {
+                float targetW = Math.max(1.0f, SAKURA_IMAGE_WIDTH) * scale;
+                float targetH = Math.max(1.0f, SAKURA_IMAGE_HEIGHT) * scale;
+                float sourceW = Math.max(1.0f, SIMPLE_IMAGE_SOURCE_WIDTH);
+                float sourceH = Math.max(1.0f, SIMPLE_IMAGE_SOURCE_HEIGHT);
+                float imageScale = Math.min(targetW / sourceW, targetH / sourceH);
+                float imageW = sourceW * imageScale;
+                float imageH = sourceH * imageScale;
+                float imageX = x + SAKURA_IMAGE_OFFSET_X * scale;
+                float imageY = y + SAKURA_IMAGE_OFFSET_Y * scale;
+                nvgSave(vg);
+                nvgScissor(vg, x, y, width, height);
+                NanoVGHelper.drawImage(imageId, imageX, imageY, imageW, imageH, 0.0f, 1.0f);
+                nvgRestore(vg);
+            }
+        }
+        nvgRestore(vg);
+        float visibleContentAlpha = clamp01(drawAlpha * contentAlpha);
+        if (visibleContentAlpha <= 0.001f) {
+            return;
+        }
+        nvgSave(vg);
+        nvgGlobalAlpha(vg, visibleContentAlpha);
+        String icon = simpleIcon(type);
+        int iconFont = FontLoader.ico();
+        float iconX = x + metrics.iconX;
+        float iconY = y + metrics.iconY;
+        if (settings.iconGlowEnabled()) {
+            drawSimpleGlowString(vg, icon, iconX, iconY, iconFont, metrics.iconSize, Color.WHITE, settings.iconGlowRange() * scale, settings.iconGlowIntensity());
+        }
+        NanoVGHelper.drawString(icon, iconX, iconY, iconFont, metrics.iconSize, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, Color.WHITE);
+        int textFont = FontLoader.medium();
+        float line1X = x + metrics.line1X;
+        float line1Y = y + metrics.line1Y;
+        float line2X = x + metrics.line2X;
+        float line2Y = y + metrics.line2Y;
+
+        Color g1 = ClickGui.color(1);
+        Color g2 = ClickGui.color2(1);
+        Color sAvg = new Color((g1.getRed() + g2.getRed()) / 2, (g1.getGreen() + g2.getGreen()) / 2, (g1.getBlue() + g2.getBlue()) / 2, 255);
+        Color line1Shadow = new Color((int) (sAvg.getRed() * 0.5f), (int) (sAvg.getGreen() * 0.5f), (int) (sAvg.getBlue() * 0.5f), 255);
+        float shadowDist = Math.max(0.0f, settings.textShadowDistance()) * scale;
+        NanoVGHelper.drawString(line1Text, line1X + shadowDist, line1Y + shadowDist, textFont, metrics.line1Size, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, line1Shadow);
+        if (settings.line1GlowEnabled()) {
+            drawSimpleGlowString(vg, line1Text, line1X, line1Y, textFont, metrics.line1Size, sAvg, settings.line1GlowRange() * scale, settings.line1GlowIntensity());
+        }
+        renderSimpleGradientStringTwoColor(vg, line1X, line1Y, textFont, metrics.line1Size, line1Text, g1, g2);
+        if (settings.line2GlowEnabled()) {
+            drawSimpleGlowString(vg, moduleName, line2X, line2Y, textFont, metrics.line2Size, Color.WHITE, settings.line2GlowRange() * scale, settings.line2GlowIntensity());
+        }
+        NanoVGHelper.drawString(moduleName, line2X, line2Y, textFont, metrics.line2Size, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, Color.WHITE);
+        nvgRestore(vg);
+    }
+
     private static float[] renderPreviewXylitol(float x, float y, float maxWidth, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
         String message = "KillAura §a enabled";
         String plain = Notification.stripFormatting(message);
         Notification.ParsedLines lines = Notification.parseLines(plain);
 
-        String title = mode == RenderMode.Xylitol4 ? "Module" : lines.title;
-        String desc = mode == RenderMode.Xylitol4 ? plain : plain;
+        String title = mode == RenderMode.Xylitol1 ? "Module" : lines.title;
+        String desc = mode == RenderMode.Xylitol1 ? plain : plain;
 
         float[] size = computeXylitolSize(mode, title, desc, scale, fontSize);
         float w = size[0];
@@ -318,7 +774,7 @@ public class NotificationManager {
         float drawY = y;
 
         float safeScale = Math.max(0.1f, scale);
-        float r = mode == RenderMode.Xylitol4 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
+        float r = mode == RenderMode.Xylitol1 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
         r = Math.min(r, Math.min(w, h) * 0.5f);
 
         if (shadowSettings != null && shadowSettings.enabled) {
@@ -326,13 +782,13 @@ public class NotificationManager {
             float[] radii = new float[]{r};
             float range = Math.max(0.0f, shadowSettings.range) * safeScale;
             float strength = shadowSettings.strength;
-            if (mode == RenderMode.Xylitol4) {
+            if (mode == RenderMode.Xylitol1) {
                 Color start = ClickGui.color(1);
                 Color end = ClickGui.color2(1);
                 start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
                 end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
                 ShadowShader.drawStairShadowGradient(drawX, drawY, w, h, range, strength, start, end, rects, radii, 1);
-            } else if (mode == RenderMode.Xylitol3) {
+            } else if (mode == RenderMode.Xylitol) {
                 Color c = backgroundColor != null ? backgroundColor : new Color(0, 0, 0, 70);
                 c = new Color(c.getRed(), c.getGreen(), c.getBlue(), 255);
                 ShadowShader.drawStairShadow(drawX, drawY, w, h, range, strength, c, rects, radii, 1);
@@ -385,7 +841,7 @@ public class NotificationManager {
             String plain = Notification.stripFormatting(notification.message);
             Notification.ParsedLines lines = Notification.parseLines(plain);
 
-            String title = mode == RenderMode.Xylitol4 ? "Module" : lines.title;
+            String title = mode == RenderMode.Xylitol1 ? "Module" : lines.title;
             String desc = plain;
 
             float[] size = computeXylitolSize(mode, title, desc, scale, fontSize);
@@ -404,7 +860,7 @@ public class NotificationManager {
             float progress = Math.max(0.0f, Math.min(1.0f, elapsed / (float) Math.max(1L, notification.length)));
             XylitolType type = inferXylitolType(notification.message);
 
-            float r = mode == RenderMode.Xylitol4 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
+            float r = mode == RenderMode.Xylitol1 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
             r = Math.min(r, Math.min(w, h) * 0.5f);
 
             if (shadowSettings != null && shadowSettings.enabled) {
@@ -412,13 +868,13 @@ public class NotificationManager {
                 float[] radii = new float[]{r};
                 float range = Math.max(0.0f, shadowSettings.range) * safeScale;
                 float strength = shadowSettings.strength;
-                if (mode == RenderMode.Xylitol4) {
+                if (mode == RenderMode.Xylitol1) {
                     Color start = ClickGui.color(1);
                     Color end = ClickGui.color2(1);
                     start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
                     end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
                     ShadowShader.drawStairShadowGradient(drawX, drawY, w, h, range, strength, start, end, rects, radii, 1);
-                } else if (mode == RenderMode.Xylitol3) {
+                } else if (mode == RenderMode.Xylitol) {
                     Color c = backgroundColor != null ? backgroundColor : new Color(0, 0, 0, 70);
                     c = new Color(c.getRed(), c.getGreen(), c.getBlue(), 255);
                     ShadowShader.drawStairShadow(drawX, drawY, w, h, range, strength, c, rects, radii, 1);
@@ -444,7 +900,7 @@ public class NotificationManager {
         scale = Math.max(0.1f, scale);
         fontSize = Math.max(6.0f, fontSize);
 
-        if (mode == RenderMode.Xylitol3) {
+        if (mode == RenderMode.Xylitol) {
             Color fill = withAlpha(lerp(Color.BLACK, type.color, 0.65f), (int) (255.0f * 0.7f));
 
             NanoVGHelper.drawRect(x, y, width, height, backgroundColor != null ? backgroundColor : new Color(0, 0, 0, 70));
@@ -485,7 +941,7 @@ public class NotificationManager {
         } else {
             NanoVGHelper.drawRect(x, y, width, height, new Color(0, 0, 0, 76));
         }
-        if (mode == RenderMode.Xylitol4) {
+        if (mode == RenderMode.Xylitol1) {
             Color start = ClickGui.color(1);
             Color end = ClickGui.color2(1);
             start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
@@ -531,7 +987,7 @@ public class NotificationManager {
 
         public Notification(String message, long length, long id) {
             this.message = message;
-            this.length = length;
+            this.length = normalizeTimeout(length);
             this.id = id;
         }
 
@@ -542,7 +998,12 @@ public class NotificationManager {
 
         public void update(String message, long length) {
             this.message = message;
-            this.length = length + (System.currentTimeMillis() - startTime);
+            long safeLength = normalizeTimeout(length);
+            if (startTime == -1L) {
+                this.length = safeLength;
+            } else {
+                this.length = Math.min(MAX_TIMEOUT, safeLength + (System.currentTimeMillis() - startTime));
+            }
             this.cachedWidth = -1.0f;
         }
 
