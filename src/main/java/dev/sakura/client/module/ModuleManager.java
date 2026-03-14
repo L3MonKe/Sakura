@@ -130,7 +130,7 @@ public class ModuleManager {
         add(new PotionHud());
         add(new ScaffoldBlocksHud());
         add(new TargetHud());
-        add(new ScoreBoardHud());
+//        add(new ScoreBoardHud());
         add(new TimeChargeHud());
         add(new WatermarkHud());
     }

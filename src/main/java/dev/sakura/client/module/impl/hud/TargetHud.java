@@ -76,7 +76,7 @@ public class TargetHud extends HudModule {
         Left, OnBar
     }
 
-    private final EnumValue<StyleEn> style = new EnumValue<>("Style", "样式", StyleEn.ThunderHack);
+    private final EnumValue<StyleEn> style = new EnumValue<>("Style", "样式", StyleEn.Sakura);
 
     // Sakura Settings
     private final NumberValue<Double> MahiroScale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 2.0, 0.1, () -> style.get() == StyleEn.Sakura);

@@ -33,9 +33,9 @@ public class ModuleListHud extends HudModule {
     }
 
     public enum ListMode {
-        Normal,
-        Gradient,
-        NewStyle
+        OldSakura,
+        Sakura,
+        Old
     }
 
     public enum FontMode {
@@ -60,8 +60,8 @@ public class ModuleListHud extends HudModule {
     }
 
     // --- 核心设置 (Core Settings) ---
-    private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Normal);
-    private final EnumValue<FontMode> fontMode = new EnumValue<>("Font Mode", "字体模式", FontMode.Default, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
+    private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Sakura);
+    private final EnumValue<FontMode> fontMode = new EnumValue<>("Font Mode", "字体模式", FontMode.Default, () -> mode.is(ListMode.Sakura) || mode.is(ListMode.Old));
     private final NumberValue<Double> hudScale = new NumberValue<>("Hud Scale", "HUD缩放", 1.1, 0.5, 2.0, 0.1);
     private final BoolValue alignRight = new BoolValue("Align Right", "右对齐", false);
     private final BoolValue hideHudModules = new BoolValue("Hide HudModules", "隐藏HUD模块", true);
@@ -77,66 +77,66 @@ public class ModuleListHud extends HudModule {
     private final NumberValue<Double> sliderSpeed = new NumberValue<>("Slider Speed", "滑动速度", 0.2, 0.01, 1.0, 0.01);
 
     // --- 普通模式设置 (Normal Mode) ---
-    private final BoolValue normalRainbowColor = new BoolValue("Normal Rainbow", "彩虹色", false, () -> mode.is(ListMode.Normal));
-    private final BoolValue normalShowCategory = new BoolValue("Normal Show Category", "显示分类", true, () -> mode.is(ListMode.Normal));
-    private final NumberValue<Double> normalRadius = new NumberValue<>("Normal Radius", "圆角半径", 6.0, 0.0, 15.0, 1.0, () -> mode.is(ListMode.Normal));
+    private final BoolValue normalRainbowColor = new BoolValue("Normal Rainbow", "彩虹色", false, () -> mode.is(ListMode.OldSakura));
+    private final BoolValue normalShowCategory = new BoolValue("Normal Show Category", "显示分类", true, () -> mode.is(ListMode.OldSakura));
+    private final NumberValue<Double> normalRadius = new NumberValue<>("Normal Radius", "圆角半径", 6.0, 0.0, 15.0, 1.0, () -> mode.is(ListMode.OldSakura));
 
     // --- 新风格设置 (New Style) ---
-    private final EnumValue<NewStyleColorMode> newStyleColorMode = new EnumValue<>("Color Mode", "颜色模式", NewStyleColorMode.Astolfo, () -> mode.is(ListMode.NewStyle));
-    private final ColorValue newStyleStaticColor = new ColorValue("Static Color", "静态颜色", new Color(255, 255, 255), () -> mode.is(ListMode.NewStyle) && newStyleColorMode.is(NewStyleColorMode.Static));
-    private final ColorValue newStyleColor1 = new ColorValue("Gradient Color 1", "渐变色1", new Color(0, 255, 255), () -> mode.is(ListMode.NewStyle) && newStyleColorMode.is(NewStyleColorMode.DoubleColor));
-    private final ColorValue newStyleColor2 = new ColorValue("Gradient Color 2", "渐变色2", new Color(255, 0, 255), () -> mode.is(ListMode.NewStyle) && newStyleColorMode.is(NewStyleColorMode.DoubleColor));
-    private final BoolValue newStyleBackground = new BoolValue("New Background", "背景", true, () -> mode.is(ListMode.NewStyle));
-    private final ColorValue newStyleBackgroundColor = new ColorValue("New Bg Color", "背景颜色", new Color(0, 0, 0, 180), () -> mode.is(ListMode.NewStyle) && newStyleBackground.get());
-    private final NumberValue<Double> newStyleBackgroundPadX = new NumberValue<>("Bg Pad X", "背景X边距", 4.0, -10.0, 20.0, 0.5, () -> mode.is(ListMode.NewStyle) && newStyleBackground.get());
-    private final NumberValue<Double> newStyleBackgroundPadY = new NumberValue<>("Bg Pad Y", "背景Y边距", 2.0, -10.0, 20.0, 0.5, () -> mode.is(ListMode.NewStyle) && newStyleBackground.get());
-    private final BoolValue newStyleBar = new BoolValue("Deco Bar", "新风格-装饰条", true, () -> mode.is(ListMode.NewStyle));
-    private final EnumValue<BarMode> newStyleBarMode = new EnumValue<>("Bar Mode", "装饰条模式", BarMode.Right, () -> mode.is(ListMode.NewStyle) && newStyleBar.get());
-    private final NumberValue<Double> newStyleBarWidth = new NumberValue<>("Bar Width", "装饰条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.NewStyle) && newStyleBar.get());
-    private final NumberValue<Double> newStyleX = new NumberValue<>("Pos X", "X轴距离", 0.0, 0.0, 1000.0, 1.0, () -> mode.is(ListMode.NewStyle));
-    private final NumberValue<Double> newStyleY = new NumberValue<>("Pos Y", "Y轴距离", 0.0, -100.0, 1000.0, 1.0, () -> mode.is(ListMode.NewStyle));
+    private final EnumValue<NewStyleColorMode> newStyleColorMode = new EnumValue<>("Color Mode", "颜色模式", NewStyleColorMode.Astolfo, () -> mode.is(ListMode.Old));
+    private final ColorValue newStyleStaticColor = new ColorValue("Static Color", "静态颜色", new Color(255, 255, 255), () -> mode.is(ListMode.Old) && newStyleColorMode.is(NewStyleColorMode.Static));
+    private final ColorValue newStyleColor1 = new ColorValue("Gradient Color 1", "渐变色 1", new Color(0, 255, 255), () -> mode.is(ListMode.Old) && newStyleColorMode.is(NewStyleColorMode.DoubleColor));
+    private final ColorValue newStyleColor2 = new ColorValue("Gradient Color 2", "渐变色 2", new Color(255, 0, 255), () -> mode.is(ListMode.Old) && newStyleColorMode.is(NewStyleColorMode.DoubleColor));
+    private final BoolValue newStyleBackground = new BoolValue("New Background", "背景", true, () -> mode.is(ListMode.Old));
+    private final ColorValue newStyleBackgroundColor = new ColorValue("New Bg Color", "背景颜色", new Color(0, 0, 0, 180), () -> mode.is(ListMode.Old) && newStyleBackground.get());
+    private final NumberValue<Double> newStyleBackgroundPadX = new NumberValue<>("Bg Pad X", "背景 X 边距", 4.0, -10.0, 20.0, 0.5, () -> mode.is(ListMode.Old) && newStyleBackground.get());
+    private final NumberValue<Double> newStyleBackgroundPadY = new NumberValue<>("Bg Pad Y", "背景 Y 边距", 2.0, -10.0, 20.0, 0.5, () -> mode.is(ListMode.Old) && newStyleBackground.get());
+    private final BoolValue newStyleBar = new BoolValue("Deco Bar", "新风格 - 装饰条", true, () -> mode.is(ListMode.Old));
+    private final EnumValue<BarMode> newStyleBarMode = new EnumValue<>("Bar Mode", "装饰条模式", BarMode.Right, () -> mode.is(ListMode.Old) && newStyleBar.get());
+    private final NumberValue<Double> newStyleBarWidth = new NumberValue<>("Bar Width", "装饰条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.Old) && newStyleBar.get());
+    private final NumberValue<Double> newStyleX = new NumberValue<>("Pos X", "X 轴距离", 0.0, 0.0, 1000.0, 1.0, () -> mode.is(ListMode.Old));
+    private final NumberValue<Double> newStyleY = new NumberValue<>("Pos Y", "Y 轴距离", 0.0, -100.0, 1000.0, 1.0, () -> mode.is(ListMode.Old));
 
     // 1. 文本与字体 (Text & Font)
-    private final NumberValue<Double> customFontSize = new NumberValue<>("Font Size", "字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
-    private final NumberValue<Double> textOffsetX = new NumberValue<>("Text Offset X", "文字X偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
-    private final NumberValue<Double> textOffsetY = new NumberValue<>("Text Offset Y", "文字Y偏移", 1.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
-    private final BoolValue textGlow = new BoolValue("Text Glow", "文本发光", true, () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> glowRadius = new NumberValue<>("Glow Radius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Gradient) && textGlow.get());
-    private final NumberValue<Integer> glowIntensity = new NumberValue<>("Glow Intensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Gradient) && textGlow.get());
+    private final NumberValue<Double> customFontSize = new NumberValue<>("Font Size", "字体大小", 10.0, 5.0, 30.0, 0.5, () -> mode.is(ListMode.Sakura) || mode.is(ListMode.Old));
+    private final NumberValue<Double> textOffsetX = new NumberValue<>("Text Offset X", "文字 X 偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) || mode.is(ListMode.Old));
+    private final NumberValue<Double> textOffsetY = new NumberValue<>("Text Offset Y", "文字 Y 偏移", 1.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) || mode.is(ListMode.Old));
+    private final BoolValue textGlow = new BoolValue("Text Glow", "文本发光", true, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> glowRadius = new NumberValue<>("Glow Radius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) && textGlow.get());
+    private final NumberValue<Integer> glowIntensity = new NumberValue<>("Glow Intensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Sakura) && textGlow.get());
 
     // 2. 渐变颜色 (Colors)
-    private final BoolValue autoColor = new BoolValue("Auto Color", "自动调色", false, () -> mode.is(ListMode.Gradient));
-    private final ColorValue gradientColor1 = new ColorValue("Color 1", "颜色1", new Color(0, 255, 255), () -> mode.is(ListMode.Gradient));
-    private final ColorValue gradientColor2 = new ColorValue("Color 2", "颜色2", new Color(255, 0, 255), () -> mode.is(ListMode.Gradient));
-    private final NumberValue<Double> gradientSpeed = new NumberValue<>("Gradient Speed", "渐变速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
-    private final NumberValue<Double> colorStep = new NumberValue<>("Color Step", "颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle));
+    private final BoolValue autoColor = new BoolValue("Auto Color", "自动调色", false, () -> mode.is(ListMode.Sakura));
+    private final ColorValue gradientColor1 = new ColorValue("Color 1", "颜色 1", new Color(0, 255, 255), () -> mode.is(ListMode.Sakura));
+    private final ColorValue gradientColor2 = new ColorValue("Color 2", "颜色 2", new Color(255, 0, 255), () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> gradientSpeed = new NumberValue<>("Gradient Speed", "渐变速度", 1.0, 0.1, 10.0, 0.1, () -> mode.is(ListMode.Sakura) || mode.is(ListMode.Old));
+    private final NumberValue<Double> colorStep = new NumberValue<>("Color Step", "颜色跨度", 15.0, 1.0, 100.0, 1.0, () -> mode.is(ListMode.Sakura) || mode.is(ListMode.Old));
 
     // 3. 背景设置 (Background)
-    private final BoolValue background = new BoolValue("Background", "背景", false, () -> mode.is(ListMode.Gradient));
+    private final BoolValue background = new BoolValue("Background", "背景", false, () -> mode.is(ListMode.Sakura));
 
     public enum BackgroundMode {Normal, Blur}
 
-    private final EnumValue<BackgroundMode> backgroundMode = new EnumValue<>("Background Mode", "背景模式", BackgroundMode.Normal, () -> mode.is(ListMode.Gradient) && background.get());
-    private final ColorValue backgroundColor = new ColorValue("Background Color", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> backgroundRadius = new NumberValue<>("Background Radius", "背景圆角", 0.0, 0.0, 10.0, 1.0, () -> (mode.is(ListMode.Gradient) && background.get()) || (mode.is(ListMode.NewStyle) && newStyleBackground.get()));
-    private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("Background Offset Y", "背景Y偏移", -3.0, -10.0, 10.0, 0.5, () -> (mode.is(ListMode.Gradient) && background.get()) || (mode.is(ListMode.NewStyle) && newStyleBackground.get()));
-    private final NumberValue<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 10.0, 0.0, 50.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur));
+    private final EnumValue<BackgroundMode> backgroundMode = new EnumValue<>("Background Mode", "背景模式", BackgroundMode.Normal, () -> mode.is(ListMode.Sakura) && background.get());
+    private final ColorValue backgroundColor = new ColorValue("Background Color", "背景颜色", new Color(0, 0, 0, 100), () -> mode.is(ListMode.Sakura) && background.get());
+    private final NumberValue<Double> backgroundRadius = new NumberValue<>("Background Radius", "背景圆角", 0.0, 0.0, 10.0, 1.0, () -> (mode.is(ListMode.Sakura) && background.get()) || (mode.is(ListMode.Old) && newStyleBackground.get()));
+    private final NumberValue<Double> backgroundOffsetY = new NumberValue<>("Background Offset Y", "背景 Y 偏移", -3.0, -10.0, 10.0, 0.5, () -> (mode.is(ListMode.Sakura) && background.get()) || (mode.is(ListMode.Old) && newStyleBackground.get()));
+    private final NumberValue<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 10.0, 0.0, 50.0, 1.0, () -> mode.is(ListMode.Sakura) && background.get() && backgroundMode.is(BackgroundMode.Blur));
 
-    private final BoolValue backgroundShadow = new BoolValue("Background Shadow", "背景阴影", false, () -> mode.is(ListMode.Gradient) && background.get());
-    private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
-    private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+    private final BoolValue backgroundShadow = new BoolValue("Background Shadow", "背景阴影", false, () -> mode.is(ListMode.Sakura) && background.get());
+    private final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> mode.is(ListMode.Sakura) && background.get() && backgroundShadow.get());
+    private final NumberValue<Double> shadowStrength = new NumberValue<>("Shadow Strength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> mode.is(ListMode.Sakura) && background.get() && backgroundShadow.get());
 
     public enum ShadowMode {Solid, Gradient}
 
-    private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "阴影模式", ShadowMode.Solid, () -> mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get());
+    private final EnumValue<ShadowMode> shadowMode = new EnumValue<>("Shadow Mode", "阴影模式", ShadowMode.Solid, () -> mode.is(ListMode.Sakura) && background.get() && backgroundShadow.get());
 
     // 4. 线条设置 (Lines)
-    private final BoolValue showGradientLine = new BoolValue("Show Line", "显示线条", false, () -> mode.is(ListMode.Gradient));
+    private final BoolValue showGradientLine = new BoolValue("Show Line", "显示线条", false, () -> mode.is(ListMode.Sakura));
 
     public enum LineMode {Left, Box}
 
-    private final EnumValue<LineMode> lineMode = new EnumValue<>("Line Mode", "线条模式", LineMode.Left, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
-    private final NumberValue<Double> lineWidth = new NumberValue<>("Line Width", "线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.Gradient) && showGradientLine.get());
+    private final EnumValue<LineMode> lineMode = new EnumValue<>("Line Mode", "线条模式", LineMode.Left, () -> mode.is(ListMode.Sakura) && showGradientLine.get());
+    private final NumberValue<Double> lineWidth = new NumberValue<>("Line Width", "线条宽度", 2.0, 1.0, 5.0, 0.5, () -> mode.is(ListMode.Sakura) && showGradientLine.get());
 
     private float targetWidth = 0;
     private float targetHeight = 0;
@@ -218,25 +218,25 @@ public class ModuleListHud extends HudModule {
         frameGradientReady = false;
         frameSegmentsTimeMs = Long.MIN_VALUE;
         update();
-        if (!mode.is(ListMode.NewStyle)) {
+        if (!mode.is(ListMode.Old)) {
             ensureWithinScreenBounds();
         }
 
-        if (mode.is(ListMode.Gradient) && background.get() && backgroundShadow.get()) {
+        if (mode.is(ListMode.Sakura) && background.get() && backgroundShadow.get()) {
             renderBackgroundShadow();
         }
 
-        if (mode.is(ListMode.Gradient) && background.get() && backgroundMode.is(BackgroundMode.Blur)) {
+        if (mode.is(ListMode.Sakura) && background.get() && backgroundMode.is(BackgroundMode.Blur)) {
             renderBlurBackgrounds();
         }
 
-        if (mode.is(ListMode.NewStyle) && newStyleBackground.get() && backgroundMode.is(BackgroundMode.Blur)) {
+        if (mode.is(ListMode.Old) && newStyleBackground.get() && backgroundMode.is(BackgroundMode.Blur)) {
             renderNewStyleBlur();
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> renderContent());
 
-        if (mode.is(ListMode.Gradient) && fontMode.is(FontMode.Minecraft)) {
+        if (mode.is(ListMode.Sakura) && fontMode.is(FontMode.Minecraft)) {
             renderGradientTextVanilla(context);
         }
     }
@@ -258,7 +258,7 @@ public class ModuleListHud extends HudModule {
         currentWidth += (targetWidth - currentWidth) * speed;
         currentHeight += (targetHeight - currentHeight) * speed;
 
-        if (mode.is(ListMode.NewStyle)) {
+        if (mode.is(ListMode.Old)) {
             float scale = hudScale.get().floatValue();
             int screenWidth = mc.getWindow().getScaledWidth();
 
@@ -281,7 +281,7 @@ public class ModuleListHud extends HudModule {
 
     private void updateModulePositions() {
         float scale = hudScale.get().floatValue();
-        float fontSize = (mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) ? customFontSize.get().floatValue() : 10f;
+        float fontSize = (mode.is(ListMode.Sakura) || mode.is(ListMode.Old)) ? customFontSize.get().floatValue() : 10f;
         float itemSpacing = this.itemSpacing.get().floatValue();
 
         float currentY = y + (PADDING_Y * scale) - (scrollOffset * scale);
@@ -316,7 +316,7 @@ public class ModuleListHud extends HudModule {
     }
 
     private int getFontId() {
-        if (mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) {
+        if (mode.is(ListMode.Sakura) || mode.is(ListMode.Old)) {
             return switch (fontMode.get()) {
                 case Comfortaa -> FontLoader.comfortaa();
                 case Ax -> FontLoader.ax();
@@ -331,11 +331,11 @@ public class ModuleListHud extends HudModule {
 
     private float getModuleTextWidth(String text) {
         float scale = hudScale.get().floatValue();
-        if ((mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) && fontMode.is(FontMode.Minecraft)) {
+        if ((mode.is(ListMode.Sakura) || mode.is(ListMode.Old)) && fontMode.is(FontMode.Minecraft)) {
             float fontSize = customFontSize.get().floatValue();
             return mc.textRenderer.getWidth(text) * (fontSize / 9.0f) * scale;
         }
-        float fontSize = (mode.is(ListMode.Gradient) || mode.is(ListMode.NewStyle)) ? customFontSize.get().floatValue() : 10f;
+        float fontSize = (mode.is(ListMode.Sakura) || mode.is(ListMode.Old)) ? customFontSize.get().floatValue() : 10f;
         int font = getFontId();
         return NanoVGHelper.getTextWidth(text, font, fontSize * scale);
     }
@@ -438,8 +438,8 @@ public class ModuleListHud extends HudModule {
     }
 
     private void calculateTargetSize() {
-        boolean isGradient = mode.is(ListMode.Gradient);
-        boolean isNewStyle = mode.is(ListMode.NewStyle);
+        boolean isGradient = mode.is(ListMode.Sakura);
+        boolean isNewStyle = mode.is(ListMode.Old);
         double spacing = itemSpacing.get();
         boolean showCat = !isGradient && !isNewStyle && normalShowCategory.get();
 
@@ -571,12 +571,12 @@ public class ModuleListHud extends HudModule {
     }
 
     private void renderContent() {
-        if (mode.is(ListMode.NewStyle)) {
+        if (mode.is(ListMode.Old)) {
             renderNewStyle();
             return;
         }
 
-        if (mode.is(ListMode.Gradient)) {
+        if (mode.is(ListMode.Sakura)) {
             renderGradientContent();
             return;
         }
@@ -1028,7 +1028,7 @@ public class ModuleListHud extends HudModule {
         frameSegments.clear();
         int index = 0;
 
-        boolean forceRight = mode.is(ListMode.NewStyle);
+        boolean forceRight = mode.is(ListMode.Old);
 
         for (ModuleEntry entry : moduleEntries) {
             EaseInOutQuad animation = moduleAnimations.get(entry.module);
@@ -1083,7 +1083,7 @@ public class ModuleListHud extends HudModule {
 
     private void buildMergedBackgroundPath(long vg, List<BackgroundSegment> segments, float r, boolean line) {
         int lastIndex = segments.size() - 1;
-        boolean isNewStyle = mode.is(ListMode.NewStyle);
+        boolean isNewStyle = mode.is(ListMode.Old);
 
         for (BackgroundSegment segment : segments) {
             boolean isFirst = segment.index == 0;
