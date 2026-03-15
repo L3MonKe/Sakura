@@ -236,7 +236,7 @@ public final class LoginWindow {
         glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
         glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GLFW_TRUE);
 
-        window = glfwCreateWindow(WIN_W, WIN_H, "欢迎来到 Sakura | Welcome to Sakura", MemoryUtil.NULL, MemoryUtil.NULL);
+        window = glfwCreateWindow(WIN_W, WIN_H, "欢迎来到桜 | Welcome to Sakura", MemoryUtil.NULL, MemoryUtil.NULL);
 
         glfwSetWindowPos(window, (glfwGetVideoMode(glfwGetPrimaryMonitor()).width() - WIN_W) / 2, (glfwGetVideoMode(glfwGetPrimaryMonitor()).height() - WIN_H) / 2);
         glfwMakeContextCurrent(window);

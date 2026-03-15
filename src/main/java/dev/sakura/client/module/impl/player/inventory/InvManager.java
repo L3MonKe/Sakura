@@ -3,8 +3,6 @@ package dev.sakura.client.module.impl.player.inventory;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.packet.PacketEvent;
-import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -55,6 +53,7 @@ public class InvManager extends Module {
     private final EnumValue<OffhandItemMode> offhandItems = new EnumValue<>("Offhand Items", "副手物品", OffhandItemMode.Projectile);
     private final BoolValue autoArmor = new BoolValue("Auto Armor", "自动穿甲", true);
     private final BoolValue inventoryOnly = new BoolValue("Inventory Only", "仅背包界面", true);
+    private final BoolValue sortWhileMoving = new BoolValue("Sort While Moving", "移动时整理", true);
     private final BoolValue switchSword = new BoolValue("Switch Sword", "切换剑", true);
     private final NumberValue<Integer> swordSlot = new NumberValue<>("Sword Slot", "剑槽位", 1, 1, 9, 1, switchSword::get);
     private final BoolValue switchBlock = new BoolValue("Switch Block", "切换方块", true, () -> !offhandItems.is(OffhandItemMode.Block));
@@ -88,7 +87,6 @@ public class InvManager extends Module {
 
     private int noMoveTicks = 0;
     private boolean clickOffHand = false;
-    private boolean inventoryOpen = false;
     private final TimerUtil timer = new TimerUtil();
 
     public static int getMaxBlockSize() {
@@ -161,30 +159,6 @@ public class InvManager extends Module {
         }
     }
 
-    @EventHandler
-    public void onPacket(PacketEvent event) {
-        if (nullCheck()) return;
-
-        if (event.getType() == EventType.SEND) {
-            if (event.getPacket() instanceof CloseHandledScreenC2SPacket) {
-                this.inventoryOpen = false;
-            }
-
-            if (this.inventoryOpen && !this.inventoryOnly.get()) {
-                if (event.getPacket() instanceof PlayerMoveC2SPacket) {
-                    if (MoveUtil.isMoving()) {
-                        mc.getNetworkHandler().sendPacket(new CloseHandledScreenC2SPacket(mc.player.playerScreenHandler.syncId));
-                    }
-                } else if (event.getPacket() instanceof PlayerInteractBlockC2SPacket
-                        || event.getPacket() instanceof PlayerInteractItemC2SPacket
-                        || event.getPacket() instanceof PlayerInteractEntityC2SPacket
-                        || event.getPacket() instanceof PlayerActionC2SPacket) {
-                    mc.getNetworkHandler().sendPacket(new CloseHandledScreenC2SPacket(mc.player.playerScreenHandler.syncId));
-                }
-            }
-        }
-    }
-
     private boolean checkConfig() {
         List<Pair<BoolValue, NumberValue<Integer>>> pairs = new ArrayList<>();
         if (!this.keepProjectile.get()) {
@@ -252,21 +226,12 @@ public class InvManager extends Module {
 
         if (Sakura.MODULES.getModule(Stealer.class).isWorking()
                 || Sakura.MODULES.getModule(Scaffold.class).isEnabled()
-                || (this.inventoryOnly.get() ? !(mc.currentScreen instanceof InventoryScreen) : this.noMoveTicks <= 1)) {
+                || (!this.sortWhileMoving.get() && this.noMoveTicks <= 1)) {
             this.clickOffHand = false;
             return;
         }
 
         if (mc.currentScreen instanceof HandledScreen<?> container && container.getScreenHandler().syncId != mc.player.playerScreenHandler.syncId) {
-            return;
-        }
-
-        InvMove invMove = Sakura.MODULES.getModule(InvMove.class);
-        if (invMove != null
-                && invMove.isEnabled()
-                && mc.currentScreen instanceof InventoryScreen
-                && !invMove.jumped) {
-            this.clickOffHand = false;
             return;
         }
 
@@ -279,9 +244,7 @@ public class InvManager extends Module {
                     if (equipment == null) return;
 
                     if (!stack.isEmpty() && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get())) && InvHelper.getBestArmorScore(equipment.slot()) > InvHelper.getProtection(stack)) {
-                        mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, 4 + (4 - i), 1, SlotActionType.THROW, mc.player);
-                        this.inventoryOpen = true;
-                        timer.reset();
+                        this.clickSlotSpoof(4 + (4 - i), 1, SlotActionType.THROW);
                     }
                 }
             }
@@ -297,23 +260,18 @@ public class InvManager extends Module {
                     boolean isBetterItem = InvHelper.getCurrentArmorScore(equipment.slot()) < currentItemScore;
                     if (isBestItem && isBetterItem && timer.passedMillise(MathUtil.getRandom(minDelay.get(), maxDelay.get()))) {
                         if (ix < 9) {
-                            mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, ix + 36, 0, SlotActionType.QUICK_MOVE, mc.player);
+                            this.clickSlotSpoof(ix + 36, 0, SlotActionType.QUICK_MOVE);
                         } else {
-                            mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, ix, 0, SlotActionType.QUICK_MOVE, mc.player);
+                            this.clickSlotSpoof(ix, 0, SlotActionType.QUICK_MOVE);
                         }
-
-                        this.inventoryOpen = true;
-                        timer.reset();
                     }
                 }
             }
         }
 
         if (this.clickOffHand && timer.passedMillise(MathUtil.getRandom(minDelay.get(), maxDelay.get()))) {
-            mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, 45, 0, SlotActionType.PICKUP, mc.player);
-            this.inventoryOpen = true;
+            this.clickSlotSpoof(45, 0, SlotActionType.PICKUP);
             this.clickOffHand = false;
-            timer.reset();
         }
 
         if (this.offhandItems.is(OffhandItemMode.GoldenApple)) {
@@ -324,14 +282,12 @@ public class InvManager extends Module {
                     ItemStack goldenAppleStack = mc.player.getInventory().getMainStacks().get(slot);
                     if (offHand.getCount() + goldenAppleStack.getCount() <= 64) {
                         if (slot < 9) {
-                            mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot + 36, 0, SlotActionType.PICKUP, mc.player);
+                            this.clickSlotSpoof(slot + 36, 0, SlotActionType.PICKUP);
                         } else {
-                            mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot, 0, SlotActionType.PICKUP, mc.player);
+                            this.clickSlotSpoof(slot, 0, SlotActionType.PICKUP);
                         }
 
-                        this.inventoryOpen = true;
                         this.clickOffHand = true;
-                        timer.reset();
                     }
                 } else {
                     this.swapOffHand(slot);
@@ -538,17 +494,15 @@ public class InvManager extends Module {
                 }
             }
         }
+
     }
 
     private void swapOffHand(int slot) {
         if (slot < 9) {
-            mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot + 36, 40, SlotActionType.SWAP, mc.player);
+            this.clickSlotSpoof(slot + 36, 40, SlotActionType.SWAP);
         } else {
-            mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot, 40, SlotActionType.SWAP, mc.player);
+            this.clickSlotSpoof(slot, 40, SlotActionType.SWAP);
         }
-
-        this.inventoryOpen = true;
-        timer.reset();
     }
 
     private void throwItem(ItemStack item) {
@@ -556,13 +510,10 @@ public class InvManager extends Module {
             int itemSlot = InvHelper.getItemStackSlot(item);
             if (itemSlot != -1) {
                 if (itemSlot < 9) {
-                    mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, itemSlot + 36, 1, SlotActionType.THROW, mc.player);
+                    this.clickSlotSpoof(itemSlot + 36, 1, SlotActionType.THROW);
                 } else {
-                    mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, itemSlot, 1, SlotActionType.THROW, mc.player);
+                    this.clickSlotSpoof(itemSlot, 1, SlotActionType.THROW);
                 }
-
-                this.inventoryOpen = true;
-                timer.reset();
             }
         }
     }
@@ -576,13 +527,10 @@ public class InvManager extends Module {
             int bestItemSlot = InvHelper.getItemStackSlot(bestItem);
             if (bestItemSlot != -1 && bestItemSlot != targetSlot) {
                 if (bestItemSlot < 9) {
-                    mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot + 36, targetSlot, SlotActionType.SWAP, mc.player);
+                    this.clickSlotSpoof(bestItemSlot + 36, targetSlot, SlotActionType.SWAP);
                 } else {
-                    mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot, targetSlot, SlotActionType.SWAP, mc.player);
+                    this.clickSlotSpoof(bestItemSlot, targetSlot, SlotActionType.SWAP);
                 }
-
-                this.inventoryOpen = true;
-                timer.reset();
             }
         }
     }
@@ -595,15 +543,23 @@ public class InvManager extends Module {
                 ItemStack bestItemStack = mc.player.getInventory().getMainStacks().get(bestItemSlot);
                 if (currentSlot.getItem() != item || currentSlot.getCount() < bestItemStack.getCount()) {
                     if (bestItemSlot < 9) {
-                        mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot + 36, targetSlot, SlotActionType.SWAP, mc.player);
+                        this.clickSlotSpoof(bestItemSlot + 36, targetSlot, SlotActionType.SWAP);
                     } else {
-                        mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot, targetSlot, SlotActionType.SWAP, mc.player);
+                        this.clickSlotSpoof(bestItemSlot, targetSlot, SlotActionType.SWAP);
                     }
-
-                    this.inventoryOpen = true;
-                    timer.reset();
                 }
             }
         }
+    }
+
+    private void clickSlotSpoof(int slot, int button, SlotActionType actionType) {
+        InvMove invMove = Sakura.MODULES.getModule(InvMove.class);
+        if (invMove != null && invMove.isEnabled()) {
+            if (!invMove.prepareInventoryAction()) {
+                return;
+            }
+        }
+        mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot, button, actionType, mc.player);
+        timer.reset();
     }
 }
