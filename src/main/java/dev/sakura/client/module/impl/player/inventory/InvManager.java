@@ -8,6 +8,7 @@ import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.gui.clickgui.ClickGuiScreen;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.module.impl.movement.InvMove;
 import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.math.MathUtil;
@@ -257,6 +258,15 @@ public class InvManager extends Module {
         }
 
         if (mc.currentScreen instanceof HandledScreen<?> container && container.getScreenHandler().syncId != mc.player.playerScreenHandler.syncId) {
+            return;
+        }
+
+        InvMove invMove = Sakura.MODULES.getModule(InvMove.class);
+        if (invMove != null
+                && invMove.isEnabled()
+                && mc.currentScreen instanceof InventoryScreen
+                && !invMove.jumped) {
+            this.clickOffHand = false;
             return;
         }
 
@@ -558,10 +568,13 @@ public class InvManager extends Module {
     }
 
     private void swapItem(int targetSlot, ItemStack bestItem) {
+        if (bestItem == null) {
+            return;
+        }
         ItemStack currentSlot = mc.player.getInventory().getMainStacks().get(targetSlot);
-        if (InvHelper.isItemValid(currentSlot) && bestItem != currentSlot && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
+        if (bestItem != currentSlot && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
             int bestItemSlot = InvHelper.getItemStackSlot(bestItem);
-            if (bestItemSlot != -1) {
+            if (bestItemSlot != -1 && bestItemSlot != targetSlot) {
                 if (bestItemSlot < 9) {
                     mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, bestItemSlot + 36, targetSlot, SlotActionType.SWAP, mc.player);
                 } else {
@@ -576,9 +589,9 @@ public class InvManager extends Module {
 
     private void swapItem(int targetSlot, Item item) {
         ItemStack currentSlot = mc.player.getInventory().getMainStacks().get(targetSlot);
-        if (InvHelper.isItemValid(currentSlot) && timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
+        if (timer.passedMillise(MathUtil.getRandom(this.minDelay.get(), this.maxDelay.get()))) {
             int bestItemSlot = InvHelper.getItemSlot(item);
-            if (bestItemSlot != -1) {
+            if (bestItemSlot != -1 && bestItemSlot != targetSlot) {
                 ItemStack bestItemStack = mc.player.getInventory().getMainStacks().get(bestItemSlot);
                 if (currentSlot.getItem() != item || currentSlot.getCount() < bestItemStack.getCount()) {
                     if (bestItemSlot < 9) {

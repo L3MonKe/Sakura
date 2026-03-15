@@ -1,17 +1,17 @@
 package dev.sakura.client.gui.mainmenu;
 
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
-import dev.sakura.client.manager.Managers;
 import dev.sakura.client.utils.render.ScreenWhiteTransition;
 import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.input.KeyInput;
 import net.minecraft.client.gui.screen.multiplayer.MultiplayerScreen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.screen.world.SelectWorldScreen;
+import net.minecraft.client.input.KeyInput;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
@@ -167,7 +167,7 @@ public class NewMainMenuScreen extends Screen {
             }
 
             NanoVGHelper.drawRect(0, 0, width, height, new Color(0, 0, 0, 24));
-            
+
             drawWhiteFadeBackground(vg, scale);
 
             float logoW = Math.min(width * 0.42f, 860f * scale) * logoSizeScale;
@@ -602,7 +602,7 @@ public class NewMainMenuScreen extends Screen {
                 // 下划线
                 float lineY = y + fontSize + 7f * scale;
                 float lineHeight = 2.0f * scale;
-                
+
                 NVGPaint glowPaint = NVGPaint.calloc(stack);
                 NVGColor trans = NVGColor.malloc(stack);
                 NanoVG.nvgRGBA((byte) 0, (byte) 0, (byte) 0, (byte) 0, trans);
@@ -624,16 +624,16 @@ public class NewMainMenuScreen extends Screen {
                 for (int i = 0; i < layers; i++) {
                     float t = (float) i / (layers - 1);
                     Color layerCol = interpolateColor(topColor, bottomColor, t);
-                    
+
                     NanoVG.nvgSave(vg);
                     // 精确裁剪每一层
                     NanoVG.nvgIntersectScissor(vg, x - 10, realTop + i * stepH, textW + 20, stepH + 0.5f);
-                    
+
                     NVGColor nvgLayerCol = NVGColor.malloc(stack);
                     NanoVG.nvgRGBA((byte) layerCol.getRed(), (byte) layerCol.getGreen(), (byte) layerCol.getBlue(), (byte) layerCol.getAlpha(), nvgLayerCol);
                     NanoVG.nvgFillColor(vg, nvgLayerCol);
                     NanoVG.nvgText(vg, x, y, text);
-                    
+
                     NanoVG.nvgRestore(vg);
                 }
             }

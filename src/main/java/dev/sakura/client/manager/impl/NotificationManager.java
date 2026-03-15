@@ -1,6 +1,8 @@
 package dev.sakura.client.manager.impl;
 
+import dev.sakura.client.Sakura;
 import dev.sakura.client.module.impl.client.ClickGui;
+import dev.sakura.client.module.impl.hud.NotificationHud;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
@@ -12,6 +14,7 @@ import org.joml.Matrix3x2fStack;
 import org.lwjgl.nanovg.NVGColor;
 import org.lwjgl.nanovg.NVGPaint;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
@@ -19,12 +22,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import javax.imageio.ImageIO;
 
 import static org.lwjgl.nanovg.NanoVG.*;
-
-import dev.sakura.client.Sakura;
-import dev.sakura.client.module.impl.hud.NotificationHud;
 
 public class NotificationManager {
     public enum RenderMode {

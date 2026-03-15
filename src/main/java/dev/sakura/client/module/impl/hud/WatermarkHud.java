@@ -32,7 +32,7 @@ public class WatermarkHud extends HudModule {
         Sakura
     }
 
-    private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Sakura);
+    private final EnumValue<ListMode> mode = new EnumValue<>("Mode", "模式", ListMode.Xylitol);
     private final NumberValue<Double> hudScale = new NumberValue<>("Scale", "缩放", 1.0, 0.5, 2.0, 0.1);
 
     // Shared Settings
@@ -539,13 +539,13 @@ public class WatermarkHud extends HudModule {
         }
 
         if (sakuraTextShadow.get()) {
-             Color c1 = xylitolSakuraColor1.get();
-             Color c2 = xylitolSakuraColor2.get();
-             Color avgColor = new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2, (c1.getBlue() + c2.getBlue()) / 2);
-             Color coloredShadow = new Color((int)(avgColor.getRed() * 0.7), (int)(avgColor.getGreen() * 0.7), (int)(avgColor.getBlue() * 0.7), 255);
-             
-             float dist = sakuraTextShadowDistance.get().floatValue() * s;
-             NanoVGHelper.drawString(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
+            Color c1 = xylitolSakuraColor1.get();
+            Color c2 = xylitolSakuraColor2.get();
+            Color avgColor = new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2, (c1.getBlue() + c2.getBlue()) / 2);
+            Color coloredShadow = new Color((int) (avgColor.getRed() * 0.5), (int) (avgColor.getGreen() * 0.5), (int) (avgColor.getBlue() * 0.5), 255);
+
+            float dist = sakuraTextShadowDistance.get().floatValue() * s;
+            NanoVGHelper.drawString(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
         }
 
         renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);

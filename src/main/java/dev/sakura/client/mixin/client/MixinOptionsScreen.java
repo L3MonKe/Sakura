@@ -1,8 +1,8 @@
 package dev.sakura.client.mixin.client;
 
 import dev.sakura.client.Sakura;
-import dev.sakura.client.utils.render.ScreenWhiteTransition;
 import dev.sakura.client.utils.render.NewMenuMusicController;
+import dev.sakura.client.utils.render.ScreenWhiteTransition;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.screen.option.OptionsScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
@@ -21,21 +21,21 @@ public class MixinOptionsScreen extends Screen {
     @Inject(method = "init", at = @At("TAIL"))
     private void addCustomButton(CallbackInfo ci) {
         this.addDrawableChild(ButtonWidget.builder(
-            Text.of(Sakura.CONFIG.getClientConfig().useNewMainMenu ? "MainMenu: Sakuranotoki" : "MainMenu: Sakura"),
-            (button) -> {
-                boolean wasNew = Sakura.CONFIG.getClientConfig().useNewMainMenu;
-                Sakura.CONFIG.getClientConfig().customMainMenu = true;
-                Sakura.CONFIG.getClientConfig().useNewMainMenu = !Sakura.CONFIG.getClientConfig().useNewMainMenu;
-                Sakura.CONFIG.saveDefaultConfig();
-                button.setMessage(Text.of(Sakura.CONFIG.getClientConfig().useNewMainMenu ? "MainMenu: Sakuranotoki" : "MainMenu: Sakura"));
-                if (!wasNew && Sakura.CONFIG.getClientConfig().useNewMainMenu && this.client != null && this.client.world == null) {
-                    NewMenuMusicController.requestDelayNextStart();
-                    ScreenWhiteTransition.clearNewMenuFadeRequest();
-                    ScreenWhiteTransition.startToAction(Sakura::redirectToMainMenu, 800L);
-                    return;
+                Text.of(Sakura.CONFIG.getClientConfig().useNewMainMenu ? "MainMenu: Sakuranotoki" : "MainMenu: Sakura"),
+                (button) -> {
+                    boolean wasNew = Sakura.CONFIG.getClientConfig().useNewMainMenu;
+                    Sakura.CONFIG.getClientConfig().customMainMenu = true;
+                    Sakura.CONFIG.getClientConfig().useNewMainMenu = !Sakura.CONFIG.getClientConfig().useNewMainMenu;
+                    Sakura.CONFIG.saveDefaultConfig();
+                    button.setMessage(Text.of(Sakura.CONFIG.getClientConfig().useNewMainMenu ? "MainMenu: Sakuranotoki" : "MainMenu: Sakura"));
+                    if (!wasNew && Sakura.CONFIG.getClientConfig().useNewMainMenu && this.client != null && this.client.world == null) {
+                        NewMenuMusicController.requestDelayNextStart();
+                        ScreenWhiteTransition.clearNewMenuFadeRequest();
+                        ScreenWhiteTransition.startToAction(Sakura::redirectToMainMenu, 800L);
+                        return;
+                    }
+                    applyMenuSwitch();
                 }
-                applyMenuSwitch();
-            }
         ).dimensions(10, 10, 160, 20).build());
     }
 

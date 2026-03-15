@@ -15,10 +15,12 @@ import java.awt.*;
 
 public class NotificationHud extends HudModule {
     public enum AlignedEnum {LEFT, RIGHT}
+
     public enum SakuraAnimationModeEnum {Classic, Enhanced}
+
     public enum NotificationShadowModeEnum {Solid, Gradient}
 
-    private final EnumValue<NotificationManager.RenderMode> mode = new EnumValue<>("Mode", "模式", NotificationManager.RenderMode.Sakura);
+    private final EnumValue<NotificationManager.RenderMode> mode = new EnumValue<>("Mode", "模式", NotificationManager.RenderMode.Xylitol1);
     private final Value<Double> maxWidthConfig = new NumberValue<>("MaxWidth", "最大宽度", 300.0, 100.0, 500.0, 10.0, () -> !mode.is(NotificationManager.RenderMode.Xylitol) && !mode.is(NotificationManager.RenderMode.Xylitol1));
     private final Value<Color> primaryColorConfig = new ColorValue("PrimaryColor", "主颜色", new Color(255, 183, 197, 255), () -> !mode.is(NotificationManager.RenderMode.Xylitol) && !mode.is(NotificationManager.RenderMode.Xylitol1));
     private final Value<Color> backgroundColorConfig = new ColorValue("BackgroundColor", "背景颜色", new Color(0, 0, 0, 180), () -> !mode.is(NotificationManager.RenderMode.Xylitol) && !mode.is(NotificationManager.RenderMode.Xylitol1));

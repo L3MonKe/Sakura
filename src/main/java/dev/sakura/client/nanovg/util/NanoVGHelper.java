@@ -9,7 +9,6 @@ import org.lwjgl.system.MemoryStack;
 import java.awt.*;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.nio.IntBuffer;
 
 import static org.lwjgl.nanovg.NanoVG.*;
 

@@ -49,9 +49,11 @@ public class ModuleManager {
         // Movement
         add(new AutoSprint());
         add(new AutoStuck());
+        add(new Blink());
         add(new BlinkNoSlow());
         add(new Flight());
         add(new GuiMove());
+        add(new InvMove());
         add(new FastWeb());
         add(new JumpCooldown());
         add(new KeepSprint());

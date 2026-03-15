@@ -29,11 +29,9 @@ import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.network.packet.s2c.play.EntityStatusS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.shape.VoxelShape;
 
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -106,12 +104,12 @@ public class Criticals extends Module {
         float yaw = mc.player.getYaw();
         // Calculate motion yaw from velocity
         double motionYaw = Math.toDegrees(Math.atan2(mc.player.getVelocity().z, mc.player.getVelocity().x)) - 90;
-        
+
         // Normalize angle difference to -180 to 180
         double diff = Math.abs(yaw - motionYaw);
         diff = diff % 360;
         if (diff > 180) diff = 360 - diff;
-        
+
         // If angle difference is > 135, player is moving backwards (180 is straight back)
         return diff > 135;
     }

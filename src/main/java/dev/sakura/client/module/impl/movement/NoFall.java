@@ -23,8 +23,8 @@ import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
-import net.minecraft.util.Hand;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -126,7 +126,7 @@ public class NoFall extends Module {
             InvUtil.swapBack();
             pendingSwapBack = false;
         }
-        
+
         if (mode.is(Mode.MLG)) {
             boolean scaffoldEnabled = isScaffoldEnabled();
             boolean scaffoldRescue = shouldScaffoldRescue();
@@ -150,7 +150,7 @@ public class NoFall extends Module {
                         if (!isFacing(rotation, 2.0f, 2.5f)) {
                             return;
                         }
-                        
+
                         InvUtil.swap(bucket.slot(), true);
                         if (interactTimer.passedMillise(interactDelay.get()) && useItemLegit(rotation)) {
                             mc.player.swingHand(Hand.MAIN_HAND);
@@ -160,14 +160,14 @@ public class NoFall extends Module {
                         }
                     }
                 } else {
-                     if (InvUtil.testInHands(Items.WATER_BUCKET)) {
-                         mlgCompleted = true;
-                         placedWaterPos = null;
-                     }
+                    if (InvUtil.testInHands(Items.WATER_BUCKET)) {
+                        mlgCompleted = true;
+                        placedWaterPos = null;
+                    }
                 }
                 return;
             }
-            
+
             if (scaffoldEnabled && !scaffoldRescue) {
                 resetPending();
                 return;
@@ -179,7 +179,7 @@ public class NoFall extends Module {
                 if (!isFacing(lockedRotation, 1.6f, 2.0f)) {
                     return;
                 }
-                
+
                 if (shouldInteract && pendingSlot != -1) {
                     InvUtil.swap(pendingSlot, true);
                     if (interactTimer.passedMillise(interactDelay.get()) && useItemLegit(lockedRotation)) {
@@ -201,41 +201,41 @@ public class NoFall extends Module {
             if (isFalling()) {
                 mlgCompleted = false;
                 placedWaterPos = null;
-                
+
                 FindItemResult waterBucket = InvUtil.findInHotbar(Items.WATER_BUCKET);
-                
+
                 if (waterBucket.found()) {
                     BlockPos bestPos = getBestPos();
                     if (bestPos != null) {
                         double dist = mc.player.getEyePos().distanceTo(bestPos.toCenterPos().add(0, 0.5, 0));
-                        
+
                         if (dist < 10) {
                             Vec3d targetVec = new Vec3d(bestPos.getX() + 0.5, bestPos.getY() + 1.0, bestPos.getZ() + 0.5);
                             Rotation rotation = RotationUtil.calculate(targetVec);
-                            
-                            Managers.ROTATION.setRotations(rotation, 180, MovementFix.NORMAL, Priority.High);
-                            
-                            if (rotation.pitch > 45) {
-                                 Vec3d eyesPos = mc.player.getEyePos();
-                                 BlockPos neighbor = bestPos.down();
-                                 
-                                 double hitX = MathHelper.clamp(eyesPos.x, neighbor.getX(), neighbor.getX() + 1.0);
-                                 double hitZ = MathHelper.clamp(eyesPos.z, neighbor.getZ(), neighbor.getZ() + 1.0);
-                                 Vec3d hitVec = new Vec3d(hitX, neighbor.getY() + 1.0, hitZ);
-                                 
-                                 if (eyesPos.distanceTo(hitVec) > 4.5) {
-                                     return;
-                                 }
-                                 
-                                 Rotation preciseRotation = RotationUtil.calculate(hitVec);
-                                 Managers.ROTATION.setRotations(preciseRotation, 180, MovementFix.NORMAL, Priority.High);
 
-                                 pendingSlot = waterBucket.slot();
-                                 shouldInteract = true;
-                                 pendingBestPos = bestPos;
-                                 
-                                 lockedRotation = preciseRotation;
-                                 waitingForRotation = true;
+                            Managers.ROTATION.setRotations(rotation, 180, MovementFix.NORMAL, Priority.High);
+
+                            if (rotation.pitch > 45) {
+                                Vec3d eyesPos = mc.player.getEyePos();
+                                BlockPos neighbor = bestPos.down();
+
+                                double hitX = MathHelper.clamp(eyesPos.x, neighbor.getX(), neighbor.getX() + 1.0);
+                                double hitZ = MathHelper.clamp(eyesPos.z, neighbor.getZ(), neighbor.getZ() + 1.0);
+                                Vec3d hitVec = new Vec3d(hitX, neighbor.getY() + 1.0, hitZ);
+
+                                if (eyesPos.distanceTo(hitVec) > 4.5) {
+                                    return;
+                                }
+
+                                Rotation preciseRotation = RotationUtil.calculate(hitVec);
+                                Managers.ROTATION.setRotations(preciseRotation, 180, MovementFix.NORMAL, Priority.High);
+
+                                pendingSlot = waterBucket.slot();
+                                shouldInteract = true;
+                                pendingBestPos = bestPos;
+
+                                lockedRotation = preciseRotation;
+                                waitingForRotation = true;
                             }
                         }
                     }
@@ -255,7 +255,7 @@ public class NoFall extends Module {
     private BlockPos getBestPos() {
         Vec3d velocity = mc.player.getVelocity();
         Vec3d predictedPos = new Vec3d(mc.player.getX() + velocity.x * 3, mc.player.getY(), mc.player.getZ() + velocity.z * 3);
-        
+
         BlockPos base = BlockPos.ofFloored(predictedPos.x, mc.player.getY() - 1, predictedPos.z);
         BlockPos direct = BlockPos.ofFloored(mc.player.getX(), mc.player.getY() - 1, mc.player.getZ());
 
@@ -265,14 +265,14 @@ public class NoFall extends Module {
         if (!mc.world.getBlockState(direct).isAir()) {
             return direct.up();
         }
-        
+
         for (int i = 0; i <= 20; i++) {
             BlockPos check = base.down(i);
             if (!mc.world.getBlockState(check).isAir()) {
                 return check.up();
             }
         }
-        
+
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 if (x == 0 && z == 0) continue;
@@ -284,7 +284,7 @@ public class NoFall extends Module {
                 }
             }
         }
-        
+
         BlockPos fallbackBase = BlockPos.ofFloored(mc.player.getX(), mc.player.getY() - 1, mc.player.getZ());
         for (int i = 0; i <= 20; i++) {
             BlockPos check = fallbackBase.down(i);
@@ -292,13 +292,13 @@ public class NoFall extends Module {
                 return check.up();
             }
         }
-        
+
         return null;
     }
 
     private BlockPos getWaterPos() {
         BlockPos base = BlockPos.ofFloored(mc.player.getX(), mc.player.getY(), mc.player.getZ());
-        
+
         for (int x = -2; x <= 2; x++) {
             for (int z = -2; z <= 2; z++) {
                 for (int y = -2; y <= 2; y++) {
@@ -307,11 +307,11 @@ public class NoFall extends Module {
                 }
             }
         }
-        
+
         Vec3d velocity = mc.player.getVelocity();
         Vec3d predicted = new Vec3d(mc.player.getX() + velocity.x * 2, mc.player.getY() + velocity.y * 2, mc.player.getZ() + velocity.z * 2);
         BlockPos predictedBase = BlockPos.ofFloored(predicted);
-        
+
         for (int x = -1; x <= 1; x++) {
             for (int z = -1; z <= 1; z++) {
                 for (int y = -1; y <= 1; y++) {
@@ -320,7 +320,7 @@ public class NoFall extends Module {
                 }
             }
         }
-        
+
         return null;
     }
 
