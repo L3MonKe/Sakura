@@ -47,9 +47,8 @@ public class ModuleManager {
         add(new TpAura());
 
         // Movement
-        add(new AutoSprint());
         add(new AutoStuck());
-        add(new Blink());
+        //add(new Blink());
         add(new BlinkNoSlow());
         add(new Flight());
         add(new GuiMove());
@@ -61,10 +60,11 @@ public class ModuleManager {
         add(new NoSlow());
         add(new SafeWalk());
         add(new Scaffold());
+        add(new Speed());
+        add(new Sprint());
         add(new Stuck());
         add(new Velocity());
         add(new TargetStrafe());
-        add(new Speed());
 
         // Player
         add(new AntiHunger());

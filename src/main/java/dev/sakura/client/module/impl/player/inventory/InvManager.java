@@ -11,16 +11,16 @@ import dev.sakura.client.module.impl.movement.Scaffold;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.MoveUtil;
+import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.*;
-import net.minecraft.network.packet.c2s.play.*;
+import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.screen.slot.SlotActionType;
 import org.apache.commons.lang3.tuple.Pair;
@@ -32,6 +32,11 @@ import java.util.stream.IntStream;
 public class InvManager extends Module {
     public InvManager() {
         super("InvManager", "背包管理", Category.Player);
+    }
+
+    private enum Mode {
+        Silent,
+        Inventory
     }
 
     private enum OffhandItemMode {
@@ -48,11 +53,11 @@ public class InvManager extends Module {
         PunchBow
     }
 
+    //todo:private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Silent);
     private final NumberValue<Double> minDelay = new NumberValue<>("Min Delay", "最小延迟", 90.0, 0.0, 500.0, 5.0);
     private final NumberValue<Double> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110.0, 0.0, 500.0, 5.0);
     private final EnumValue<OffhandItemMode> offhandItems = new EnumValue<>("Offhand Items", "副手物品", OffhandItemMode.Projectile);
     private final BoolValue autoArmor = new BoolValue("Auto Armor", "自动穿甲", true);
-    private final BoolValue inventoryOnly = new BoolValue("Inventory Only", "仅背包界面", true);
     private final BoolValue sortWhileMoving = new BoolValue("Sort While Moving", "移动时整理", true);
     private final BoolValue switchSword = new BoolValue("Switch Sword", "切换剑", true);
     private final NumberValue<Integer> swordSlot = new NumberValue<>("Sword Slot", "剑槽位", 1, 1, 9, 1, switchSword::get);
@@ -560,6 +565,7 @@ public class InvManager extends Module {
             }
         }
         mc.interactionManager.clickSlot(mc.player.playerScreenHandler.syncId, slot, button, actionType, mc.player);
+        PacketUtil.sendPacketNoEvent(new CloseHandledScreenC2SPacket(mc.player.currentScreenHandler.syncId));
         timer.reset();
     }
 }

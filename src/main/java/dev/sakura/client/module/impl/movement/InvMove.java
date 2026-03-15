@@ -9,7 +9,6 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.client.gui.screen.ingame.InventoryScreen;
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
@@ -27,7 +26,6 @@ public class InvMove extends Module {
     public BoolValue onlyValue = new BoolValue("OnlySpoof", "", false);
 
     public boolean peek;
-    public boolean jumped;
     private boolean resumeSprint;
     private int sprintSuppressTicks;
     private int inventoryActionDelayTicks;
@@ -35,7 +33,6 @@ public class InvMove extends Module {
     @Override
     public void onEnable() {
         peek = false;
-        jumped = false;
         resumeSprint = false;
         sprintSuppressTicks = 0;
         inventoryActionDelayTicks = 0;
@@ -63,9 +60,9 @@ public class InvMove extends Module {
         }
 
         if (onlyValue.get()) {
-            peek = mc.currentScreen != null && !(mc.currentScreen instanceof ChatScreen);
+            peek = mc.currentScreen instanceof InventoryScreen;
         } else {
-            if (mc.currentScreen != null && !(mc.currentScreen instanceof ChatScreen)) {
+            if (mc.currentScreen instanceof InventoryScreen) {
                 KeyBinding[] key = {mc.options.forwardKey, mc.options.backKey, mc.options.leftKey, mc.options.rightKey, mc.options.jumpKey};
                 if (sprintValue.get()) {
                     setKeyPressed(mc.options.sprintKey);
@@ -85,19 +82,6 @@ public class InvMove extends Module {
         if (event.getType() != EventType.SEND) return;
 
         Packet<?> packet = event.getPacket();
-        if (mc.currentScreen instanceof InventoryScreen) {
-            if (!jumped) {
-                if (mc.player.isOnGround()) {
-                    mc.player.jump();
-                    jumped = true;
-                }
-            }
-            if (jumped) {
-                if (mc.player.isOnGround()) {
-                    PacketUtil.sendPacketNoEvent(new CloseHandledScreenC2SPacket(mc.player.playerScreenHandler.syncId));
-                }
-            }
-        }
         if (packet instanceof ClickSlotC2SPacket || packet instanceof CloseHandledScreenC2SPacket) {
             boolean wasSprinting = mc.player.isSprinting();
             boolean keyPressed = mc.options.sprintKey.isPressed();
@@ -107,9 +91,6 @@ public class InvMove extends Module {
                 sprintSuppressTicks = 4;
                 resumeSprint = wasSprinting && mc.currentScreen instanceof InventoryScreen && sprintValue.get();
             }
-        }
-        if (packet instanceof CloseHandledScreenC2SPacket) {
-            jumped = false;
         }
     }
 
@@ -137,14 +118,20 @@ public class InvMove extends Module {
         if (mc.player == null) {
             return false;
         }
+        if (sprintSuppressTicks > 0) {
+            return inventoryActionDelayTicks <= 0;
+        }
         boolean wasSprinting = mc.player.isSprinting();
         boolean keyPressed = mc.options.sprintKey.isPressed();
-        if (wasSprinting || keyPressed) {
+        if (wasSprinting) {
             suppressSprintForTicks(6);
             if (inventoryActionDelayTicks < 1) {
                 inventoryActionDelayTicks = 1;
             }
             return false;
+        }
+        if (keyPressed) {
+            suppressSprintForTicks(2);
         }
         return inventoryActionDelayTicks <= 0;
     }
