@@ -38,12 +38,14 @@ public class NoFall extends Module {
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Packet);
     private final NumberValue<Integer> swapDelay = new NumberValue<>("Swap Back Delay", "切回延迟", 200, 0, 1000, 10);
     private final NumberValue<Integer> interactDelay = new NumberValue<>("Interact Delay", "交互延迟", 60, 0, 300, 5);
+    private final NumberValue<Integer> collectDelayTicks = new NumberValue<>("Collect Delay Ticks", "收水延后Tick", 2, 0, 10, 1);
     private final NumberValue<Double> scaffoldRescueFall = new NumberValue<>("Scaffold Rescue Fall", "搭路自救距离", 5.5, 3.0, 12.0, 0.1);
     private boolean mlgCompleted = true;
     private BlockPos placedWaterPos = null;
     private final TimerUtil swapTimer = new TimerUtil();
     private final TimerUtil interactTimer = new TimerUtil();
     private boolean pendingSwapBack = false;
+    private int quickCollectDelayTicks = 0;
     private int quickCollectTicks = 0;
 
     // Post tick interaction
@@ -69,6 +71,7 @@ public class NoFall extends Module {
         mlgCompleted = true;
         placedWaterPos = null;
         pendingSwapBack = false;
+        quickCollectDelayTicks = 0;
         quickCollectTicks = 0;
         swapTimer.reset();
         interactTimer.reset();
@@ -80,6 +83,7 @@ public class NoFall extends Module {
         mlgCompleted = true;
         placedWaterPos = null;
         pendingSwapBack = false;
+        quickCollectDelayTicks = 0;
         quickCollectTicks = 0;
         swapTimer.reset();
         interactTimer.reset();
@@ -143,7 +147,9 @@ public class NoFall extends Module {
                 mc.options.sprintKey.setPressed(false);
             }
 
-            if (quickCollectTicks > 0) {
+            if (quickCollectDelayTicks > 0) {
+                quickCollectDelayTicks--;
+            } else if (quickCollectTicks > 0) {
                 quickCollectTicks--;
                 if (tryQuickCollectWater()) {
                     return;
@@ -151,6 +157,10 @@ public class NoFall extends Module {
             }
 
             if ((mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted) {
+                if (quickCollectDelayTicks > 0) {
+                    return;
+                }
+
                 if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
                     completeMlgCycle();
                     return;
@@ -209,6 +219,7 @@ public class NoFall extends Module {
                             placedWaterPos = pendingBestPos;
                         }
 
+                        quickCollectDelayTicks = collectDelayTicks.get();
                         quickCollectTicks = 5;
                         resetPending();
                     }
@@ -296,6 +307,7 @@ public class NoFall extends Module {
         mlgCompleted = true;
         placedWaterPos = null;
         pendingSwapBack = false;
+        quickCollectDelayTicks = 0;
         quickCollectTicks = 0;
         resetPending();
     }
