@@ -46,7 +46,6 @@ public class NoFall extends Module {
     private final TimerUtil interactTimer = new TimerUtil();
     private boolean pendingSwapBack = false;
     private int quickCollectDelayTicks = 0;
-    private int quickCollectTicks = 0;
 
     // Post tick interaction
     private boolean shouldInteract = false;
@@ -72,7 +71,6 @@ public class NoFall extends Module {
         placedWaterPos = null;
         pendingSwapBack = false;
         quickCollectDelayTicks = 0;
-        quickCollectTicks = 0;
         swapTimer.reset();
         interactTimer.reset();
         resetPending();
@@ -84,7 +82,6 @@ public class NoFall extends Module {
         placedWaterPos = null;
         pendingSwapBack = false;
         quickCollectDelayTicks = 0;
-        quickCollectTicks = 0;
         swapTimer.reset();
         interactTimer.reset();
         resetPending();
@@ -147,20 +144,11 @@ public class NoFall extends Module {
                 mc.options.sprintKey.setPressed(false);
             }
 
-            if (quickCollectDelayTicks > 0) {
-                quickCollectDelayTicks--;
-            } else if (quickCollectTicks > 0) {
-                quickCollectTicks--;
-                if (tryQuickCollectWater()) {
-                    return;
-                }
+            if (tryContinuousCollectWater()) {
+                return;
             }
 
             if ((mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted) {
-                if (quickCollectDelayTicks > 0) {
-                    return;
-                }
-
                 if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
                     completeMlgCycle();
                     return;
@@ -220,7 +208,6 @@ public class NoFall extends Module {
                         }
 
                         quickCollectDelayTicks = collectDelayTicks.get();
-                        quickCollectTicks = 5;
                         resetPending();
                     }
                 }
@@ -308,11 +295,18 @@ public class NoFall extends Module {
         placedWaterPos = null;
         pendingSwapBack = false;
         quickCollectDelayTicks = 0;
-        quickCollectTicks = 0;
         resetPending();
     }
 
-    private boolean tryQuickCollectWater() {
+    private boolean tryContinuousCollectWater() {
+        if (waitingForRotation || shouldInteract) return false;
+        if (isFalling() && !mc.player.isTouchingWater() && !mc.player.isInFluid()) return false;
+
+        if (quickCollectDelayTicks > 0) {
+            quickCollectDelayTicks--;
+            return false;
+        }
+
         if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
             completeMlgCycle();
             return true;

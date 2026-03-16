@@ -10,6 +10,9 @@ import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
+import dev.sakura.client.utils.animations.Animation;
+import dev.sakura.client.utils.animations.Direction;
+import dev.sakura.client.utils.animations.impl.EaseOutSine;
 import dev.sakura.client.values.Value;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
@@ -75,6 +78,9 @@ public class ScaffoldBlocksHud extends HudModule {
     private final Value<Boolean> blocksGlow = new BoolValue("BlocksGlow", "BlocksGlow", false);
     private final Value<Double> blocksGlowRange = new NumberValue<>("BlocksGlowRange", "BlocksGlow范围", 4.0, 0.0, 20.0, 0.5, blocksGlow::get);
     private final Value<Integer> blocksGlowIntensity = new NumberValue<>("BlocksGlowIntensity", "BlocksGlow强度", 2, 1, 10, 1, blocksGlow::get);
+    private final Animation visibilityAnimation = new EaseOutSine(300, 1.0, Direction.BACKWARDS);
+    private int cachedBlocks = 0;
+    private ItemStack cachedScaffoldBlock = ItemStack.EMPTY;
 
     public ScaffoldBlocksHud() {
         super("ScaffoldBlocks", "搭路方块", 10, 80);
@@ -84,20 +90,32 @@ public class ScaffoldBlocksHud extends HudModule {
     public void onRender(DrawContext context) {
         float scale = hudScale.get().floatValue();
         int blocks = getHotbarBlockCount();
+        ItemStack currentScaffoldBlock = getCurrentScaffoldBlock();
         boolean editorPreview = Sakura.MODULES.getModule(HudEditor.class).isEnabled();
         Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
         boolean scaffoldEnabled = scaffold != null && scaffold.isEnabled();
+        boolean visible = editorPreview || scaffoldEnabled;
 
-        if (!editorPreview && !scaffoldEnabled) {
+        visibilityAnimation.setDirection(visible ? Direction.FORWARDS : Direction.BACKWARDS);
+        float animValue = visibilityAnimation.getOutput().floatValue();
+        if (!visible && animValue <= 0.01f) {
             width = 0;
             height = 0;
             return;
         }
+        float animScale = Math.max(0.01f, animValue);
 
-        int displayBlocks = scaffoldEnabled ? blocks : 99;
+        if (visible) {
+            cachedBlocks = blocks;
+            if (!currentScaffoldBlock.isEmpty()) {
+                cachedScaffoldBlock = currentScaffoldBlock;
+            }
+        }
+
+        int displayBlocks = scaffoldEnabled ? blocks : (editorPreview ? 99 : cachedBlocks);
         String numberText = String.valueOf(displayBlocks);
         String blocksText = ClickGui.language.is(ClickGui.LanguageMode.Chinese) ? "方块" : "Blocks";
-        ItemStack currentScaffoldBlock = getCurrentScaffoldBlock();
+        ItemStack renderScaffoldBlock = currentScaffoldBlock.isEmpty() ? cachedScaffoldBlock : currentScaffoldBlock;
 
         int numberFont = getFontId(numberFontMode.get());
         int blocksFont = getFontId(blocksFontMode.get());
@@ -121,29 +139,41 @@ public class ScaffoldBlocksHud extends HudModule {
         float boxWidth = Math.max(68f * scale, textWidth + 20f * scale);
         float boxHeight = Math.max(50f * scale, topPadding + itemSize + centerGap + textHeight + bottomPadding);
         float boxRadius = radius.get().floatValue() * scale;
+        float centerX = x + boxWidth / 2f;
+        float centerY = y + boxHeight / 2f;
+        float animatedWidth = boxWidth * animScale;
+        float animatedHeight = boxHeight * animScale;
+        float animatedX = centerX - animatedWidth / 2f;
+        float animatedY = centerY - animatedHeight / 2f;
+        float animatedRadius = boxRadius * animScale;
         if (shadow.get()) {
-            float[] rects = new float[]{x, y, boxWidth, boxHeight};
-            float[] radii = new float[]{boxRadius};
-            float range = shadowRange.get().floatValue() * scale;
-            float strength = shadowStrength.get().floatValue();
+            float[] rects = new float[]{animatedX, animatedY, animatedWidth, animatedHeight};
+            float[] radii = new float[]{animatedRadius};
+            float range = shadowRange.get().floatValue() * scale * animScale;
+            float strength = shadowStrength.get().floatValue() * animValue;
 
             if (shadowMode.is(ShadowMode.Gradient)) {
                 Color start = ClickGui.color(1);
                 Color end = ClickGui.color2(1);
                 start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
                 end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
-                ShadowShader.drawStairShadowGradient(x, y, boxWidth, boxHeight, range, strength, start, end, rects, radii, 1);
+                ShadowShader.drawStairShadowGradient(animatedX, animatedY, animatedWidth, animatedHeight, range, strength, start, end, rects, radii, 1);
             } else {
                 Color c = new Color(128, 128, 128, 255);
-                ShadowShader.drawStairShadow(x, y, boxWidth, boxHeight, range, strength, c, rects, radii, 1);
+                ShadowShader.drawStairShadow(animatedX, animatedY, animatedWidth, animatedHeight, range, strength, c, rects, radii, 1);
             }
         }
 
         if (blur.get()) {
-            BlurShader.drawRoundedBlur(x, y, boxWidth, boxHeight, boxRadius, blurStrength.get().floatValue());
+            BlurShader.drawRoundedBlur(animatedX, animatedY, animatedWidth, animatedHeight, animatedRadius, blurStrength.get().floatValue() * animValue);
         }
 
         NanoVGRenderer.INSTANCE.draw(vg -> {
+            NanoVGHelper.save();
+            NanoVGHelper.translate(vg, centerX, centerY);
+            NanoVGHelper.scale(vg, animScale, animScale);
+            NanoVGHelper.translate(vg, -centerX, -centerY);
+            nvgGlobalAlpha(vg, animValue);
             NanoVGHelper.drawRoundRect(x, y, boxWidth, boxHeight, boxRadius, backgroundColor.get());
 
             float textX = x + (boxWidth - textWidth) / 2f;
@@ -175,16 +205,20 @@ public class ScaffoldBlocksHud extends HudModule {
             } else {
                 NanoVGHelper.drawString(blocksText, blocksX, blocksRenderY, blocksFont, blocksSize, blocksColor.get());
             }
+            NanoVGHelper.restore();
         });
 
-        if (!currentScaffoldBlock.isEmpty()) {
+        if (!renderScaffoldBlock.isEmpty()) {
             float itemX = x + (boxWidth - itemSize) / 2f + blockOffsetX.get().floatValue() * scale;
             float itemY = y + topPadding + blockOffsetY.get().floatValue() * scale;
 
             context.getMatrices().pushMatrix();
+            context.getMatrices().translate(centerX, centerY);
+            context.getMatrices().scale(animScale, animScale);
+            context.getMatrices().translate(-centerX, -centerY);
             context.getMatrices().translate(itemX, itemY);
             context.getMatrices().scale(itemScale, itemScale);
-            context.drawItem(currentScaffoldBlock, 0, 0);
+            context.drawItem(renderScaffoldBlock, 0, 0);
             context.getMatrices().popMatrix();
         }
 
