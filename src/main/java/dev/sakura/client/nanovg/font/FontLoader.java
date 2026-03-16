@@ -33,6 +33,10 @@ public class FontLoader {
         return FontManager.font("ico.ttf");
     }
 
+    public static int icont() {
+        return FontManager.font("icont.ttf");
+    }
+
     public static int cjk() {
         return FontManager.font("kuriyama.ttf");
     }

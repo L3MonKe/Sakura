@@ -49,6 +49,28 @@ public class TranslationManager {
         register("colormode.tenacity", "Tenacity", "渐变");
         register("colormode.static", "Static", "静态");
         register("colormode.double", "Double", "双色");
+
+        register("cloudmusic.title", "Cloud Music", "网易云音乐");
+        register("cloudmusic.loading", "Loading...", "正在加载...");
+        register("cloudmusic.login", "Login", "登录");
+        register("cloudmusic.back", "Back", "返回");
+        register("cloudmusic.sidebar.recommend", "Recommend", "推荐");
+        register("cloudmusic.sidebar.search", "Search", "搜索");
+        register("cloudmusic.sidebar.playlists", "My Playlists", "我的歌单");
+        register("cloudmusic.empty.not_logged_in", "Not logged in, click top-right to login", "未登录，请点击右上角登录");
+        register("cloudmusic.search.coming_soon", "Search is coming soon...", "搜索功能即将上线...");
+        register("cloudmusic.player.no_music", "No music playing", "未播放音乐");
+        register("cloudmusic.qr.loading", "Loading QR...", "二维码加载中...");
+        register("cloudmusic.qr.parse_error", "QR decode error", "二维码解析错误");
+        register("cloudmusic.qr.refresh", "Refresh QR", "刷新二维码");
+        register("cloudmusic.status.connecting", "Connecting to Cloud Music...", "正在连接网易云接口...");
+        register("cloudmusic.status.checking_login", "Checking login status...", "正在检测登录状态...");
+        register("cloudmusic.status.welcome", "Welcome, %s", "欢迎你, %s");
+        register("cloudmusic.status.not_logged_in", "Not logged in", "未登录");
+        register("cloudmusic.status.generating_qr", "Generating QR...", "正在生成二维码...");
+        register("cloudmusic.status.qr_fetch_failed", "Failed to fetch QR, please check your network", "二维码获取失败，请检查网络");
+        register("cloudmusic.status.login_success", "Login successful", "登录成功");
+        register("cloudmusic.status.qr_expired", "QR expired, please refresh", "二维码过期，请刷新");
     }
 
     public static void register(String key, String en, String zh) {

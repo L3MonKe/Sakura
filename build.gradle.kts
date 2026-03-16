@@ -67,6 +67,11 @@ dependencies {
     implementation(include("org.lwjgl:lwjgl-nanovg:$nvgVersion")!!)
     runtimeOnly(include("org.lwjgl:lwjgl-nanovg:$nvgVersion:natives-windows")!!)
 
+    implementation(include("com.google.zxing:core:3.5.3")!!)
+    implementation(include("com.googlecode.soundlibs:mp3spi:1.9.5.4")!!)
+    implementation(include("com.googlecode.soundlibs:tritonus-share:0.3.7.4")!!)
+    implementation(include("javazoom:jlayer:1.0.1")!!)
+
     // native-obfuscator annotations
     implementation(files("libs/annotations.jar"))
 }

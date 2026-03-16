@@ -444,7 +444,7 @@ public class NanoVGHelper {
     public static int loadTexture(String path) {
         try {
             InputStream is = NanoVGHelper.class.getResourceAsStream(path);
-            if (is == null) return -1;
+            if (is == null) return 0;
 
             byte[] bytes = is.readAllBytes();
             is.close();
@@ -455,7 +455,7 @@ public class NanoVGHelper {
 
             return nvgCreateImageMem(getContext(), 0, imageBuffer);
         } catch (Exception e) {
-            return -1;
+            return 0;
         }
     }
 
