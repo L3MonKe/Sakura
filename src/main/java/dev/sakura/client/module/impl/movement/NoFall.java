@@ -18,9 +18,13 @@ import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
+import net.minecraft.block.BlockState;
 import net.minecraft.block.FluidBlock;
+import net.minecraft.block.SlabBlock;
+import net.minecraft.block.enums.SlabType;
 import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.ActionResult;
@@ -28,6 +32,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.state.property.Properties;
 
 public class NoFall extends Module {
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Packet);
@@ -39,6 +44,7 @@ public class NoFall extends Module {
     private final TimerUtil swapTimer = new TimerUtil();
     private final TimerUtil interactTimer = new TimerUtil();
     private boolean pendingSwapBack = false;
+    private int quickCollectTicks = 0;
 
     // Post tick interaction
     private boolean shouldInteract = false;
@@ -63,6 +69,7 @@ public class NoFall extends Module {
         mlgCompleted = true;
         placedWaterPos = null;
         pendingSwapBack = false;
+        quickCollectTicks = 0;
         swapTimer.reset();
         interactTimer.reset();
         resetPending();
@@ -73,6 +80,7 @@ public class NoFall extends Module {
         mlgCompleted = true;
         placedWaterPos = null;
         pendingSwapBack = false;
+        quickCollectTicks = 0;
         swapTimer.reset();
         interactTimer.reset();
         resetPending();
@@ -135,7 +143,19 @@ public class NoFall extends Module {
                 mc.options.sprintKey.setPressed(false);
             }
 
+            if (quickCollectTicks > 0) {
+                quickCollectTicks--;
+                if (tryQuickCollectWater()) {
+                    return;
+                }
+            }
+
             if ((mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted) {
+                if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
+                    completeMlgCycle();
+                    return;
+                }
+
                 FindItemResult bucket = InvUtil.findInHotbar(Items.BUCKET);
                 if (bucket.found()) {
                     BlockPos targetPos = placedWaterPos != null ? placedWaterPos : getWaterPos();
@@ -161,8 +181,7 @@ public class NoFall extends Module {
                     }
                 } else {
                     if (InvUtil.testInHands(Items.WATER_BUCKET)) {
-                        mlgCompleted = true;
-                        placedWaterPos = null;
+                        completeMlgCycle();
                     }
                 }
                 return;
@@ -185,13 +204,12 @@ public class NoFall extends Module {
                     if (interactTimer.passedMillise(interactDelay.get()) && useItemLegit(lockedRotation)) {
                         mc.player.swingHand(Hand.MAIN_HAND);
                         interactTimer.reset();
-                        pendingSwapBack = true;
-                        swapTimer.reset();
 
                         if (pendingBestPos != null) {
                             placedWaterPos = pendingBestPos;
                         }
 
+                        quickCollectTicks = 5;
                         resetPending();
                     }
                 }
@@ -207,6 +225,12 @@ public class NoFall extends Module {
                 if (waterBucket.found()) {
                     BlockPos bestPos = getBestPos();
                     if (bestPos != null) {
+                        if (shouldSkipMlgPlacement(bestPos)) {
+                            mlgCompleted = true;
+                            resetPending();
+                            return;
+                        }
+
                         double dist = mc.player.getEyePos().distanceTo(bestPos.toCenterPos().add(0, 0.5, 0));
 
                         if (dist < 10) {
@@ -250,6 +274,86 @@ public class NoFall extends Module {
             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(mc.player.getX(), mc.player.getY() + 0.000000001, mc.player.getZ(), mc.player.getYaw(), mc.player.getPitch(), false, mc.player.horizontalCollision));
             mc.player.onLanding();
         }
+    }
+
+    private boolean shouldSkipMlgPlacement(BlockPos bestPos) {
+        BlockPos landingPos = bestPos.down();
+        BlockState landingState = mc.world.getBlockState(landingPos);
+        if (landingState.isAir()) return false;
+        if (!landingState.contains(Properties.WATERLOGGED)) return false;
+
+        if (landingState.getBlock() instanceof SlabBlock) {
+            SlabType slabType = landingState.get(SlabBlock.TYPE);
+            if (slabType == SlabType.BOTTOM) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void completeMlgCycle() {
+        mlgCompleted = true;
+        placedWaterPos = null;
+        pendingSwapBack = false;
+        quickCollectTicks = 0;
+        resetPending();
+    }
+
+    private boolean tryQuickCollectWater() {
+        if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
+            completeMlgCycle();
+            return true;
+        }
+
+        FindItemResult bucket = InvUtil.findInHotbar(Items.BUCKET);
+        if (!bucket.found()) return false;
+
+        BlockPos targetPos = findNearbyWaterTarget();
+        if (targetPos == null) return false;
+
+        Vec3d eyesPos = mc.player.getEyePos();
+        double hitX = MathHelper.clamp(eyesPos.x, targetPos.getX(), targetPos.getX() + 1.0);
+        double hitZ = MathHelper.clamp(eyesPos.z, targetPos.getZ(), targetPos.getZ() + 1.0);
+        Vec3d hitVec = new Vec3d(hitX, targetPos.getY() + 1.0, hitZ);
+        Rotation rotation = RotationUtil.calculate(hitVec);
+        Managers.ROTATION.setRotations(rotation, 180, MovementFix.NORMAL, Priority.High);
+
+        if (!isFacing(rotation, 2.0f, 2.5f)) return true;
+
+        InvUtil.swap(bucket.slot(), true);
+        if (interactTimer.passedMillise(interactDelay.get()) && useItemLegit(rotation)) {
+            mc.player.swingHand(Hand.MAIN_HAND);
+            interactTimer.reset();
+            completeMlgCycle();
+        }
+
+        return true;
+    }
+
+    private BlockPos findNearbyWaterTarget() {
+        BlockPos base = BlockPos.ofFloored(mc.player.getX(), mc.player.getY(), mc.player.getZ());
+        Vec3d eyesPos = mc.player.getEyePos();
+        BlockPos bestPos = null;
+        double bestDistance = Double.MAX_VALUE;
+
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    BlockPos check = base.add(x, y, z);
+                    BlockState state = mc.world.getBlockState(check);
+                    if (!state.getFluidState().isOf(Fluids.WATER)) continue;
+
+                    double distance = eyesPos.squaredDistanceTo(check.toCenterPos().add(0, 0.5, 0));
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestPos = check;
+                    }
+                }
+            }
+        }
+
+        return bestPos;
     }
 
     private BlockPos getBestPos() {
