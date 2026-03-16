@@ -13,6 +13,7 @@ import net.minecraft.client.gui.Click;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.input.KeyInput;
+import net.minecraft.client.input.CharInput;
 import net.minecraft.text.Text;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.nanovg.NanoVG;
@@ -78,6 +79,14 @@ public class CloudMusicScreen extends Screen {
     private long closeTime = -1;
 
     private boolean showLoginOverlay = false;
+    private boolean searchEditing = false;
+    private String searchText = "";
+    private int searchCursorPos = 0;
+    private long searchBlinkAt = 0L;
+    private boolean searchCursorVisible = true;
+    private boolean searchLoading = false;
+    private Rect searchInputRect;
+    private Rect searchButtonRect;
 
     private float playlistScrollCurrent = 0f;
     private float playlistScrollTarget = 0f;
@@ -176,6 +185,54 @@ public class CloudMusicScreen extends Screen {
             BlurShader.drawRoundedBlur(x, y, w, h, r, new Color(0, 0, 0, 150), 40f, ease);
         }
 
+        // Extra blur/shadow for Search controls (outside NVG batch to avoid pipeline mixing)
+        if (currentTab == Tab.Search) {
+            float contentX = x + sidebarW;
+            float contentY = y + 50f;
+            float contentW = w - sidebarW;
+            float contentH = h - 50f - 80f;
+            float inputH = 28f;
+            float btnW = 86f;
+            float inputX = contentX + 12f;
+            float inputY = contentY + 12f;
+            float inputW = contentW - 24f - btnW - 10f;
+            float pillRadius = inputH * 0.5f;
+            float btnX = inputX + inputW + 10f;
+            float btnY = inputY;
+            float searchShadowRange = Math.max(6f, CloudMusicGui.shadowRange.get().floatValue());
+            float bgBlur = CloudMusicGui.blurStrength.get().floatValue();
+            float searchBlur = Math.min(32f, Math.max(12f, bgBlur + 6f));
+            int tick = (int) ((System.currentTimeMillis() / 20.0) * CloudMusicGui.gradientSpeed.get().floatValue());
+            Color c1 = dev.sakura.client.module.impl.client.ClickGui.color(tick);
+            Color c2 = dev.sakura.client.module.impl.client.ClickGui.color2(tick);
+            float[] rects = new float[]{inputX, inputY, inputW, inputH, btnX, btnY, btnW, inputH};
+            float[] radii = new float[]{pillRadius, pillRadius};
+            float unionX = inputX;
+            float unionY = inputY;
+            float unionW = (btnX + btnW) - inputX;
+            float unionH = inputH;
+            BlurShader.drawSegmentedBlur(unionX, unionY, unionW, unionH, 0f, new Color(0, 0, 0, 0), searchBlur, 1.0f, rects, radii, 2);
+            ShadowShader.drawStairShadowGradient(
+                    inputX, inputY, inputW, inputH,
+                    searchShadowRange * 0.8f,
+                    0.65f * ease,
+                    new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), 255),
+                    new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), 255),
+                    new float[]{inputX, inputY, inputW, inputH},
+                    new float[]{pillRadius},
+                    1
+            );
+            ShadowShader.drawStairShadowGradient(
+                    btnX, btnY, btnW, inputH,
+                    searchShadowRange * 0.8f,
+                    0.65f * ease,
+                    new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), 255),
+                    new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), 255),
+                    new float[]{btnX, btnY, btnW, inputH},
+                    new float[]{pillRadius},
+                    1
+            );
+        }
         // --- Render UI (NanoVG) ---
         NanoVGRenderer.INSTANCE.draw(vg -> {
             flushPendingImages();
@@ -229,6 +286,10 @@ public class CloudMusicScreen extends Screen {
     private void drawModernHeader(float x, float y, float w, float h) {
         float titleX = x + 18f;
         float titleCenterY = y + h * 0.5f;
+        if (CloudMusicGui.titleTextShadow.get()) {
+            float dist = CloudMusicGui.titleTextShadowDist.get().floatValue();
+            NanoVGHelper.drawString("Sakura", titleX + dist, titleCenterY - 6f + dist, FontLoader.bold(), 20f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(0, 0, 0, 160));
+        }
         drawGradientGlowText("Sakura", titleX, titleCenterY - 6f, FontLoader.bold(), 20f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE);
         NanoVGHelper.drawString("Music", titleX, titleCenterY + 12f, FontLoader.regular(), 11f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(180, 180, 200));
         
@@ -304,6 +365,7 @@ public class CloudMusicScreen extends Screen {
     }
 
     private double lastMouseX, lastMouseY;
+    private boolean volumeDragging = false;
 
     private void drawLoginOverlay(float x, float y, float w, float h) {
         // Overlay background (Removed dark block)
@@ -635,10 +697,10 @@ public class CloudMusicScreen extends Screen {
              return;
         }
 
-        if (currentTab == Tab.Search) {
-             NanoVGHelper.drawCenteredString(TranslationManager.get("cloudmusic.search.coming_soon"), x + w * 0.5f, y + h * 0.5f, FontLoader.regular(), 14f, new Color(180, 180, 200));
-             return;
-        }
+            if (currentTab == Tab.Search) {
+                drawSearch(x + 12, y, w - 24, h, mouseX, mouseY);
+                return;
+            }
 
         if (currentPlaylistDetail != null) {
             drawModernPlaylist(x + 12, y, w - 24, h, mouseX, mouseY);
@@ -742,6 +804,86 @@ public class CloudMusicScreen extends Screen {
         NanoVGHelper.restore();
     }
 
+    private void drawSearch(float x, float y, float w, float h, int mouseX, int mouseY) {
+        long now = System.currentTimeMillis();
+        if (now - searchBlinkAt > 530) {
+            searchCursorVisible = !searchCursorVisible;
+            searchBlinkAt = now;
+        }
+        float inputH = 28f;
+        float btnW = 86f;
+        float inputX = x;
+        float inputY = y + 12f;
+        float inputW = w - btnW - 10f;
+        float pillRadius = inputH * 0.5f;
+        String displayText = searchEditing ? searchText : (searchText.isEmpty() ? TranslationManager.get("Enter the song name") : searchText);
+        float fontSize = 13f;
+        NanoVGHelper.drawString(displayText, inputX + 8f, inputY + inputH * 0.5f + 1f, FontLoader.regular(), fontSize, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(220, 220, 230));
+        if (searchEditing && searchCursorVisible) {
+            String before = searchText.substring(0, Math.min(searchCursorPos, searchText.length()));
+            float cursorX = inputX + 8f + NanoVGHelper.getTextWidth(before, FontLoader.regular(), fontSize);
+            if (cursorX < inputX + inputW - 6f) {
+                NanoVGHelper.drawRect(cursorX, inputY + 6f, 1f, inputH - 12f, new Color(255, 255, 255));
+            }
+        }
+        searchInputRect = new Rect(inputX, inputY, inputW, inputH);
+        float btnX = inputX + inputW + 10f;
+        float btnY = inputY;
+        NanoVGHelper.drawCenteredString(TranslationManager.get("Search"), btnX + btnW * 0.5f, btnY + inputH * 0.5f, FontLoader.bold(), 13f, Color.WHITE);
+        searchButtonRect = new Rect(btnX, btnY, btnW, inputH);
+        float listY = inputY + inputH + 10f;
+        float listH = h - (listY - y);
+        drawSongList(x, listY, w, listH, mouseX, mouseY, currentSongs);
+    }
+
+    private void drawSongList(float x, float y, float w, float h, int mouseX, int mouseY, List<CloudMusicService.SongItem> list) {
+        float rowH = 52f;
+        int total = list.size();
+        songScrollArea = new Rect(x, y, w, h);
+        songScrollTarget = clamp(songScrollTarget, 0, Math.max(0, total - (h / rowH)));
+        NanoVGHelper.save();
+        NanoVGHelper.scissor(x, y, w, h);
+        for (int i = 0; i < total; i++) {
+            float rowY = y + i * rowH - songScrollCurrent * rowH;
+            if (rowY + rowH < y || rowY > y + h) continue;
+            CloudMusicService.SongItem song = list.get(i);
+            int tex = requestUrlTexture(song.coverUrl());
+            float imgSize = rowH - 16f;
+            if (tex > 0) {
+                NanoVGHelper.drawImage(tex, x + 10, rowY + 8, imgSize, imgSize, 6f, 1f);
+            }
+            float textX = x + 10 + imgSize + 12;
+            float maxTextW = w - (textX - x) - 20;
+            drawScrollingString(song.name(), textX, rowY + rowH * 0.35f, FontLoader.bold(), 14f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, Color.WHITE, maxTextW);
+            drawScrollingString(song.artist(), textX, rowY + rowH * 0.7f, FontLoader.regular(), 11f, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_MIDDLE, new Color(160, 160, 180), maxTextW);
+            songRowRects.put(i, new Rect(x, rowY, w, rowH - 4));
+        }
+        NanoVGHelper.restore();
+    }
+
+    private void triggerSearch() {
+        if (searchLoading) return;
+        searchLoading = true;
+        currentSongs.clear();
+        service.searchSongs(searchText, 30, 0).thenCompose(service::fillMissingCovers).whenComplete((songs, ex) -> {
+            searchLoading = false;
+            if (ex != null) {
+                errorText = ex.getMessage();
+                return;
+            }
+            currentSongs.clear();
+            currentSongs.addAll(songs);
+            songScrollTarget = 0f;
+            songScrollCurrent = 0f;
+            errorText = "";
+        });
+    }
+
+    private void resetSearchCursor() {
+        searchBlinkAt = System.currentTimeMillis();
+        searchCursorVisible = true;
+    }
+
     private void drawModernBottomPlayer(float x, float y, float w, float h, int mouseX, int mouseY) {
         CloudMusicService.SongItem song = player.getCurrentSong();
         if (song != null) {
@@ -778,6 +920,32 @@ public class CloudMusicScreen extends Screen {
         boolean prevHover = hit("prev", mouseX, mouseY);
         NanoVGHelper.drawCenteredString(PREV_ICON, prevX + 12, y + h * 0.5f, FontLoader.icont(), 20f, prevHover ? Color.WHITE : new Color(200, 200, 220));
         staticRects.put("prev", new Rect(prevX, y + h * 0.5f - 12, 24, 24));
+
+        // Volume Slider on right
+        float sliderW = 120f;
+        float sliderH = 16f;
+        float sliderX = x + w - sliderW - 12f;
+        float sliderY = y + (h - sliderH) * 0.5f;
+        int vol = player.getVolume();
+        float ratio = Math.max(0f, Math.min(1f, vol / 100f));
+        NanoVGHelper.drawRoundRect(sliderX, sliderY, sliderW, sliderH, sliderH * 0.5f, new Color(255, 255, 255, 20));
+        float fillW = Math.max(6f, sliderW * ratio);
+        int tick = (int) ((System.currentTimeMillis() / 20.0) * CloudMusicGui.gradientSpeed.get().floatValue());
+        Color c1 = dev.sakura.client.module.impl.client.ClickGui.color(tick);
+        Color c2 = dev.sakura.client.module.impl.client.ClickGui.color2(tick);
+        long vg = NanoVGRenderer.INSTANCE.getContext();
+        try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+            org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+            org.lwjgl.nanovg.NanoVG.nvgLinearGradient(vg, sliderX, sliderY, sliderX + sliderW, sliderY, NanoVGHelper.nvgColor(c1), NanoVGHelper.nvgColor(c2), paint);
+            org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
+            org.lwjgl.nanovg.NanoVG.nvgRoundedRect(vg, sliderX, sliderY, fillW, sliderH, sliderH * 0.5f);
+            org.lwjgl.nanovg.NanoVG.nvgFillPaint(vg, paint);
+            org.lwjgl.nanovg.NanoVG.nvgFill(vg);
+        }
+        float knobX = sliderX + fillW - 8f;
+        knobX = Math.max(sliderX + 2f, Math.min(sliderX + sliderW - 10f, knobX));
+        NanoVGHelper.drawRoundRect(knobX, sliderY + 2f, 10f, sliderH - 4f, (sliderH - 4f) * 0.5f, Color.WHITE);
+        staticRects.put("volume_slider", new Rect(sliderX, sliderY, sliderW, sliderH));
     }
 
     private void drawErrorToast(float x, float y) {
@@ -838,6 +1006,13 @@ public class CloudMusicScreen extends Screen {
             player.previous();
             return true;
         }
+        if (hit("volume_slider", mx, my)) {
+            Rect r = staticRects.get("volume_slider");
+            float ratio = Math.max(0f, Math.min(1f, (mx - r.x) / r.w));
+            player.setVolume((int) Math.round(ratio * 100));
+            volumeDragging = true;
+            return true;
+        }
         
         if (hit("tab_recommend", mx, my)) {
             currentTab = Tab.Recommend;
@@ -852,6 +1027,19 @@ public class CloudMusicScreen extends Screen {
             currentTab = Tab.Search;
             currentPlaylistDetail = null;
             return true;
+        }
+        if (currentTab == Tab.Search) {
+            if (searchInputRect != null && searchInputRect.contains(mx, my)) {
+                searchEditing = true;
+                searchCursorPos = searchText.length();
+                searchBlinkAt = System.currentTimeMillis();
+                searchCursorVisible = true;
+                return true;
+            }
+            if (searchButtonRect != null && searchButtonRect.contains(mx, my)) {
+                triggerSearch();
+                return true;
+            }
         }
         
         if (hit("refresh_qr", mx, my)) {
@@ -909,6 +1097,7 @@ public class CloudMusicScreen extends Screen {
     @Override
     public boolean mouseReleased(Click click) {
         dragging = false;
+        volumeDragging = false;
         return super.mouseReleased(click);
     }
 
@@ -920,6 +1109,15 @@ public class CloudMusicScreen extends Screen {
             windowX = (float) click.x() - dragX;
             windowY = (float) click.y() - dragY;
             return true;
+        }
+        if (volumeDragging && click.button() == 0) {
+            Rect r = staticRects.get("volume_slider");
+            if (r != null) {
+                float mx = (float) click.x();
+                float ratio = Math.max(0f, Math.min(1f, (mx - r.x) / r.w));
+                player.setVolume((int) Math.round(ratio * 100));
+                return true;
+            }
         }
         return super.mouseDragged(click, deltaX, deltaY);
     }
@@ -936,7 +1134,68 @@ public class CloudMusicScreen extends Screen {
             close();
             return true;
         }
+        if (currentTab == Tab.Search && searchEditing) {
+            switch (input.getKeycode()) {
+                case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
+                    triggerSearch();
+                    return true;
+                }
+                case GLFW.GLFW_KEY_BACKSPACE -> {
+                    if (searchCursorPos > 0 && !searchText.isEmpty()) {
+                        searchText = searchText.substring(0, searchCursorPos - 1) + searchText.substring(searchCursorPos);
+                        searchCursorPos--;
+                        resetSearchCursor();
+                    }
+                    return true;
+                }
+                case GLFW.GLFW_KEY_DELETE -> {
+                    if (searchCursorPos < searchText.length()) {
+                        searchText = searchText.substring(0, searchCursorPos) + searchText.substring(searchCursorPos + 1);
+                        resetSearchCursor();
+                    }
+                    return true;
+                }
+                case GLFW.GLFW_KEY_LEFT -> {
+                    if (searchCursorPos > 0) {
+                        searchCursorPos--;
+                        resetSearchCursor();
+                    }
+                    return true;
+                }
+                case GLFW.GLFW_KEY_RIGHT -> {
+                    if (searchCursorPos < searchText.length()) {
+                        searchCursorPos++;
+                        resetSearchCursor();
+                    }
+                    return true;
+                }
+                case GLFW.GLFW_KEY_HOME -> {
+                    searchCursorPos = 0;
+                    resetSearchCursor();
+                    return true;
+                }
+                case GLFW.GLFW_KEY_END -> {
+                    searchCursorPos = searchText.length();
+                    resetSearchCursor();
+                    return true;
+                }
+            }
+        }
         return super.keyPressed(input);
+    }
+
+    @Override
+    public boolean charTyped(CharInput input) {
+        if (currentTab == Tab.Search && searchEditing) {
+            char chr = (char) input.codepoint();
+            if (chr >= 32 && chr != 127) {
+                searchText = searchText.substring(0, searchCursorPos) + chr + searchText.substring(searchCursorPos);
+                searchCursorPos++;
+                resetSearchCursor();
+                return true;
+            }
+        }
+        return super.charTyped(input);
     }
 
     @Override
@@ -947,6 +1206,12 @@ public class CloudMusicScreen extends Screen {
         float mx = (float) mouseX;
         float my = (float) mouseY;
         int delta = scrollY > 0 ? -1 : 1;
+        if (staticRects.containsKey("volume_slider") && staticRects.get("volume_slider").contains(mx, my)) {
+            int step = 5;
+            int newVol = Math.max(0, Math.min(100, player.getVolume() + (delta > 0 ? -step : step)));
+            player.setVolume(newVol);
+            return true;
+        }
         if (songScrollArea != null && songScrollArea.contains(mx, my)) {
             int visibleCount = Math.max(1, (int) (songScrollArea.h / 42f));
             int maxStart = Math.max(0, currentSongs.size() - visibleCount);
@@ -1188,10 +1453,24 @@ public class CloudMusicScreen extends Screen {
             loadingImages.add(url);
             CompletableFuture.runAsync(() -> {
                 try {
-                    InputStream stream = URI.create(url).toURL().openStream();
-                    byte[] bytes = stream.readAllBytes();
-                    stream.close();
-                    pendingImageBytes.put(url, bytes);
+                    String u = url.startsWith("//") ? ("https:" + url) : url;
+                    java.net.URL uu = new java.net.URL(u);
+                    java.net.HttpURLConnection conn = (java.net.HttpURLConnection) uu.openConnection();
+                    conn.setConnectTimeout(6000);
+                    conn.setReadTimeout(8000);
+                    conn.setInstanceFollowRedirects(true);
+                    conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)");
+                    conn.setRequestProperty("Accept", "*/*");
+                    conn.setRequestProperty("Referer", "https://music.163.com");
+                    conn.connect();
+                    try (InputStream stream = conn.getInputStream()) {
+                        byte[] bytes = stream.readAllBytes();
+                        if (bytes != null && bytes.length > 0) {
+                            pendingImageBytes.put(url, bytes);
+                        }
+                    } finally {
+                        conn.disconnect();
+                    }
                 } catch (Exception ignored) {
                 } finally {
                     loadingImages.remove(url);

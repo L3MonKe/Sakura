@@ -12,12 +12,17 @@ import com.google.zxing.common.BitMatrix;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.stream.Collectors;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
@@ -52,6 +57,12 @@ public class CloudMusicService {
 
     public record LyricData(List<LyricLine> lyric, List<LyricLine> translation) {
     }
+    public record WordFragment(long startMs, long durationMs, String text) {
+    }
+    public record PreciseLine(long startMs, List<WordFragment> words, String text) {
+    }
+    public record LyricPreciseData(List<PreciseLine> lyric, List<PreciseLine> translation) {
+    }
 
     private static final String API_BASE = "https://music.163.com";
     private static final String PLAY_BASE = "https://interface3.music.163.com";
@@ -65,6 +76,8 @@ public class CloudMusicService {
     private volatile UserProfile profile;
     private volatile QrLoginState qrLoginState;
     private final Map<Long, LyricData> lyricCache = new ConcurrentHashMap<>();
+    private final Map<Long, LyricPreciseData> lyricPreciseCache = new ConcurrentHashMap<>();
+    private final Path cookieStorePath = Paths.get(System.getProperty("user.home"), ".sakura_cloudmusic_cookie");
 
     public CloudMusicService() {
         headers.put("Accept", "*/*");
@@ -73,6 +86,7 @@ public class CloudMusicService {
         headers.put("Content-Type", "application/x-www-form-urlencoded");
         headers.put("Referer", "https://music.163.com");
         headers.put("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko)");
+        restoreCookieFromDisk();
     }
 
     public String getCookie() {
@@ -127,6 +141,7 @@ public class CloudMusicService {
                 String finalCookie = !bodyCookie.isBlank() ? bodyCookie : headerCookie;
                 if (!finalCookie.isBlank()) {
                     cookie = "appver=2.7.1.198277; os=pc; " + finalCookie;
+                    persistCookieToDisk(cookie);
                 }
                 refreshProfileSync();
             }
@@ -138,6 +153,15 @@ public class CloudMusicService {
 
     public CompletableFuture<UserProfile> refreshProfile() {
         return CompletableFuture.supplyAsync(this::refreshProfileSync, executor);
+    }
+
+    public void logout() {
+        cookie = "appver=2.7.1.198277; os=pc;";
+        profile = null;
+        try {
+            Files.deleteIfExists(cookieStorePath);
+        } catch (IOException ignored) {
+        }
     }
 
     public CompletableFuture<List<PlaylistCard>> loadRecommendPlaylists() {
@@ -285,6 +309,73 @@ public class CloudMusicService {
         return CompletableFuture.supplyAsync(() -> resolveSongUrlSync(songId), executor);
     }
 
+    public CompletableFuture<List<SongItem>> searchSongs(String keywords, int limit, int offset) {
+        return CompletableFuture.supplyAsync(() -> {
+            Map<String, String> data = new LinkedHashMap<>();
+            data.put("s", Objects.toString(keywords, ""));
+            data.put("type", "1");
+            data.put("limit", String.valueOf(Math.max(1, limit)));
+            data.put("offset", String.valueOf(Math.max(0, offset)));
+            JsonObject result = post(API_BASE, "/api/search/get", data, false).body;
+            JsonObject res = result.has("result") && result.get("result").isJsonObject() ? result.getAsJsonObject("result") : null;
+            if (res == null) {
+                return List.of();
+            }
+            JsonArray songs = res.getAsJsonArray("songs");
+            if (songs == null || songs.isEmpty()) {
+                return List.of();
+            }
+            return parseSongs(songs);
+        }, executor);
+    }
+
+    public CompletableFuture<List<SongItem>> fillMissingCovers(List<SongItem> items) {
+        return CompletableFuture.supplyAsync(() -> {
+            List<SongItem> list = items == null ? List.of() : items;
+            if (list.isEmpty()) return list;
+            String ids = list.stream().map(it -> String.valueOf(it.id())).collect(Collectors.joining(","));
+            String idsParam = "[" + ids + "]";
+            JsonObject detail = post(API_BASE, "/api/song/detail", Map.of("ids", idsParam), false).body;
+            if (detail != null && detail.has("songs")) {
+                JsonArray arr = detail.getAsJsonArray("songs");
+                Map<Long, String> covers = new HashMap<>();
+                for (JsonElement e : arr) {
+                    JsonObject s = e.getAsJsonObject();
+                    long id = s.has("id") ? s.get("id").getAsLong() : -1L;
+                    String cv = "";
+                    if (s.has("al") && s.get("al").isJsonObject()) {
+                        JsonObject al = s.getAsJsonObject("al");
+                        cv = al.has("picUrl") ? getString(al, "picUrl") : getString(al, "blurPicUrl");
+                    }
+                    if ((cv == null || cv.isBlank()) && s.has("album") && s.get("album").isJsonObject()) {
+                        JsonObject al = s.getAsJsonObject("album");
+                        cv = al.has("picUrl") ? getString(al, "picUrl") : getString(al, "blurPicUrl");
+                    }
+                    if (cv != null && !cv.isBlank()) {
+                        if (!cv.contains("?param=")) {
+                            cv = cv + "?param=100y100";
+                        }
+                        covers.put(id, cv);
+                    }
+                }
+                if (!covers.isEmpty()) {
+                    List<SongItem> updated = new ArrayList<>(list.size());
+                    for (SongItem it : list) {
+                        if (it == null) continue;
+                        String cv = covers.get(it.id());
+                        if (cv != null) {
+                            updated.add(new SongItem(it.id(), it.name(), it.artist(), it.album(), cv, it.durationMs()));
+                        } else {
+                            updated.add(it);
+                        }
+                    }
+                    return updated;
+                }
+            }
+            return list;
+        }, executor);
+    }
+
     public String resolveSongUrlSync(long songId) {
         JsonObject result = postAuthed(PLAY_BASE, "/api/song/enhance/player/url/v1", Map.of(
                 "ids", "[" + songId + "]",
@@ -342,6 +433,9 @@ public class CloudMusicService {
             if (albumObj != null) {
                 album = getString(albumObj, "name");
                 cover = albumObj.has("picUrl") ? getString(albumObj, "picUrl") : getString(albumObj, "blurPicUrl");
+                if (cover != null && !cover.isBlank() && !cover.contains("?param=")) {
+                    cover = cover + "?param=100y100";
+                }
             }
             int duration = song.has("dt") ? song.get("dt").getAsInt() : song.has("duration") ? song.get("duration").getAsInt() : 0;
             list.add(new SongItem(id, name, artist, album, cover, duration));
@@ -432,6 +526,26 @@ public class CloudMusicService {
             if (connection != null) {
                 connection.disconnect();
             }
+        }
+    }
+
+    private void restoreCookieFromDisk() {
+        try {
+            if (Files.exists(cookieStorePath)) {
+                String saved = Files.readString(cookieStorePath, StandardCharsets.UTF_8);
+                if (saved != null && !saved.isBlank()) {
+                    cookie = saved.trim();
+                }
+            }
+        } catch (IOException ignored) {
+        }
+    }
+
+    private void persistCookieToDisk(String c) {
+        if (c == null || c.isBlank()) return;
+        try {
+            Files.writeString(cookieStorePath, c, StandardCharsets.UTF_8);
+        } catch (IOException ignored) {
         }
     }
 
@@ -616,5 +730,163 @@ public class CloudMusicService {
     }
 
     private record ApiResponse(JsonObject body, List<String> setCookies) {
+    }
+
+    public CompletableFuture<LyricPreciseData> loadLyricPrecise(long songId) {
+        LyricPreciseData cached = lyricPreciseCache.get(songId);
+        if (cached != null) {
+            return CompletableFuture.completedFuture(cached);
+        }
+        return CompletableFuture.supplyAsync(() -> {
+            JsonObject result = post(API_BASE, "/api/song/lyric/v1", Map.of(
+                    "id", String.valueOf(songId),
+                    "cp", "false",
+                    "tv", "0",
+                    "lv", "0",
+                    "rv", "0",
+                    "kv", "0",
+                    "yv", "0",
+                    "ytv", "0",
+                    "yrv", "0"
+            ), false).body;
+            String yrc = "";
+            String ytlrc = "";
+            if (result.has("yrc") && result.get("yrc").isJsonObject()) {
+                JsonObject obj = result.getAsJsonObject("yrc");
+                if (obj.has("lyric") && !obj.get("lyric").isJsonNull()) {
+                    yrc = obj.get("lyric").getAsString();
+                }
+            }
+            if (result.has("ytlrc") && result.get("ytlrc").isJsonObject()) {
+                JsonObject obj = result.getAsJsonObject("ytlrc");
+                if (obj.has("lyric") && !obj.get("lyric").isJsonNull()) {
+                    ytlrc = obj.get("lyric").getAsString();
+                }
+            } else if (result.has("tlyric") && result.get("tlyric").isJsonObject()) {
+                JsonObject obj = result.getAsJsonObject("tlyric");
+                if (obj.has("lyric") && !obj.get("lyric").isJsonNull()) {
+                    ytlrc = obj.get("lyric").getAsString();
+                }
+            }
+            LyricPreciseData data = new LyricPreciseData(parseYrc(yrc), parseYrc(ytlrc));
+            lyricPreciseCache.put(songId, data);
+            return data;
+        }, executor);
+    }
+
+    private List<PreciseLine> parseYrc(String raw) {
+        if (raw == null || raw.isBlank()) return List.of();
+        List<PreciseLine> out = new ArrayList<>();
+        String[] lines = raw.split("\n");
+        for (String line : lines) {
+            if (line == null) continue;
+            String l = line.trim();
+            if (l.isEmpty()) continue;
+            if (!l.startsWith("[")) continue;
+            int idx = 0;
+            List<Long> times = new ArrayList<>();
+            while (idx < l.length() && l.charAt(idx) == '[') {
+                int end = l.indexOf(']', idx);
+                if (end == -1) break;
+                String tag = l.substring(idx + 1, end);
+                Long t = parseTimeTagMs(tag);
+                if (t != null) {
+                    times.add(t);
+                }
+                idx = end + 1;
+            }
+            if (times.isEmpty()) continue;
+            String text = idx < l.length() ? l.substring(idx) : "";
+            if (text.isEmpty()) continue;
+            int p = 0;
+            List<WordFragment> wordsBase = new ArrayList<>();
+            Long lastStartRel = null;
+            Long lastDurRel = null;
+            int segmentStart = -1;
+            while (p < text.length()) {
+                int lt = text.indexOf('<', p);
+                if (lt == -1) {
+                    if (lastStartRel != null && segmentStart >= 0 && segmentStart <= text.length()) {
+                        String seg = text.substring(segmentStart);
+                        if (!seg.isBlank()) {
+                            long dur = lastDurRel != null ? lastDurRel : 0L;
+                            wordsBase.add(new WordFragment(lastStartRel, dur, seg));
+                        }
+                    }
+                    break;
+                }
+                int gt = text.indexOf('>', lt + 1);
+                if (gt == -1) {
+                    break;
+                }
+                String tag = text.substring(lt + 1, gt).trim();
+                Long[] sd = parseWordTag(tag);
+                Long startRel = sd[0];
+                Long durRel = sd[1];
+                long baseAbs = times.get(0);
+                if (startRel != null && startRel >= baseAbs) {
+                    startRel = startRel - baseAbs;
+                }
+                if (lastStartRel != null && segmentStart >= 0) {
+                    String seg = text.substring(segmentStart, lt);
+                    if (!seg.isBlank()) {
+                        long dur = lastDurRel != null ? lastDurRel : Math.max(0L, (startRel != null ? startRel : 0L) - lastStartRel);
+                        wordsBase.add(new WordFragment(lastStartRel, dur, seg));
+                    }
+                }
+                lastStartRel = startRel != null ? startRel : lastStartRel;
+                lastDurRel = durRel;
+                segmentStart = gt + 1;
+                p = gt + 1;
+            }
+            // 如果整行没有任何标签，放弃逐词，交由逐行或静态渲染
+            if (segmentStart == -1 && lastStartRel == null && wordsBase.isEmpty()) {
+                String plainNoTag = text.replaceAll("<[^>]+>", "").trim();
+                if (plainNoTag.isEmpty()) {
+                    continue;
+                }
+                for (Long t : times) {
+                    out.add(new PreciseLine(t, List.of(), plainNoTag));
+                }
+                continue;
+            }
+            String plain = text.replaceAll("<[^>]+>", "");
+            if (plain.isBlank()) {
+                continue;
+            }
+            for (Long t : times) {
+                long baseAbs = times.get(0);
+                long offset = t - baseAbs;
+                List<WordFragment> wordsForT = new ArrayList<>();
+                for (WordFragment wf : wordsBase) {
+                    long ns = Math.max(0L, wf.startMs() - offset);
+                    long nd = wf.durationMs();
+                    wordsForT.add(new WordFragment(ns, nd, wf.text()));
+                }
+                out.add(new PreciseLine(t, wordsForT, plain));
+            }
+        }
+        out.sort((a, b) -> Long.compare(a.startMs(), b.startMs()));
+        return out;
+    }
+
+    private Long[] parseWordTag(String tag) {
+        if (tag == null || tag.isBlank()) return new Long[]{null, null};
+        try {
+            if (tag.contains(":")) {
+                Long abs = parseTimeTagMs(tag);
+                return abs == null ? new Long[]{null, null} : new Long[]{abs, null};
+            }
+            if (tag.contains(",")) {
+                String[] p = tag.split(",", 2);
+                Long start = Long.parseLong(p[0].trim()) * 10L;
+                Long dur = Long.parseLong(p[1].trim()) * 10L;
+                return new Long[]{start, dur};
+            }
+            Long ms = Long.parseLong(tag.trim()) * 10L;
+            return new Long[]{ms, null};
+        } catch (Exception ignored) {
+            return new Long[]{null, null};
+        }
     }
 }

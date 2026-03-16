@@ -5,6 +5,7 @@ import dev.sakura.client.music.CloudMusicPlayer;
 import dev.sakura.client.music.CloudMusicService;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.NumberValue;
 
@@ -15,6 +16,8 @@ public class CloudMusicGui extends Module {
     public static final NumberValue<Double> blurStrength = new NumberValue<>("Blur Strength", "模糊强度", 15.0, 0.0, 30.0, 1.0);
     public static final NumberValue<Double> shadowRange = new NumberValue<>("Shadow Range", "阴影范围", 12.0, 0.0, 30.0, 1.0);
     public static final NumberValue<Double> gradientSpeed = new NumberValue<>("Gradient Speed", "渐变速度", 1.0, 0.1, 5.0, 0.05);
+    public static final BoolValue titleTextShadow = new BoolValue("Title Shadow", "标题阴影", true);
+    public static final NumberValue<Double> titleTextShadowDist = new NumberValue<>("Title Shadow Dist", "阴影间距", 1.5, 0.0, 6.0, 0.1, titleTextShadow::get);
 
     private static final CloudMusicService SERVICE = new CloudMusicService();
     private static final CloudMusicPlayer PLAYER = new CloudMusicPlayer(SERVICE::resolveSongUrlSync);
