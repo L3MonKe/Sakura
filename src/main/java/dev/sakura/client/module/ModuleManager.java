@@ -15,6 +15,7 @@ import dev.sakura.client.module.impl.movement.*;
 import dev.sakura.client.module.impl.player.*;
 import dev.sakura.client.module.impl.player.Timer;
 import dev.sakura.client.module.impl.player.inventory.InvManager;
+import dev.sakura.client.module.impl.player.inventory.InventorySync;
 import dev.sakura.client.module.impl.player.inventory.Stealer;
 import dev.sakura.client.module.impl.render.*;
 import dev.sakura.client.module.impl.settings.RenderSetting;
@@ -82,6 +83,7 @@ public class ModuleManager {
         add(new Timer());
         add(new ViewLock());
         add(new InvManager());
+        add(new InventorySync());
 
         // Render
         add(new AspectRatio());
