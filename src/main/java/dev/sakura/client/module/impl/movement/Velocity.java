@@ -162,36 +162,37 @@ public class Velocity extends Module {
                 }
             }
             case Reduce -> {
-               if (delay){
-                   bufferTicks++;
-               }
-               if (mc.player.hurtTime < 6){
-                   shouldHandleVelocity = false;
-               }
-               if (delay && ((bufferTicks > 20 || (mc.player.isSprinting() && bufferTicks > 3 && mc.targetedEntity != null)))){
-                   handle();
+                if (delay) {
+                    bufferTicks++;
                 }
-               if (shouldHandleVelocity){
-                   if (mc.player.isOnGround() && mc.player.hurtTime > 8 && !delay){
-                       mc.player.jump();
-                   }
-                   if (mc.targetedEntity != null && mc.player.hurtTime == 10 && mc.player.isSprinting()){
-                      mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(mc.targetedEntity,false));
-                      mc.player.swingHand(Hand.MAIN_HAND);
-                      mc.player.setVelocity(mc.player.getVelocity().multiply(0.6,1,0.6));
-                      mc.player.setSprinting(false);
-                      shouldHandleVelocity = false;
-                   }
-               }
+                if (mc.player.hurtTime < 6) {
+                    shouldHandleVelocity = false;
+                }
+                if (delay && ((bufferTicks > 20 || (mc.player.isSprinting() && bufferTicks > 3 && mc.targetedEntity != null)))) {
+                    handle();
+                }
+                if (shouldHandleVelocity) {
+                    if (mc.player.isOnGround() && mc.player.hurtTime > 8 && !delay) {
+                        mc.player.jump();
+                    }
+                    if (mc.targetedEntity != null && mc.player.hurtTime == 10 && mc.player.isSprinting()) {
+                        mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(mc.targetedEntity, false));
+                        mc.player.swingHand(Hand.MAIN_HAND);
+                        mc.player.setVelocity(mc.player.getVelocity().multiply(0.6, 1, 0.6));
+                        mc.player.setSprinting(false);
+                        shouldHandleVelocity = false;
+                    }
+                }
             }
 
         }
 
         this.setSuffix(mode.get() + (stage == VelocityStage.DELAY ? " " + (System.currentTimeMillis() - velocityTime) / 50 + "Ticks" : ""));
     }
-    private void handle(){
-        if (!delayPackets.isEmpty()){
-            for (Packet packet : delayPackets){
+
+    private void handle() {
+        if (!delayPackets.isEmpty()) {
+            for (Packet packet : delayPackets) {
                 packet.apply(mc.getNetworkHandler());
             }
             delay = false;
@@ -316,8 +317,8 @@ public class Velocity extends Module {
                     }
                     if (delay) {
                         Packet<?> pPacket = event.getPacket();
-                        if (pPacket instanceof CommonPingS2CPacket || pPacket instanceof KeepAliveS2CPacket ||( pPacket instanceof EntityVelocityUpdateS2CPacket p1 && p1.getEntityId() == mc.player.getId())
-                        || pPacket instanceof ExplosionS2CPacket){
+                        if (pPacket instanceof CommonPingS2CPacket || pPacket instanceof KeepAliveS2CPacket || (pPacket instanceof EntityVelocityUpdateS2CPacket p1 && p1.getEntityId() == mc.player.getId())
+                                || pPacket instanceof ExplosionS2CPacket) {
                             event.setCancelled(true);
                             delayPackets.add(pPacket);
                         }

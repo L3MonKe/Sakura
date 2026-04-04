@@ -213,16 +213,16 @@ public class LyricsHud extends HudModule {
                 if (pLine != null && pLine.words() != null && !pLine.words().isEmpty()) {
                     float targetReveal = computePreciseRevealWidth(main, pLine.words(), startMs, posMs, mainFont, mainSize);
                     revealMainW += (targetReveal - revealMainW) * 0.35f;
-                float revealWClamped = Math.max(0f, Math.min(revealMainW, NanoVGHelper.getTextWidth(main, mainFont, mainSize)));
-                if (mainTextShadow.get() && revealWClamped > 0f) {
-                    float dist = mainShadowDistance.get().floatValue();
-                    drawMaskScrollingCentered(main, cx + dist, mainY + dist, mainFont, mainSize,
-                            new Color(0, 0, 0, 120), new Color(0, 0, 0, 120),
+                    float revealWClamped = Math.max(0f, Math.min(revealMainW, NanoVGHelper.getTextWidth(main, mainFont, mainSize)));
+                    if (mainTextShadow.get() && revealWClamped > 0f) {
+                        float dist = mainShadowDistance.get().floatValue();
+                        drawMaskScrollingCentered(main, cx + dist, mainY + dist, mainFont, mainSize,
+                                new Color(0, 0, 0, 120), new Color(0, 0, 0, 120),
+                                textAreaW, targetTextAreaW, revealWClamped);
+                    }
+                    drawMaskScrollingCentered(main, cx, mainY, mainFont, mainSize,
+                            new Color(255, 255, 255, 160), Color.WHITE,
                             textAreaW, targetTextAreaW, revealWClamped);
-                }
-                drawMaskScrollingCentered(main, cx, mainY, mainFont, mainSize,
-                        new Color(255, 255, 255, 160), Color.WHITE,
-                        textAreaW, targetTextAreaW, revealWClamped);
                 } else {
                     long endMs = startMs + 3000L;
                     if (idx >= 0 && (idx + 1) < lines.size()) {

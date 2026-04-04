@@ -7,15 +7,10 @@ import dev.sakura.client.mixin.accessor.IPlayerMoveC2SPacket;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;
-import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.MultiBoolValue;
-import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
-import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
-import net.minecraft.network.packet.c2s.play.CloseHandledScreenC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
-import java.util.List;
+import java.util.Random;
 
 public class Disabler extends Module {
     public Disabler() {
@@ -23,9 +18,10 @@ public class Disabler extends Module {
     }
 
     private final BoolValue disAim360 = new BoolValue("Aim 360", "Aim 360", true);
-    private final BoolValue inventory = new BoolValue("Inventory", "背包", true);
+    private final BoolValue duplicateRotPlace = new BoolValue("Duplicate Rot Place", "Duplicate Rot Place", true);
     private final BoolValue logging = new BoolValue("Logging", "日志", false);
-    private final MultiBoolValue selected = new MultiBoolValue("Select", "选择", List.of(new BoolValue("Aim360", "Aim360", false, disAim360::get), new BoolValue("Inventory", "背包", true, inventory::get)), logging::get);
+
+    private float playerYaw;
 
     @EventHandler
     private void onPacket(PacketEvent event) {
@@ -38,22 +34,36 @@ public class Disabler extends Module {
                 float yaw = accessor.getYaw();
                 if (yaw < 360.0f && yaw > -360.0f) {
                     accessor.setYaw(yaw + 720.0f);
-                    if (logging.get() && selected.isEnabled("Aim360")) {
+                    if (logging.get()) {
                         log("Disabled aim 360");
                     }
                 }
+                return;
             }
         }
 
-        if (inventory.get()) {
-            if ((event.getPacket() instanceof ClickSlotC2SPacket || event.getPacket() instanceof CloseHandledScreenC2SPacket) && mc.player.isSprinting()) {
-                event.setCancelled(true);
-                mc.getNetworkHandler().sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.STOP_SPRINTING));
-                PacketUtil.sendPacketNoEvent(event.getPacket());
-                if (logging.get() && selected.isEnabled("Inventory")) {
-                    log("Disabled screen action");
+        if (duplicateRotPlace.get()) {
+            if (event.getPacket() instanceof PlayerMoveC2SPacket packet && packet.changesLook()) {
+                IPlayerMoveC2SPacket accessor = (IPlayerMoveC2SPacket) packet;
+                float originalYaw = accessor.getYaw();
+
+                if (originalYaw < 360.0F && originalYaw > -360.0F) {
+                    ((IPlayerMoveC2SPacket) packet).setYaw(originalYaw + 720f);
                 }
-                mc.getNetworkHandler().sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.START_SPRINTING));
+
+                float lastPlayerYaw = this.playerYaw;
+                this.playerYaw = accessor.getYaw();
+
+                float deltaYaw = Math.abs(this.playerYaw - lastPlayerYaw);
+                if (deltaYaw > 2.0F) {
+                    Random random = new Random();
+                    float perturbation = 0.005f + random.nextFloat() * 0.015f;
+                    if (random.nextBoolean()) {
+                        ((IPlayerMoveC2SPacket) packet).setYaw(accessor.getYaw() + perturbation);
+                    } else {
+                        ((IPlayerMoveC2SPacket) packet).setYaw(accessor.getYaw() - perturbation);
+                    }
+                }
             }
         }
     }

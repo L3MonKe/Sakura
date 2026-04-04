@@ -10,13 +10,13 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.effect.StatusEffects;
 
 public class Fullbright extends Module {
-
-    public enum Mode {
-        Gamma, Potion
-    }
-
     public Fullbright() {
         super("Fullbright", "夜视", Category.Render);
+    }
+
+    public enum Mode {
+        Gamma,
+        Potion
     }
 
     public final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Gamma);

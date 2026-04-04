@@ -61,7 +61,7 @@ public class FastWeb extends Module {
             for (int y = MathHelper.floor(box.minY); y <= box.maxY; y++) {
                 for (int z = MathHelper.floor(box.minZ); z <= box.maxZ; z++) {
                     BlockPos pos = new BlockPos(x, y, z);
-                    if (mc.world != null && mc.world.getBlockState(pos).getBlock() instanceof CobwebBlock) {
+                    if (mc.world.getBlockState(pos).getBlock() instanceof CobwebBlock) {
                         return true;
                     }
                 }

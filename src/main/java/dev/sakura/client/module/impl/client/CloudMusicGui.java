@@ -1,10 +1,10 @@
 package dev.sakura.client.module.impl.client;
 
 import dev.sakura.client.gui.music.CloudMusicScreen;
-import dev.sakura.client.music.CloudMusicPlayer;
-import dev.sakura.client.music.CloudMusicService;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.music.CloudMusicPlayer;
+import dev.sakura.client.music.CloudMusicService;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.NumberValue;

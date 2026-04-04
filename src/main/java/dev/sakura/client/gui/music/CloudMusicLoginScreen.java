@@ -14,12 +14,8 @@ import org.lwjgl.nanovg.NanoVG;
 
 import java.awt.*;
 import java.nio.ByteBuffer;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.HashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 
 public class CloudMusicLoginScreen extends Screen {
     private final Screen parent;
