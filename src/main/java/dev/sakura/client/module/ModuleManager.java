@@ -56,7 +56,6 @@ public class ModuleManager {
         add(new InvMove());
         add(new FastWeb());
         add(new JumpCooldown());
-        add(new KeepSprint());
         add(new NoFall());
         add(new NoSlow());
         add(new SafeWalk());

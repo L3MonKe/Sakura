@@ -24,7 +24,6 @@ import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.c2s.play.PlayerInteractEntityC2SPacket;
 import net.minecraft.network.packet.s2c.common.CommonPingS2CPacket;
 import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
 import net.minecraft.network.packet.s2c.common.KeepAliveS2CPacket;
@@ -51,7 +50,7 @@ public class Velocity extends Module {
     private enum Mode {
         Legit,
         NoXZ,
-        Reduce,
+        ShabiIzkaurn,
         Watchdog
     }
 
@@ -64,15 +63,10 @@ public class Velocity extends Module {
     }
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.NoXZ);
-    private final NumberValue<Integer> attacks = new NumberValue<>("Attack Counts", "攻击计数", 4, 1, 5, 1, () -> mode.is(Mode.NoXZ));
     private final NumberValue<Double> alinkTime = new NumberValue<>("Max Alink Time (ms)", "最大Alink时间(ms)", 2500.0, 50.0, 10000.0, 50.0, () -> mode.is(Mode.NoXZ));
     private final BoolValue render = new BoolValue("Render", "渲染", false);
     private final BoolValue debug = new BoolValue("Debug", "调试", false);
     private final BoolValue delayUntilGround = new BoolValue("Delay until ground", "直到落地", true, () -> mode.is(Mode.Watchdog));
-
-    /*public final BoolValue blockPush = new BoolValue("BlockPush", "阻止方块推动", true);
-        public final BoolValue entityPush = new BoolValue("EntityPush", "阻止实体推动", true);
-        public final BoolValue waterPush = new BoolValue("WaterPush", "阻止水流推动", true);*/
 
     public boolean lag;
     private boolean jump;
@@ -122,14 +116,12 @@ public class Velocity extends Module {
                 if (stage == VelocityStage.ATTACK) {
                     if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
                         var motionXZ = 1.0D;
-                        for (int i = 0; i < attacks.get(); i++) {
-                            if (mc.player.isSprinting()) mc.player.setSprinting(false);
-                            mc.interactionManager.attackEntity(mc.player, target);
-                            mc.player.swingHand(Hand.MAIN_HAND);
-                            motionXZ *= 0.6D;
-                        }
+                        if (mc.player.isSprinting()) mc.player.setSprinting(false);
+                        mc.interactionManager.attackEntity(mc.player, target);
+                        mc.player.swingHand(Hand.MAIN_HAND);
+                        motionXZ *= 0.6D;
                         mc.player.setVelocity(velocity.x * motionXZ, velocity.y, velocity.z * motionXZ);
-                        debug("执行反击，motionXZ=" + motionXZ + "，velocity=" + formatVec(velocity));
+                        debug("执行攻击，motionXZ=" + motionXZ + "，velocity=" + formatVec(velocity));
                         stage = VelocityStage.CLEAR;
                     }
                 } else if (System.currentTimeMillis() - velocityTime >= alinkTime.get() && stage == VelocityStage.DELAY) {
@@ -161,7 +153,7 @@ public class Velocity extends Module {
                     this.sprintResetTicks--;
                 }
             }
-            case Reduce -> {
+            case ShabiIzkaurn -> {
                 if (delay) {
                     bufferTicks++;
                 }
@@ -176,7 +168,7 @@ public class Velocity extends Module {
                         mc.player.jump();
                     }
                     if (mc.targetedEntity != null && mc.player.hurtTime == 10 && mc.player.isSprinting()) {
-                        mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(mc.targetedEntity, false));
+                        mc.interactionManager.attackEntity(mc.player, mc.targetedEntity);
                         mc.player.swingHand(Hand.MAIN_HAND);
                         mc.player.setVelocity(mc.player.getVelocity().multiply(0.6, 1, 0.6));
                         mc.player.setSprinting(false);
@@ -304,8 +296,8 @@ public class Velocity extends Module {
                     jump = true;
                 }
             }
-            case Reduce -> {
-                if (event.getType() == EventType.RECEIVE && !event.isCancelled()) {
+            case ShabiIzkaurn -> {
+                if (!event.isCancelled()) {
                     if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket s12 && s12.getEntityId() == mc.player.getId()) {
                         double motionXZ = Math.sqrt(s12.getVelocity().getX() * s12.getVelocity().getX() + s12.getVelocity().getZ() * s12.getVelocity().getZ());
                         if (motionXZ > 0.2) {

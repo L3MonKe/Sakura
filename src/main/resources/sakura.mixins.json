@@ -35,7 +35,6 @@
     "entity.MixinClientPlayerEntity",
     "entity.MixinEntity",
     "entity.MixinLivingEntity",
-    "entity.MixinPlayerEntity",
     "input.MixinKeyboard",
     "input.MixinKeyboardInput",
     "input.MixinMouse",

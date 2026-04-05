@@ -72,6 +72,8 @@ public class Scaffold extends Module {
     private int yLevel;
     private int airTicks;
 
+    private boolean hasJump;
+
     private boolean swapped;
     private boolean invSwapped;
     private boolean shouldSwapBack;
@@ -118,6 +120,12 @@ public class Scaffold extends Module {
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
+        hasJump = false;
+        if (mc.player.isOnGround() && MoveUtil.isMoving() && mode.is(Mode.Telly) && !mc.options.jumpKey.isPressed()) {
+            mc.options.jumpKey.setPressed(true);
+            hasJump = true;
+        }
+
         updateBlockInfo();
 
         MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
@@ -163,10 +171,10 @@ public class Scaffold extends Module {
     }
 
     @EventHandler
-    private void onStrafe(StrafeEvent event) {
-        if (nullCheck()) return;
-        if (mc.player.isOnGround() && MoveUtil.isMoving() && mode.is(Mode.Telly) && !mc.options.jumpKey.isPressed()) {
-            mc.player.jump();
+    private void onTickPost(TickEvent.Post event) {
+        if (hasJump) {
+            mc.options.jumpKey.setPressed(false);
+            hasJump = false;
         }
     }
 
