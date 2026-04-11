@@ -183,31 +183,69 @@ public class MoveUtil {
         float forward = event.getForward();
         float strafe = event.getStrafe();
 
-        double angle = MathHelper.wrapDegrees(Math.toDegrees(getDirection(mc.player.getYaw(), forward, strafe)));
+        int angleUnit = 45;
+        float angleTolerance = 22.5F;
+        float directionFactor = Math.max(Math.abs(forward), Math.abs(strafe));
+        double angleDifference = MathHelper.wrapDegrees(getDirection(forward, strafe) - yaw);
+        double angleDistance = Math.abs(angleDifference);
 
-        if (forward == 0 && strafe == 0) {
-            return;
+        forward = 0.0F;
+        strafe = 0.0F;
+
+        if (angleDistance <= (double) ((float) angleUnit + angleTolerance)) {
+            forward++;
+        } else if (angleDistance >= (double) (180.0F - (float) angleUnit - angleTolerance)) {
+            forward--;
         }
 
-        float closestForward = 0, closestStrafe = 0, closestDifference = Float.MAX_VALUE;
+        if (angleDifference >= (double) ((float) angleUnit - angleTolerance) && angleDifference <= (double) (180.0F - (float) angleUnit + angleTolerance)) {
+            strafe--;
+        } else if (angleDifference <= (double) ((float) (-angleUnit) + angleTolerance) && angleDifference >= (double) (-180.0F + (float) angleUnit - angleTolerance)) {
+            strafe++;
+        }
 
-        for (float predictedForward = -1F; predictedForward <= 1F; predictedForward += 1F) {
-            for (float predictedStrafe = -1F; predictedStrafe <= 1F; predictedStrafe += 1F) {
-                if (predictedStrafe == 0 && predictedForward == 0) continue;
+        forward *= directionFactor;
+        strafe *= directionFactor;
 
-                final double predictedAngle = MathHelper.wrapDegrees(Math.toDegrees(getDirection(yaw, predictedForward, predictedStrafe)));
-                final double difference = MathUtil.wrappedDifference(angle, predictedAngle);
+        event.setForward(forward);
+        event.setStrafe(strafe);
+    }
 
-                if (difference < closestDifference) {
-                    closestDifference = (float) difference;
-                    closestForward = predictedForward;
-                    closestStrafe = predictedStrafe;
-                }
+    private static float getDirection(float forward, float strafe) {
+        float yaw = mc.player.getYaw();
+
+        boolean isMovingForward = forward > 0;
+        boolean isMovingBack = forward < 0;
+        boolean isMovingRight = strafe > 0;
+        boolean isMovingLeft = strafe < 0;
+        boolean isMovingSideways = isMovingRight || isMovingLeft;
+        boolean isMovingStraight = isMovingForward || isMovingBack;
+
+        if (forward != 0.0F || strafe != 0.0F) {
+            if (isMovingBack && !isMovingSideways) {
+                return yaw + 180.0F;
+            }
+            if (isMovingForward && isMovingLeft) {
+                return yaw + 45.0F;
+            }
+            if (isMovingForward && isMovingRight) {
+                return yaw - 45.0F;
+            }
+            if (!isMovingStraight && isMovingLeft) {
+                return yaw + 90.0F;
+            }
+            if (!isMovingStraight) {
+                return yaw - 90.0F;
+            }
+            if (isMovingBack && isMovingLeft) {
+                return yaw + 135.0F;
+            }
+            if (isMovingBack) {
+                return yaw - 135.0F;
             }
         }
 
-        event.setForward(closestForward);
-        event.setStrafe(closestStrafe);
+        return yaw;
     }
 
     public static float getTickDelta() {

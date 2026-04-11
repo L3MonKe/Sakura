@@ -6,6 +6,7 @@ import dev.sakura.client.event.EventPriority;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.module.impl.player.inventory.InvManager;
 import net.minecraft.client.gui.screen.Screen;
 
 public class Sprint extends Module {
@@ -21,7 +22,7 @@ public class Sprint extends Module {
             mc.options.sprintKey.setPressed(false);
             return;
         }
-        InvMove invMove = Sakura.MODULES.getModule(InvMove.class);
+        InvManager invMove = Sakura.MODULES.getModule(InvManager.class);
         if (invMove != null && invMove.isEnabled() && invMove.isSprintSuppressed()) {
             mc.options.sprintKey.setPressed(false);
             return;

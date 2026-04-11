@@ -6,6 +6,7 @@ import it.unimi.dsi.fastutil.longs.LongBidirectionalIterator;
 import it.unimi.dsi.fastutil.longs.LongSortedSet;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
@@ -23,6 +24,9 @@ import java.util.function.Predicate;
 import static dev.sakura.client.Sakura.mc;
 
 public class EntityUtil {
+    public static boolean isEating() {
+        return (mc.player.getMainHandStack().getComponents().contains(DataComponentTypes.FOOD) || mc.player.getOffHandStack().getComponents().contains(DataComponentTypes.FOOD)) && mc.player.isUsingItem();
+    }
     public static PlayerEntity getClosestPlayer(double range) {
         return mc.world.getPlayers().stream().filter(e -> !(e instanceof ClientPlayerEntity) && !e.isSpectator())
                 .filter(e -> mc.player.squaredDistanceTo(e) <= range * range)

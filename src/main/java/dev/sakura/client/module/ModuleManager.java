@@ -35,6 +35,7 @@ public class ModuleManager {
         // Combat
         add(new AntiBot());
         add(new AttackCrystal());
+        add(new AttackReduce());
         add(new AutoWeapon());
         add(new Criticals());
         add(new KillAura());
@@ -50,10 +51,9 @@ public class ModuleManager {
         // Movement
         add(new AutoStuck());
         //add(new Blink());
-        add(new BlinkNoSlow());
+        //add(new BlinkNoSlow());
         add(new Flight());
         add(new GuiMove());
-        add(new InvMove());
         add(new FastWeb());
         add(new JumpCooldown());
         add(new NoFall());
