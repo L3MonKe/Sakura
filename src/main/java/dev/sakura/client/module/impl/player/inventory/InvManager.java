@@ -62,6 +62,7 @@ public class InvManager extends Module {
     }
 
     //todo:private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Silent);
+    private final BoolValue onlyInInventory = new BoolValue("Only In Inventory", "仅在背包界面", false);
     private final BoolValue pauseOnEat = new BoolValue("Pause On Eat", "吃东西时停止", true);
     private final NumberValue<Double> minDelay = new NumberValue<>("Min Delay", "最小延迟", 90.0, 0.0, 500.0, 5.0);
     private final NumberValue<Double> maxDelay = new NumberValue<>("Max Delay", "最大延迟", 110.0, 0.0, 500.0, 5.0);
@@ -138,14 +139,24 @@ public class InvManager extends Module {
             resumeSprint = false;
         }
 
-            if (mc.currentScreen instanceof InventoryScreen) {
-                KeyBinding[] key = {mc.options.forwardKey, mc.options.backKey, mc.options.leftKey, mc.options.rightKey, mc.options.jumpKey};
+        if (mc.currentScreen instanceof InventoryScreen) {
+            KeyBinding[] key = {mc.options.forwardKey, mc.options.backKey, mc.options.leftKey, mc.options.rightKey, mc.options.jumpKey};
 
-                    setKeyPressed(mc.options.sprintKey);
+            // 如果启用了"仅在背包界面"选项，禁止移动
+            if (onlyInInventory.get()) {
+                // 禁止所有移动按键
+                for (KeyBinding b : key) {
+                    KeyBinding.setKeyPressed(b.getDefaultKey(), false);
+                }
+                KeyBinding.setKeyPressed(mc.options.sprintKey.getDefaultKey(), false);
+            } else {
+                // 原有逻辑：保持按键状态
+                setKeyPressed(mc.options.sprintKey);
                 for (KeyBinding b : key) {
                     setKeyPressed(b);
                 }
             }
+        }
     }
 
     @EventHandler
@@ -330,6 +341,11 @@ public class InvManager extends Module {
         if (!(mc.currentScreen instanceof ClickGuiScreen) && !this.checkConfig()) {
             ChatUtil.clientMessage("Duplicate slot config in Inventory Manager! Please check your config!");
             this.toggle();
+            return;
+        }
+
+        // 如果启用了"仅在背包界面"选项，检查当前是否打开了背包
+        if (onlyInInventory.get() && !(mc.currentScreen instanceof InventoryScreen)) {
             return;
         }
 

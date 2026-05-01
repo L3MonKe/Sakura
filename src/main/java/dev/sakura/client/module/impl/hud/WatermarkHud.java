@@ -127,6 +127,14 @@ public class WatermarkHud extends HudModule {
     private final NumberValue<Double> xylitolShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolShadow.get());
     private final BoolValue sakuraTextShadow = new BoolValue("TextShadow", "文本阴影", false, () -> mode.is(ListMode.Sakura));
     private final NumberValue<Double> sakuraTextShadowDistance = new NumberValue<>("TextShadowDist", "阴影间距", 1.0, 0.0, 5.0, 0.1, () -> mode.is(ListMode.Sakura) && sakuraTextShadow.get());
+    
+    // Sakura 简化模式
+    private final BoolValue sakuraSimpleMode = new BoolValue("SimpleMode", "简化模式", false, () -> mode.is(ListMode.Sakura));
+    private final BoolValue sakuraShowVersion = new BoolValue("ShowVersion", "显示版本", true, () -> mode.is(ListMode.Sakura) && sakuraSimpleMode.get());
+    private final NumberValue<Double> sakuraVersionSize = new NumberValue<>("VersionSize", "版本大小", 10.0, 6.0, 24.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraSimpleMode.get() && sakuraShowVersion.get());
+    private final NumberValue<Double> sakuraVersionGap = new NumberValue<>("VersionGap", "版本间距", 2.0, 0.0, 20.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraSimpleMode.get() && sakuraShowVersion.get());
+    private final NumberValue<Double> sakuraVersionOffsetY = new NumberValue<>("VersionOffsetY", "版本Y偏移", 0.0, -10.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) && sakuraSimpleMode.get() && sakuraShowVersion.get());
+    private final ColorValue sakuraVersionColor = new ColorValue("VersionColor", "版本颜色", new Color(255, 255, 255, 255), () -> mode.is(ListMode.Sakura) && sakuraSimpleMode.get() && sakuraShowVersion.get());
 
     public enum XylitolShadowMode {Solid, Gradient}
 
@@ -502,6 +510,12 @@ public class WatermarkHud extends HudModule {
     }
 
     private void renderNewSakura(long vg, float s) {
+        // 简化模式：只显示 Sakura + 版本号
+        if (sakuraSimpleMode.get()) {
+            renderSakuraSimple(vg, s);
+            return;
+        }
+        
         XylitolMetrics m = calculateXylitolMetrics(s);
 
         double offsetDeg = (System.currentTimeMillis() / 20.0) * animationSpeed.get();
@@ -554,6 +568,73 @@ public class WatermarkHud extends HudModule {
 
         this.width = m.totalW;
         this.height = m.totalH;
+    }
+    
+    private void renderSakuraSimple(long vg, float s) {
+        String displayName = XYLITOL_MAIN_TEXT;
+        if (displayName == null) displayName = "";
+
+        int mainFont = getXylitolSakuraFont();
+        float mainSize = xylitolMainFontSize.get().floatValue() * s;
+        float mainH = NanoVGHelper.getFontHeight(mainFont, mainSize);
+        
+        double offsetDeg = (System.currentTimeMillis() / 20.0) * animationSpeed.get();
+        int colorStepDeg = xylitolSakuraGradientSpread.get();
+        float blockW = Math.max(1.0f, xylitolSakuraBlockDistance.get() * s);
+
+        float mainX = x;
+        float mainBaseY = y + mainH + (xylitolSakuraTextOffsetY.get().floatValue() * s);
+        
+        float textW = NanoVGHelper.getTextWidth(displayName, mainFont, mainSize);
+        if (textW <= 0.0f) {
+            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(XYLITOL_MAIN_TEXT, mainFont, mainSize));
+        }
+
+        // 绘制发光效果
+        if (xylitolSakuraGlow.get()) {
+            int glowIndex = (int) Math.max(0, Math.floor((textW * 0.5f) / blockW));
+            Color glowC = getXylitolSakuraStepColor(offsetDeg + (double) glowIndex * colorStepDeg);
+            glowC = new Color(glowC.getRed(), glowC.getGreen(), glowC.getBlue(), 220);
+            NanoVGHelper.drawGlowingString(displayName, mainX, mainBaseY, mainFont, mainSize, glowC, xylitolSakuraGlowRadius.get().floatValue() * s, xylitolSakuraGlowIntensity.get());
+        }
+
+        // 绘制文本阴影
+        if (sakuraTextShadow.get()) {
+            Color c1 = xylitolSakuraColor1.get();
+            Color c2 = xylitolSakuraColor2.get();
+            Color avgColor = new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2, (c1.getBlue() + c2.getBlue()) / 2);
+            Color coloredShadow = new Color((int) (avgColor.getRed() * 0.5), (int) (avgColor.getGreen() * 0.5), (int) (avgColor.getBlue() * 0.5), 255);
+
+            float dist = sakuraTextShadowDistance.get().floatValue() * s;
+            NanoVGHelper.drawString(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
+        }
+
+        // 绘制渐变文本
+        renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);
+
+        float totalWidth = textW;
+        
+        // 绘制版本号（不参与渐变）
+        if (sakuraShowVersion.get()) {
+            float gap = sakuraVersionGap.get().floatValue() * s;
+            String version = Sakura.MOD_VER;
+            int versionFont = FontLoader.regular();
+            float versionSize = sakuraVersionSize.get().floatValue() * s;
+            float versionW = NanoVGHelper.getTextWidth(version, versionFont, versionSize);
+            float versionH = NanoVGHelper.getFontHeight(versionFont, versionSize);
+            
+            float versionX = mainX + textW + gap;
+            // 调整版本号的垂直位置，使其与主文本对齐，并应用 Y 偏移
+            float versionOffsetY = sakuraVersionOffsetY.get().floatValue() * s;
+            float versionBaseY = y + mainH + (xylitolSakuraTextOffsetY.get().floatValue() * s) + (mainH - versionH) * 0.5f + versionH * 0.5f + versionOffsetY;
+            
+            NanoVGHelper.drawString(version, versionX, versionBaseY, versionFont, versionSize, sakuraVersionColor.get());
+            
+            totalWidth += gap + versionW;
+        }
+
+        this.width = totalWidth;
+        this.height = mainH;
     }
 
     private void renderXylitolShadow() {

@@ -23,6 +23,7 @@ import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.RotationAxis;
+import org.joml.Vector3f;
 
 public class Animations extends Module {
     public Animations() {
@@ -73,7 +74,17 @@ public class Animations extends Module {
         V1_7,
         Pushdown,
         Exhibition,
-        Spin
+        Spin,
+        Vanilla,
+        Tap,
+        Tap2,
+        Slide,
+        Slide2,
+        Scale,
+        Leaked,
+        Ninja,
+        Tomy,
+        Down
     }
 
     private enum SwingMode {
@@ -192,14 +203,21 @@ public class Animations extends Module {
     }
 
     private void applyBlockingAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
-        if (blockingAnimation.is(BlockingAnimation.V1_7)) {
-            oneSevenTransform(matrices, arm, equipProgress, swingProgress);
-        } else if (blockingAnimation.is(BlockingAnimation.Pushdown)) {
-            pushdownTransform(matrices, arm, equipProgress, swingProgress);
-        } else if (blockingAnimation.is(BlockingAnimation.Exhibition)) {
-            exhibitionTransform(matrices, arm, equipProgress, swingProgress);
-        } else if (blockingAnimation.is(BlockingAnimation.Spin)) {
-            spinTransform(matrices, arm, equipProgress, swingProgress);
+        switch (blockingAnimation.get()) {
+            case V1_7 -> oneSevenTransform(matrices, arm, equipProgress, swingProgress);
+            case Pushdown -> pushdownTransform(matrices, arm, equipProgress, swingProgress);
+            case Exhibition -> exhibitionTransform(matrices, arm, equipProgress, swingProgress);
+            case Spin -> spinTransform(matrices, arm, equipProgress, swingProgress);
+            case Vanilla -> vanillaAnimation(matrices, arm, equipProgress, swingProgress);
+            case Tap -> tapAnimation(matrices, arm, equipProgress, swingProgress);
+            case Tap2 -> tap2Animation(matrices, arm, equipProgress, swingProgress);
+            case Slide -> slideAnimation(matrices, arm, equipProgress, swingProgress);
+            case Slide2 -> slide2Animation(matrices, arm, equipProgress, swingProgress);
+            case Scale -> scaleAnimation(matrices, arm, equipProgress, swingProgress);
+            case Leaked -> leakedAnimation(matrices, arm, equipProgress, swingProgress);
+            case Ninja -> ninjaAnimation(matrices, arm, equipProgress, swingProgress);
+            case Tomy -> tomyAnimation(matrices, arm, equipProgress, swingProgress);
+            case Down -> downAnimation(matrices, arm, equipProgress, swingProgress);
         }
     }
 
@@ -237,6 +255,143 @@ public class Animations extends Module {
         matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(spinX.get().floatValue()));
         matrices.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(spinY.get().floatValue()));
         matrices.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(spinZ.get().floatValue()));
+    }
+
+    // ==================== SigmaRemap-1.7 动画 ====================
+    
+    private void vanillaAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.48F, -0.55F, -0.71999997F);
+        matrices.translate(0.0, equipProgress * -0.6F, 0.0);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, f * -20.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, g * -20.0F, 0.0F, 0.0F, 1.0F);
+        rotate(matrices, g * -69.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        float scale = 1.2F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    private void tapAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.0, -3.5, 0.0);
+        matrices.translate(0.56F, -0.52F, -0.72F);
+        matrices.translate(0.56F, -0.22F, -0.71999997F);
+        rotate(matrices, 45.0F, 0.0F, 1.0F, 0.0F);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, 0.0F, 0.0F, 0.0F, 1.0F);
+        rotate(matrices, g * -9.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, -9.0F, 0.0F, 0.0F, 1.0F);
+        matrices.translate(0.0, 3.2F, 0.0);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        matrices.scale(2.7F, 2.7F, 2.7F);
+    }
+
+    private void tap2Animation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.648F, -0.55F, -0.71999997F);
+        matrices.translate(0.0, equipProgress * -0.6F, 0.0);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, -g * 10.0F, 1.0F, -2.0F, 3.0F);
+        float scale = 1.2F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    private void slideAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.648F, -0.55F, -0.71999997F);
+        matrices.translate(0.0, equipProgress * -0.6F, 0.0);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, -g * 20.0F, 1.0F, 0.0F, 0.0F);
+        float scale = 1.2F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    private void slide2Animation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.48F, -0.55F, -0.71999997F);
+        matrices.translate(0.0, equipProgress * -0.6F, 0.0);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, f * -20.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, g * -20.0F, 0.0F, 0.0F, 1.0F);
+        rotate(matrices, g * -69.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        float scale = 1.2F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    private void scaleAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.48F, -0.55F, -0.71999997F);
+        matrices.translate(0.0, equipProgress * -0.2F, 0.0);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        float scale = 1.2F - g * 0.3F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    private void leakedAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.56, -0.52, -0.72);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, g * 10.0F, -4.0F, -2.0F, 5.0F);
+        rotate(matrices, g * 30.0F, 1.0F, -0.0F, -1.0F);
+    }
+
+    private void ninjaAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.48F, -0.39F, -0.71999997F);
+        matrices.translate(0.0, equipProgress * -0.6F, 0.0);
+        rotate(matrices, 100.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -50.0F, 0.0F, 0.0F, 1.0F);
+        float f = MathHelper.sin(swingProgress * (float) Math.PI);
+        float g = MathHelper.sin(swingProgress * (float) Math.PI);
+        rotate(matrices, f * -10.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, g * -30.0F, 0.0F, 0.0F, 1.0F);
+        rotate(matrices, g * 109.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, -90.0F, 1.0F, 0.0F, 0.0F);
+        float scale = 1.2F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    private void tomyAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        matrices.translate(0.48F, -0.55F, -0.71999997F);
+        matrices.translate(0.0, equipProgress * -0.6F, 0.0);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        float f = MathHelper.sin(swingProgress * swingProgress * (float) Math.PI);
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        rotate(matrices, f * -20.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, g * -20.0F, 0.0F, 0.0F, 1.0F);
+        rotate(matrices, g * -69.0F, 1.0F, 0.0F, 0.0F);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        float scale = 1.2F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    private void downAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
+        float g = MathHelper.sin(MathHelper.sqrt(swingProgress) * (float) Math.PI);
+        matrices.translate(0.48F, -0.55F, -0.71999997F);
+        matrices.translate(0.0, g * -0.2F, 0.0);
+        rotate(matrices, 77.0F, 0.0F, 1.0F, 0.0F);
+        rotate(matrices, -10.0F, 0.0F, 0.0F, 1.0F);
+        rotate(matrices, -80.0F, 1.0F, 0.0F, 0.0F);
+        float scale = 1.2F;
+        matrices.scale(scale, scale, scale);
+    }
+
+    // 辅助旋转方法
+    private void rotate(MatrixStack matrices, float angle, float x, float y, float z) {
+        matrices.multiply(RotationAxis.of(new Vector3f(x, y, z)).rotationDegrees(angle));
     }
 
     private void renderItem(LivingEntity entity, ItemStack stack, ItemDisplayContext renderMode, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {

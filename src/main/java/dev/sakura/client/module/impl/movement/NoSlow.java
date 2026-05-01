@@ -11,10 +11,13 @@ import dev.sakura.client.values.impl.EnumValue;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
 import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
 import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
 public class NoSlow extends Module {
     public NoSlow() {
@@ -26,7 +29,8 @@ public class NoSlow extends Module {
         Jump("Jump"),
         Grim50("Grim 1/2"),
         Grim33("Grim 1/3"),
-        GrimSword("GrimSword");
+        GrimSword("GrimSword"),
+        Hypixel("Hypixel");
 
         private final String displayName;
 
@@ -76,6 +80,7 @@ public class NoSlow extends Module {
             case Grim50 -> grim50(event);
             case Grim33 -> grim33(event);
             case GrimSword -> grimSword(event);
+            case Hypixel -> hypixel(event);
         }
     }
 
@@ -98,6 +103,20 @@ public class NoSlow extends Module {
                         mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot % 7 + 2));
                         mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
                     }
+                }
+            }
+        }
+
+        if (mode.is(Mode.Hypixel) && checkSword()) {
+            if (event.getType() == EventType.PRE) {
+                if (mc.player.isUsingItem()) {
+                    // 发送RELEASE_USE_ITEM包来清除减速
+                    PlayerActionC2SPacket releasePacket = new PlayerActionC2SPacket(
+                            PlayerActionC2SPacket.Action.RELEASE_USE_ITEM,
+                            BlockPos.ORIGIN,
+                            Direction.DOWN
+                    );
+                    mc.getNetworkHandler().sendPacket(releasePacket);
                 }
             }
         }
@@ -126,6 +145,13 @@ public class NoSlow extends Module {
     }
 
     private void grimSword(SlowdownEvent event) {
+        if (checkSword()) {
+            event.setSlowdown(false);
+        }
+    }
+
+    private void hypixel(SlowdownEvent event) {
+        // Hypixel模式仅在持剑时生效
         if (checkSword()) {
             event.setSlowdown(false);
         }

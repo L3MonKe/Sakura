@@ -29,6 +29,7 @@ public class AttackReduce extends Module {
     private final BoolValue doRotation = new BoolValue("Rotation", "自动转向", true);
     private final BoolValue onlyPlayer = new BoolValue("OnlyPlayer", "仅玩家", true);
     private final BoolValue cancelSprint = new BoolValue("CancelSprint", "取消疾跑", true);
+    private final BoolValue limitRange = new BoolValue("LimitRange", "限制范围(3格)", false);
     
     private int hitCount = 0;
     private double motionX = 0;
@@ -118,7 +119,9 @@ public class AttackReduce extends Module {
     private void findTarget() {
         target = null;
         
-        double minDistance = 7.0;
+        double maxDistance = limitRange.get() ? 3.0 : 7.0;
+        double minDistance = maxDistance;
+        
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
             if (entity == mc.player) continue;
@@ -128,7 +131,7 @@ public class AttackReduce extends Module {
             double distance = mc.player.distanceTo(entity);
             if (distance < minDistance) {
                 // 检查是否是有效目标
-                if (Managers.COMBAT.isEnemy(living, minDistance)) {
+                if (Managers.COMBAT.isEnemy(living, maxDistance)) {
                     minDistance = distance;
                     target = living;
                 }

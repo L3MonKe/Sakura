@@ -6,6 +6,7 @@ import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.PlayerTickEvent;
 import dev.sakura.client.event.impl.player.SlowdownEvent;
 import dev.sakura.client.event.type.EventType;
+import dev.sakura.client.module.impl.movement.Sprint;
 import net.minecraft.client.network.ClientPlayerEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;

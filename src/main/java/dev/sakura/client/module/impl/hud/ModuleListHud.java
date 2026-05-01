@@ -103,6 +103,11 @@ public class ModuleListHud extends HudModule {
     private final BoolValue textGlow = new BoolValue("Text Glow", "文本发光", true, () -> mode.is(ListMode.Sakura));
     private final NumberValue<Double> glowRadius = new NumberValue<>("Glow Radius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Sakura) && textGlow.get());
     private final NumberValue<Integer> glowIntensity = new NumberValue<>("Glow Intensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Sakura) && textGlow.get());
+    
+    // 字体阴影 (Font Shadow) - Sakura 模式同款
+    private final BoolValue textShadow = new BoolValue("Text Shadow", "文本阴影", true, () -> mode.is(ListMode.Sakura));
+    private final NumberValue<Double> textShadowDistance = new NumberValue<>("TextShadowDist", "阴影间距", 0.9, 0.0, 5.0, 0.1, () -> mode.is(ListMode.Sakura) && textShadow.get());
+    private final NumberValue<Double> textShadowOffsetY = new NumberValue<>("ShadowOffsetY", "阴影Y偏移", -3.3, -10.0, 10.0, 0.1, () -> mode.is(ListMode.Sakura) && textShadow.get());
 
     // 2. 渐变颜色 (Colors)
     private final BoolValue autoColor = new BoolValue("Auto Color", "自动调色", false, () -> mode.is(ListMode.Sakura));
@@ -987,6 +992,19 @@ public class ModuleListHud extends HudModule {
 
             if (!fontMode.is(FontMode.Minecraft)) {
                 float y1 = textY - (fontSize * scale / 2) + (1 * scale);
+                
+                // 绘制文本阴影（Sakura 模式同款）
+                if (textShadow.get()) {
+                    // 计算渐变色的平均颜色并变暗作为阴影
+                    Color avgColor = new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2, (c1.getBlue() + c2.getBlue()) / 2);
+                    Color coloredShadow = new Color((int) (avgColor.getRed() * 0.5), (int) (avgColor.getGreen() * 0.5), (int) (avgColor.getBlue() * 0.5), (int) (255 * animationValue));
+                    
+                    float dist = textShadowDistance.get().floatValue();
+                    float shadowYOffset = textShadowOffsetY.get().floatValue();
+                    NanoVGHelper.drawString(moduleName, animatedTextX + dist, textY + dist + shadowYOffset, font, fontSize * scale, coloredShadow);
+                }
+                
+                // 绘制文本（带发光效果或普通）
                 if (textGlow.get()) {
                     NanoVGHelper.drawGlowingString(moduleName, animatedTextX, y1, font, fontSize * scale, animatedTextColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
                 } else {
@@ -1001,6 +1019,18 @@ public class ModuleListHud extends HudModule {
                             SUFFIX_COLOR.getBlue(),
                             (int) (SUFFIX_COLOR.getAlpha() * animationValue)
                     );
+                    
+                    // 绘制后缀阴影
+                    if (textShadow.get()) {
+                        Color avgColorSuffix = new Color((c1.getRed() + c2.getRed()) / 2, (c1.getGreen() + c2.getGreen()) / 2, (c1.getBlue() + c2.getBlue()) / 2);
+                        Color coloredShadowSuffix = new Color((int) (avgColorSuffix.getRed() * 0.5), (int) (avgColorSuffix.getGreen() * 0.5), (int) (avgColorSuffix.getBlue() * 0.5), (int) (SUFFIX_COLOR.getAlpha() * animationValue));
+                        
+                        float dist = textShadowDistance.get().floatValue();
+                        float shadowYOffset = textShadowOffsetY.get().floatValue();
+                        NanoVGHelper.drawString(formattedSuffix, suffixX + dist, textY + dist + shadowYOffset, font, fontSize * scale, coloredShadowSuffix);
+                    }
+                    
+                    // 绘制后缀文本
                     if (textGlow.get()) {
                         NanoVGHelper.drawGlowingString(formattedSuffix, suffixX, y1, font, fontSize * scale, animatedSuffixColor, glowRadius.get().floatValue() * scale, glowIntensity.get());
                     } else {
