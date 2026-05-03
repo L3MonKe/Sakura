@@ -10,8 +10,6 @@ import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 
-import java.util.Random;
-
 public class Disabler extends Module {
     public Disabler() {
         super("Disabler", "禁用器", Category.Player);

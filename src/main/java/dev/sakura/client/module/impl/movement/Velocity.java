@@ -26,7 +26,6 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.common.CommonPingS2CPacket;
 import net.minecraft.network.packet.s2c.common.DisconnectS2CPacket;
-import net.minecraft.network.packet.s2c.common.KeepAliveS2CPacket;
 import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.EntityHitResult;
@@ -50,7 +49,6 @@ public class Velocity extends Module {
     private enum Mode {
         Legit,
         NoXZ,
-        ShabiIzkaurn,
         Watchdog
     }
 
@@ -115,13 +113,11 @@ public class Velocity extends Module {
             case NoXZ -> {
                 if (stage == VelocityStage.ATTACK) {
                     if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
-                        var motionXZ = 1.0D;
                         if (mc.player.isSprinting()) mc.player.setSprinting(false);
                         mc.interactionManager.attackEntity(mc.player, target);
                         mc.player.swingHand(Hand.MAIN_HAND);
-                        motionXZ *= 0.6D;
-                        mc.player.setVelocity(velocity.x * motionXZ, velocity.y, velocity.z * motionXZ);
-                        debug("执行攻击，motionXZ=" + motionXZ + "，velocity=" + formatVec(velocity));
+                        mc.player.setVelocity(velocity.x * 0.6, velocity.y, velocity.z * 0.6);
+                        debug("ATTACK");
                         stage = VelocityStage.CLEAR;
                     }
                 } else if (System.currentTimeMillis() - velocityTime >= alinkTime.get() && stage == VelocityStage.DELAY) {
@@ -153,30 +149,6 @@ public class Velocity extends Module {
                     this.sprintResetTicks--;
                 }
             }
-            case ShabiIzkaurn -> {
-                if (delay) {
-                    bufferTicks++;
-                }
-                if (mc.player.hurtTime < 6) {
-                    shouldHandleVelocity = false;
-                }
-                if (delay && ((bufferTicks > 20 || (mc.player.isSprinting() && bufferTicks > 3 && mc.targetedEntity != null)))) {
-                    handle();
-                }
-                if (shouldHandleVelocity) {
-                    if (mc.player.isOnGround() && mc.player.hurtTime > 8 && !delay) {
-                        mc.player.jump();
-                    }
-                    if (mc.targetedEntity != null && mc.player.hurtTime == 10 && mc.player.isSprinting()) {
-                        mc.interactionManager.attackEntity(mc.player, mc.targetedEntity);
-                        mc.player.swingHand(Hand.MAIN_HAND);
-                        mc.player.setVelocity(mc.player.getVelocity().multiply(0.6, 1, 0.6));
-                        mc.player.setSprinting(false);
-                        shouldHandleVelocity = false;
-                    }
-                }
-            }
-
         }
 
         this.setSuffix(mode.get() + (stage == VelocityStage.DELAY ? " " + (System.currentTimeMillis() - velocityTime) / 50 + "Ticks" : ""));
@@ -294,27 +266,6 @@ public class Velocity extends Module {
             case Legit -> {
                 if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
                     jump = true;
-                }
-            }
-            case ShabiIzkaurn -> {
-                if (!event.isCancelled()) {
-                    if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket s12 && s12.getEntityId() == mc.player.getId()) {
-                        double motionXZ = Math.sqrt(s12.getVelocity().getX() * s12.getVelocity().getX() + s12.getVelocity().getZ() * s12.getVelocity().getZ());
-                        if (motionXZ > 0.2) {
-                            shouldHandleVelocity = true;
-                        }
-                        if (motionXZ > 0.9) {
-                            delay = true;
-                        }
-                    }
-                    if (delay) {
-                        Packet<?> pPacket = event.getPacket();
-                        if (pPacket instanceof CommonPingS2CPacket || pPacket instanceof KeepAliveS2CPacket || (pPacket instanceof EntityVelocityUpdateS2CPacket p1 && p1.getEntityId() == mc.player.getId())
-                                || pPacket instanceof ExplosionS2CPacket) {
-                            event.setCancelled(true);
-                            delayPackets.add(pPacket);
-                        }
-                    }
                 }
             }
             case Watchdog -> {

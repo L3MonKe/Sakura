@@ -127,7 +127,7 @@ public class WatermarkHud extends HudModule {
     private final NumberValue<Double> xylitolShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> (mode.is(ListMode.Xylitol) || mode.is(ListMode.Sakura)) && xylitolShadow.get());
     private final BoolValue sakuraTextShadow = new BoolValue("TextShadow", "文本阴影", false, () -> mode.is(ListMode.Sakura));
     private final NumberValue<Double> sakuraTextShadowDistance = new NumberValue<>("TextShadowDist", "阴影间距", 1.0, 0.0, 5.0, 0.1, () -> mode.is(ListMode.Sakura) && sakuraTextShadow.get());
-    
+
     // Sakura 简化模式
     private final BoolValue sakuraSimpleMode = new BoolValue("SimpleMode", "简化模式", false, () -> mode.is(ListMode.Sakura));
     private final BoolValue sakuraShowVersion = new BoolValue("ShowVersion", "显示版本", true, () -> mode.is(ListMode.Sakura) && sakuraSimpleMode.get());
@@ -515,7 +515,7 @@ public class WatermarkHud extends HudModule {
             renderSakuraSimple(vg, s);
             return;
         }
-        
+
         XylitolMetrics m = calculateXylitolMetrics(s);
 
         double offsetDeg = (System.currentTimeMillis() / 20.0) * animationSpeed.get();
@@ -569,7 +569,7 @@ public class WatermarkHud extends HudModule {
         this.width = m.totalW;
         this.height = m.totalH;
     }
-    
+
     private void renderSakuraSimple(long vg, float s) {
         String displayName = XYLITOL_MAIN_TEXT;
         if (displayName == null) displayName = "";
@@ -577,14 +577,14 @@ public class WatermarkHud extends HudModule {
         int mainFont = getXylitolSakuraFont();
         float mainSize = xylitolMainFontSize.get().floatValue() * s;
         float mainH = NanoVGHelper.getFontHeight(mainFont, mainSize);
-        
+
         double offsetDeg = (System.currentTimeMillis() / 20.0) * animationSpeed.get();
         int colorStepDeg = xylitolSakuraGradientSpread.get();
         float blockW = Math.max(1.0f, xylitolSakuraBlockDistance.get() * s);
 
         float mainX = x;
         float mainBaseY = y + mainH + (xylitolSakuraTextOffsetY.get().floatValue() * s);
-        
+
         float textW = NanoVGHelper.getTextWidth(displayName, mainFont, mainSize);
         if (textW <= 0.0f) {
             textW = Math.max(1.0f, NanoVGHelper.getTextWidth(XYLITOL_MAIN_TEXT, mainFont, mainSize));
@@ -613,7 +613,7 @@ public class WatermarkHud extends HudModule {
         renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);
 
         float totalWidth = textW;
-        
+
         // 绘制版本号（不参与渐变）
         if (sakuraShowVersion.get()) {
             float gap = sakuraVersionGap.get().floatValue() * s;
@@ -622,14 +622,14 @@ public class WatermarkHud extends HudModule {
             float versionSize = sakuraVersionSize.get().floatValue() * s;
             float versionW = NanoVGHelper.getTextWidth(version, versionFont, versionSize);
             float versionH = NanoVGHelper.getFontHeight(versionFont, versionSize);
-            
+
             float versionX = mainX + textW + gap;
             // 调整版本号的垂直位置，使其与主文本对齐，并应用 Y 偏移
             float versionOffsetY = sakuraVersionOffsetY.get().floatValue() * s;
             float versionBaseY = y + mainH + (xylitolSakuraTextOffsetY.get().floatValue() * s) + (mainH - versionH) * 0.5f + versionH * 0.5f + versionOffsetY;
-            
+
             NanoVGHelper.drawString(version, versionX, versionBaseY, versionFont, versionSize, sakuraVersionColor.get());
-            
+
             totalWidth += gap + versionW;
         }
 

@@ -1,7 +1,6 @@
 package dev.sakura.client.utils.player;
 
 import dev.sakura.client.event.impl.input.MoveInputEvent;
-import dev.sakura.client.utils.math.MathUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.util.math.MathHelper;

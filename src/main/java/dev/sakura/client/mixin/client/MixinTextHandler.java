@@ -3,8 +3,6 @@ package dev.sakura.client.mixin.client;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.impl.player.NameProtect;
 import net.minecraft.client.font.TextHandler;
-import net.minecraft.text.CharacterVisitor;
-import net.minecraft.text.OrderedText;
 import net.minecraft.text.StringVisitable;
 import net.minecraft.text.Style;
 import org.spongepowered.asm.mixin.Final;
@@ -38,7 +36,7 @@ public abstract class MixinTextHandler {
         if (Sakura.MODULES == null) {
             return;
         }
-        
+
         NameProtect nameProtect = Sakura.MODULES.getModule(NameProtect.class);
         if (nameProtect == null || !nameProtect.isEnabled()) {
             return;
@@ -46,23 +44,23 @@ public abstract class MixinTextHandler {
 
         // 使用 MutableFloat 来累积宽度
         final float[] totalWidth = {0.0f};
-        
+
         // 访问文本内容并替换名称
         text.visit((style, asString) -> {
             // 替换名称
             String replaced = nameProtect.replace(asString);
-            
+
             // 计算替换后文本的宽度
             for (int i = 0; i < replaced.length(); i++) {
                 int codePoint = replaced.codePointAt(i);
                 totalWidth[0] += widthRetriever.getWidth(codePoint, style);
-                
+
                 // 处理代理对（surrogate pairs）
                 if (Character.isSupplementaryCodePoint(codePoint)) {
                     i++;
                 }
             }
-            
+
             return Optional.empty();
         }, Style.EMPTY);
 

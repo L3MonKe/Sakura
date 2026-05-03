@@ -27,6 +27,7 @@ public class EntityUtil {
     public static boolean isEating() {
         return (mc.player.getMainHandStack().getComponents().contains(DataComponentTypes.FOOD) || mc.player.getOffHandStack().getComponents().contains(DataComponentTypes.FOOD)) && mc.player.isUsingItem();
     }
+
     public static PlayerEntity getClosestPlayer(double range) {
         return mc.world.getPlayers().stream().filter(e -> !(e instanceof ClientPlayerEntity) && !e.isSpectator())
                 .filter(e -> mc.player.squaredDistanceTo(e) <= range * range)

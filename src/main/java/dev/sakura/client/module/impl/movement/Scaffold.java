@@ -4,7 +4,6 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MouseClickEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
-import dev.sakura.client.event.impl.player.StrafeEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;

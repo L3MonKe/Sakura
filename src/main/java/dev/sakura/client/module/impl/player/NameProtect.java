@@ -11,8 +11,9 @@ import net.minecraft.text.OrderedText;
 import net.minecraft.text.Style;
 
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**

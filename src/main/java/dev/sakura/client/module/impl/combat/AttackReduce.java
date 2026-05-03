@@ -18,8 +18,6 @@ import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 
-import static dev.sakura.client.Sakura.mc;
-
 /**
  * AttackReduce - 减少击退效果
  * 通过在被击退时攻击目标来减少击退距离
@@ -30,16 +28,16 @@ public class AttackReduce extends Module {
     private final BoolValue onlyPlayer = new BoolValue("OnlyPlayer", "仅玩家", true);
     private final BoolValue cancelSprint = new BoolValue("CancelSprint", "取消疾跑", true);
     private final BoolValue limitRange = new BoolValue("LimitRange", "限制范围(3格)", false);
-    
+
     private int hitCount = 0;
     private double motionX = 0;
     private double motionZ = 0;
     private LivingEntity target = null;
-    
+
     public AttackReduce() {
         super("AttackReduce", "减少击退", Category.Combat);
     }
-    
+
     @Override
     protected void onDisable() {
         hitCount = 0;
@@ -47,19 +45,19 @@ public class AttackReduce extends Module {
         motionZ = 0;
         target = null;
     }
-    
+
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
         if (!isEnabled() || hitCount <= 0) return;
-        
+
         hitCount--;
-        
+
         // 查找目标
         findTarget();
-        
+
         if (target == null) return;
-        
+
         // 计算反向旋转以减少击退
         if (motionX != 0 && motionZ != 0 && doRotation.get()) {
             Vec3d knockback = new Vec3d(motionX, 0.0, motionZ).normalize();
@@ -68,37 +66,37 @@ public class AttackReduce extends Module {
             Rotation rotation = RotationUtil.calculate(lookAt);
             Managers.ROTATION.setRotations(rotation, 10);
         }
-        
+
         // 执行攻击
         attackTarget();
-        
+
         // 取消疾跑以减少击退
         if (cancelSprint.get() && mc.player.isSprinting()) {
             mc.player.setSprinting(false);
         }
     }
-    
+
     @EventHandler
     public void onPacket(PacketEvent event) {
         if (nullCheck()) return;
         if (!isEnabled()) return;
         if (event.getType() != EventType.RECEIVE) return;
-        
+
         if (!(event.getPacket() instanceof EntityVelocityUpdateS2CPacket velocity)) return;
-        
+
         // 检查是否是玩家的速度更新
         if (velocity.getEntityId() != mc.player.getId()) return;
-        
+
         Vec3d vel = velocity.getVelocity();
-        
+
         // 检查是否有足够的击退需要减少
         if (vel.y <= 0.1 || Math.hypot(vel.x, vel.z) <= 0.2) return;
-        
+
         motionX = vel.x;
         motionZ = vel.z;
         hitCount = computeReduceTicks(vel.x, vel.z);
     }
-    
+
     /**
      * 计算需要攻击的tick数来减少击退
      * 基于击退速度计算最优攻击次数
@@ -112,22 +110,22 @@ public class AttackReduce extends Module {
         if (ticks > 10) ticks = 10;
         return ticks;
     }
-    
+
     /**
      * 查找攻击目标
      */
     private void findTarget() {
         target = null;
-        
+
         double maxDistance = limitRange.get() ? 3.0 : 7.0;
         double minDistance = maxDistance;
-        
+
         for (Entity entity : mc.world.getEntities()) {
             if (!(entity instanceof LivingEntity living)) continue;
             if (entity == mc.player) continue;
-            
+
             if (onlyPlayer.get() && !(entity instanceof PlayerEntity)) continue;
-            
+
             double distance = mc.player.distanceTo(entity);
             if (distance < minDistance) {
                 // 检查是否是有效目标
@@ -138,21 +136,21 @@ public class AttackReduce extends Module {
             }
         }
     }
-    
+
     /**
      * 攻击目标实体
      */
     private void attackTarget() {
         if (target == null) return;
-        
+
         // 发送攻击包
         PlayerInteractEntityC2SPacket packet = PlayerInteractEntityC2SPacket.attack(target, mc.player.isSneaking());
         mc.getNetworkHandler().sendPacket(packet);
-        
+
         // 本地攻击效果
         mc.interactionManager.attackEntity(mc.player, target);
         mc.player.swingHand(Hand.MAIN_HAND);
-        
+
         // 应用疾跑惩罚（减少玩家速度）
         if (mc.player.isSprinting()) {
             Vec3d velocity = mc.player.getVelocity();

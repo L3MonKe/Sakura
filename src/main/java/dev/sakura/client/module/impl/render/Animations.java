@@ -258,7 +258,7 @@ public class Animations extends Module {
     }
 
     // ==================== SigmaRemap-1.7 动画 ====================
-    
+
     private void vanillaAnimation(MatrixStack matrices, Arm arm, float equipProgress, float swingProgress) {
         matrices.translate(0.48F, -0.55F, -0.71999997F);
         matrices.translate(0.0, equipProgress * -0.6F, 0.0);
