@@ -11,8 +11,6 @@ import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.animations.Easing;
 import dev.sakura.verify.util.ExitUtil;
 import org.joml.Matrix3x2fStack;
-import org.lwjgl.nanovg.NVGColor;
-import org.lwjgl.nanovg.NVGPaint;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -27,8 +25,6 @@ import static org.lwjgl.nanovg.NanoVG.*;
 
 public class NotificationManager {
     public enum RenderMode {
-        Xylitol,
-        Xylitol1,
         Sakura,
         Trollhack
     }
@@ -70,27 +66,7 @@ public class NotificationManager {
         public static final Xylitol4Offsets ZERO = new Xylitol4Offsets(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    public static final Xylitol4Offsets XYLITOL4_HARDCODED_OFFSETS = new Xylitol4Offsets(-3.0f, -3.0f, -2.0f, -4.0f, -1.5f, 0.0f, -3.0f);
-    public static final Alignment XYLITOL3_HARDCODED_ALIGNMENT = Alignment.RIGHT;
-    public static final float XYLITOL3_HARDCODED_SCALE = 1.85f;
-    public static final float XYLITOL3_HARDCODED_FONT_SIZE = 10.0f;
-    public static final float XYLITOL3_HARDCODED_MAX_WIDTH = 500.0f;
-    public static final boolean XYLITOL3_HARDCODED_BLUR = true;
-    public static final float XYLITOL3_HARDCODED_BLUR_STRENGTH = 4.0f;
-    public static final Color XYLITOL3_HARDCODED_PRIMARY_COLOR = Color.getHSBColor(0.9675926f, 0.15294118f, 1.0f);
-    public static final Color XYLITOL3_HARDCODED_BACKGROUND_COLOR = new Color(
-            Color.getHSBColor(0.0f, 0.0f, 0.21489775f).getRed(),
-            Color.getHSBColor(0.0f, 0.0f, 0.21489775f).getGreen(),
-            Color.getHSBColor(0.0f, 0.0f, 0.21489775f).getBlue(),
-            45
-    );
-    public static final Alignment XYLITOL4_HARDCODED_ALIGNMENT = Alignment.RIGHT;
-    public static final float XYLITOL4_HARDCODED_SCALE = 1.85f;
-    public static final float XYLITOL4_HARDCODED_FONT_SIZE = 10.0f;
-    public static final float XYLITOL4_HARDCODED_LINE_LENGTH = 5.5f;
-    public static final float XYLITOL4_HARDCODED_MAX_WIDTH = 500.0f;
-    public static final boolean XYLITOL4_HARDCODED_BLUR = true;
-    public static final float XYLITOL4_HARDCODED_BLUR_STRENGTH = 4.0f;
+    
     private static final float HARD_SHADOW_RANGE = 8.0f;
     private static final float HARD_SHADOW_STRENGTH = 0.6f;
 
@@ -225,10 +201,7 @@ public class NotificationManager {
         if (mode == RenderMode.Trollhack) {
             return renderPreviewLegacy(x, y, alignment == Alignment.LEFT, primaryColor, backgroundColor, maxWidth, blur, blurStrength);
         }
-        if (mode == RenderMode.Sakura) {
-            return renderPreviewSimple(x, y, maxWidth, backgroundColor, blur, blurStrength, scale, alignment, cornerRadius, shadowSettings, simpleIconSettings);
-        }
-        return renderPreviewXylitol(x, y, maxWidth, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius);
+        return renderPreviewSimple(x, y, maxWidth, backgroundColor, blur, blurStrength, scale, alignment, cornerRadius, shadowSettings, simpleIconSettings);
     }
 
     public static void render(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, float maxWidth, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment) {
@@ -252,11 +225,7 @@ public class NotificationManager {
             renderLegacy(x, y, alignment == Alignment.LEFT, primaryColor, backgroundColor, maxWidth, blur, blurStrength);
             return;
         }
-        if (mode == RenderMode.Sakura) {
-            renderSimple(x, y, maxWidth, backgroundColor, blur, blurStrength, scale, alignment, cornerRadius, shadowSettings, simpleIconSettings);
-            return;
-        }
-        renderXylitol(x, y, maxWidth, mode, primaryColor, backgroundColor, blur, blurStrength, scale, fontSize, xylitol4LineLength, alignment, xylitol4Offsets, shadowSettings, cornerRadius);
+        renderSimple(x, y, maxWidth, backgroundColor, blur, blurStrength, scale, alignment, cornerRadius, shadowSettings, simpleIconSettings);
     }
 
     public static float[] renderPreview(Matrix3x2fStack matrices, float x, float y, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment) {
@@ -330,27 +299,7 @@ public class NotificationManager {
         });
     }
 
-    private enum XylitolType {
-        SUCCESS(new Color(20, 250, 90), "A"),
-        DISABLE(new Color(255, 30, 30), "B"),
-        INFO(Color.DARK_GRAY, "C"),
-        WARNING(Color.YELLOW, "D");
-
-        private final Color color;
-        private final String icon;
-
-        XylitolType(Color color, String icon) {
-            this.color = color;
-            this.icon = icon;
-        }
-    }
-
-    private static XylitolType inferXylitolType(String message) {
-        String m = message.toLowerCase();
-        if (m.contains("§a") || m.contains(" enabled") || m.contains("已开启")) return XylitolType.SUCCESS;
-        if (m.contains("§c") || m.contains(" disabled") || m.contains("已关闭")) return XylitolType.DISABLE;
-        return XylitolType.INFO;
-    }
+    
 
     private static Color withAlpha(Color c, int alpha) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(255, alpha)));
@@ -382,41 +331,10 @@ public class NotificationManager {
         return Math.max(0.0f, Math.min(1.0f, v));
     }
 
-    private static float[] computeXylitolSize(RenderMode mode, String title, String description, float scale, float fontSize) {
-        scale = Math.max(0.1f, scale);
-        fontSize = Math.max(6.0f, fontSize);
-
-        if (mode == RenderMode.Xylitol) {
-            int font = FontLoader.medium();
-            float textW = NanoVGHelper.getTextWidth(description, font, fontSize);
-            float textH = NanoVGHelper.getFontHeight(font, fontSize);
-            float w = textW + 15.0f * scale;
-            float h = Math.max(23.0f * scale, textH + 10.0f * scale);
-            return new float[]{w, h};
-        }
-
-        int titleFont = FontLoader.ax();
-        float titleSize = fontSize + 2.0f;
-        float titleH = NanoVGHelper.getFontHeight(titleFont, titleSize);
-
-        int descFont = FontLoader.medium();
-        float descSize = fontSize;
-        float descW = NanoVGHelper.getTextWidth(description, descFont, descSize);
-        float descH = NanoVGHelper.getFontHeight(descFont, descSize);
-
-        float w = descW + 20.0f * scale;
-        float h = titleH + descH + 4.0f * scale;
-        return new float[]{w, h};
-    }
-
-    private static String simpleIcon(XylitolType type) {
-        if (type == XylitolType.DISABLE) return "C";
-        if (type == XylitolType.SUCCESS) return "D";
-        return "D";
-    }
-
-    private static String simpleTitle(XylitolType type) {
-        return type == XylitolType.DISABLE ? "Disabled Module" : "Enabled Module";
+    private static String inferSimpleTitle(String message) {
+        String m = message.toLowerCase();
+        if (m.contains("§c") || m.contains(" disabled") || m.contains("已关闭")) return "Disabled Module";
+        return "Enabled Module";
     }
 
     private static Color interpolateColor(Color c1, Color c2, float t) {
@@ -545,8 +463,7 @@ public class NotificationManager {
         String plain = Notification.stripFormatting(message);
         Notification.ParsedLines lines = Notification.parseLines(plain);
         String moduleName = lines.title == null || lines.title.isBlank() ? plain : lines.title;
-        XylitolType type = inferXylitolType(message);
-        String line1Text = simpleTitle(type);
+        String line1Text = "Enabled Module";
         SimpleMetrics metrics = computeSimpleMetrics(line1Text, moduleName, maxWidth, scale);
         float w = metrics.width;
         float h = metrics.height;
@@ -580,7 +497,7 @@ public class NotificationManager {
         if (blur) {
             BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength);
         }
-        NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, drawX, drawY, line1Text, moduleName, backgroundColor, type, scale, cornerRadius, metrics, settings, 1.0f, 1.0f));
+        NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, drawX, drawY, line1Text, moduleName, backgroundColor, scale, cornerRadius, metrics, settings, 1.0f, 1.0f));
         return new float[]{w, h};
     }
 
@@ -629,8 +546,7 @@ public class NotificationManager {
             String plain = Notification.stripFormatting(notification.message);
             Notification.ParsedLines lines = Notification.parseLines(plain);
             String moduleName = lines.title == null || lines.title.isBlank() ? plain : lines.title;
-            XylitolType type = inferXylitolType(notification.message);
-            String line1Text = simpleTitle(type);
+            String line1Text = inferSimpleTitle(notification.message);
             SimpleMetrics metrics = computeSimpleMetrics(line1Text, moduleName, maxWidth, scale);
             float w = metrics.width;
             float h = metrics.height;
@@ -672,12 +588,12 @@ public class NotificationManager {
             SimpleMetrics finalMetrics = metrics;
             float finalDrawAlpha = drawAlpha;
             float finalContentAlpha = contentAlpha;
-            NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, finalX, finalY, finalLine1Text, finalModuleName, backgroundColor, type, scale, cornerRadius, finalMetrics, settings, finalDrawAlpha, finalContentAlpha));
+            NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, finalX, finalY, finalLine1Text, finalModuleName, backgroundColor, scale, cornerRadius, finalMetrics, settings, finalDrawAlpha, finalContentAlpha));
             yOffset += (h + spacing) * (hide ? output : 1.0f);
         }
     }
 
-    private static void drawSimpleNotification(long vg, float x, float y, String line1Text, String moduleName, Color backgroundColor, XylitolType type, float scale, float cornerRadius, SimpleMetrics metrics, SimpleIconSettings settings, float drawAlpha, float contentAlpha) {
+    private static void drawSimpleNotification(long vg, float x, float y, String line1Text, String moduleName, Color backgroundColor, float scale, float cornerRadius, SimpleMetrics metrics, SimpleIconSettings settings, float drawAlpha, float contentAlpha) {
         scale = Math.max(0.1f, scale);
         drawAlpha = clamp01(drawAlpha);
         contentAlpha = clamp01(contentAlpha);
@@ -718,7 +634,7 @@ public class NotificationManager {
         }
         nvgSave(vg);
         nvgGlobalAlpha(vg, visibleContentAlpha);
-        String icon = simpleIcon(type);
+        String icon = "D";
         int iconFont = FontLoader.ico();
         float iconX = x + metrics.iconX;
         float iconY = y + metrics.iconY;
@@ -747,234 +663,6 @@ public class NotificationManager {
         }
         NanoVGHelper.drawString(moduleName, line2X, line2Y, textFont, metrics.line2Size, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, Color.WHITE);
         nvgRestore(vg);
-    }
-
-    private static float[] renderPreviewXylitol(float x, float y, float maxWidth, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
-        String message = "KillAura §a enabled";
-        String plain = Notification.stripFormatting(message);
-        Notification.ParsedLines lines = Notification.parseLines(plain);
-
-        String title = mode == RenderMode.Xylitol1 ? "Module" : lines.title;
-        String desc = mode == RenderMode.Xylitol1 ? plain : plain;
-
-        float[] size = computeXylitolSize(mode, title, desc, scale, fontSize);
-        float w = size[0];
-        float h = size[1];
-
-        float progress = 0.65f;
-        float output = 1.0f;
-        float drawX;
-        if (alignment == Alignment.RIGHT) {
-            float anchorRight = x + Math.max(0.0f, maxWidth);
-            drawX = anchorRight - w * output;
-        } else {
-            drawX = x - w * (1.0f - output);
-        }
-        float drawY = y;
-
-        float safeScale = Math.max(0.1f, scale);
-        float r = mode == RenderMode.Xylitol1 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
-        r = Math.min(r, Math.min(w, h) * 0.5f);
-
-        if (shadowSettings != null && shadowSettings.enabled) {
-            float[] rects = new float[]{drawX, drawY, w, h};
-            float[] radii = new float[]{r};
-            float range = Math.max(0.0f, shadowSettings.range) * safeScale;
-            float strength = shadowSettings.strength;
-            if (mode == RenderMode.Xylitol1) {
-                Color start = ClickGui.color(1);
-                Color end = ClickGui.color2(1);
-                start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
-                end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
-                ShadowShader.drawStairShadowGradient(drawX, drawY, w, h, range, strength, start, end, rects, radii, 1);
-            } else if (mode == RenderMode.Xylitol) {
-                Color c = backgroundColor != null ? backgroundColor : new Color(0, 0, 0, 70);
-                c = new Color(c.getRed(), c.getGreen(), c.getBlue(), 255);
-                ShadowShader.drawStairShadow(drawX, drawY, w, h, range, strength, c, rects, radii, 1);
-            }
-        }
-
-        if (blur) {
-            BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength);
-        }
-
-        XylitolType type = inferXylitolType(message);
-        NanoVGRenderer.INSTANCE.draw(vg -> drawXylitolNotification(mode, type, drawX, drawY, w, h, title, desc, primaryColor, backgroundColor, progress, scale, fontSize, xylitol4LineLength, xylitol4Offsets, cornerRadius));
-        return new float[]{w, h};
-    }
-
-    private static void renderXylitol(float x, float y, float maxWidth, RenderMode mode, Color primaryColor, Color backgroundColor, boolean blur, float blurStrength, float scale, float fontSize, float xylitol4LineLength, Alignment alignment, Xylitol4Offsets xylitol4Offsets, ShadowSettings shadowSettings, float cornerRadius) {
-        float yOffset = 0.0f;
-        float safeScale = Math.max(0.1f, scale);
-        float spacing = 6.0f * safeScale;
-
-        for (int i = 0; i < notifications.size(); i++) {
-            Notification notification = notifications.get(i);
-            if (notification.startTime == -1L) {
-                notification.startTime = System.currentTimeMillis();
-            }
-
-            long now = System.currentTimeMillis();
-            long elapsed = now - notification.startTime;
-            boolean hide = elapsed >= notification.length;
-
-            float output;
-            if (!hide) {
-                output = easeOutDecelerate(Math.min(1.0f, elapsed / (float) ANIMATION_TIME_MS));
-            } else {
-                float t = Math.min(1.0f, (elapsed - notification.length) / (float) ANIMATION_TIME_MS);
-                output = 1.0f - easeOutDecelerate(t);
-            }
-
-            if (hide && (elapsed - notification.length) >= ANIMATION_TIME_MS && output <= 0.001f) {
-                synchronized (notificationMap) {
-                    if (notificationMap.get(notification.id) == notification) {
-                        notificationMap.remove(notification.id);
-                    }
-                }
-                notifications.remove(i);
-                i--;
-                continue;
-            }
-
-            String plain = Notification.stripFormatting(notification.message);
-            Notification.ParsedLines lines = Notification.parseLines(plain);
-
-            String title = mode == RenderMode.Xylitol1 ? "Module" : lines.title;
-            String desc = plain;
-
-            float[] size = computeXylitolSize(mode, title, desc, scale, fontSize);
-            float w = size[0];
-            float h = size[1];
-
-            float drawX;
-            if (alignment == Alignment.RIGHT) {
-                float anchorRight = x + Math.max(0.0f, maxWidth);
-                drawX = anchorRight - w * output;
-            } else {
-                drawX = x - w * (1.0f - output);
-            }
-            float drawY = y - yOffset;
-
-            float progress = Math.max(0.0f, Math.min(1.0f, elapsed / (float) Math.max(1L, notification.length)));
-            XylitolType type = inferXylitolType(notification.message);
-
-            float r = mode == RenderMode.Xylitol1 ? Math.max(0.0f, cornerRadius) * safeScale : 0.0f;
-            r = Math.min(r, Math.min(w, h) * 0.5f);
-
-            if (shadowSettings != null && shadowSettings.enabled) {
-                float[] rects = new float[]{drawX, drawY, w, h};
-                float[] radii = new float[]{r};
-                float range = Math.max(0.0f, shadowSettings.range) * safeScale;
-                float strength = shadowSettings.strength;
-                if (mode == RenderMode.Xylitol1) {
-                    Color start = ClickGui.color(1);
-                    Color end = ClickGui.color2(1);
-                    start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
-                    end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
-                    ShadowShader.drawStairShadowGradient(drawX, drawY, w, h, range, strength, start, end, rects, radii, 1);
-                } else if (mode == RenderMode.Xylitol) {
-                    Color c = backgroundColor != null ? backgroundColor : new Color(0, 0, 0, 70);
-                    c = new Color(c.getRed(), c.getGreen(), c.getBlue(), 255);
-                    ShadowShader.drawStairShadow(drawX, drawY, w, h, range, strength, c, rects, radii, 1);
-                }
-            }
-
-            if (blur) {
-                BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength);
-            }
-
-            float finalX = drawX;
-            float finalY = drawY;
-            float finalW = w;
-            float finalH = h;
-            float finalProgress = progress;
-            NanoVGRenderer.INSTANCE.draw(vg -> drawXylitolNotification(mode, type, finalX, finalY, finalW, finalH, title, desc, primaryColor, backgroundColor, finalProgress, scale, fontSize, xylitol4LineLength, xylitol4Offsets, cornerRadius));
-
-            yOffset += (h + spacing) * (hide ? output : 1.0f);
-        }
-    }
-
-    private static void drawXylitolNotification(RenderMode mode, XylitolType type, float x, float y, float width, float height, String title, String description, Color primaryColor, Color backgroundColor, float progress, float scale, float fontSize, float xylitol4LineLength, Xylitol4Offsets xylitol4Offsets, float cornerRadius) {
-        scale = Math.max(0.1f, scale);
-        fontSize = Math.max(6.0f, fontSize);
-
-        if (mode == RenderMode.Xylitol) {
-            Color fill = withAlpha(lerp(Color.BLACK, type.color, 0.65f), (int) (255.0f * 0.7f));
-
-            NanoVGHelper.drawRect(x, y, width, height, backgroundColor != null ? backgroundColor : new Color(0, 0, 0, 70));
-            NanoVGHelper.drawRect(x, y, 1.0f * scale, height, fill.brighter());
-            NanoVGHelper.drawRect(x, y, width * progress, height, withAlpha(fill.brighter(), 50));
-
-            Color textColor = withAlpha(Color.WHITE, (int) (255.0f * 0.8f));
-            int font = FontLoader.medium();
-            NanoVGHelper.drawString(description, x + 6.0f * scale, y + 8.0f * scale, font, fontSize, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, textColor);
-            return;
-        }
-
-        String icon;
-        switch (title) {
-            case "Friend Manager" -> icon = "\uEC2D";
-            case "Config" -> icon = "\uEA21";
-            case "Module" -> icon = "\uEB13";
-            case "IRC" -> icon = "\uEA20";
-            default -> icon = "\uEBF8";
-        }
-
-        float textX = x + 7.0f * scale;
-        float textY = y + 5.0f * scale;
-        float lineW = 1.0f * scale;
-        float lineH = Math.max(0.0f, xylitol4LineLength) * scale;
-        float iconOffsetX = xylitol4Offsets.iconOffsetX * scale;
-        float iconOffsetY = xylitol4Offsets.iconOffsetY * scale;
-        float titleOffsetX = xylitol4Offsets.titleOffsetX * scale;
-        float titleOffsetY = xylitol4Offsets.titleOffsetY * scale;
-        float descriptionOffsetX = xylitol4Offsets.descriptionOffsetX * scale;
-        float descriptionOffsetY = xylitol4Offsets.descriptionOffsetY * scale;
-        float lineOffsetY = xylitol4Offsets.lineOffsetY * scale;
-
-        float r = Math.max(0.0f, cornerRadius) * scale;
-        r = Math.min(r, Math.min(width, height) * 0.5f);
-        if (r > 0.001f) {
-            NanoVGHelper.drawRoundRect(x, y, width, height, r, new Color(0, 0, 0, 76));
-        } else {
-            NanoVGHelper.drawRect(x, y, width, height, new Color(0, 0, 0, 76));
-        }
-        if (mode == RenderMode.Xylitol1) {
-            Color start = ClickGui.color(1);
-            Color end = ClickGui.color2(1);
-            start = new Color(start.getRed(), start.getGreen(), start.getBlue(), 255);
-            end = new Color(end.getRed(), end.getGreen(), end.getBlue(), 255);
-
-            long vg = NanoVGRenderer.INSTANCE.getContext();
-            NVGPaint paint = NVGPaint.create();
-            NVGColor nvgStart = NanoVGHelper.nvgColor(start);
-            NVGColor nvgEnd = NanoVGHelper.nvgColor(end);
-            nvgLinearGradient(vg, 0, textY + lineOffsetY, 0, textY + lineOffsetY + lineH, nvgStart, nvgEnd, paint);
-
-            nvgBeginPath(vg);
-            nvgRect(vg, x, textY + lineOffsetY, lineW, lineH);
-            nvgFillPaint(vg, paint);
-            nvgFill(vg);
-        } else {
-            NanoVGHelper.drawRect(x, textY + lineOffsetY, lineW, lineH, primaryColor);
-        }
-
-        int iconFont = FontLoader.material();
-        float iconSize = fontSize;
-        NanoVGHelper.drawString(icon, textX - 1.0f * scale + iconOffsetX, textY + 2.0f * scale + iconOffsetY, iconFont, iconSize, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, Color.WHITE);
-
-        float iconW = NanoVGHelper.getTextWidth(icon, iconFont, iconSize);
-
-        int titleFont = FontLoader.ax();
-        float titleSize = fontSize + 2.0f;
-        NanoVGHelper.drawString(title, textX + iconW + 2.0f * scale + titleOffsetX, y + 6.0f * scale + titleOffsetY, titleFont, titleSize, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, Color.WHITE);
-
-        float titleH = NanoVGHelper.getFontHeight(titleFont, titleSize);
-
-        int descFont = FontLoader.medium();
-        float descSize = fontSize;
-        NanoVGHelper.drawString(description, textX + descriptionOffsetX, textY + (titleH - 2.0f * scale) + descriptionOffsetY, descFont, descSize, NVG_ALIGN_LEFT | NVG_ALIGN_TOP, Color.WHITE);
     }
 
     public static class Notification {
