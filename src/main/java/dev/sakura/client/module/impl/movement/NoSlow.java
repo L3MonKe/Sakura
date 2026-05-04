@@ -1,129 +1,201 @@
 package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.event.EventHandler;
+import dev.sakura.client.event.impl.input.MoveInputEvent;
+import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.player.SlowdownEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
-import net.minecraft.item.Item;
+import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
+import net.minecraft.item.consume.UseAction;
+import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
-import net.minecraft.network.packet.c2s.play.UpdateSelectedSlotC2SPacket;
-import net.minecraft.registry.tag.ItemTags;
+import net.minecraft.network.packet.s2c.play.*;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+
+import java.util.concurrent.LinkedBlockingQueue;
 
 public class NoSlow extends Module {
     public NoSlow() {
         super("NoSlow", "无减速", Category.Movement);
     }
 
-    public enum Mode {
-        Cancel(""),
-        Jump("Jump"),
-        Grim50("Grim 1/2"),
-        Grim33("Grim 1/3"),
-        GrimSword("GrimSword"),
-        Hypixel("Hypixel");
-
-        private final String displayName;
-
-        Mode(String displayName) {
-            this.displayName = displayName;
-        }
+    private enum Mode {
+        Vanilla,
+        Jump,
+        GrimFull,
+        Grim1_2,
+        Grim1_3
     }
 
-    public final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Grim50);
-    public final BoolValue food = new BoolValue("Food", "食物", true);
-    public final BoolValue bow = new BoolValue("Bow", "弓", true);
-    public final BoolValue crossbow = new BoolValue("Crossbow", "弩", true);
-    public final BoolValue sword = new BoolValue("Sword", "剑", true);
-    public final BoolValue shield = new BoolValue("Shield", "盾牌", true);
+    private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.GrimFull);
+    private final BoolValue food = new BoolValue("Food", "食物", true);
+    private final BoolValue bow = new BoolValue("Bow", "弓", true);
+    private final BoolValue crossbow = new BoolValue("Crossbow", "弩", true);
 
+    private int ticks;
+    private int useDuration = 32;
     private int onGroundTick = 0;
+
+    private boolean eating;
+
+    private final LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
+
+    @Override
+    protected void onDisable() {
+        flush();
+        eating = false;
+        ticks = 0;
+        useDuration = 32;
+    }
 
     @Override
     public String getSuffix() {
-        return mode.get().displayName;
-    }
-
-    @Override
-    public void onEnable() {
-        onGroundTick = 0;
-    }
-
-    @Override
-    public void onDisable() {
-        onGroundTick = 0;
+        return mode.get().name();
     }
 
     @EventHandler
-    public void onSlowdown(SlowdownEvent event) {
-        if (nullCheck()) return;
-        if (checkFood() && mc.player.getItemUseTimeLeft() > 30) return;
+    private void onSendPosition(MotionEvent event) {
+        if (event.getType() != EventType.PRE) return;
 
-        if (!food.get() && checkFood()) return;
-        if (!bow.get() && checkItem(Items.BOW)) return;
-        if (!crossbow.get() && checkItem(Items.CROSSBOW)) return;
-        if (!sword.get() && checkSword()) return;
-        if (!shield.get() && checkItem(Items.SHIELD)) return;
+        if (mc.player.isOnGround()) {
+            onGroundTick++;
+        } else {
+            onGroundTick = 0;
+        }
+
+        if (!mode.is(Mode.GrimFull)) {
+            return;
+        }
+
+        if (mc.player.age < 30) {
+            return;
+        }
+
+        if (eating) {
+            ticks++;
+        }
+
+        ItemStack useItem = mc.player.getActiveItem();
+        UseAction anim = useItem.getUseAction();
+        if (
+                mc.player.isUsingItem()
+                        && (anim == UseAction.EAT
+                        || anim == UseAction.DRINK
+                        || anim == UseAction.CROSSBOW)
+                        && !eating
+        ) {
+            eating = true;
+            ticks = 0;
+            ItemStack activeItem = mc.player.getActiveItem();
+            useDuration = activeItem.getMaxUseTime(mc.player);
+        }
+
+        if (eating) {
+            if (ticks == 1) {
+                PacketUtil.sendPacketNoEvent(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
+                PacketUtil.sendPacketNoEvent(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, Direction.DOWN));
+            }
+            if (ticks == 2) {
+                Hand hand = mc.player.getActiveHand() == Hand.OFF_HAND
+                        ? Hand.MAIN_HAND
+                        : Hand.OFF_HAND;
+
+                mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(hand, 0, mc.player.getYaw(), mc.player.getPitch()));
+            }
+            if (ticks > useDuration + 3) {
+                mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, Direction.DOWN));
+                mc.options.useKey.setPressed(false);
+                ticks = 0;
+                eating = false;
+            }
+        }
+    }
+
+    @EventHandler
+    private void onPacketReceive(PacketEvent event) {
+        if (nullCheck() || mc.player.age < 30 || !eating || !mode.is(Mode.GrimFull)) return;
+
+        if (event.getType() == EventType.RECEIVE) {
+            Packet<?> packet = event.getPacket();
+
+            if (packet instanceof PlayerPositionLookS2CPacket) {
+                flush();
+                return;
+            }
+
+            if (packet instanceof HealthUpdateS2CPacket
+                    || packet instanceof GameMessageS2CPacket
+                    || packet instanceof EntityPositionS2CPacket
+                    || packet instanceof EntityS2CPacket
+                    || packet instanceof EntityStatusS2CPacket
+                    || packet instanceof EntitySpawnS2CPacket
+                    || packet instanceof BlockUpdateS2CPacket
+                    || packet instanceof BlockEventS2CPacket
+            ) {
+                return;
+            }
+
+            event.setCancelled(true);
+            packets.add(packet);
+        }
+
+        if (event.getType() == EventType.SEND && mode.is(Mode.GrimFull) && event.getPacket() instanceof PlayerActionC2SPacket packet && packet.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM) {
+            eating = false;
+            ticks = 0;
+            flush();
+            PacketUtil.sendPacketNoEvent(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.SWAP_ITEM_WITH_OFFHAND, BlockPos.ORIGIN, Direction.DOWN));
+        }
+    }
+
+    @EventHandler
+    private void onSlowdown(SlowdownEvent event) {
+        if (nullCheck() || mc.player.age < 30) return;
+
+        if (!food.get() && mc.player.getActiveItem().contains(DataComponentTypes.FOOD)) return;
+        if (!bow.get() && mc.player.getActiveItem().isOf(Items.BOW)) return;
+        if (!crossbow.get() && mc.player.getActiveItem().isOf(Items.CROSSBOW)) return;
 
         switch (mode.get()) {
-            case Cancel -> cancel(event);
+            case Vanilla -> cancel(event);
+            case GrimFull -> grimFull(event);
             case Jump -> jump(event);
-            case Grim50 -> grim50(event);
-            case Grim33 -> grim33(event);
-            case GrimSword -> grimSword(event);
-            case Hypixel -> hypixel(event);
+            case Grim1_2 -> grim50(event);
+            case Grim1_3 -> grim33(event);
         }
     }
 
     @EventHandler
-    public void onMotion(MotionEvent event) {
-        if (nullCheck()) return;
-
-        if (mode.is(Mode.GrimSword) && checkSword()) {
-            if (event.getType() == EventType.PRE) {
-                if (mc.player.isUsingItem()) {
-                    Hand hand = mc.player.getActiveHand();
-                    if (hand == Hand.MAIN_HAND) {
-                        // Send offhand interact packet
-                        // so that grim focuses on offhand noslow checks that don't exist.
-                        mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(Hand.OFF_HAND, 0, mc.player.getYaw(), mc.player.getPitch()));
-                    } else {
-                        // Switch slots (based on 1.8 grim switch noslow)
-                        int slot = mc.player.getInventory().getSelectedSlot();
-                        mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot % 8 + 1));
-                        mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot % 7 + 2));
-                        mc.getNetworkHandler().sendPacket(new UpdateSelectedSlotC2SPacket(slot));
-                    }
-                }
-            }
-        }
-
-        if (mode.is(Mode.Hypixel) && checkSword()) {
-            if (event.getType() == EventType.PRE) {
-                if (mc.player.isUsingItem()) {
-                    // 发送RELEASE_USE_ITEM包来清除减速
-                    PlayerActionC2SPacket releasePacket = new PlayerActionC2SPacket(
-                            PlayerActionC2SPacket.Action.RELEASE_USE_ITEM,
-                            BlockPos.ORIGIN,
-                            Direction.DOWN
-                    );
-                    mc.getNetworkHandler().sendPacket(releasePacket);
-                }
-            }
+    private void onKeyboardInput(MoveInputEvent event) {
+        if (mode.is(Mode.Jump) && mc.player.isOnGround() && mc.player.isUsingItem() && (event.getForward() != 0 || event.getStrafe() != 0)) {
+            event.setJump(true);
         }
     }
 
     private void cancel(SlowdownEvent event) {
         event.setSlowdown(false);
+    }
+
+    private void grimFull(SlowdownEvent event) {
+        UseAction anim = mc.player.getActiveItem().getUseAction();
+        if (
+                mc.player.isUsingItem()
+                        && mc.player.getItemUseTimeLeft() < 30
+                        && (anim == UseAction.EAT || anim == UseAction.DRINK)
+        ) {
+            event.setSlowdown(false);
+            mc.player.setSprinting(true);
+        }
     }
 
     private void jump(SlowdownEvent event) {
@@ -139,39 +211,13 @@ public class NoSlow extends Module {
     }
 
     private void grim33(SlowdownEvent event) {
-        if (mc.player.getItemUseTimeLeft() % 3 == 0 && (!checkFood() || mc.player.getItemUseTimeLeft() <= 30)) {
+        if (mc.player.getItemUseTimeLeft() % 3 == 0 && mc.player.getItemUseTimeLeft() <= 30) {
             event.setSlowdown(false);
         }
     }
 
-    private void grimSword(SlowdownEvent event) {
-        if (checkSword()) {
-            event.setSlowdown(false);
-        }
+    private void flush() {
+        while (!packets.isEmpty()) packets.poll().apply(mc.getNetworkHandler());
     }
 
-    private void hypixel(SlowdownEvent event) {
-        // Hypixel模式仅在持剑时生效
-        if (checkSword()) {
-            event.setSlowdown(false);
-        }
-    }
-
-    private boolean checkItem(Item item) {
-        ItemStack mainHandItem = mc.player.getMainHandStack();
-        ItemStack offhandItem = mc.player.getOffHandStack();
-        return mainHandItem.isOf(item) || offhandItem.isOf(item);
-    }
-
-    private boolean checkSword() {
-        ItemStack mainHandItem = mc.player.getMainHandStack();
-        ItemStack offhandItem = mc.player.getOffHandStack();
-        return mainHandItem.isIn(ItemTags.SWORDS) || offhandItem.isIn(ItemTags.SWORDS);
-    }
-
-    private boolean checkFood() {
-        ItemStack mainHandItem = mc.player.getMainHandStack();
-        ItemStack offhandItem = mc.player.getOffHandStack();
-        return mainHandItem.isOf(Items.GOLDEN_APPLE) || offhandItem.isOf(Items.GOLDEN_APPLE) || mainHandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE) || offhandItem.isOf(Items.ENCHANTED_GOLDEN_APPLE) || mainHandItem.isOf(Items.POTION) || offhandItem.isOf(Items.POTION);
-    }
 }

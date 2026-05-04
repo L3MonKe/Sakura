@@ -59,7 +59,7 @@ public class Scaffold extends Module {
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, () -> mode.is(Mode.Telly));
     private final BoolValue sideCheck = new BoolValue("Strict Side", "严格放置面", false);
-    private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true);
+    private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true, () -> false);
     private final BoolValue safeWalk = new BoolValue("Safe Walk", "安全行走", true);
 
     private final BoolValue render = new BoolValue("Render", "渲染", true);
