@@ -111,7 +111,7 @@ public class NoSlow extends Module {
                         ? Hand.MAIN_HAND
                         : Hand.OFF_HAND;
 
-                mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(hand, 0, mc.player.getYaw(), mc.player.getPitch()));
+                mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(hand, mc.world.getPendingUpdateManager().incrementSequence().getSequence(), mc.player.getYaw(), mc.player.getPitch()));
             }
             if (ticks > useDuration + 3) {
                 mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, Direction.DOWN));
