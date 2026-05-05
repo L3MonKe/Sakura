@@ -20,6 +20,7 @@ import dev.sakura.client.utils.animations.Animation;
 import dev.sakura.client.utils.animations.Direction;
 import dev.sakura.client.utils.animations.impl.EaseOutSine;
 import dev.sakura.client.utils.color.ColorUtil;
+import dev.sakura.client.utils.render.SakuraPipelines;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
@@ -136,7 +137,7 @@ public class TargetHud extends HudModule {
     // 3D ESP Settings
     private final BoolValue espEnabled = new BoolValue("ESP", "ESP", true);
 
-    private enum ESPMode {CaptureMark, Firefly}
+    private enum ESPMode {CaptureMark, Firefly, Circle}
 
     private final EnumValue<ESPMode> espMode = new EnumValue<>("ESP Mode", "ESP模式", ESPMode.Firefly, espEnabled::get);
     private final ColorValue fireflyColor = new ColorValue("Firefly Color", "萤火虫颜色", new Color(149, 149, 149, 80), () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
@@ -149,6 +150,7 @@ public class TargetHud extends HudModule {
     private final NumberValue<Integer> fireflyFactor = new NumberValue<>("Factor", "因子", 8, 1, 10, 1, () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
     private final NumberValue<Double> fireflyShaking = new NumberValue<>("Shaking", "抖动", 1.8, 0.25, 10.0, 0.25, () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
     private final NumberValue<Double> fireflyAmplitude = new NumberValue<>("Amplitude", "振幅", 3.0, 0.0, 10.0, 0.25, () -> espEnabled.get() && espMode.is(ESPMode.Firefly));
+    private final NumberValue<Double> circleRadius = new NumberValue<>("Circle Radius", "圆形半径", 0.75, 0.1, 2.0, 0.05, () -> espEnabled.get() && espMode.is(ESPMode.Circle));
 
     // Health Bar Settings
     private final ColorValue healthColor = new ColorValue("HealthColor", "血条颜色", new Color(0, 255, 0), () -> true);
@@ -621,6 +623,7 @@ public class TargetHud extends HudModule {
         switch (espMode.get()) {
             case CaptureMark -> renderEsp(target, event.getMatrices(), event.getTickDelta());
             case Firefly -> firefly(target, event.getMatrices(), event.getTickDelta());
+            case Circle -> circle(target, event.getMatrices(), event.getTickDelta());
         }
     }
 
@@ -717,6 +720,74 @@ public class TargetHud extends HudModule {
         }
 
         fireflyLayer.draw(buffer.end());
+    }
+
+    private void circle(LivingEntity target, MatrixStack matrices, float tickDelta) {
+        float radius = circleRadius.get().floatValue();
+        float alpha = animation.getOutput().floatValue();
+
+        if (alpha <= 0.01f) return;
+
+        Color color1 = healthColor.get();
+        Color color2 = healthColor2.get();
+
+        float tick = (float) (System.currentTimeMillis() % 1000000) * 0.004f;
+
+        double x = MathHelper.lerp(tickDelta, target.lastX, target.getX()) - mc.getEntityRenderDispatcher().camera.getCameraPos().x;
+        double y = MathHelper.lerp(tickDelta, target.lastY, target.getY()) - mc.getEntityRenderDispatcher().camera.getCameraPos().y + Math.sin(tick) + 1;
+        double z = MathHelper.lerp(tickDelta, target.lastZ, target.getZ()) - mc.getEntityRenderDispatcher().camera.getCameraPos().z;
+
+        matrices.push();
+        matrices.translate(x, y, z);
+
+        BufferBuilder triBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.TRIANGLE_STRIP, VertexFormats.POSITION_COLOR);
+        Matrix4f matrix = matrices.peek().getPositionMatrix();
+
+        for (float i = 0; i <= (Math.PI * 2); i += (Math.PI * 2) / 64.F) {
+            float vecX = (float) (radius * Math.cos(i));
+            float vecZ = (float) (radius * Math.sin(i));
+
+            float t = ((i + tick) % ((float) Math.PI * 2)) / ((float) Math.PI * 2);
+            int r = (int) (color1.getRed() + (color2.getRed() - color1.getRed()) * t);
+            int g = (int) (color1.getGreen() + (color2.getGreen() - color1.getGreen()) * t);
+            int b = (int) (color1.getBlue() + (color2.getBlue() - color1.getBlue()) * t);
+
+            triBuffer.vertex(matrix, vecX, (float) (-Math.sin(tick + 1) / 2.7f), vecZ).color(r / 255.0f, g / 255.0f, b / 255.0f, 0.0f);
+            triBuffer.vertex(matrix, vecX, 0, vecZ).color(r / 255.0f, g / 255.0f, b / 255.0f, 0.52f * alpha);
+        }
+
+        SakuraPipelines.TRIANGLE_STRIP.draw(triBuffer.end());
+
+        BufferBuilder lineBuffer = Tessellator.getInstance().begin(VertexFormat.DrawMode.LINES, VertexFormats.POSITION_COLOR_NORMAL_LINE_WIDTH);
+        MatrixStack.Entry entry = matrices.peek();
+
+        for (int i = 0; i <= 180; i++) {
+            float radAngle = (float) (i * Math.PI * 2 / 90);
+            float t = ((radAngle + tick) % ((float) Math.PI * 2)) / ((float) Math.PI * 2);
+            int r = (int) (color1.getRed() + (color2.getRed() - color1.getRed()) * t);
+            int g = (int) (color1.getGreen() + (color2.getGreen() - color1.getGreen()) * t);
+            int b = (int) (color1.getBlue() + (color2.getBlue() - color1.getBlue()) * t);
+            int lineColor = ((int) (0.5f * alpha * 255) & 0xFF) << 24 | (r & 0xFF) << 16 | (g & 0xFF) << 8 | (b & 0xFF);
+
+            float lineX = (float) (-Math.sin(radAngle) * radius);
+            float lineZ = (float) (Math.cos(radAngle) * radius);
+            float nextAngle = (float) ((i + 1) * Math.PI * 2 / 90);
+            float nextX = (float) (-Math.sin(nextAngle) * radius);
+            float nextZ = (float) (Math.cos(nextAngle) * radius);
+
+            float dx = nextX - lineX;
+            float dz = nextZ - lineZ;
+            float len = MathHelper.sqrt(dx * dx + dz * dz);
+            if (len < 1.0E-6f) continue;
+            float nx = dx / len;
+            float nz = dz / len;
+
+            lineBuffer.vertex(entry, lineX, 0, lineZ).color(lineColor).normal(entry, nx, 0.0f, nz).lineWidth(1.5f);
+            lineBuffer.vertex(entry, nextX, 0, nextZ).color(lineColor).normal(entry, nx, 0.0f, nz).lineWidth(1.5f);
+        }
+        SakuraPipelines.LINES.draw(lineBuffer.end());
+
+        matrices.pop();
     }
 
     private void drawPlayerAvatar(PlayerEntity player, float x, float y, float size, float radius, float scale, float damageFactor) {

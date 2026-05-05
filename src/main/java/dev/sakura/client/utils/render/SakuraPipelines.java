@@ -21,4 +21,8 @@ public class SakuraPipelines {
     private static final RenderPipeline TRIANGLE_FAN_PIPELINE = RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET).withLocation(Identifier.of("sakura", "pipeline/triangle_fan")).withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false).withCull(false).withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.TRIANGLE_FAN).build();
     public static final RenderLayer TRIANGLE_FAN = RenderLayer.of("sakura_triangle_fan", RenderSetup.builder(TRIANGLE_FAN_PIPELINE).translucent().layeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING).build());
 
+    // Triangle strip
+    private static final RenderPipeline TRIANGLE_STRIP_PIPELINE = RenderPipeline.builder(RenderPipelines.POSITION_COLOR_SNIPPET).withLocation(Identifier.of("sakura", "pipeline/triangle_strip")).withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST).withDepthWrite(false).withCull(false).withVertexFormat(VertexFormats.POSITION_COLOR, VertexFormat.DrawMode.TRIANGLE_STRIP).build();
+    public static final RenderLayer TRIANGLE_STRIP = RenderLayer.of("sakura_triangle_strip", RenderSetup.builder(TRIANGLE_STRIP_PIPELINE).translucent().layeringTransform(LayeringTransform.VIEW_OFFSET_Z_LAYERING).build());
+
 }
