@@ -497,7 +497,9 @@ public class NotificationManager {
         if (blur) {
             BlurShader.drawRoundedBlur(drawX, drawY, w, h, r, blurStrength);
         }
-        NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, drawX, drawY, line1Text, moduleName, backgroundColor, scale, cornerRadius, metrics, settings, 1.0f, 1.0f));
+        String m = message.toLowerCase();
+        String icon = (m.contains("§c") || m.contains(" disabled") || m.contains("已关闭")) ? "C" : "D";
+        NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, drawX, drawY, line1Text, moduleName, backgroundColor, scale, cornerRadius, metrics, settings, 1.0f, 1.0f, icon));
         return new float[]{w, h};
     }
 
@@ -588,12 +590,14 @@ public class NotificationManager {
             SimpleMetrics finalMetrics = metrics;
             float finalDrawAlpha = drawAlpha;
             float finalContentAlpha = contentAlpha;
-            NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, finalX, finalY, finalLine1Text, finalModuleName, backgroundColor, scale, cornerRadius, finalMetrics, settings, finalDrawAlpha, finalContentAlpha));
+            String m = notification.message.toLowerCase();
+            String finalIcon = (m.contains("§c") || m.contains(" disabled") || m.contains("已关闭")) ? "C" : "D";
+            NanoVGRenderer.INSTANCE.draw(vg -> drawSimpleNotification(vg, finalX, finalY, finalLine1Text, finalModuleName, backgroundColor, scale, cornerRadius, finalMetrics, settings, finalDrawAlpha, finalContentAlpha, finalIcon));
             yOffset += (h + spacing) * (hide ? output : 1.0f);
         }
     }
 
-    private static void drawSimpleNotification(long vg, float x, float y, String line1Text, String moduleName, Color backgroundColor, float scale, float cornerRadius, SimpleMetrics metrics, SimpleIconSettings settings, float drawAlpha, float contentAlpha) {
+    private static void drawSimpleNotification(long vg, float x, float y, String line1Text, String moduleName, Color backgroundColor, float scale, float cornerRadius, SimpleMetrics metrics, SimpleIconSettings settings, float drawAlpha, float contentAlpha, String icon) {
         scale = Math.max(0.1f, scale);
         drawAlpha = clamp01(drawAlpha);
         contentAlpha = clamp01(contentAlpha);
@@ -634,7 +638,6 @@ public class NotificationManager {
         }
         nvgSave(vg);
         nvgGlobalAlpha(vg, visibleContentAlpha);
-        String icon = "D";
         int iconFont = FontLoader.ico();
         float iconX = x + metrics.iconX;
         float iconY = y + metrics.iconY;

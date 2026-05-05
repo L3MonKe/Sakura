@@ -77,6 +77,10 @@ public class TargetHud extends HudModule {
         Left, OnBar
     }
 
+    public enum MahiroParticleModeEn {
+        Spread, Fall
+    }
+
     private final EnumValue<StyleEn> style = new EnumValue<>("Style", "样式", StyleEn.Sakura);
 
     // Sakura Settings
@@ -93,6 +97,7 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> MahiroNameY = new NumberValue<>("NameY", "名字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroOnBarHeight = new NumberValue<>("OnBarHeight", "悬浮高度", 15.0, 0.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroAvatarPos.get() == AvatarPosEn.OnBar);
     private final ColorValue MahiroBgColor = new ColorValue("BgColor", "背景颜色", new Color(0, 0, 0, 80), () -> style.get() == StyleEn.Sakura);
+    private final ColorValue MahiroBarBgColor = new ColorValue("BarBgColor", "血条背景颜色", new Color(30, 30, 30), () -> style.get() == StyleEn.Sakura);
     private final BoolValue MahiroShadow = new BoolValue("Shadow", "背景阴影", false, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroShadowRange = new NumberValue<>("ShadowRange", "阴影范围", 8.0, 0.0, 30.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
     private final NumberValue<Double> MahiroShadowStrength = new NumberValue<>("ShadowStrength", "阴影强度", 0.6, 0.0, 1.0, 0.05, () -> style.get() == StyleEn.Sakura && MahiroShadow.get());
@@ -107,6 +112,14 @@ public class TargetHud extends HudModule {
     private final NumberValue<Integer> MahiroDelayTime = new NumberValue<>("DelayTime", "延迟时间(ms)", 600, 0, 2000, 50, () -> style.get() == StyleEn.Sakura && MahiroDelay.get() && MahiroDelayWait.get());
     private final NumberValue<Double> MahiroDelaySpeed = new NumberValue<>("DelaySpeed", "延迟动画速度", 2.0, 0.1, 10.0, 0.1, () -> style.get() == StyleEn.Sakura && MahiroDelay.get());
     private final ColorValue MahiroDelayColor = new ColorValue("DelayColor", "延迟血条颜色", new Color(255, 255, 0, 150), () -> style.get() == StyleEn.Sakura && MahiroDelay.get());
+
+    // Sakura Particle Settings
+    private final BoolValue MahiroParticles = new BoolValue("Particles", "粒子效果", false, () -> style.get() == StyleEn.Sakura);
+    private final BoolValue MahiroBarParticles = new BoolValue("BarParticles", "血条粒子", true, () -> style.get() == StyleEn.Sakura && MahiroParticles.get());
+    private final BoolValue MahiroAvatarParticles = new BoolValue("AvatarParticles", "头像粒子", true, () -> style.get() == StyleEn.Sakura && MahiroParticles.get());
+    private final NumberValue<Integer> MahiroParticleAmount = new NumberValue<>("ParticleAmount", "粒子数量", 8, 3, 20, 1, () -> style.get() == StyleEn.Sakura && MahiroParticles.get());
+    private final NumberValue<Double> MahiroParticleRange = new NumberValue<>("ParticleRange", "粒子范围", 2.0, 0.5, 5.0, 0.5, () -> style.get() == StyleEn.Sakura && MahiroParticles.get());
+    private final EnumValue<MahiroParticleModeEn> MahiroParticleMode = new EnumValue<>("ParticleMode", "粒子模式", MahiroParticleModeEn.Spread, () -> style.get() == StyleEn.Sakura && MahiroParticles.get());
 
     private final BoolValue hanabiBarGlow = new BoolValue("HanabiBarGlow", "Hanabi血条发光", true, () -> style.get() == StyleEn.Hanabi);
     private final NumberValue<Double> hanabiBarGlowRange = new NumberValue<>("HanabiGlowRange", "Hanabi发光范围", 14.0, 0.0, 40.0, 1.0, () -> style.get() == StyleEn.Hanabi && hanabiBarGlow.get());
@@ -196,6 +209,13 @@ public class TargetHud extends HudModule {
     private boolean needsCacheClear = false;
     private KillAura killAuraModule;
 
+    // Sakura Particle Tracking
+    private boolean mahiroSentBarParticles = false;
+    private boolean mahiroSentAvatarParticles = false;
+    private final ArrayList<Particle> mahiroBarParticles = new ArrayList<>();
+    private final ArrayList<Particle> mahiroAvatarParticles = new ArrayList<>();
+    private final TimerUtil mahiroParticleTimer = new TimerUtil();
+
     private float hanabiHealthBarWidth = 140f;
     private float hanabiHealthBarWidth2 = 140f;
     private float hanabiHudHeight = 0f;
@@ -234,6 +254,8 @@ public class TargetHud extends HudModule {
         lastTargetHealth = -1;
         delayHealth = -1;
         particles.clear();
+        mahiroBarParticles.clear();
+        mahiroAvatarParticles.clear();
         needsCacheClear = true;
     }
 
@@ -241,6 +263,8 @@ public class TargetHud extends HudModule {
     protected void onDisable() {
         needsCacheClear = true;
         particles.clear();
+        mahiroBarParticles.clear();
+        mahiroAvatarParticles.clear();
     }
 
     private LivingEntity getCurrentTarget() {
@@ -612,6 +636,104 @@ public class TargetHud extends HudModule {
             if (p.opacity > 4) {
                 p.render();
             }
+        }
+    }
+
+    private void updateMahiroParticles(long vg) {
+        if (!MahiroParticles.get()) return;
+
+        float globalScale = MahiroScale.get().floatValue();
+        float baseW = MahiroWidth.get().floatValue();
+        float baseH = MahiroHeight.get().floatValue();
+        float barH = MahiroBarHeight.get().floatValue();
+        float padding = 6f;
+        float avatarSize = baseH - padding * 2;
+        float heightIncrease = 0;
+
+        if (MahiroAvatarPos.get() == AvatarPosEn.OnBar) {
+            heightIncrease = MahiroOnBarHeight.get().floatValue();
+        }
+
+        float totalH = baseH + heightIncrease;
+        float contentX = x + padding + avatarSize + padding;
+        float contentW = baseW - (padding + avatarSize + padding + padding);
+
+        if (MahiroAvatarPos.get() == AvatarPosEn.OnBar) {
+            contentX = x + padding;
+            contentW = baseW - (padding + padding);
+        }
+
+        float barY = y + totalH - padding - barH;
+        float barX = contentX;
+        float avatarX = x + padding;
+        float avatarY = y + padding;
+
+        if (mahiroParticleTimer.passedMillise(1000.0 / 60.0)) {
+            mahiroBarParticles.removeIf(p -> !p.isAlive());
+            mahiroAvatarParticles.removeIf(p -> !p.isAlive());
+            mahiroParticleTimer.reset();
+        }
+
+        for (Particle p : mahiroBarParticles) {
+            p.update();
+        }
+        for (Particle p : mahiroAvatarParticles) {
+            p.update();
+        }
+
+        if (target == null) return;
+
+        int amount = MahiroParticleAmount.get();
+        float range = MahiroParticleRange.get().floatValue();
+        MahiroParticleModeEn mode = MahiroParticleMode.get();
+
+        if (MahiroBarParticles.get() && target.hurtTime == 9 && !mahiroSentBarParticles) {
+            float barW = contentW * MathHelper.clamp(Managers.HEALTH.getHealth(target) / target.getMaxHealth(), 0f, 1f);
+            for (int i = 0; i < amount; i++) {
+                Color c1 = healthColor.get();
+                Color c2 = healthColor2.get();
+                float mixFactor = (float) ((Math.sin(System.currentTimeMillis() * 0.01 + i) + 1) * 0.5f);
+                Color c;
+                if (healthGradient.get()) {
+                    c = ColorUtil.interpolateColor(c1, c2, mixFactor);
+                } else {
+                    c = c1;
+                }
+                float px = barX + ThreadLocalRandom.current().nextFloat() * barW;
+                float py = barY + ThreadLocalRandom.current().nextFloat() * barH;
+                Particle p = new Particle(px, py, c, mode, range);
+                mahiroBarParticles.add(p);
+            }
+            mahiroSentBarParticles = true;
+        }
+        if (target.hurtTime == 8) mahiroSentBarParticles = false;
+
+        boolean isAttacking = killAuraModule != null && killAuraModule.isEnabled() && target.hurtTime > 0;
+        if (MahiroAvatarParticles.get() && isAttacking && !mahiroSentAvatarParticles) {
+            for (int i = 0; i < amount; i++) {
+                Color c1 = healthColor.get();
+                Color c2 = healthColor2.get();
+                float mixFactor = (float) ((Math.sin(System.currentTimeMillis() * 0.01 + i) + 1) * 0.5f);
+                Color c;
+                if (healthGradient.get()) {
+                    c = ColorUtil.interpolateColor(c1, c2, mixFactor);
+                } else {
+                    c = c1;
+                }
+                float px = avatarX + ThreadLocalRandom.current().nextFloat() * avatarSize;
+                float py = avatarY + ThreadLocalRandom.current().nextFloat() * avatarSize;
+                Particle p = new Particle(px, py, c, mode, range);
+                mahiroAvatarParticles.add(p);
+            }
+            mahiroSentAvatarParticles = true;
+        }
+        if (target.hurtTime == 8) mahiroSentAvatarParticles = false;
+
+        for (Particle p : mahiroBarParticles) {
+            p.render(vg);
+        }
+        for (Particle p : mahiroAvatarParticles) {
+            p.render(vg);
         }
     }
 
@@ -998,7 +1120,7 @@ public class TargetHud extends HudModule {
         float delayBarW = contentW * delayPct;
 
         // Bar Bg
-        NanoVGHelper.drawRoundRect(contentX, barY, contentW, barH, barRadius, new Color(30, 30, 30));
+        NanoVGHelper.drawRoundRect(contentX, barY, contentW, barH, barRadius, MahiroBarBgColor.get());
 
         // Delay Bar
         if (MahiroDelay.get() && delayHealth > health) {
@@ -1066,6 +1188,7 @@ public class TargetHud extends HudModule {
             NanoVGHelper.drawRoundRect(avatarX, avatarY, avatarSize, avatarSize, 6f, new Color(80, 80, 80));
         }
 
+        updateMahiroParticles(vg);
         NanoVGHelper.restore();
     }
 
@@ -1365,15 +1488,83 @@ public class TargetHud extends HudModule {
         public void updatePosition() {
             this.x += this.motionX;
             this.y += this.motionY;
-            this.opacity -= 0.5f; // Decay
+            this.opacity -= 0.5f;
         }
 
         public void render() {
             if (opacity <= 0) return;
-            // Map opacity 0-20 to alpha 0-255 roughly
             int alpha = (int) MathHelper.clamp(opacity * 12, 0, 255);
             Color c = new Color(color.getRed(), color.getGreen(), color.getBlue(), alpha);
             NanoVGHelper.drawCircle(x, y, 2f, c);
+        }
+    }
+
+    private static class Particle {
+        public float x, y;
+        public float velocityX, velocityY;
+        public float size;
+        public Color color;
+        public float alpha;
+        public float life;
+        public float maxLife;
+        public float startX, startY;
+        public float gravity;
+        public MahiroParticleModeEn mode;
+
+        public Particle(float x, float y, Color color, MahiroParticleModeEn mode, float range) {
+            this.x = x;
+            this.y = y;
+            this.startX = x;
+            this.startY = y;
+            this.size = 1.0f + (float) (Math.random() * 2.0f);
+            this.color = color;
+            this.alpha = 1.0f;
+            this.maxLife = 100f + (float) (Math.random() * 100f);
+            this.life = maxLife;
+            this.mode = mode;
+            this.gravity = 0.05f;
+            
+            float speed = 0.3f + (float) (Math.random() * range);
+            double angle = Math.random() * Math.PI * 2;
+            this.velocityX = (float) (Math.cos(angle) * speed);
+            this.velocityY = (float) (Math.sin(angle) * speed);
+        }
+
+        public void update() {
+            if (mode == MahiroParticleModeEn.Spread) {
+                x += velocityX;
+                y += velocityY;
+            } else if (mode == MahiroParticleModeEn.Fall) {
+                x += velocityX;
+                y += velocityY;
+                velocityY += gravity;
+            }
+            life -= 1.0f;
+            alpha = life / maxLife;
+        }
+
+        public boolean isAlive() {
+            return life > 0;
+        }
+
+        public void render(long vg) {
+            if (!isAlive()) return;
+            Color particleColor = new Color(
+                    color.getRed(),
+                    color.getGreen(),
+                    color.getBlue(),
+                    (int) (color.getAlpha() * alpha)
+            );
+
+            org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
+            org.lwjgl.nanovg.NanoVG.nvgCircle(vg, x, y, size);
+            org.lwjgl.nanovg.NanoVG.nvgFillColor(vg, NanoVGHelper.nvgColor(particleColor));
+            org.lwjgl.nanovg.NanoVG.nvgFill(vg);
+
+            org.lwjgl.nanovg.NanoVG.nvgBeginPath(vg);
+            org.lwjgl.nanovg.NanoVG.nvgCircle(vg, x, y, size * 1.5f);
+            org.lwjgl.nanovg.NanoVG.nvgFillColor(vg, NanoVGHelper.nvgColor(new Color(255, 255, 255, (int) (50 * alpha))));
+            org.lwjgl.nanovg.NanoVG.nvgFill(vg);
         }
     }
 }
