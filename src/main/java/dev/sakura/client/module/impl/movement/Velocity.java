@@ -193,25 +193,30 @@ public class Velocity extends Module {
                     return;
                 }
                 if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
-                    if (stage == VelocityStage.NONE) {
-                        if (!lag) {
-                            stage = VelocityStage.DELAY;
-                            velocityTime = System.currentTimeMillis();
-                            event.setCancelled(true);
-                            velocity = new Vec3d(packet.getVelocity().getX(), packet.getVelocity().getY(), packet.getVelocity().getZ());
-                            debug("进入 DELAY，velocity=" + formatVec(velocity));
+                    if (mc.player.hurtTime == 0) {
+                        if (stage == VelocityStage.NONE) {
+                            if (!lag) {
+                                stage = VelocityStage.DELAY;
+                                velocityTime = System.currentTimeMillis();
+                                event.setCancelled(true);
+                                velocity = new Vec3d(packet.getVelocity().getX(), packet.getVelocity().getY(), packet.getVelocity().getZ());
+                                debug("进入 DELAY，velocity=" + formatVec(velocity));
 
+                            } else {
+                                lag = false;
+                                debug("清除 lag 标记");
+                            }
+                            return;
                         } else {
-                            lag = false;
-                            debug("清除 lag 标记");
+                            velocity = new Vec3d(packet.getVelocity().getX(), packet.getVelocity().getY(), packet.getVelocity().getZ());
+                            stage = VelocityStage.LAG;
+                            event.setCancelled(true);
+                            debug("进入 LAG，velocity=" + formatVec(velocity));
+                            return;
                         }
-                        return;
                     } else {
-                        velocity = new Vec3d(packet.getVelocity().getX(), packet.getVelocity().getY(), packet.getVelocity().getZ());
-                        stage = VelocityStage.LAG;
-                        event.setCancelled(true);
-                        debug("进入 LAG，velocity=" + formatVec(velocity));
-                        return;
+                        jump = true;
+                        debug("攻击触发跳跃");
                     }
                 }
                 if (stage != VelocityStage.NONE && event.getType() == EventType.RECEIVE) {
@@ -269,7 +274,7 @@ public class Velocity extends Module {
                 }
             }
             case Watchdog -> {
-                if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
+                if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId() && mc.player.hurtTime == 0 && !mc.player.isOnFire()) {
                     if (mc.player == null || !this.delayUntilGround.get()) {
                         return;
                     }
@@ -303,7 +308,7 @@ public class Velocity extends Module {
     @EventHandler
     public void onMoveInput(MoveInputEvent event) {
         if (mode.is(Mode.NoXZ)) {
-            if (stage == VelocityStage.DELAY && velocity != null && mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
+            if (stage == VelocityStage.DELAY && velocity != null && mc.player.isOnGround() && mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
                 event.setForward(1);
                 event.setStrafe(0);
                 stage = VelocityStage.ATTACK;
