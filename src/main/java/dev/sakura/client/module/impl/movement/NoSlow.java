@@ -15,6 +15,7 @@ import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.item.consume.UseAction;
+import net.minecraft.network.NetworkSide;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerInteractItemC2SPacket;
@@ -146,8 +147,10 @@ public class NoSlow extends Module {
                 return;
             }
 
-            event.setCancelled(true);
-            packets.add(packet);
+            if (packet.getPacketType().side() == NetworkSide.CLIENTBOUND) {
+                event.setCancelled(true);
+                packets.add(packet);
+            }
         }
 
         if (event.getType() == EventType.SEND && mode.is(Mode.GrimFull) && event.getPacket() instanceof PlayerActionC2SPacket packet && packet.getAction() == PlayerActionC2SPacket.Action.RELEASE_USE_ITEM) {
