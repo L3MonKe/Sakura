@@ -33,6 +33,13 @@ public class NameProtectMappings {
             "Rhythm非常牛逼",
             "最强之Zem",
             "确实打不过ZeM",
+            "热注入就得玩Zen",
+            "男娘就得玩杨浩田",
+            "女人就得玩郭明杰",
+            "郭光周",
+            "郭丰年",
+            "郭艺雯",
+            "郭勇",
             "感觉不如Southside"
     };
 
