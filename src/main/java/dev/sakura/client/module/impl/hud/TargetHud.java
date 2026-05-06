@@ -191,6 +191,7 @@ public class TargetHud extends HudModule {
     // Animations
     private final Animation animation = new EaseOutSine(300, 1.0, Direction.BACKWARDS);
     private final Animation damageAnim = new EaseOutSine(150, 1.0, Direction.BACKWARDS);
+    private final Animation circleAnim = new EaseOutSine(300, 1.0, Direction.BACKWARDS);
 
     private float displayHealth = -1;
     private float lastTargetHealth = -1;
@@ -250,6 +251,7 @@ public class TargetHud extends HudModule {
         killAuraModule = Sakura.MODULES.getModule(KillAura.class);
         animation.setDirection(Direction.BACKWARDS);
         damageAnim.setDirection(Direction.BACKWARDS);
+        circleAnim.setDirection(Direction.BACKWARDS);
         displayHealth = -1;
         lastTargetHealth = -1;
         delayHealth = -1;
@@ -296,11 +298,13 @@ public class TargetHud extends HudModule {
         if (hasTarget) {
             target = currentTarget;
             animation.setDirection(Direction.FORWARDS);
+            circleAnim.setDirection(Direction.FORWARDS);
         } else {
             if (style.get() == StyleEn.Hanabi) {
                 target = null;
             }
             animation.setDirection(Direction.BACKWARDS);
+            circleAnim.setDirection(Direction.BACKWARDS);
         }
 
         if (style.get() != StyleEn.Hanabi) {
@@ -846,7 +850,7 @@ public class TargetHud extends HudModule {
 
     private void circle(LivingEntity target, MatrixStack matrices, float tickDelta) {
         float radius = circleRadius.get().floatValue();
-        float alpha = animation.getOutput().floatValue();
+        float alpha = circleAnim.getOutput().floatValue();
 
         if (alpha <= 0.01f) return;
 
