@@ -23,7 +23,17 @@ public class NameProtectMappings {
             "客户端就得玩Southside",
             "客户端就得玩Rhythm",
             "Southside牛逼666",
-            "Rhythm牛逼克拉斯"
+            "Rhythm牛逼克拉斯",
+            "我可是Zen外挂",
+            "zEN么强？",
+            "杨浩田1337",
+            "我喜欢巴结南方",
+            "ZEN之忠犬",
+            "最强之南方",
+            "Rhythm非常牛逼",
+            "最强之Zem",
+            "确实打不过ZeM",
+            "感觉不如Southside"
     };
 
     private String playerName;
