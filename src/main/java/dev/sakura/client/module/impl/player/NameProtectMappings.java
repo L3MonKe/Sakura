@@ -13,7 +13,6 @@ import java.util.List;
  */
 public class NameProtectMappings {
 
-    // 固定的 9 个宣传名称
     private static final String[] RANDOM_NAMES = {
             "我是南方客户端",
             "我是Southside外挂",
