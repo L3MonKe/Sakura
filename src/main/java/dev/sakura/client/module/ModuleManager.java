@@ -35,9 +35,9 @@ public class ModuleManager {
         // Combat
         add(new AntiBot());
         add(new AttackCrystal());
-        add(new AttackReduce());
+        //add(new AttackReduce());
         add(new AutoWeapon());
-        add(new Criticals());
+        //add(new Criticals());
         add(new KillAura());
         add(new AttackCrystal());
         add(new AutoAnchor());
@@ -45,8 +45,8 @@ public class ModuleManager {
         add(new AutoThrow());
         add(new LegitCrystal());
         add(new SafeHotbar());
-        add(new TickBase());
-        add(new TpAura());
+        //add(new TickBase());
+        //add(new TpAura());
 
         // Movement
         add(new AutoStuck());
