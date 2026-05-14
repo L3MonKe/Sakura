@@ -65,6 +65,7 @@ public class Velocity extends Module {
     private final BoolValue render = new BoolValue("Render", "渲染", false);
     private final BoolValue debug = new BoolValue("Debug", "调试", false);
     private final BoolValue delayUntilGround = new BoolValue("Delay until ground", "直到落地", true, () -> mode.is(Mode.Watchdog));
+    private final BoolValue old = new BoolValue("Old", "旧逻辑", false, () -> mode.is(Mode.NoXZ));
 
     public boolean lag;
     private boolean jump;
@@ -112,10 +113,15 @@ public class Velocity extends Module {
         switch (mode.get()) {
             case NoXZ -> {
                 if (stage == VelocityStage.ATTACK) {
-                    if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
+                    if ((old.get() || mc.player.isOnGround()) && mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
                         if (mc.player.isSprinting()) mc.player.setSprinting(false);
                         mc.interactionManager.attackEntity(mc.player, target);
                         mc.player.swingHand(Hand.MAIN_HAND);
+                        if (!old.get()) {
+                            jump = true;
+                            mc.interactionManager.attackEntity(mc.player, target);
+                            mc.player.swingHand(Hand.MAIN_HAND);
+                        }
                         mc.player.setVelocity(velocity.x * 0.6, velocity.y, velocity.z * 0.6);
                         debug("ATTACK");
                         stage = VelocityStage.CLEAR;
@@ -193,8 +199,9 @@ public class Velocity extends Module {
                     return;
                 }
                 if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet && packet.getEntityId() == mc.player.getId()) {
-                    jump = true;
-                    debug("攻击触发跳跃");
+                    if (old.get()) {
+                        jump = true;
+                    }
                     if (stage == VelocityStage.NONE) {
                         if (!lag) {
                             stage = VelocityStage.DELAY;
