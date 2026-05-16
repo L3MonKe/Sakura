@@ -81,16 +81,22 @@ public class TargetHud extends HudModule {
         Spread, Fall
     }
 
+    public enum MahiroBarShapeEn {
+        Style1, Style2
+    }
+
     private final EnumValue<StyleEn> style = new EnumValue<>("Style", "样式", StyleEn.Sakura);
 
     // Sakura Settings
+    private final EnumValue<MahiroBarShapeEn> MahiroBarShape = new EnumValue<>("BarShape", "血条形状", MahiroBarShapeEn.Style1, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroScale = new NumberValue<>("Scale", "整体缩放", 1.0, 0.5, 2.0, 0.1, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroWidth = new NumberValue<>("Width", "宽度", 150.0, 100.0, 300.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroHeight = new NumberValue<>("Height", "高度", 50.0, 30.0, 100.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroRadius = new NumberValue<>("Radius", "圆角半径", 10.0, 0.0, 20.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroBlurRadius = new NumberValue<>("BlurRadius", "模糊半径", 10.0, 1.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroBarHeight = new NumberValue<>("BarHeight", "血条粗细", 10.0, 2.0, 30.0, 1.0, () -> style.get() == StyleEn.Sakura);
-    private final NumberValue<Double> MahiroBarRadius = new NumberValue<>("BarRadius", "血条圆角", 4.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> MahiroBarRadius1 = new NumberValue<>("BarRadius1", "形状1圆角", 4.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroBarShape.get() == MahiroBarShapeEn.Style1);
+    private final NumberValue<Double> MahiroBarRadius2 = new NumberValue<>("BarRadius2", "形状2圆角", 0.0, 0.0, 15.0, 1.0, () -> style.get() == StyleEn.Sakura && MahiroBarShape.get() == MahiroBarShapeEn.Style2);
     private final EnumValue<AvatarPosEn> MahiroAvatarPos = new EnumValue<>("AvatarPos", "头像位置", AvatarPosEn.Left, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroNameSize = new NumberValue<>("NameSize", "名字大小", 14.0, 8.0, 24.0, 1.0, () -> style.get() == StyleEn.Sakura);
     private final NumberValue<Double> MahiroNameX = new NumberValue<>("NameX", "名字X偏移", 0.0, -50.0, 50.0, 1.0, () -> style.get() == StyleEn.Sakura);
@@ -171,6 +177,7 @@ public class TargetHud extends HudModule {
     private final ColorValue healthColor2 = new ColorValue("HealthColor2", "渐变颜色2", new Color(0, 255, 255), healthGradient::get);
     private final NumberValue<Double> gradientSpeed = new NumberValue<>("GradientSpeed", "渐变速度", 3.0, 0.1, 10.0, 0.1, healthGradient::get);
     private final NumberValue<Double> colorLength = new NumberValue<>("ColorLength", "颜色长度", 1.0, 0.1, 5.0, 0.1, () -> healthGradient.get() || espEnabled.get());
+    private final NumberValue<Double> gradientRepeat = new NumberValue<>("GradientRepeat", "渐变循环次数", 1.0, 0.1, 10.0, 0.1, healthGradient::get);
 
     // Glow Settings
     private final BoolValue nameGlow = new BoolValue("NameGlow", "名字发光", true);
@@ -950,11 +957,6 @@ public class TargetHud extends HudModule {
                 NanoVG.nvgFillPaint(vg, paint);
                 NanoVG.nvgFill(vg);
 
-                // Smooth edges
-                NanoVG.nvgStrokeWidth(vg, 1.0f);
-                NanoVG.nvgStrokePaint(vg, paint);
-                NanoVG.nvgStroke(vg);
-
                 // Red Damage Overlay
                 if (damageFactor > 0.01f) {
                     NanoVG.nvgBeginPath(vg);
@@ -1058,7 +1060,7 @@ public class TargetHud extends HudModule {
         float baseW = MahiroWidth.get().floatValue();
         float baseH = MahiroHeight.get().floatValue();
         float radius = MahiroRadius.get().floatValue();
-        float barRadius = MahiroBarRadius.get().floatValue();
+        float barRadius = MahiroBarShape.get() == MahiroBarShapeEn.Style1 ? MahiroBarRadius1.get().floatValue() : MahiroBarRadius2.get().floatValue();
         float nameSize = MahiroNameSize.get().floatValue();
         AvatarPosEn avatarPos = MahiroAvatarPos.get();
 
@@ -1137,10 +1139,6 @@ public class TargetHud extends HudModule {
                 NanoVG.nvgRoundedRect(vg, contentX, barY, delayBarW, barH, barRadius);
                 NanoVG.nvgFillColor(vg, col);
                 NanoVG.nvgFill(vg);
-
-                NanoVG.nvgStrokeWidth(vg, 1.0f);
-                NanoVG.nvgStrokeColor(vg, col);
-                NanoVG.nvgStroke(vg);
             }
         }
 
@@ -1169,7 +1167,9 @@ public class TargetHud extends HudModule {
             NanoVG.nvgRGBA((byte) c2.getRed(), (byte) c2.getGreen(), (byte) c2.getBlue(), (byte) c2.getAlpha(), col2);
 
             if (healthGradient.get()) {
-                NanoVG.nvgLinearGradient(vg, contentX, barY, contentX + barW, barY, col1, col2, paint);
+                float repeatFactor = gradientRepeat.get().floatValue();
+                float gradEndX = contentX + contentW * repeatFactor;
+                NanoVG.nvgLinearGradient(vg, contentX, barY, gradEndX, barY, col1, col2, paint);
             } else {
                 NanoVG.nvgLinearGradient(vg, contentX, barY, contentX, barY + barH, col1, col2, paint);
             }
@@ -1178,11 +1178,6 @@ public class TargetHud extends HudModule {
             NanoVG.nvgRoundedRect(vg, contentX, barY, barW, barH, barRadius);
             NanoVG.nvgFillPaint(vg, paint);
             NanoVG.nvgFill(vg);
-
-            // Smooth edges
-            NanoVG.nvgStrokeWidth(vg, 1.0f);
-            NanoVG.nvgStrokePaint(vg, paint);
-            NanoVG.nvgStroke(vg);
         }
 
         if (target instanceof PlayerEntity player) {
@@ -1202,7 +1197,7 @@ public class TargetHud extends HudModule {
         float globalScale = MahiroScale.get().floatValue();
         float baseW = MahiroWidth.get().floatValue();
         float baseH = MahiroHeight.get().floatValue();
-        float barRadius = MahiroBarRadius.get().floatValue();
+        float barRadius = MahiroBarShape.get() == MahiroBarShapeEn.Style1 ? MahiroBarRadius1.get().floatValue() : MahiroBarRadius2.get().floatValue();
         float barH = MahiroBarHeight.get().floatValue();
 
         float padding = 6f;
