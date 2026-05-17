@@ -12,6 +12,7 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.AntiBot;
 import dev.sakura.client.module.impl.combat.KillAura;
+import dev.sakura.client.module.impl.movement.NoSlow;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.network.blockage.block.BlockHolder;
 import dev.sakura.client.utils.network.blockage.impl.InboundNetworkBlockage;
@@ -110,6 +111,13 @@ public class Velocity extends Module {
     private void onPreTick(TickEvent.Pre event) {
         if (nullCheck()) return;
 
+        if (shouldDisableDueToNoSlow()) {
+            if (stage != VelocityStage.NONE) {
+                clear(true);
+            }
+            return;
+        }
+
         switch (mode.get()) {
             case NoXZ -> {
                 if (stage == VelocityStage.ATTACK) {
@@ -189,6 +197,7 @@ public class Velocity extends Module {
     public void onPacket(PacketEvent event) {
         if (nullCheck()) return;
         if (event.getType() != EventType.RECEIVE) return;
+        if (shouldDisableDueToNoSlow()) return;
 
         switch (mode.get()) {
             case NoXZ -> {
@@ -311,6 +320,8 @@ public class Velocity extends Module {
 
     @EventHandler
     public void onMoveInput(MoveInputEvent event) {
+        if (shouldDisableDueToNoSlow()) return;
+
         if (mode.is(Mode.NoXZ)) {
             if (stage == VelocityStage.DELAY && velocity != null && mc.player.isOnGround() && mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity() instanceof PlayerEntity player && !AntiBot.isBot(player)) {
                 event.setForward(1);
@@ -387,5 +398,10 @@ public class Velocity extends Module {
 
     private String formatVec(Vec3d vec) {
         return String.format("%.3f, %.3f, %.3f", vec.x, vec.y, vec.z);
+    }
+
+    private boolean shouldDisableDueToNoSlow() {
+        NoSlow noSlow = Sakura.MODULES.getModule(NoSlow.class);
+        return noSlow != null && noSlow.isEnabled() && mc.player.isUsingItem();
     }
 }

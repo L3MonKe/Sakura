@@ -1,5 +1,6 @@
 package dev.sakura.client.utils.player;
 
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.Packet;
 
 import java.util.HashSet;
@@ -12,7 +13,9 @@ public class PacketUtil {
 
     public static void sendPacketNoEvent(Packet<?> packet) {
         if (packet == null) return;
+        ClientPlayNetworkHandler networkHandler = mc.getNetworkHandler();
+        if (networkHandler == null) return;
         bypassPackets.add(packet);
-        mc.getNetworkHandler().sendPacket(packet);
+        networkHandler.sendPacket(packet);
     }
 }

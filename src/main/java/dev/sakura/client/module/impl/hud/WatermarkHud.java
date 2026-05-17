@@ -12,6 +12,7 @@ import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
+import dev.sakura.client.values.impl.StringValue;
 import dev.sakura.verify.AuthState;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.nanovg.NVGPaint;
@@ -63,7 +64,7 @@ public class WatermarkHud extends HudModule {
         Cjk
     }
 
-    private static final String XYLITOL_MAIN_TEXT = "Sakura";
+    private final StringValue customText = new StringValue("CustomText", "自定义文本", "Sakura", () -> mode.is(ListMode.Sakura));
     private final NumberValue<Double> xylitolMainFontSize = new NumberValue<>("MainSize", "主文字大小", 14.0, 8.0, 32.0, 0.5, () -> mode.is(ListMode.Sakura));
     private final NumberValue<Double> xylitolInfoFontSize = new NumberValue<>("InfoSize", "信息文字大小", 10.0, 6.0, 24.0, 0.5, () -> mode.is(ListMode.Sakura));
     private final EnumValue<XylitolSakuraFontMode> xylitolSakuraFontMode = new EnumValue<>("Font", "字体", XylitolSakuraFontMode.Bold, () -> mode.is(ListMode.Sakura));
@@ -277,7 +278,7 @@ public class WatermarkHud extends HudModule {
 
         NanoVGHelper.drawRoundRect(m.bgX, m.bgY, m.bgW, m.bgH, m.radius * s, xylitolBackgroundColor.get());
 
-        String displayName = XYLITOL_MAIN_TEXT;
+        String displayName = customText.get();
         if (displayName == null) displayName = "";
 
         int mainFont = getXylitolSakuraFont();
@@ -295,7 +296,7 @@ public class WatermarkHud extends HudModule {
         float mainX = m.bgX + m.padX;
         float textW = NanoVGHelper.getTextWidth(displayName, mainFont, mainSize);
         if (textW <= 0.0f) {
-            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(XYLITOL_MAIN_TEXT, mainFont, mainSize));
+            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(customText.get(), mainFont, mainSize));
         }
 
         if (xylitolSakuraGlow.get()) {
@@ -324,7 +325,7 @@ public class WatermarkHud extends HudModule {
     }
 
     private void renderSakuraSimple(long vg, float s) {
-        String displayName = XYLITOL_MAIN_TEXT;
+        String displayName = customText.get();
         if (displayName == null) displayName = "";
 
         int mainFont = getXylitolSakuraFont();
@@ -340,7 +341,7 @@ public class WatermarkHud extends HudModule {
 
         float textW = NanoVGHelper.getTextWidth(displayName, mainFont, mainSize);
         if (textW <= 0.0f) {
-            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(XYLITOL_MAIN_TEXT, mainFont, mainSize));
+            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(customText.get(), mainFont, mainSize));
         }
 
         // 绘制发光效果
@@ -426,7 +427,7 @@ public class WatermarkHud extends HudModule {
         float mainSize = xylitolMainFontSize.get().floatValue() * s;
         float infoSize = xylitolInfoFontSize.get().floatValue() * s;
 
-        String clientName = XYLITOL_MAIN_TEXT;
+        String clientName = customText.get();
         if (clientName == null) clientName = "";
 
         String username;
