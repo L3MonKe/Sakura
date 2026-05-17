@@ -12,6 +12,7 @@ import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.player.MoveUtil;
+import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.utils.player.SlotUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.RaytraceUtil;
@@ -27,6 +28,7 @@ import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
@@ -50,7 +52,13 @@ public class Scaffold extends Module {
         Silent
     }
 
+    private enum Raytrace {
+        Normal,
+        Hypixel
+    }
+
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.GodBridge);
+    private final EnumValue<Raytrace> raytrace = new EnumValue<>("Raytrace", "光线追踪", Raytrace.Normal);
     private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
     private final BoolValue swapBack = new BoolValue("SwapBack", "停用还原", true, () -> swapMode.is(SwapMode.Normal));
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
@@ -59,8 +67,12 @@ public class Scaffold extends Module {
     private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, () -> mode.is(Mode.Telly));
     private final BoolValue sideCheck = new BoolValue("Strict Side", "严格放置面", false);
-    private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true, () -> false);
+    private final BoolValue silentRotation = new BoolValue("Silent Rotation", "静默旋转", false);
+    private final BoolValue moveFix = new BoolValue("Movement Fix", "移动修复", true, () -> !silentRotation.get());
     private final BoolValue safeWalk = new BoolValue("Safe Walk", "安全行走", true);
+
+    private final BoolValue legit = new BoolValue("Legit", "Legit模式", false, () -> mode.is(Mode.Telly));
+    private final NumberValue<Integer> legitBlocks = new NumberValue<>("Legit Blocks", "Legit放置方块数", 3, 1, 10, 1, () -> mode.is(Mode.Telly) && legit.get());
 
     private final BoolValue render = new BoolValue("Render", "渲染", true);
     private final BoolValue fade = new BoolValue("Fade", "变淡", false, render::get);
@@ -72,6 +84,10 @@ public class Scaffold extends Module {
     private int airTicks;
 
     private boolean hasJump;
+
+    private int legitBlockCount;
+    private boolean inLegitPhase;
+    private boolean pendingTelly;
 
     private boolean swapped;
     private boolean invSwapped;
@@ -90,6 +106,9 @@ public class Scaffold extends Module {
         swapped = false;
         invSwapped = false;
         shouldSwapBack = false;
+        legitBlockCount = 0;
+        inLegitPhase = false;
+        pendingTelly = false;
     }
 
     @Override
@@ -120,27 +139,63 @@ public class Scaffold extends Module {
         if (nullCheck()) return;
 
         hasJump = false;
-        if (mc.player.isOnGround() && MoveUtil.isMoving() && mode.is(Mode.Telly) && !mc.options.jumpKey.isPressed()) {
-            mc.options.jumpKey.setPressed(true);
-            hasJump = true;
+        boolean isLegitMode = mode.is(Mode.Telly) && legit.get();
+
+        if (mode.is(Mode.Telly) && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+            if (isLegitMode) {
+                if (mc.player.isOnGround() && pendingTelly) {
+                    mc.options.jumpKey.setPressed(true);
+                    hasJump = true;
+                    pendingTelly = false;
+                    inLegitPhase = false;
+                }
+            } else {
+                if (mc.player.isOnGround()) {
+                    mc.options.jumpKey.setPressed(true);
+                    hasJump = true;
+                }
+            }
         }
 
         updateBlockInfo();
 
-        MovementFix movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
+        MovementFix movementFix;
+        if (silentRotation.get()) {
+            movementFix = MovementFix.OFF;
+        } else {
+            movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
+        }
+        boolean silent = silentRotation.get();
         if (mode.is(Mode.Telly)) {
             if (mc.player.isOnGround()) {
                 yLevel = MathHelper.floor(mc.player.getY()) - 1;
                 airTicks = 0;
                 blockInfo = null;
-                Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
-                Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix);
+                if (!silent) {
+                    Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+                    Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix);
+                }
+
+                if (isLegitMode && !hasJump) {
+                    inLegitPhase = true;
+                }
             } else {
                 if (airTicks >= tellyTick.get() && blockInfo != null) {
                     FindItemResult item = findItem();
                     if (item.found()) {
-                        Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
-                        place(item);
+                        int speed = rotationSpeed.get();
+                        if (raytrace.is(Raytrace.Hypixel)) {
+                            speed = airTicks <= 1 ? 127 : 35;
+                        }
+                        if (silent) {
+                            silentPlace(item);
+                        } else {
+                            Managers.ROTATION.setRotations(getRotation(blockInfo), speed, movementFix);
+                            place(item);
+                        }
+                        if (isLegitMode) {
+                            pendingTelly = true;
+                        }
                     }
                 }
                 airTicks++;
@@ -148,8 +203,31 @@ public class Scaffold extends Module {
         } else if (blockInfo != null) {
             FindItemResult item = findItem();
             if (item.found()) {
-                Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
-                place(item);
+                if (silent) {
+                    silentPlace(item);
+                } else {
+                    Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
+                    place(item);
+                }
+            }
+        }
+
+        if (isLegitMode && inLegitPhase && blockInfo != null) {
+            FindItemResult item = findItem();
+            if (item.found()) {
+                if (silent) {
+                    silentPlace(item);
+                } else {
+                    Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
+                    if (placeAndCheck(item)) {
+                        legitBlockCount++;
+                        if (legitBlockCount >= legitBlocks.get()) {
+                            pendingTelly = true;
+                            legitBlockCount = 0;
+                            inLegitPhase = false;
+                        }
+                    }
+                }
             }
         }
 
@@ -236,8 +314,21 @@ public class Scaffold extends Module {
     }
 
     private void place(FindItemResult item) {
+        placeAndCheck(item);
+    }
+
+    private void silentPlace(FindItemResult item) {
         if (!onAir()) return;
         if (!BlockUtil.canPlaceAt(blockInfo.blockPos)) return;
+
+        Rotation rot = getRotation(blockInfo);
+        float clampedPitch = MathHelper.clamp(rot.pitch, -90.0f, 90.0f);
+
+        PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.LookAndOnGround(
+                rot.yaw, clampedPitch,
+                mc.player.isOnGround(), mc.player.horizontalCollision));
+
+        if (raytrace.is(Raytrace.Normal) && !RaytraceUtil.overBlock(rot, blockInfo.position, false)) return;
 
         switch (swapMode.get()) {
             case Normal -> {
@@ -249,21 +340,51 @@ public class Scaffold extends Module {
             case InvSwitch -> invSwapped = InvUtil.invSwap(item.slot());
         }
 
-        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockInfo.dir, blockInfo.position, sideCheck.get());
-        if (hasRotated) {
-            ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
-            if (result.isAccepted()) {
-                if (swingHand.get()) {
-                    mc.player.swingHand(item.getHand());
-                } else {
-                    mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
-                }
-            }
-
-            if (render.get()) {
-                Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+        ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
+        if (result.isAccepted()) {
+            if (swingHand.get()) {
+                mc.player.swingHand(item.getHand());
+            } else {
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
             }
         }
+
+        if (render.get()) {
+            Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+        }
+    }
+
+    private boolean placeAndCheck(FindItemResult item) {
+        if (!onAir()) return false;
+        if (!BlockUtil.canPlaceAt(blockInfo.blockPos)) return false;
+
+        switch (swapMode.get()) {
+            case Normal -> {
+                boolean should = swapBack.get();
+                InvUtil.swap(item.slot(), should);
+                shouldSwapBack = should;
+            }
+            case Silent -> swapped = InvUtil.swap(item.slot(), true);
+            case InvSwitch -> invSwapped = InvUtil.invSwap(item.slot());
+        }
+
+        if (raytrace.is(Raytrace.Normal) && !RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockInfo.position, false)) {
+            return false;
+        }
+
+        ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
+        if (result.isAccepted()) {
+            if (swingHand.get()) {
+                mc.player.swingHand(item.getHand());
+            } else {
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
+            }
+        }
+
+        if (render.get()) {
+            Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+        }
+        return result.isAccepted();
     }
 
     private void updateBlockInfo() {
@@ -320,11 +441,36 @@ public class Scaffold extends Module {
     }
 
     private Rotation getRotation(BlockInfo blockCache) {
+        if (raytrace.is(Raytrace.Normal)) {
+            Rotation calculate = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.dir) : RotationUtil.calculate(blockCache.position.toCenterPos());
+            Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
+            boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.position, false);
+            if (hasRotated) return reverseYaw;
+            else return calculate;
+        }
+
         Rotation calculate = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.dir) : RotationUtil.calculate(blockCache.position.toCenterPos());
-        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
-        boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.position, false);
-        if (hasRotated) return reverseYaw;
-        else return calculate;
+
+        Float[] yawArray = {
+                -135F,
+                -90F,
+                -45F,
+                0F,
+                45F,
+                90F,
+                135F,
+                180F,
+                calculate.yaw
+        };
+
+        java.util.Arrays.sort(yawArray, (a, b) ->
+                Float.compare(
+                        Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - 180 - a)),
+                        Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - 180 - b))
+                )
+        );
+
+        return new Rotation(yawArray[0], 82.0F);
     }
 
     private boolean onAir() {
