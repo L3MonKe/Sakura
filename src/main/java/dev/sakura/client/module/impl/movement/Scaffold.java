@@ -10,6 +10,7 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
+import dev.sakura.client.utils.player.FallingPlayer;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.player.PacketUtil;
@@ -30,10 +31,12 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
 
 import java.awt.*;
+import java.util.Arrays;
 
 public class Scaffold extends Module {
     public Scaffold() {
@@ -82,19 +85,16 @@ public class Scaffold extends Module {
 
     private int yLevel;
     private int airTicks;
-
     private boolean hasJump;
-
     private int legitBlockCount;
     private boolean inLegitPhase;
     private boolean pendingTelly;
-
     private boolean swapped;
     private boolean invSwapped;
     private boolean shouldSwapBack;
-
     private BlockInfo blockInfo;
     private Rotation lastRotation;
+    private int rotateCount;
 
     @Override
     public String getSuffix() {
@@ -105,6 +105,7 @@ public class Scaffold extends Module {
     protected void onEnable() {
         blockInfo = null;
         lastRotation = null;
+        rotateCount = 0;
         swapped = false;
         invSwapped = false;
         shouldSwapBack = false;
@@ -161,6 +162,43 @@ public class Scaffold extends Module {
 
         updateBlockInfo();
 
+        if (blockInfo != null) {
+            boolean reachable = true;
+            if (mc.player.getVelocity().y < -0.1) {
+                FallingPlayer fallingPlayer = new FallingPlayer(mc.player);
+                fallingPlayer.calculate(2);
+                if (blockInfo.position.getY() > fallingPlayer.y) {
+                    reachable = false;
+                }
+            }
+            double strength = mc.player.getVelocity().horizontalLength();
+            if ((!reachable || strength >= 1.5D) && rotateCount <= 8 && findItem().found()) {
+                Rotation rotation = getRotation(blockInfo);
+                rotateCount++;
+                Managers.ROTATION.rotations = rotation;
+                Managers.ROTATION.setActive(true);
+                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.LookAndOnGround(
+                        rotation.yaw, MathHelper.clamp(rotation.pitch, -90.0f, 90.0f),
+                        mc.player.isOnGround(), mc.player.horizontalCollision));
+                ActionResult result = mc.interactionManager.interactBlock(
+                        mc.player,
+                        Hand.MAIN_HAND,
+                        new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false)
+                );
+                if (result.isAccepted()) {
+                    if (swingHand.get()) mc.player.swingHand(Hand.MAIN_HAND);
+                    else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
+
+                    if (render.get()) {
+                        Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+                    }
+                }
+                return;
+            } else {
+                rotateCount = 0;
+            }
+        }
+
         MovementFix movementFix;
         if (silentRotation.get()) {
             movementFix = MovementFix.OFF;
@@ -182,17 +220,22 @@ public class Scaffold extends Module {
                     inLegitPhase = true;
                 }
             } else {
+                if (blockInfo != null) {
+                    int speed = rotationSpeed.get();
+                    if (raytrace.is(Raytrace.Hypixel)) {
+                        speed = airTicks == 0 ? 127 : 35;
+                    }
+                    if (!silent) {
+                        Managers.ROTATION.setRotations(getRotation(blockInfo), speed, movementFix);
+                    }
+                }
+
                 if (airTicks >= tellyTick.get() && blockInfo != null) {
                     FindItemResult item = findItem();
                     if (item.found()) {
-                        int speed = rotationSpeed.get();
-                        if (raytrace.is(Raytrace.Hypixel)) {
-                            speed = airTicks <= 1 ? 127 : 35;
-                        }
                         if (silent) {
                             silentPlace(item);
                         } else {
-                            Managers.ROTATION.setRotations(getRotation(blockInfo), speed, movementFix);
                             place(item);
                         }
                         if (isLegitMode) {
@@ -266,9 +309,9 @@ public class Scaffold extends Module {
     }
 
     public static Vec3d getVec3(BlockPos pos, Direction face) {
-        double x = (double) pos.getX() + 0.5;
-        double y = (double) pos.getY() + 0.5;
-        double z = (double) pos.getZ() + 0.5;
+        double x = pos.getX() + 0.5;
+        double y = pos.getY() + 0.5;
+        double z = pos.getZ() + 0.5;
 
         if (face != Direction.UP && face != Direction.DOWN) {
             y += 0.08;
@@ -348,11 +391,8 @@ public class Scaffold extends Module {
 
         ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
         if (result.isAccepted()) {
-            if (swingHand.get()) {
-                mc.player.swingHand(item.getHand());
-            } else {
-                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
-            }
+            if (swingHand.get()) mc.player.swingHand(item.getHand());
+            else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
         }
 
         if (render.get()) {
@@ -380,11 +420,8 @@ public class Scaffold extends Module {
 
         ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
         if (result.isAccepted()) {
-            if (swingHand.get()) {
-                mc.player.swingHand(item.getHand());
-            } else {
-                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
-            }
+            if (swingHand.get()) mc.player.swingHand(item.getHand());
+            else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
         }
 
         if (render.get()) {
@@ -394,6 +431,8 @@ public class Scaffold extends Module {
     }
 
     private void updateBlockInfo() {
+        blockInfo = null;
+
         Vec3d baseVec = mc.player.getEyePos();
         BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
         int baseX = base.getX();
@@ -444,7 +483,7 @@ public class Scaffold extends Module {
 
             Vec3d relevant = hit.subtract(baseVec);
             if (relevant.lengthSquared() <= 4.5 * 4.5 && relevant.dotProduct(new Vec3d(dir.getVector())) >= 0) {
-                if (dir.getOpposite() == Direction.UP && mode.is(Mode.GodBridge) && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+                if (dir.getOpposite() == Direction.UP && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
                     continue;
                 }
                 blockInfo = new BlockInfo(pos, new BlockPos(baseBlock), dir.getOpposite());
@@ -490,7 +529,7 @@ public class Scaffold extends Module {
                 calculate.yaw
         };
 
-        java.util.Arrays.sort(yawArray, (a, b) ->
+        Arrays.sort(yawArray, (a, b) ->
                 Float.compare(
                         Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - 180 - a)),
                         Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - 180 - b))
