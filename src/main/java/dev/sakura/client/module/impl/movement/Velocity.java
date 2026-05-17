@@ -13,11 +13,14 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.combat.AntiBot;
 import dev.sakura.client.module.impl.combat.KillAura;
 import dev.sakura.client.module.impl.movement.NoSlow;
+import dev.sakura.client.manager.Managers;
 import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.utils.network.blockage.block.BlockHolder;
 import dev.sakura.client.utils.network.blockage.impl.InboundNetworkBlockage;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
+import dev.sakura.client.utils.rotation.RaytraceUtil;
+import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
@@ -146,15 +149,33 @@ public class Velocity extends Module {
             }
             case Watchdog -> {
                 if (this.blockHolder.isBlocking()) {
+                    KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+                    PlayerEntity attackTarget = null;
+                    if (killAura.isEnabled() && killAura.getCurrentTarget() instanceof PlayerEntity player && !AntiBot.isBot(player)
+                            && !player.isDead()
+                            && RaytraceUtil.facingEnemy(mc.player, player, RotationUtil.calculate(player), 3.0, 0)) {
+                        attackTarget = player;
+                    }
+
                     if (mc.player == null || mc.player.isOnGround() || mc.player.isClimbing() || mc.player.isInFluid() || System.currentTimeMillis() - velocityTime > 1000
                             || mc.options.attackKey.isPressed()
-                            || (Sakura.MODULES.getModule(KillAura.class).isEnabled() && Sakura.MODULES.getModule(KillAura.class).getCurrentTarget() != null)) {
+                            || (killAura.isEnabled() && killAura.getCurrentTarget() != null)
+                            || attackTarget != null) {
                         this.blockHolder.release();
                         stage = VelocityStage.NONE;
                         this.sprintResetTicks = 10;
 
-                        if (mc.player.isOnGround() && this.delayUntilGround.get() && velocity != null) {
-                            this.jump = true;
+                        if (attackTarget != null) {
+                            if (mc.player.isSprinting()) mc.player.setSprinting(false);
+                            mc.interactionManager.attackEntity(mc.player, attackTarget);
+                            mc.player.swingHand(Hand.MAIN_HAND);
+                            if (velocity != null) {
+                                mc.player.setVelocity(velocity.x * 0.6, velocity.y, velocity.z * 0.6);
+                            }
+                        } else {
+                            if (mc.player.isOnGround() && this.delayUntilGround.get() && velocity != null) {
+                                this.jump = true;
+                            }
                         }
                     }
                 }

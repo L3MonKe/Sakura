@@ -137,6 +137,7 @@ public class KillAura extends Module {
 
         if (target != null) {
             if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
+                if (mc.player.isUsingItem() && !abMode.is(AutoBlockMode.Hypixel)) return;
                 Rotation calculate = RotationUtil.calculate(target);
                 Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, Priority.Medium);
                 if (rayTrace.get()) {

@@ -64,7 +64,7 @@ public class Scaffold extends Module {
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
     private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 0, 0, 8, 1, () -> mode.is(Mode.Telly));
     private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, () -> mode.is(Mode.Telly));
-    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
+    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1, () -> !raytrace.is(Raytrace.Hypixel));
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, () -> mode.is(Mode.Telly));
     private final BoolValue sideCheck = new BoolValue("Strict Side", "严格放置面", false);
     private final BoolValue silentRotation = new BoolValue("Silent Rotation", "静默旋转", false);
@@ -94,6 +94,7 @@ public class Scaffold extends Module {
     private boolean shouldSwapBack;
 
     private BlockInfo blockInfo;
+    private Rotation lastRotation;
 
     @Override
     public String getSuffix() {
@@ -103,6 +104,7 @@ public class Scaffold extends Module {
     @Override
     protected void onEnable() {
         blockInfo = null;
+        lastRotation = null;
         swapped = false;
         invSwapped = false;
         shouldSwapBack = false;
@@ -172,7 +174,7 @@ public class Scaffold extends Module {
                 airTicks = 0;
                 blockInfo = null;
                 if (!silent) {
-                    Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+                    Rotation rotation = new Rotation(mc.player.getYaw(), lastRotation == null ? mc.player.getPitch() : lastRotation.pitch);
                     Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix);
                 }
 
@@ -267,18 +269,22 @@ public class Scaffold extends Module {
         double x = (double) pos.getX() + 0.5;
         double y = (double) pos.getY() + 0.5;
         double z = (double) pos.getZ() + 0.5;
-        if (face == Direction.UP || face == Direction.DOWN) {
-            x += MathUtil.getRandom(0.3, -0.3);
-            z += MathUtil.getRandom(0.3, -0.3);
+
+        if (face != Direction.UP && face != Direction.DOWN) {
+            y += 0.08;
         } else {
-            y += MathUtil.getRandom(0.3, -0.3);
+            x += MathUtil.getRandom(-0.3, 0.3);
+            z += MathUtil.getRandom(-0.3, 0.3);
         }
+
         if (face == Direction.WEST || face == Direction.EAST) {
-            z += MathUtil.getRandom(0.3, -0.3);
+            z += MathUtil.getRandom(-0.3, 0.3);
         }
+
         if (face == Direction.SOUTH || face == Direction.NORTH) {
-            x += MathUtil.getRandom(0.3, -0.3);
+            x += MathUtil.getRandom(-0.3, 0.3);
         }
+
         return new Vec3d(x, y, z);
     }
 
@@ -416,6 +422,14 @@ public class Scaffold extends Module {
     }
 
     private boolean checkBlock(Vec3d baseVec, BlockPos pos) {
+        if (!onAir()) {
+            return false;
+        }
+
+        if (pos.getY() > getYLevel()) {
+            return false;
+        }
+
         if (!(mc.world.getBlockState(pos).getBlock() instanceof AirBlock) && !(mc.world.getBlockState(pos).getBlock() instanceof FluidBlock)) {
             return false;
         }
@@ -441,15 +455,28 @@ public class Scaffold extends Module {
     }
 
     private Rotation getRotation(BlockInfo blockCache) {
-        if (raytrace.is(Raytrace.Normal)) {
-            Rotation calculate = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.dir) : RotationUtil.calculate(blockCache.position.toCenterPos());
-            Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
-            boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.position, false);
-            if (hasRotated) return reverseYaw;
-            else return calculate;
+        if (lastRotation == null) {
+            return new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 135.0F), 82.0F);
         }
 
-        Rotation calculate = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.dir) : RotationUtil.calculate(blockCache.position.toCenterPos());
+        if (!onAir() || blockCache == null || blockCache.dir == null) {
+            return lastRotation;
+        }
+
+        if (raytrace.is(Raytrace.Normal)) {
+            Rotation calculate = RotationUtil.calculate(blockCache.position, blockCache.dir);
+            Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
+            boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.position, false);
+            if (hasRotated) {
+                lastRotation = reverseYaw;
+                return reverseYaw;
+            } else {
+                lastRotation = calculate;
+                return calculate;
+            }
+        }
+
+        Rotation calculate = RotationUtil.calculate(blockCache.position, blockCache.dir);
 
         Float[] yawArray = {
                 -135F,
@@ -470,7 +497,9 @@ public class Scaffold extends Module {
                 )
         );
 
-        return new Rotation(yawArray[0], 82.0F);
+        Rotation result = new Rotation(yawArray[0], 82.0F);
+        lastRotation = result;
+        return result;
     }
 
     private boolean onAir() {
