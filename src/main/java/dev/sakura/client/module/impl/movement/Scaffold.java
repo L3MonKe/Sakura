@@ -10,7 +10,6 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
-import dev.sakura.client.utils.player.FallingPlayer;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.player.PacketUtil;
@@ -31,12 +30,10 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
 
 import java.awt.*;
-import java.util.Arrays;
 
 public class Scaffold extends Module {
     public Scaffold() {
@@ -55,19 +52,13 @@ public class Scaffold extends Module {
         Silent
     }
 
-    private enum Raytrace {
-        Normal,
-        Hypixel
-    }
-
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.GodBridge);
-    private final EnumValue<Raytrace> raytrace = new EnumValue<>("Raytrace", "光线追踪", Raytrace.Normal);
     private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
     private final BoolValue swapBack = new BoolValue("SwapBack", "停用还原", true, () -> swapMode.is(SwapMode.Normal));
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
     private final NumberValue<Integer> tellyTick = new NumberValue<>("Telly Tick", "Telly延迟", 0, 0, 8, 1, () -> mode.is(Mode.Telly));
     private final BoolValue keepY = new BoolValue("Keep Y", "保持Y轴", true, () -> mode.is(Mode.Telly));
-    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1, () -> !raytrace.is(Raytrace.Hypixel));
+    private final NumberValue<Integer> rotationSpeed = new NumberValue<>("Rotation Speed", "旋转速度", 10, 1, 10, 1);
     private final NumberValue<Integer> rotationBackSpeed = new NumberValue<>("Rotation Back Speed", "回转速度", 10, 0, 10, 1, () -> mode.is(Mode.Telly));
     private final BoolValue sideCheck = new BoolValue("Strict Side", "严格放置面", false);
     private final BoolValue silentRotation = new BoolValue("Silent Rotation", "静默旋转", false);
@@ -85,16 +76,18 @@ public class Scaffold extends Module {
 
     private int yLevel;
     private int airTicks;
+
     private boolean hasJump;
+
     private int legitBlockCount;
     private boolean inLegitPhase;
     private boolean pendingTelly;
+
     private boolean swapped;
     private boolean invSwapped;
     private boolean shouldSwapBack;
+
     private BlockInfo blockInfo;
-    private Rotation lastRotation;
-    private int rotateCount;
 
     @Override
     public String getSuffix() {
@@ -104,8 +97,6 @@ public class Scaffold extends Module {
     @Override
     protected void onEnable() {
         blockInfo = null;
-        lastRotation = null;
-        rotateCount = 0;
         swapped = false;
         invSwapped = false;
         shouldSwapBack = false;
@@ -162,43 +153,6 @@ public class Scaffold extends Module {
 
         updateBlockInfo();
 
-        if (blockInfo != null) {
-            boolean reachable = true;
-            if (mc.player.getVelocity().y < -0.1) {
-                FallingPlayer fallingPlayer = new FallingPlayer(mc.player);
-                fallingPlayer.calculate(2);
-                if (blockInfo.position.getY() > fallingPlayer.y) {
-                    reachable = false;
-                }
-            }
-            double strength = mc.player.getVelocity().horizontalLength();
-            if ((!reachable || strength >= 1.5D) && rotateCount <= 8 && findItem().found()) {
-                Rotation rotation = getRotation(blockInfo);
-                rotateCount++;
-                Managers.ROTATION.rotations = rotation;
-                Managers.ROTATION.setActive(true);
-                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.LookAndOnGround(
-                        rotation.yaw, MathHelper.clamp(rotation.pitch, -90.0f, 90.0f),
-                        mc.player.isOnGround(), mc.player.horizontalCollision));
-                ActionResult result = mc.interactionManager.interactBlock(
-                        mc.player,
-                        Hand.MAIN_HAND,
-                        new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false)
-                );
-                if (result.isAccepted()) {
-                    if (swingHand.get()) mc.player.swingHand(Hand.MAIN_HAND);
-                    else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
-
-                    if (render.get()) {
-                        Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
-                    }
-                }
-                return;
-            } else {
-                rotateCount = 0;
-            }
-        }
-
         MovementFix movementFix;
         if (silentRotation.get()) {
             movementFix = MovementFix.OFF;
@@ -212,7 +166,7 @@ public class Scaffold extends Module {
                 airTicks = 0;
                 blockInfo = null;
                 if (!silent) {
-                    Rotation rotation = new Rotation(mc.player.getYaw(), lastRotation == null ? mc.player.getPitch() : lastRotation.pitch);
+                    Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
                     Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix);
                 }
 
@@ -220,22 +174,13 @@ public class Scaffold extends Module {
                     inLegitPhase = true;
                 }
             } else {
-                if (blockInfo != null) {
-                    int speed = rotationSpeed.get();
-                    if (raytrace.is(Raytrace.Hypixel)) {
-                        speed = airTicks == 0 ? 127 : 35;
-                    }
-                    if (!silent) {
-                        Managers.ROTATION.setRotations(getRotation(blockInfo), speed, movementFix);
-                    }
-                }
-
                 if (airTicks >= tellyTick.get() && blockInfo != null) {
                     FindItemResult item = findItem();
                     if (item.found()) {
                         if (silent) {
                             silentPlace(item);
                         } else {
+                            Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
                             place(item);
                         }
                         if (isLegitMode) {
@@ -309,25 +254,21 @@ public class Scaffold extends Module {
     }
 
     public static Vec3d getVec3(BlockPos pos, Direction face) {
-        double x = pos.getX() + 0.5;
-        double y = pos.getY() + 0.5;
-        double z = pos.getZ() + 0.5;
-
-        if (face != Direction.UP && face != Direction.DOWN) {
-            y += 0.08;
+        double x = (double) pos.getX() + 0.5;
+        double y = (double) pos.getY() + 0.5;
+        double z = (double) pos.getZ() + 0.5;
+        if (face == Direction.UP || face == Direction.DOWN) {
+            x += MathUtil.getRandom(0.3, -0.3);
+            z += MathUtil.getRandom(0.3, -0.3);
         } else {
-            x += MathUtil.getRandom(-0.3, 0.3);
-            z += MathUtil.getRandom(-0.3, 0.3);
+            y += MathUtil.getRandom(0.3, -0.3);
         }
-
         if (face == Direction.WEST || face == Direction.EAST) {
-            z += MathUtil.getRandom(-0.3, 0.3);
+            z += MathUtil.getRandom(0.3, -0.3);
         }
-
         if (face == Direction.SOUTH || face == Direction.NORTH) {
-            x += MathUtil.getRandom(-0.3, 0.3);
+            x += MathUtil.getRandom(0.3, -0.3);
         }
-
         return new Vec3d(x, y, z);
     }
 
@@ -377,7 +318,7 @@ public class Scaffold extends Module {
                 rot.yaw, clampedPitch,
                 mc.player.isOnGround(), mc.player.horizontalCollision));
 
-        if (raytrace.is(Raytrace.Normal) && !RaytraceUtil.overBlock(rot, blockInfo.position, false)) return;
+        if (!RaytraceUtil.overBlock(rot, blockInfo.dir, blockInfo.position, sideCheck.get())) return;
 
         switch (swapMode.get()) {
             case Normal -> {
@@ -391,8 +332,11 @@ public class Scaffold extends Module {
 
         ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
         if (result.isAccepted()) {
-            if (swingHand.get()) mc.player.swingHand(item.getHand());
-            else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
+            if (swingHand.get()) {
+                mc.player.swingHand(item.getHand());
+            } else {
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
+            }
         }
 
         if (render.get()) {
@@ -414,25 +358,26 @@ public class Scaffold extends Module {
             case InvSwitch -> invSwapped = InvUtil.invSwap(item.slot());
         }
 
-        if (raytrace.is(Raytrace.Normal) && !RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockInfo.position, false)) {
-            return false;
-        }
+        boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockInfo.dir, blockInfo.position, sideCheck.get());
+        if (hasRotated) {
+            ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
+            if (result.isAccepted()) {
+                if (swingHand.get()) {
+                    mc.player.swingHand(item.getHand());
+                } else {
+                    mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
+                }
+            }
 
-        ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
-        if (result.isAccepted()) {
-            if (swingHand.get()) mc.player.swingHand(item.getHand());
-            else mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
+            if (render.get()) {
+                Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+            }
+            return result.isAccepted();
         }
-
-        if (render.get()) {
-            Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
-        }
-        return result.isAccepted();
+        return false;
     }
 
     private void updateBlockInfo() {
-        blockInfo = null;
-
         Vec3d baseVec = mc.player.getEyePos();
         BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
         int baseX = base.getX();
@@ -461,14 +406,6 @@ public class Scaffold extends Module {
     }
 
     private boolean checkBlock(Vec3d baseVec, BlockPos pos) {
-        if (!onAir()) {
-            return false;
-        }
-
-        if (pos.getY() > getYLevel()) {
-            return false;
-        }
-
         if (!(mc.world.getBlockState(pos).getBlock() instanceof AirBlock) && !(mc.world.getBlockState(pos).getBlock() instanceof FluidBlock)) {
             return false;
         }
@@ -483,7 +420,7 @@ public class Scaffold extends Module {
 
             Vec3d relevant = hit.subtract(baseVec);
             if (relevant.lengthSquared() <= 4.5 * 4.5 && relevant.dotProduct(new Vec3d(dir.getVector())) >= 0) {
-                if (dir.getOpposite() == Direction.UP && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
+                if (dir.getOpposite() == Direction.UP && mode.is(Mode.GodBridge) && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed()) {
                     continue;
                 }
                 blockInfo = new BlockInfo(pos, new BlockPos(baseBlock), dir.getOpposite());
@@ -494,51 +431,11 @@ public class Scaffold extends Module {
     }
 
     private Rotation getRotation(BlockInfo blockCache) {
-        if (lastRotation == null) {
-            return new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 135.0F), 82.0F);
-        }
-
-        if (!onAir() || blockCache == null || blockCache.dir == null) {
-            return lastRotation;
-        }
-
-        if (raytrace.is(Raytrace.Normal)) {
-            Rotation calculate = RotationUtil.calculate(blockCache.position, blockCache.dir);
-            Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
-            boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.position, false);
-            if (hasRotated) {
-                lastRotation = reverseYaw;
-                return reverseYaw;
-            } else {
-                lastRotation = calculate;
-                return calculate;
-            }
-        }
-
-        Rotation calculate = RotationUtil.calculate(blockCache.position, blockCache.dir);
-
-        Float[] yawArray = {
-                -135F,
-                -90F,
-                -45F,
-                0F,
-                45F,
-                90F,
-                135F,
-                180F,
-                calculate.yaw
-        };
-
-        Arrays.sort(yawArray, (a, b) ->
-                Float.compare(
-                        Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - 180 - a)),
-                        Math.abs(MathHelper.wrapDegrees(mc.player.getYaw() - 180 - b))
-                )
-        );
-
-        Rotation result = new Rotation(yawArray[0], 82.0F);
-        lastRotation = result;
-        return result;
+        Rotation calculate = onAir() ? RotationUtil.calculate(blockCache.position, blockCache.dir) : RotationUtil.calculate(blockCache.position.toCenterPos());
+        Rotation reverseYaw = new Rotation(MathHelper.wrapDegrees(mc.player.getYaw() - 180), calculate.pitch);
+        boolean hasRotated = RaytraceUtil.overBlock(reverseYaw, blockCache.position, false);
+        if (hasRotated) return reverseYaw;
+        else return calculate;
     }
 
     private boolean onAir() {
