@@ -63,9 +63,18 @@ public class StringValueComponent extends Component {
             if (textWidth > inputWidth - 6 * scale) {
                 while (textWidth > inputWidth - 6 * scale && !trimmedText.isEmpty()) {
                     if (editing && cursorPos == displayText.length()) {
-                        trimmedText = trimmedText.substring(1);
+                        int skip = 1;
+                        if (trimmedText.length() > 1 && Character.isHighSurrogate(trimmedText.charAt(0)) && Character.isLowSurrogate(trimmedText.charAt(1))) {
+                            skip = 2;
+                        }
+                        trimmedText = trimmedText.substring(skip);
                     } else {
-                        trimmedText = trimmedText.substring(0, trimmedText.length() - 1);
+                        int len = trimmedText.length();
+                        int cut = 1;
+                        if (len >= 2 && Character.isHighSurrogate(trimmedText.charAt(len - 2)) && Character.isLowSurrogate(trimmedText.charAt(len - 1))) {
+                            cut = 2;
+                        }
+                        trimmedText = trimmedText.substring(0, len - cut);
                     }
                     textWidth = NanoVGHelper.getTextWidth(trimmedText + (editing && cursorPos == displayText.length() ? "" : "..."),
                             FontLoader.regular(), textFontSize);
@@ -119,6 +128,38 @@ public class StringValueComponent extends Component {
     public boolean keyPressed(KeyInput input) {
         if (!editing) return false;
 
+        if (input.isPaste()) {
+            String clipboard = getClipboardText();
+            if (!clipboard.isEmpty()) {
+                String filtered = filterClipboardText(clipboard);
+                if (!filtered.isEmpty()) {
+                    tempText = tempText.substring(0, cursorPos) + filtered + tempText.substring(cursorPos);
+                    cursorPos += filtered.length();
+                    resetCursor();
+                }
+            }
+            return true;
+        }
+
+        if (input.isCopy()) {
+            setClipboardText(tempText);
+            return true;
+        }
+
+        if (input.isCut()) {
+            setClipboardText(tempText);
+            tempText = "";
+            cursorPos = 0;
+            resetCursor();
+            return true;
+        }
+
+        if (input.isSelectAll()) {
+            cursorPos = tempText.length();
+            resetCursor();
+            return true;
+        }
+
         switch (input.getKeycode()) {
             case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_KP_ENTER -> {
                 finishEditing();
@@ -130,15 +171,23 @@ public class StringValueComponent extends Component {
             }
             case GLFW.GLFW_KEY_BACKSPACE -> {
                 if (cursorPos > 0) {
-                    tempText = tempText.substring(0, cursorPos - 1) + tempText.substring(cursorPos);
-                    cursorPos--;
+                    int deleteCount = 1;
+                    if (cursorPos >= 2 && Character.isLowSurrogate(tempText.charAt(cursorPos - 1)) && Character.isHighSurrogate(tempText.charAt(cursorPos - 2))) {
+                        deleteCount = 2;
+                    }
+                    tempText = tempText.substring(0, cursorPos - deleteCount) + tempText.substring(cursorPos);
+                    cursorPos -= deleteCount;
                     resetCursor();
                 }
                 return true;
             }
             case GLFW.GLFW_KEY_DELETE -> {
                 if (cursorPos < tempText.length()) {
-                    tempText = tempText.substring(0, cursorPos) + tempText.substring(cursorPos + 1);
+                    int deleteCount = 1;
+                    if (cursorPos + 1 < tempText.length() && Character.isHighSurrogate(tempText.charAt(cursorPos)) && Character.isLowSurrogate(tempText.charAt(cursorPos + 1))) {
+                        deleteCount = 2;
+                    }
+                    tempText = tempText.substring(0, cursorPos) + tempText.substring(cursorPos + deleteCount);
                     resetCursor();
                 }
                 return true;
@@ -146,6 +195,9 @@ public class StringValueComponent extends Component {
             case GLFW.GLFW_KEY_LEFT -> {
                 if (cursorPos > 0) {
                     cursorPos--;
+                    if (cursorPos > 0 && Character.isLowSurrogate(tempText.charAt(cursorPos)) && Character.isHighSurrogate(tempText.charAt(cursorPos - 1))) {
+                        cursorPos--;
+                    }
                     resetCursor();
                 }
                 return true;
@@ -153,6 +205,9 @@ public class StringValueComponent extends Component {
             case GLFW.GLFW_KEY_RIGHT -> {
                 if (cursorPos < tempText.length()) {
                     cursorPos++;
+                    if (cursorPos < tempText.length() && Character.isHighSurrogate(tempText.charAt(cursorPos - 1)) && Character.isLowSurrogate(tempText.charAt(cursorPos))) {
+                        cursorPos++;
+                    }
                     resetCursor();
                 }
                 return true;
@@ -176,14 +231,19 @@ public class StringValueComponent extends Component {
     public boolean charTyped(CharInput input) {
         if (!editing) return false;
 
-        char chr = (char) input.codepoint();
+        int codepoint = input.codepoint();
+        String str = Character.toString(codepoint);
 
-        if (setting.isOnlyNumber() && !Character.isDigit(chr) && chr != '.' && chr != '-') {
-            return false;
+        if (setting.isOnlyNumber()) {
+            char chr = (char) codepoint;
+            if (!Character.isDigit(chr) && chr != '.' && chr != '-') {
+                return false;
+            }
+            str = String.valueOf(chr);
         }
 
-        tempText = tempText.substring(0, cursorPos) + chr + tempText.substring(cursorPos);
-        cursorPos++;
+        tempText = tempText.substring(0, cursorPos) + str + tempText.substring(cursorPos);
+        cursorPos += str.length();
         resetCursor();
 
         return true;
@@ -197,6 +257,48 @@ public class StringValueComponent extends Component {
     private void resetCursor() {
         lastBlinkTime = System.currentTimeMillis();
         cursorVisible = true;
+    }
+
+    private String getClipboardText() {
+        try {
+            long window = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
+            if (window == 0) return "";
+            String text = org.lwjgl.glfw.GLFW.glfwGetClipboardString(window);
+            return text != null ? text : "";
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private void setClipboardText(String text) {
+        try {
+            long window = org.lwjgl.glfw.GLFW.glfwGetCurrentContext();
+            if (window == 0) return;
+            org.lwjgl.glfw.GLFW.glfwSetClipboardString(window, text);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private String filterClipboardText(String text) {
+        if (setting.isOnlyNumber()) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < text.length(); i++) {
+                char c = text.charAt(i);
+                if (Character.isDigit(c) || c == '.' || c == '-') {
+                    sb.append(c);
+                }
+            }
+            return sb.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < text.length(); ) {
+            int cp = text.codePointAt(i);
+            if (cp >= 32 && cp != 127 && cp != 167) {
+                sb.appendCodePoint(cp);
+            }
+            i += Character.charCount(cp);
+        }
+        return sb.toString();
     }
 
     @Override

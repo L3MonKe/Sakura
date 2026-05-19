@@ -5,6 +5,7 @@ import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
+import dev.sakura.client.nanovg.util.EmojiHelper;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
@@ -294,16 +295,16 @@ public class WatermarkHud extends HudModule {
         float infoBaseY = m.bgY + m.padY + (maxH - infoH) / 2f + infoH;
 
         float mainX = m.bgX + m.padX;
-        float textW = NanoVGHelper.getTextWidth(displayName, mainFont, mainSize);
+        float textW = EmojiHelper.getTextWidthWithEmoji(displayName, mainFont, mainSize);
         if (textW <= 0.0f) {
-            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(customText.get(), mainFont, mainSize));
+            textW = Math.max(1.0f, EmojiHelper.getTextWidthWithEmoji(customText.get(), mainFont, mainSize));
         }
 
         if (xylitolSakuraGlow.get()) {
             int glowIndex = (int) Math.max(0, Math.floor((textW * 0.5f) / blockW));
             Color glowC = getXylitolSakuraStepColor(offsetDeg + (double) glowIndex * colorStepDeg);
             glowC = new Color(glowC.getRed(), glowC.getGreen(), glowC.getBlue(), 220);
-            NanoVGHelper.drawGlowingString(displayName, mainX, mainBaseY, mainFont, mainSize, glowC, xylitolSakuraGlowRadius.get().floatValue() * s, xylitolSakuraGlowIntensity.get());
+            EmojiHelper.drawGlowingStringWithEmoji(displayName, mainX, mainBaseY, mainFont, mainSize, glowC, xylitolSakuraGlowRadius.get().floatValue() * s, xylitolSakuraGlowIntensity.get());
         }
 
         if (sakuraTextShadow.get()) {
@@ -313,10 +314,14 @@ public class WatermarkHud extends HudModule {
             Color coloredShadow = new Color((int) (avgColor.getRed() * 0.5), (int) (avgColor.getGreen() * 0.5), (int) (avgColor.getBlue() * 0.5), 255);
 
             float dist = sakuraTextShadowDistance.get().floatValue() * s;
-            NanoVGHelper.drawString(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
+            EmojiHelper.drawStringWithEmoji(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
         }
 
-        renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);
+        if (EmojiHelper.containsEmoji(displayName)) {
+            EmojiHelper.drawGradientStringWithEmoji(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW, this::getXylitolSakuraStepColor);
+        } else {
+            renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);
+        }
 
         NanoVGHelper.drawString(m.infoText, m.bgX + m.padX + m.mainW + m.gap, infoBaseY, infoFont, infoSize, new Color(255, 255, 255, 255));
 
@@ -339,20 +344,18 @@ public class WatermarkHud extends HudModule {
         float mainX = x;
         float mainBaseY = y + mainH + (xylitolSakuraTextOffsetY.get().floatValue() * s);
 
-        float textW = NanoVGHelper.getTextWidth(displayName, mainFont, mainSize);
+        float textW = EmojiHelper.getTextWidthWithEmoji(displayName, mainFont, mainSize);
         if (textW <= 0.0f) {
-            textW = Math.max(1.0f, NanoVGHelper.getTextWidth(customText.get(), mainFont, mainSize));
+            textW = Math.max(1.0f, EmojiHelper.getTextWidthWithEmoji(customText.get(), mainFont, mainSize));
         }
 
-        // 绘制发光效果
         if (xylitolSakuraGlow.get()) {
             int glowIndex = (int) Math.max(0, Math.floor((textW * 0.5f) / blockW));
             Color glowC = getXylitolSakuraStepColor(offsetDeg + (double) glowIndex * colorStepDeg);
             glowC = new Color(glowC.getRed(), glowC.getGreen(), glowC.getBlue(), 220);
-            NanoVGHelper.drawGlowingString(displayName, mainX, mainBaseY, mainFont, mainSize, glowC, xylitolSakuraGlowRadius.get().floatValue() * s, xylitolSakuraGlowIntensity.get());
+            EmojiHelper.drawGlowingStringWithEmoji(displayName, mainX, mainBaseY, mainFont, mainSize, glowC, xylitolSakuraGlowRadius.get().floatValue() * s, xylitolSakuraGlowIntensity.get());
         }
 
-        // 绘制文本阴影
         if (sakuraTextShadow.get()) {
             Color c1 = xylitolSakuraColor1.get();
             Color c2 = xylitolSakuraColor2.get();
@@ -360,11 +363,14 @@ public class WatermarkHud extends HudModule {
             Color coloredShadow = new Color((int) (avgColor.getRed() * 0.5), (int) (avgColor.getGreen() * 0.5), (int) (avgColor.getBlue() * 0.5), 255);
 
             float dist = sakuraTextShadowDistance.get().floatValue() * s;
-            NanoVGHelper.drawString(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
+            EmojiHelper.drawStringWithEmoji(displayName, mainX + dist, mainBaseY + dist, mainFont, mainSize, coloredShadow);
         }
 
-        // 绘制渐变文本
-        renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);
+        if (EmojiHelper.containsEmoji(displayName)) {
+            EmojiHelper.drawGradientStringWithEmoji(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW, this::getXylitolSakuraStepColor);
+        } else {
+            renderXylitolSakuraStringLineGradient(vg, mainX, mainBaseY, mainFont, mainSize, displayName, offsetDeg, colorStepDeg, textW, blockW);
+        }
 
         float totalWidth = textW;
 
@@ -445,7 +451,7 @@ public class WatermarkHud extends HudModule {
         String ver = Sakura.MOD_VER;
         String info = " | " + username + " | fps:" + fps + " | " + ver;
 
-        float mainW = NanoVGHelper.getTextWidth(clientName, mainFont, mainSize);
+        float mainW = EmojiHelper.getTextWidthWithEmoji(clientName, mainFont, mainSize);
         float infoW = NanoVGHelper.getTextWidth(info, infoFont, infoSize);
         float mainH = NanoVGHelper.getFontHeight(mainFont, mainSize);
         float infoH = NanoVGHelper.getFontHeight(infoFont, infoSize);
