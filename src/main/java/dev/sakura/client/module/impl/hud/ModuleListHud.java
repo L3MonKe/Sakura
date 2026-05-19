@@ -68,7 +68,7 @@ public class ModuleListHud extends HudModule {
 
     // --- 布局与限制 (Layout & Limits) ---
     private final NumberValue<Double> maxWidth = new NumberValue<>("Max Width", "最大宽度", 150.0, 50.0, 300.0, 5.0);
-    private final NumberValue<Double> maxHeight = new NumberValue<>("Max Height", "最大高度", 200.0, 50.0, 500.0, 10.0);
+    private final NumberValue<Double> maxHeight = new NumberValue<>("Max Height", "最大高度", 5000.0, 50.0, 10000.0, 10.0);
     private final NumberValue<Double> itemSpacing = new NumberValue<>("Item Spacing", "项目间距", 7.0, 0.0, 10.0, 0.5);
     private final NumberValue<Integer> suffixStyle = new NumberValue<>("Suffix Style", "后缀符号", 0, 0, 3, 1);
 
@@ -503,16 +503,11 @@ public class ModuleListHud extends HudModule {
         }
 
         targetWidth = Math.min(maxTextWidth + PADDING_X * 2 * scale, maxWidthValue);
-        targetHeight = Math.min(totalHeight, maxHeightValue);
+        targetHeight = totalHeight;
     }
 
     private void updateScroll() {
-        float maxHeightValue = maxHeight.get().floatValue();
-        if (targetHeight > maxHeightValue) {
-            scrollOffset = Math.max(0, scrollOffset);
-        } else {
-            scrollOffset = 0;
-        }
+        scrollOffset = 0;
     }
 
     private void updateAnchors(int screenWidth, int screenHeight, float scaledWidth, float scaledHeight) {
@@ -564,11 +559,6 @@ public class ModuleListHud extends HudModule {
         }
 
         if (y < 0) y = 0;
-        float bottomEdge = y + scaledHeight;
-        if (bottomEdge > screenHeight) {
-            y = screenHeight - scaledHeight;
-            if (y < 0) y = 0;
-        }
 
         updateAnchors(screenWidth, screenHeight, scaledWidth, scaledHeight);
         lastScaledScreenWidth = screenWidth;
@@ -606,10 +596,6 @@ public class ModuleListHud extends HudModule {
             // Increment currentY for the next module based on this module's animated height
             if (animationValue > 0.01) {
                 currentY += (float) (itemFullHeight * animationValue);
-            }
-
-            if (renderY + (10 * scale) < y || renderY > y + (currentHeight * scale)) {
-                continue;
             }
 
             if (animationValue < 0.01) {
@@ -947,10 +933,6 @@ public class ModuleListHud extends HudModule {
                 index++;
             }
 
-            if (renderY + (fontSize * scale) < y || renderY > y + (currentHeight * scale)) {
-                continue;
-            }
-
             if (animationValue < 0.01) {
                 continue;
             }
@@ -1278,10 +1260,6 @@ public class ModuleListHud extends HudModule {
             if (animationValue > 0.01) {
                 currentY += (float) (itemFullHeight * animationValue);
                 index++;
-            }
-
-            if (renderY + (fontSize * scale) < y || renderY > y + (currentHeight * scale)) {
-                continue;
             }
 
             if (animationValue < 0.01) {

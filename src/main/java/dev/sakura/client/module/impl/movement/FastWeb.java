@@ -49,6 +49,11 @@ public class FastWeb extends Module {
         }
     }
 
+    @Override
+    public String getSuffix() {
+        return mode.get().name();
+    }
+
     private boolean isInWeb() {
         BlockPos playerPos = mc.player.getBlockPos();
         if (mc.world.getBlockState(playerPos).getBlock() instanceof CobwebBlock) {

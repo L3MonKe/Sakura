@@ -53,9 +53,7 @@ public class KeepSprint extends Module {
 
     @Override
     public String getSuffix() {
-        if (keepSlowdown.get()) {
-            return String.format("%.0f%%", slowdownMultiplier.get() * 100);
-        }
-        return "No Slowdown";
+        return "";
     }
+
 }
