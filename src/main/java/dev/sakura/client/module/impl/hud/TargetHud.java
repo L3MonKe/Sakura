@@ -1400,39 +1400,20 @@ public class TargetHud extends HudModule {
 
         if (glowRadius > 0 && glowIntensity > 0) {
             NanoVG.nvgFontBlur(vg, glowRadius);
-            float glowPad = glowRadius * 2.0f;
-            int glowRegions = Math.max(2, Math.min(6, segments / 4));
-            float regionW = totalW / glowRegions;
 
-            for (int r = 0; r < glowRegions; r++) {
-                float regionLeft = x + r * regionW;
-                float regionRight = x + (r + 1) * regionW;
+            Color leftColor = colorProvider.getColor(offsetDeg);
+            Color rightColor = colorProvider.getColor(offsetDeg + (double) segments * colorStepDeg);
+            leftColor = new Color(leftColor.getRed(), leftColor.getGreen(), leftColor.getBlue(), 200);
+            rightColor = new Color(rightColor.getRed(), rightColor.getGreen(), rightColor.getBlue(), 200);
 
-                float leftTextPos = r / (float) glowRegions;
-                float rightTextPos = (r + 1) / (float) glowRegions;
-                double leftOffset = offsetDeg + (double) (leftTextPos * segments) * colorStepDeg;
-                double rightOffset = offsetDeg + (double) (rightTextPos * segments) * colorStepDeg;
+            try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+                org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+                NanoVG.nvgLinearGradient(vg, x, baseY, x + totalW, baseY, NanoVGHelper.nvgColor(leftColor), NanoVGHelper.nvgColor(rightColor), paint);
 
-                Color leftColor = colorProvider.getColor(leftOffset);
-                Color rightColor = colorProvider.getColor(rightOffset);
-                leftColor = new Color(leftColor.getRed(), leftColor.getGreen(), leftColor.getBlue(), 220);
-                rightColor = new Color(rightColor.getRed(), rightColor.getGreen(), rightColor.getBlue(), 220);
-
-                NanoVG.nvgSave(vg);
-                NanoVG.nvgScissor(vg, regionLeft - glowPad, scissorY - glowPad, regionW + glowPad * 2.0f, scissorH + glowPad * 2.0f);
-
-                try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
-                    org.lwjgl.nanovg.NVGColor nvgLeft = NanoVGHelper.nvgColor(leftColor);
-                    org.lwjgl.nanovg.NVGColor nvgRight = NanoVGHelper.nvgColor(rightColor);
-                    org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
-                    NanoVG.nvgLinearGradient(vg, regionLeft, baseY, regionRight, baseY, nvgLeft, nvgRight, paint);
-                    for (int g = 0; g < glowIntensity; g++) {
-                        NanoVG.nvgFillPaint(vg, paint);
-                        NanoVG.nvgText(vg, x, baseY, text);
-                    }
+                for (int g = 0; g < glowIntensity; g++) {
+                    NanoVG.nvgFillPaint(vg, paint);
+                    NanoVG.nvgText(vg, x, baseY, text);
                 }
-
-                NanoVG.nvgRestore(vg);
             }
 
             NanoVG.nvgFontBlur(vg, 0);
