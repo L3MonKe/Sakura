@@ -15,6 +15,7 @@ import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.nanovg.font.FontLoader;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
+import dev.sakura.client.shaders.HealthBarShader;
 import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.animations.Animation;
 import dev.sakura.client.utils.animations.Direction;
@@ -62,7 +63,7 @@ public class TargetHud extends HudModule {
     }
 
     public enum HPmodeEn {
-        HP, Percentage
+        HP, Percentage, TextHP
     }
 
     public enum StyleEn {
@@ -83,6 +84,10 @@ public class TargetHud extends HudModule {
 
     public enum MahiroBarShapeEn {
         Style1, Style2
+    }
+
+    public enum BarModeEn {
+        Normal, Shader
     }
 
     private final EnumValue<StyleEn> style = new EnumValue<>("Style", "样式", StyleEn.Sakura);
@@ -172,12 +177,35 @@ public class TargetHud extends HudModule {
     private final NumberValue<Double> circleRadius = new NumberValue<>("Circle Radius", "圆形半径", 0.75, 0.1, 2.0, 0.05, () -> espEnabled.get() && espMode.is(ESPMode.Circle));
 
     // Health Bar Settings
-    private final ColorValue healthColor = new ColorValue("HealthColor", "血条颜色", new Color(0, 255, 0), () -> true);
-    private final BoolValue healthGradient = new BoolValue("HealthGradient", "血条渐变", false);
-    private final ColorValue healthColor2 = new ColorValue("HealthColor2", "渐变颜色2", new Color(0, 255, 255), healthGradient::get);
-    private final NumberValue<Double> gradientSpeed = new NumberValue<>("GradientSpeed", "渐变速度", 3.0, 0.1, 10.0, 0.1, healthGradient::get);
-    private final NumberValue<Double> colorLength = new NumberValue<>("ColorLength", "颜色长度", 1.0, 0.1, 5.0, 0.1, () -> healthGradient.get() || espEnabled.get());
-    private final NumberValue<Double> gradientRepeat = new NumberValue<>("GradientRepeat", "渐变循环次数", 1.0, 0.1, 10.0, 0.1, healthGradient::get);
+    private final BoolValue healthBypass = new BoolValue("HealthBypass", "血量绕过", true);
+    private final EnumValue<BarModeEn> barMode = new EnumValue<>("BarMode", "血条模式", BarModeEn.Normal);
+    private final ColorValue healthColor = new ColorValue("HealthColor", "血条颜色", new Color(0, 255, 0), () -> barMode.get() == BarModeEn.Normal);
+    private final BoolValue healthGradient = new BoolValue("HealthGradient", "血条渐变", false, () -> barMode.get() == BarModeEn.Normal);
+    private final ColorValue healthColor2 = new ColorValue("HealthColor2", "渐变颜色2", new Color(0, 255, 255), () -> healthGradient.get() && barMode.get() == BarModeEn.Normal);
+    private final NumberValue<Double> gradientSpeed = new NumberValue<>("GradientSpeed", "渐变速度", 3.0, 0.1, 10.0, 0.1, () -> healthGradient.get() && barMode.get() == BarModeEn.Normal);
+    private final NumberValue<Double> colorLength = new NumberValue<>("ColorLength", "颜色长度", 1.0, 0.1, 5.0, 0.1, () -> (healthGradient.get() && barMode.get() == BarModeEn.Normal) || espEnabled.get());
+    private final NumberValue<Double> gradientRepeat = new NumberValue<>("GradientRepeat", "渐变循环次数", 1.0, 0.1, 10.0, 0.1, () -> healthGradient.get() && barMode.get() == BarModeEn.Normal);
+
+    private final NumberValue<Double> shaderHueMin = new NumberValue<>("ShaderHueMin", "着色器色相最小", 0.85, 0.0, 1.0, 0.01, () -> barMode.get() == BarModeEn.Shader);
+    private final NumberValue<Double> shaderHueMax = new NumberValue<>("ShaderHueMax", "着色器色相最大", 0.95, 0.0, 1.0, 0.01, () -> barMode.get() == BarModeEn.Shader);
+    private final NumberValue<Double> shaderSatMin = new NumberValue<>("ShaderSatMin", "着色器饱和度最小", 0.5, 0.0, 1.0, 0.01, () -> barMode.get() == BarModeEn.Shader);
+    private final NumberValue<Double> shaderSatMax = new NumberValue<>("ShaderSatMax", "着色器饱和度最大", 0.55, 0.0, 1.0, 0.01, () -> barMode.get() == BarModeEn.Shader);
+    private final NumberValue<Double> shaderValMin = new NumberValue<>("ShaderValMin", "着色器明度最小", 0.75, 0.0, 1.0, 0.01, () -> barMode.get() == BarModeEn.Shader);
+    private final NumberValue<Double> shaderValMax = new NumberValue<>("ShaderValMax", "着色器明度最大", 1.0, 0.0, 1.0, 0.01, () -> barMode.get() == BarModeEn.Shader);
+    private final NumberValue<Double> shaderSpeed = new NumberValue<>("ShaderSpeed", "着色器速度", 1.0, 0.1, 5.0, 0.1, () -> barMode.get() == BarModeEn.Shader);
+
+    // TextHP Settings
+    private final NumberValue<Double> textHpSize = new NumberValue<>("TextHpSize", "HP文字大小", 9.0, 4.0, 20.0, 0.5, () -> hpMode.get() == HPmodeEn.TextHP && style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> textHpX = new NumberValue<>("TextHpX", "HP文字X偏移", 0.0, -50.0, 50.0, 1.0, () -> hpMode.get() == HPmodeEn.TextHP && style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> textHpY = new NumberValue<>("TextHpY", "HP文字Y偏移", 0.0, -50.0, 50.0, 1.0, () -> hpMode.get() == HPmodeEn.TextHP && style.get() == StyleEn.Sakura);
+    private final BoolValue textHpGlow = new BoolValue("TextHpGlow", "HP文字发光", false, () -> hpMode.get() == HPmodeEn.TextHP && style.get() == StyleEn.Sakura);
+    private final BoolValue textHpGradient = new BoolValue("TextHpGradient", "HP文字渐变", false, () -> hpMode.get() == HPmodeEn.TextHP && style.get() == StyleEn.Sakura);
+
+    // Name Gradient Settings
+    private final BoolValue nameGradient = new BoolValue("NameGradient", "名字渐变", false, () -> style.get() == StyleEn.Sakura);
+    private final NumberValue<Double> nameGradSpeed = new NumberValue<>("NameGradSpeed", "名字渐变速度", 0.6, 0.0, 5.0, 0.05, () -> nameGradient.get() && style.get() == StyleEn.Sakura);
+    private final NumberValue<Integer> nameGradSpread = new NumberValue<>("NameGradSpread", "名字渐变跨度", 15, 1, 400, 1, () -> nameGradient.get() && style.get() == StyleEn.Sakura);
+    private final NumberValue<Integer> nameGradBlockDist = new NumberValue<>("NameGradBlockDist", "名字渐变块距", 100, 1, 100, 1, () -> nameGradient.get() && style.get() == StyleEn.Sakura);
 
     // Glow Settings
     private final BoolValue nameGlow = new BoolValue("NameGlow", "名字发光", true);
@@ -229,6 +257,12 @@ public class TargetHud extends HudModule {
     private float hanabiHudHeight = 0f;
     private final float[] hanabiGlowSegmentRects = new float[4];
     private final float[] hanabiGlowSegmentRadii = new float[]{0f};
+
+    private float shaderBarX;
+    private float shaderBarY;
+    private float shaderBarW;
+    private float shaderBarH;
+    private float shaderBarRadius;
 
     private final RenderPipeline TARGET_ICON_PIPELINE = RenderPipelines.register(RenderPipeline.builder(RenderPipelines.POSITION_TEX_COLOR_SNIPPET)
             .withLocation("pipeline/sakura_target_icon")
@@ -327,7 +361,7 @@ public class TargetHud extends HudModule {
         float health = 0;
         float maxHealth = 20;
         if (target != null) {
-            health = Managers.HEALTH.getHealth(target);
+            health = healthBypass.get() ? Managers.HEALTH.getHealth(target) : target.getHealth() + target.getAbsorptionAmount();
             if (absorp.get()) {
                 health += target.getAbsorptionAmount();
             }
@@ -406,11 +440,11 @@ public class TargetHud extends HudModule {
             }
 
             if (style.get() == StyleEn.Sakura) {
-                renderMahiro(vg, renderTarget, finalHealth, finalMaxHealth, damageFactor);
+                renderMahiro(vg, renderTarget, finalHealth, finalMaxHealth, damageFactor, animValue);
             } else if (style.get() == StyleEn.Hanabi) {
                 renderHanabi(vg, renderTarget, finalHealth, finalMaxHealth);
             } else {
-                renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, damageFactor);
+                renderThunderHack(vg, renderTarget, finalHealth, finalMaxHealth, damageFactor, animValue);
             }
 
             NanoVGHelper.restore();
@@ -419,9 +453,19 @@ public class TargetHud extends HudModule {
         //     renderMahiroGlow(renderTarget, finalHealth, finalMaxHealth, animValue);
         // }
 
+        if (barMode.get() == BarModeEn.Shader && shaderBarW > 0 && shaderBarH > 0) {
+            HealthBarShader.render(
+                    shaderBarX, shaderBarY, shaderBarW, shaderBarH, shaderBarRadius,
+                    shaderHueMin.get().floatValue(), shaderHueMax.get().floatValue(),
+                    shaderSatMin.get().floatValue(), shaderSatMax.get().floatValue(),
+                    shaderValMin.get().floatValue(), shaderValMax.get().floatValue(),
+                    shaderSpeed.get().floatValue()
+            );
+        }
+
         if (style.get() == StyleEn.Hanabi) {
             if (target != null && hanabiHudHeight > 0.5f && hanabiHealthBarWidth > 0.5f) {
-                if (hanabiBarGlow.get()) {
+                if (hanabiBarGlow.get() && barMode.get() != BarModeEn.Shader) {
                     int healthColor = getHanabiHealthColor(health, maxHealth).getRGB();
                     Color start = new Color(0, 81, 179, 255);
                     Color endBase = new Color(healthColor, true);
@@ -476,7 +520,7 @@ public class TargetHud extends HudModule {
         }
     }
 
-    private void renderThunderHack(long vg, LivingEntity target, float health, float maxHealth, float damageFactor) {
+    private void renderThunderHack(long vg, LivingEntity target, float health, float maxHealth, float damageFactor, float animValue) {
         NanoVGHelper.drawRoundRect(x, y, 70, 50, 6, new Color(0, 0, 0, 139));
         NanoVGHelper.drawRoundRect(x + 50, y, 100, 50, 6, new Color(0, 0, 0, 255));
         this.width = 150;
@@ -527,62 +571,72 @@ public class TargetHud extends HudModule {
 
         NanoVGHelper.drawGradientRRect(x + 55, y + 21 + yOffset, 90, 10, 2, new Color(20, 20, 20), new Color(40, 40, 40));
 
-        // Calculate gradient colors
-        Color c1 = healthColor.get();
-        Color c2 = healthColor.get().darker();
+        float thunderBarX = x + 55;
+        float thunderBarY = y + 21 + yOffset;
+        float thunderBarW = healthWidth;
+        float thunderBarH = 10;
+        float thunderBarRadius = 2;
 
-        if (healthGradient.get()) {
-            double speed = gradientSpeed.get();
-            float time = (float) ((System.currentTimeMillis() % 2000000) * speed / 1000.0);
+        float centerX = x + width / 2f;
+        float centerY = y + height / 2f;
+        shaderBarX = centerX + (thunderBarX - centerX) * animValue;
+        shaderBarY = centerY + (thunderBarY - centerY) * animValue;
+        shaderBarW = thunderBarW * animValue;
+        shaderBarH = thunderBarH * animValue;
+        shaderBarRadius = thunderBarRadius * animValue;
 
-            float length = colorLength.get().floatValue();
-            float frequency = 1.0f / length;
+        if (barMode.get() == BarModeEn.Shader) {
+            // skip normal health bar fill, shader will render after NanoVG
+        } else {
+            // Calculate gradient colors
+            Color c1 = healthColor.get();
+            Color c2 = healthColor.get().darker();
 
-            float t1 = (float) ((Math.sin(time) + 1.0) / 2.0);
-            float t2 = (float) ((Math.sin(time + frequency) + 1.0) / 2.0);
+            if (healthGradient.get()) {
+                double speed = gradientSpeed.get();
+                float time = (float) ((System.currentTimeMillis() % 2000000) * speed / 1000.0);
 
-            c1 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t1);
-            c2 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t2);
-        }
+                float length = colorLength.get().floatValue();
+                float frequency = 1.0f / length;
 
-        // Health Bar Glow
-        if (hpGlow.get()) {
-            // Draw manual bloom for stronger effect
-            float strength = glowStrength.get().floatValue();
+                float t1 = (float) ((Math.sin(time) + 1.0) / 2.0);
+                float t2 = (float) ((Math.sin(time + frequency) + 1.0) / 2.0);
 
-            // Optimization: Increase step size from 0.5f to 1.0f to reduce draw calls
-            for (float i = 1.0f; i <= strength; i += 1.0f) {
-                // Non-linear alpha falloff for "glowing core" look
-                // (1 - (i/strength)^2) gives a sharper core and softer edge
-                float normalizedDist = i / (strength + 2);
-                float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
-                // Base alpha lowered to prevent over-saturation when stacking
-                // Adjusted alpha multiplier to compensate for fewer layers (0.15f -> 0.25f)
-                float alpha = alphaFactor * 0.25f;
+                c1 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t1);
+                c2 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t2);
+            }
 
-                int alphaInt = MathHelper.clamp((int) (alpha * 255), 0, 255);
-                if (alphaInt > 0) {
-                    if (healthGradient.get()) {
-                        Color gc1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt);
-                        Color gc2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alphaInt);
-                        NanoVGHelper.drawGradientRRect2(x + 55 - i, y + 21 + yOffset - i, healthWidth + i * 2, 10 + i * 2, 2 + i, gc1, gc2);
-                    } else {
-                        NanoVGHelper.drawRoundRect(x + 55 - i, y + 21 + yOffset - i, healthWidth + i * 2, 10 + i * 2, 2 + i, new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt));
+            // Health Bar Glow
+            if (hpGlow.get()) {
+                float strength = glowStrength.get().floatValue();
+
+                for (float i = 1.0f; i <= strength; i += 1.0f) {
+                    float normalizedDist = i / (strength + 2);
+                    float alphaFactor = 1.0f - (normalizedDist * normalizedDist);
+                    float alpha = alphaFactor * 0.25f;
+
+                    int alphaInt = MathHelper.clamp((int) (alpha * 255), 0, 255);
+                    if (alphaInt > 0) {
+                        if (healthGradient.get()) {
+                            Color gc1 = new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt);
+                            Color gc2 = new Color(c2.getRed(), c2.getGreen(), c2.getBlue(), alphaInt);
+                            NanoVGHelper.drawGradientRRect2(x + 55 - i, y + 21 + yOffset - i, healthWidth + i * 2, 10 + i * 2, 2 + i, gc1, gc2);
+                        } else {
+                            NanoVGHelper.drawRoundRect(x + 55 - i, y + 21 + yOffset - i, healthWidth + i * 2, 10 + i * 2, 2 + i, new Color(c1.getRed(), c1.getGreen(), c1.getBlue(), alphaInt));
+                        }
                     }
                 }
             }
+
+            // Draw Health Bar
+            if (healthGradient.get()) {
+                NanoVGHelper.drawGradientRRect2(x + 55, y + 21 + yOffset, healthWidth, 10, 2, c1, c2);
+            } else {
+                NanoVGHelper.drawGradientRRect(x + 55, y + 21 + yOffset, healthWidth, 10, 2, c1, c2);
+            }
         }
 
-        // Draw Health Bar
-        if (healthGradient.get()) {
-            NanoVGHelper.drawGradientRRect2(x + 55, y + 21 + yOffset, healthWidth, 10, 2, c1, c2);
-        } else {
-            NanoVGHelper.drawGradientRRect(x + 55, y + 21 + yOffset, healthWidth, 10, 2, c1, c2);
-        }
-
-        String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
-
-        // HP Text
+        String hpText = hpMode.get() == HPmodeEn.Percentage ? String.format("%.0f%%", (health / maxHealth) * 100) : String.format("%.1f", health);
         NanoVGHelper.drawCenteredString(hpText, x + 102, y + 24f + 3 + yOffset, FontLoader.bold(), 10, Color.WHITE);
 
         // Name Glow
@@ -699,7 +753,7 @@ public class TargetHud extends HudModule {
         MahiroParticleModeEn mode = MahiroParticleMode.get();
 
         if (MahiroBarParticles.get() && target.hurtTime == 9 && !mahiroSentBarParticles) {
-            float barW = contentW * MathHelper.clamp(Managers.HEALTH.getHealth(target) / target.getMaxHealth(), 0f, 1f);
+            float barW = contentW * MathHelper.clamp((healthBypass.get() ? Managers.HEALTH.getHealth(target) : target.getHealth() + target.getAbsorptionAmount()) / target.getMaxHealth(), 0f, 1f);
             for (int i = 0; i < amount; i++) {
                 Color c1 = healthColor.get();
                 Color c2 = healthColor2.get();
@@ -1049,7 +1103,7 @@ public class TargetHud extends HudModule {
         BlurShader.drawRoundedBlur(rx, ry, w, h, r, blur);
     }
 
-    private void renderMahiro(long vg, LivingEntity target, float health, float maxHealth, float damageFactor) {
+    private void renderMahiro(long vg, LivingEntity target, float health, float maxHealth, float damageFactor, float animValue) {
         float globalScale = MahiroScale.get().floatValue();
 
         NanoVGHelper.save();
@@ -1104,16 +1158,63 @@ public class TargetHud extends HudModule {
             textX = x + padding + 2 + nameXOffset;
         }
 
-        if (nameGlow.get()) {
-            NanoVGHelper.drawGlowingString(target.getName().getString(), textX, nameY, FontLoader.bold(), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
+        String targetName = target.getName().getString();
+
+        if (nameGradient.get()) {
+            double offsetDeg;
+            int colorStepDeg = nameGradSpread.get();
+            int blockDist = nameGradBlockDist.get();
+            float textW = NanoVGHelper.getTextWidth(targetName, FontLoader.bold(), nameSize);
+            float glowR = nameGlow.get() ? glowStrength.get().floatValue() : 0;
+            int glowI = nameGlow.get() ? 2 : 0;
+
+            if (barMode.get() == BarModeEn.Shader) {
+                offsetDeg = (System.currentTimeMillis() / 20.0) * shaderSpeed.get();
+                renderStringLineGradientWithGlow(vg, textX, nameY, FontLoader.bold(), nameSize, targetName, offsetDeg, colorStepDeg, textW, blockDist, this::getShaderStepColor, glowR, glowI);
+            } else {
+                offsetDeg = (System.currentTimeMillis() / 20.0) * nameGradSpeed.get();
+                renderStringLineGradientWithGlow(vg, textX, nameY, FontLoader.bold(), nameSize, targetName, offsetDeg, colorStepDeg, textW, blockDist, this::getGradientStepColor, glowR, glowI);
+            }
         } else {
-            NanoVGHelper.drawString(target.getName().getString(), textX, nameY, FontLoader.bold(), nameSize, Color.WHITE);
+            if (nameGlow.get()) {
+                NanoVGHelper.drawGlowingString(targetName, textX, nameY, FontLoader.bold(), nameSize, Color.WHITE, glowStrength.get().floatValue(), 2);
+            } else {
+                NanoVGHelper.drawString(targetName, textX, nameY, FontLoader.bold(), nameSize, Color.WHITE);
+            }
         }
 
         // HP Text
-        String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
-        float hpW = NanoVGHelper.getTextWidth(hpText, FontLoader.bold(), nameSize);
-        NanoVGHelper.drawString(hpText, x + baseW - padding - hpW, nameY, FontLoader.bold(), nameSize, Color.WHITE);
+        if (hpMode.get() == HPmodeEn.TextHP) {
+            String hpStr = "HP: " + String.format("%.1f", health);
+            float hpTextSize = textHpSize.get().floatValue();
+            float hpTextX = textX + textHpX.get().floatValue();
+            float fontH = NanoVGHelper.getFontHeight(FontLoader.comfortaa(), nameSize);
+            float hpTextY = nameY + fontH + 2 + textHpY.get().floatValue();
+            if (textHpGradient.get()) {
+                double offsetDeg;
+                int colorStepDeg = nameGradSpread.get();
+                int blockDist = nameGradBlockDist.get();
+                float textW = NanoVGHelper.getTextWidth(hpStr, FontLoader.comfortaa(), hpTextSize);
+                float glowR = textHpGlow.get() ? glowStrength.get().floatValue() : 0;
+                int glowI = textHpGlow.get() ? 2 : 0;
+
+                if (barMode.get() == BarModeEn.Shader) {
+                    offsetDeg = (System.currentTimeMillis() / 20.0) * shaderSpeed.get();
+                    renderStringLineGradientWithGlow(vg, hpTextX, hpTextY, FontLoader.comfortaa(), hpTextSize, hpStr, offsetDeg, colorStepDeg, textW, blockDist, this::getShaderStepColor, glowR, glowI);
+                } else {
+                    offsetDeg = (System.currentTimeMillis() / 20.0) * nameGradSpeed.get();
+                    renderStringLineGradientWithGlow(vg, hpTextX, hpTextY, FontLoader.comfortaa(), hpTextSize, hpStr, offsetDeg, colorStepDeg, textW, blockDist, this::getGradientStepColor, glowR, glowI);
+                }
+            } else if (textHpGlow.get()) {
+                NanoVGHelper.drawGlowingString(hpStr, hpTextX, hpTextY, FontLoader.comfortaa(), hpTextSize, Color.WHITE, glowStrength.get().floatValue(), 2);
+            } else {
+                NanoVGHelper.drawString(hpStr, hpTextX, hpTextY, FontLoader.comfortaa(), hpTextSize, Color.WHITE);
+            }
+        } else {
+            String hpText = hpMode.get() == HPmodeEn.HP ? String.format("%.1f", health) : String.format("%.0f%%", (health / maxHealth) * 100);
+            float hpW = NanoVGHelper.getTextWidth(hpText, FontLoader.bold(), nameSize);
+            NanoVGHelper.drawString(hpText, x + baseW - padding - hpW, nameY, FontLoader.bold(), nameSize, Color.WHITE);
+        }
 
         // Health Bar
         // barY calculation: start from bottom of total height
@@ -1156,28 +1257,44 @@ public class TargetHud extends HudModule {
             c2 = ColorUtil.interpolateColor(healthColor.get(), healthColor2.get(), t2);
         }
 
-        // Bar Glow
+        float sx = x + (contentX - x) * globalScale;
+        float sy = y + (barY - y) * globalScale;
+        float sw = barW * globalScale;
+        float sh = barH * globalScale;
+        float sr = barRadius * globalScale;
 
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
-            org.lwjgl.nanovg.NVGColor col1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
-            org.lwjgl.nanovg.NVGColor col2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+        float cx = x + this.width / 2f;
+        float cy = y + this.height / 2f;
+        shaderBarX = cx + (sx - cx) * animValue;
+        shaderBarY = cy + (sy - cy) * animValue;
+        shaderBarW = sw * animValue;
+        shaderBarH = sh * animValue;
+        shaderBarRadius = sr * animValue;
 
-            NanoVG.nvgRGBA((byte) c1.getRed(), (byte) c1.getGreen(), (byte) c1.getBlue(), (byte) c1.getAlpha(), col1);
-            NanoVG.nvgRGBA((byte) c2.getRed(), (byte) c2.getGreen(), (byte) c2.getBlue(), (byte) c2.getAlpha(), col2);
+        if (barMode.get() == BarModeEn.Shader) {
+            // skip normal health bar fill, shader will render after NanoVG
+        } else {
+            try (MemoryStack stack = MemoryStack.stackPush()) {
+                org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+                org.lwjgl.nanovg.NVGColor col1 = org.lwjgl.nanovg.NVGColor.malloc(stack);
+                org.lwjgl.nanovg.NVGColor col2 = org.lwjgl.nanovg.NVGColor.malloc(stack);
 
-            if (healthGradient.get()) {
-                float repeatFactor = gradientRepeat.get().floatValue();
-                float gradEndX = contentX + contentW * repeatFactor;
-                NanoVG.nvgLinearGradient(vg, contentX, barY, gradEndX, barY, col1, col2, paint);
-            } else {
-                NanoVG.nvgLinearGradient(vg, contentX, barY, contentX, barY + barH, col1, col2, paint);
+                NanoVG.nvgRGBA((byte) c1.getRed(), (byte) c1.getGreen(), (byte) c1.getBlue(), (byte) c1.getAlpha(), col1);
+                NanoVG.nvgRGBA((byte) c2.getRed(), (byte) c2.getGreen(), (byte) c2.getBlue(), (byte) c2.getAlpha(), col2);
+
+                if (healthGradient.get()) {
+                    float repeatFactor = gradientRepeat.get().floatValue();
+                    float gradEndX = contentX + contentW * repeatFactor;
+                    NanoVG.nvgLinearGradient(vg, contentX, barY, gradEndX, barY, col1, col2, paint);
+                } else {
+                    NanoVG.nvgLinearGradient(vg, contentX, barY, contentX, barY + barH, col1, col2, paint);
+                }
+
+                NanoVG.nvgBeginPath(vg);
+                NanoVG.nvgRoundedRect(vg, contentX, barY, barW, barH, barRadius);
+                NanoVG.nvgFillPaint(vg, paint);
+                NanoVG.nvgFill(vg);
             }
-
-            NanoVG.nvgBeginPath(vg);
-            NanoVG.nvgRoundedRect(vg, contentX, barY, barW, barH, barRadius);
-            NanoVG.nvgFillPaint(vg, paint);
-            NanoVG.nvgFill(vg);
         }
 
         if (target instanceof PlayerEntity player) {
@@ -1191,8 +1308,152 @@ public class TargetHud extends HudModule {
         NanoVGHelper.restore();
     }
 
+    private Color interpolateGradientColor(Color c1, Color c2, float t) {
+        t = Math.max(0, Math.min(1, t));
+        int r = (int) (c1.getRed() + (c2.getRed() - c1.getRed()) * t);
+        int g = (int) (c1.getGreen() + (c2.getGreen() - c1.getGreen()) * t);
+        int b = (int) (c1.getBlue() + (c2.getBlue() - c1.getBlue()) * t);
+        int a = (int) (c1.getAlpha() + (c2.getAlpha() - c1.getAlpha()) * t);
+        return new Color(r, g, b, a);
+    }
+
+    private Color getGradientStepColor(double offsetDeg) {
+        double rad = Math.toRadians(offsetDeg);
+        float t1 = (float) ((Math.sin(rad) + 1.0) / 2.0);
+        float t2 = (float) ((Math.sin(rad * 2.0 + 1.5) + 1.0) / 2.0);
+        float mix = t1 * 0.65f + t2 * 0.35f;
+        mix = Math.max(0f, Math.min(1f, mix));
+        Color c1 = healthGradient.get() ? healthColor2.get() : healthColor.get().darker();
+        Color c2 = healthColor.get();
+        return interpolateGradientColor(c1, c2, mix);
+    }
+
+    private int[] hsvToRgb(float h, float s, float v) {
+        float c = v * s;
+        float x = c * (1 - Math.abs((h * 6) % 2 - 1));
+        float m = v - c;
+        float r1, g1, b1;
+        int hi = (int) (h * 6) % 6;
+        switch (hi) {
+            case 0: r1 = c; g1 = x; b1 = 0; break;
+            case 1: r1 = x; g1 = c; b1 = 0; break;
+            case 2: r1 = 0; g1 = c; b1 = x; break;
+            case 3: r1 = 0; g1 = x; b1 = c; break;
+            case 4: r1 = x; g1 = 0; b1 = c; break;
+            default: r1 = c; g1 = 0; b1 = x; break;
+        }
+        return new int[]{
+                Math.round((r1 + m) * 255),
+                Math.round((g1 + m) * 255),
+                Math.round((b1 + m) * 255)
+        };
+    }
+
+    private float shaderRange(float val, float mi, float ma) {
+        return val * (ma - mi) + mi;
+    }
+
+    private Color getShaderStepColor(double offsetDeg) {
+        double factor = (Math.sin(Math.toRadians(offsetDeg)) + 1.0) / 2.0;
+        float f = (float) factor;
+        float hue = shaderRange(f, shaderHueMin.get().floatValue(), shaderHueMax.get().floatValue());
+        float sat = shaderRange(f, shaderSatMin.get().floatValue(), shaderSatMax.get().floatValue());
+        float val = shaderRange(f, shaderValMin.get().floatValue(), shaderValMax.get().floatValue());
+        hue = hue % 1.0f;
+        if (hue < 0) hue += 1.0f;
+        int[] rgb = hsvToRgb(hue, sat, val);
+        return new Color(rgb[0], rgb[1], rgb[2], 255);
+    }
+
+    private void renderStringLineGradient(long vg, float x, float baseY, int font, float size, String text, double offsetDeg, int colorStepDeg, float textW, int blockDist) {
+        renderStringLineGradient(vg, x, baseY, font, size, text, offsetDeg, colorStepDeg, textW, blockDist, this::getGradientStepColor, 0, 0);
+    }
+
+    private void renderShaderStringLineGradient(long vg, float x, float baseY, int font, float size, String text, double offsetDeg, int colorStepDeg, float textW, int blockDist) {
+        renderStringLineGradient(vg, x, baseY, font, size, text, offsetDeg, colorStepDeg, textW, blockDist, this::getShaderStepColor, 0, 0);
+    }
+
+    private void renderStringLineGradientWithGlow(long vg, float x, float baseY, int font, float size, String text, double offsetDeg, int colorStepDeg, float textW, int blockDist, StepColorProvider colorProvider, float glowRadius, int glowIntensity) {
+        renderStringLineGradient(vg, x, baseY, font, size, text, offsetDeg, colorStepDeg, textW, blockDist, colorProvider, glowRadius, glowIntensity);
+    }
+
+    @FunctionalInterface
+    private interface StepColorProvider {
+        Color getColor(double offsetDeg);
+    }
+
+    private void renderStringLineGradient(long vg, float x, float baseY, int font, float size, String text, double offsetDeg, int colorStepDeg, float textW, int blockDist, StepColorProvider colorProvider, float glowRadius, int glowIntensity) {
+        if (text == null || text.isEmpty()) return;
+
+        float totalW = Math.max(1.0f, textW);
+        float blockW = (float) blockDist;
+        int segments = (int) Math.max(16, Math.min(260, Math.ceil(totalW / Math.max(1.0f, blockW))));
+        float segW = totalW / segments;
+        float fontH = NanoVGHelper.getFontHeight(font, size);
+        float scissorY = baseY - fontH - 2.0f;
+        float scissorH = fontH + 4.0f;
+        float overlap = 0.75f;
+
+        NanoVG.nvgFontFaceId(vg, font);
+        NanoVG.nvgFontSize(vg, size);
+        NanoVG.nvgTextAlign(vg, NanoVG.NVG_ALIGN_LEFT | NanoVG.NVG_ALIGN_BASELINE);
+
+        if (glowRadius > 0 && glowIntensity > 0) {
+            NanoVG.nvgFontBlur(vg, glowRadius);
+            float glowPad = glowRadius * 2.0f;
+            int glowRegions = Math.max(2, Math.min(6, segments / 4));
+            float regionW = totalW / glowRegions;
+
+            for (int r = 0; r < glowRegions; r++) {
+                float regionLeft = x + r * regionW;
+                float regionRight = x + (r + 1) * regionW;
+
+                float leftTextPos = r / (float) glowRegions;
+                float rightTextPos = (r + 1) / (float) glowRegions;
+                double leftOffset = offsetDeg + (double) (leftTextPos * segments) * colorStepDeg;
+                double rightOffset = offsetDeg + (double) (rightTextPos * segments) * colorStepDeg;
+
+                Color leftColor = colorProvider.getColor(leftOffset);
+                Color rightColor = colorProvider.getColor(rightOffset);
+                leftColor = new Color(leftColor.getRed(), leftColor.getGreen(), leftColor.getBlue(), 220);
+                rightColor = new Color(rightColor.getRed(), rightColor.getGreen(), rightColor.getBlue(), 220);
+
+                NanoVG.nvgSave(vg);
+                NanoVG.nvgScissor(vg, regionLeft - glowPad, scissorY - glowPad, regionW + glowPad * 2.0f, scissorH + glowPad * 2.0f);
+
+                try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+                    org.lwjgl.nanovg.NVGColor nvgLeft = NanoVGHelper.nvgColor(leftColor);
+                    org.lwjgl.nanovg.NVGColor nvgRight = NanoVGHelper.nvgColor(rightColor);
+                    org.lwjgl.nanovg.NVGPaint paint = org.lwjgl.nanovg.NVGPaint.malloc(stack);
+                    NanoVG.nvgLinearGradient(vg, regionLeft, baseY, regionRight, baseY, nvgLeft, nvgRight, paint);
+                    for (int g = 0; g < glowIntensity; g++) {
+                        NanoVG.nvgFillPaint(vg, paint);
+                        NanoVG.nvgText(vg, x, baseY, text);
+                    }
+                }
+
+                NanoVG.nvgRestore(vg);
+            }
+
+            NanoVG.nvgFontBlur(vg, 0);
+        }
+
+        for (int i = 0; i < segments; i++) {
+            float segX = x + i * segW;
+            Color col = colorProvider.getColor(offsetDeg + (double) i * colorStepDeg);
+            col = new Color(col.getRed(), col.getGreen(), col.getBlue(), 255);
+
+            NanoVG.nvgSave(vg);
+            NanoVG.nvgScissor(vg, segX - overlap, scissorY, segW + overlap * 2.0f, scissorH);
+            NanoVG.nvgFillColor(vg, NanoVGHelper.nvgColor(col));
+            NanoVG.nvgText(vg, x, baseY, text);
+            NanoVG.nvgRestore(vg);
+        }
+    }
+
     private void renderMahiroGlow(LivingEntity target, float health, float maxHealth, float animValue) {
         if (!hpGlow.get()) return;
+        if (barMode.get() == BarModeEn.Shader) return;
 
         float globalScale = MahiroScale.get().floatValue();
         float baseW = MahiroWidth.get().floatValue();
@@ -1313,7 +1574,17 @@ public class TargetHud extends HudModule {
         NanoVGHelper.drawRect(x, y + 37f, w, 3f, new Color(0, 0, 0, 49));
         NanoVGHelper.drawRect(x, y + 37f, hanabiHealthBarWidth2, 3f, new Color(255, 0, 213, 220));
 
-        NanoVGHelper.drawGradientRRect2(x, y + 37f, hanabiHealthBarWidth, 3f, 0f, new Color(0, 81, 179), new Color(healthColor));
+        shaderBarX = x;
+        shaderBarY = y + 37f;
+        shaderBarW = hanabiHealthBarWidth;
+        shaderBarH = 3f;
+        shaderBarRadius = 0f;
+
+        if (barMode.get() == BarModeEn.Shader) {
+            // skip normal health bar fill, shader will render after NanoVG
+        } else {
+            NanoVGHelper.drawGradientRRect2(x, y + 37f, hanabiHealthBarWidth, 3f, 0f, new Color(0, 81, 179), new Color(healthColor));
+        }
 
         float hpTextWidth = NanoVGHelper.getTextWidth(healthStr, FontLoader.bold(), HANABI_HEALTH_SIZE);
         float hpTextX = x + w - HANABI_HEALTH_TEXT_RIGHT_PAD - hpTextWidth;
