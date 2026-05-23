@@ -3,7 +3,9 @@ package dev.sakura.client.module.impl.movement;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
+import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.mixin.accessor.IPlayerMoveC2SPacket;
@@ -16,6 +18,7 @@ import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
+import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.block.BlockState;
@@ -24,22 +27,44 @@ import net.minecraft.block.SlabBlock;
 import net.minecraft.block.enums.SlabType;
 import net.minecraft.component.type.AttributeModifierSlot;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Box;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 public class NoFall extends Module {
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Packet);
-    private final NumberValue<Integer> swapDelay = new NumberValue<>("Swap Back Delay", "切回延迟", 200, 0, 1000, 10);
-    private final NumberValue<Integer> interactDelay = new NumberValue<>("Interact Delay", "交互延迟", 60, 0, 300, 5);
-    private final NumberValue<Integer> collectDelayTicks = new NumberValue<>("Collect Delay Ticks", "收水延后Tick", 2, 0, 10, 1);
-    private final NumberValue<Double> scaffoldRescueFall = new NumberValue<>("Scaffold Rescue Fall", "搭路自救距离", 5.5, 3.0, 12.0, 0.1);
+    private final EnumValue<MlgMode> mlgMode = new EnumValue<>("MLG Mode", "MLG模式", MlgMode.Grim, () -> mode.is(Mode.MLG));
+    private final NumberValue<Integer> swapDelay = new NumberValue<>("Swap Back Delay", "切回延迟", 200, 0, 1000, 10, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
+    private final NumberValue<Integer> interactDelay = new NumberValue<>("Interact Delay", "交互延迟", 60, 0, 300, 5, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
+    private final NumberValue<Integer> collectDelayTicks = new NumberValue<>("Collect Delay Ticks", "收水延后Tick", 2, 0, 10, 1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
+    private final NumberValue<Double> scaffoldRescueFall = new NumberValue<>("Scaffold Rescue Fall", "搭路自救距离", 5.5, 3.0, 12.0, 0.1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
+
+    private final EnumValue<HypixelFallDistanceMode> hypixelDistanceMode = new EnumValue<>("FallDistanceMode", "摔落距离模式", HypixelFallDistanceMode.SafeDistance, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel));
+    private final NumberValue<Double> hypixelFallDistance = new NumberValue<>("FallDistance", "摔落距离", 3.0, 0.0, 10.0, 0.1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel) && hypixelDistanceMode.is(HypixelFallDistanceMode.Custom));
+    private final NumberValue<Integer> hypixelRetrieveTick = new NumberValue<>("RetrieveTick", "收水刻", 0, 0, 20, 1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel));
+    private final BoolValue hypixelStopMove = new BoolValue("StopMove", "停止移动", false, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel));
+
     private boolean mlgCompleted = true;
     private BlockPos placedWaterPos = null;
     private final TimerUtil swapTimer = new TimerUtil();
@@ -47,14 +72,22 @@ public class NoFall extends Module {
     private boolean pendingSwapBack = false;
     private int quickCollectDelayTicks = 0;
 
-    // Post tick interaction
     private boolean shouldInteract = false;
     private int pendingSlot = -1;
     private BlockPos pendingBestPos = null;
 
-    // Rotation lock for next tick
     private Rotation lockedRotation = null;
     private boolean waitingForRotation = false;
+
+    private int hypixelTicksExisted = -1;
+    private boolean hypixelInteractRequired = false;
+    private int hypixelOldSlot = -1;
+    private boolean hypixelHandleStopMove = false;
+    private boolean hypixelShouldReceive = false;
+    private HypixelPlaceData hypixelLastData;
+    private int hypixelTicksSinceTeleport = 0;
+    private boolean hypixelPacketOnGround = false;
+    private Rotation hypixelTargetRotation = null;
 
     public NoFall() {
         super("NoFall", "无摔落", Category.Movement);
@@ -74,6 +107,7 @@ public class NoFall extends Module {
         swapTimer.reset();
         interactTimer.reset();
         resetPending();
+        resetHypixel();
     }
 
     @Override
@@ -85,6 +119,7 @@ public class NoFall extends Module {
         swapTimer.reset();
         interactTimer.reset();
         resetPending();
+        resetHypixel();
     }
 
     private void resetPending() {
@@ -93,6 +128,18 @@ public class NoFall extends Module {
         pendingBestPos = null;
         lockedRotation = null;
         waitingForRotation = false;
+    }
+
+    private void resetHypixel() {
+        hypixelInteractRequired = false;
+        hypixelShouldReceive = false;
+        hypixelHandleStopMove = false;
+        hypixelTicksExisted = -1;
+        hypixelOldSlot = -1;
+        hypixelLastData = null;
+        hypixelTicksSinceTeleport = 0;
+        hypixelPacketOnGround = false;
+        hypixelTargetRotation = null;
     }
 
     private boolean isFacing(Rotation target, float yawTolerance, float pitchTolerance) {
@@ -130,6 +177,10 @@ public class NoFall extends Module {
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
+
+        if (mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel)) {
+            return;
+        }
 
         if (pendingSwapBack && swapTimer.passedMillise(swapDelay.get())) {
             InvUtil.swapBack();
@@ -272,6 +323,303 @@ public class NoFall extends Module {
             mc.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(mc.player.getX(), mc.player.getY() + 0.000000001, mc.player.getZ(), mc.player.getYaw(), mc.player.getPitch(), false, mc.player.horizontalCollision));
             mc.player.onLanding();
         }
+    }
+
+    @EventHandler
+    public void onMotion(MotionEvent event) {
+        if (nullCheck()) return;
+
+        if (mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel)) {
+            if (event.getType() == EventType.PRE) {
+                onHypixelMotionPre();
+            } else if (event.getType() == EventType.POST) {
+                onHypixelMotionPost();
+            }
+        }
+    }
+
+    @EventHandler
+    public void onMoveInput(MoveInputEvent event) {
+        if (nullCheck()) return;
+
+        if (mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel)) {
+            if (hypixelLastData != null) {
+                mc.player.setSprinting(false);
+            }
+            if (hypixelHandleStopMove && hypixelStopMove.get()) {
+                event.setCancelled(true);
+            }
+        }
+    }
+
+    private void onHypixelTick() {
+        if (mc.player.isCreative()) return;
+        if (mc.player.isUsingItem() || mc.currentScreen != null) return;
+
+        hypixelTicksSinceTeleport++;
+
+        if (hypixelTicksSinceTeleport < 3) return;
+
+        boolean shouldMLG = (mc.player.fallDistance > mc.player.getAttributeValue(EntityAttributes.SAFE_FALL_DISTANCE) && hypixelDistanceMode.is(HypixelFallDistanceMode.SafeDistance)
+                || mc.player.fallDistance > hypixelFallDistance.get() && hypixelDistanceMode.is(HypixelFallDistanceMode.Custom)) && !mc.player.isTouchingWater() && hypixelNextTickWillLanding();
+
+        if (hypixelTicksExisted >= 0) {
+            hypixelTicksExisted--;
+        }
+
+        if (shouldMLG) {
+            int waterBucketSlot = hypixelFindSlot(Items.WATER_BUCKET);
+            if (waterBucketSlot == -1) {
+                shouldMLG = false;
+            }
+            hypixelTicksExisted = hypixelRetrieveTick.get();
+            hypixelHandleStopMove = true;
+            hypixelPlaceWaterBucket(waterBucketSlot);
+        }
+        if (!shouldMLG && hypixelHasEmptyBucket() && hypixelShouldReceive && hypixelTicksExisted <= 0) {
+            hypixelRetrieveWaterBlock();
+        }
+
+        if (hypixelHandleStopMove) {
+            if (!mc.player.isTouchingWater() && hypixelClientOnGround()) {
+                hypixelHandleStopMove = false;
+            }
+        }
+    }
+
+    private void onHypixelMotionPre() {
+        onHypixelTick();
+    }
+
+    private void onHypixelMotionPost() {
+        if (hypixelTargetRotation == null || mc.player == null || mc.interactionManager == null) return;
+
+        if (hypixelInteractRequired) {
+            BlockHitResult result = hypixelRayCast(hypixelTargetRotation, 4.5);
+            if (result == null) {
+                if (mc.player.getInventory().getStack(mc.player.getInventory().getSelectedSlot()).getItem().equals(Items.BUCKET)) {
+                    hypixelShouldReceive = true;
+                }
+                if (hypixelOldSlot != -1) {
+                    mc.player.getInventory().setSelectedSlot(hypixelOldSlot);
+                    hypixelOldSlot = -1;
+                }
+                return;
+            }
+
+            hypixelInteractRequired = false;
+            mc.crosshairTarget = result;
+            float currentYaw = mc.player.getYaw();
+            float currentPitch = mc.player.getPitch();
+            mc.player.setYaw(hypixelTargetRotation.yaw);
+            mc.player.setPitch(hypixelTargetRotation.pitch);
+
+            var res = mc.interactionManager.interactItem(mc.player, Hand.MAIN_HAND);
+            mc.player.setYaw(currentYaw);
+            mc.player.setPitch(currentPitch);
+            if (res.isAccepted()) {
+                mc.player.swingHand(Hand.MAIN_HAND);
+            }
+
+            if (mc.player.getInventory().getStack(mc.player.getInventory().getSelectedSlot()).getItem().equals(Items.BUCKET)) {
+                hypixelShouldReceive = true;
+            }
+            if (hypixelOldSlot != -1) {
+                mc.player.getInventory().setSelectedSlot(hypixelOldSlot);
+                hypixelOldSlot = -1;
+            }
+        }
+    }
+
+    private void hypixelRetrieveWaterBlock() {
+        if (mc.player == null) return;
+
+        hypixelOldSlot = mc.player.getInventory().getSelectedSlot();
+        int emptyBucketSlot = hypixelFindSlot(Items.BUCKET);
+        if (emptyBucketSlot == -1) return;
+        BlockPos pos = hypixelFindScoopableWaterBlock();
+        if (pos == null) {
+            return;
+        }
+        var r = hypixelGetLookAtWaterBlock(pos);
+
+        if (mc.player.getMainHandStack().getItem() != Items.BUCKET)
+            mc.player.getInventory().setSelectedSlot(emptyBucketSlot);
+        hypixelInteractItem(r);
+        hypixelShouldReceive = false;
+    }
+
+    private BlockPos hypixelFindScoopableWaterBlock() {
+        if (mc.player == null) return null;
+
+        World world = mc.player.getEntityWorld();
+        BlockPos playerBlockPos = mc.player.getBlockPos();
+        double maxReachDistance = mc.player.getBlockInteractionRange();
+        int reach = (int) Math.ceil(maxReachDistance);
+        List<BlockPos> possible = new ArrayList<>();
+        for (int x = -reach; x <= reach; x++) {
+            for (int y = -reach; y <= reach; y++) {
+                for (int z = -reach; z <= reach; z++) {
+                    BlockPos currentPos = playerBlockPos.add(x, y, z);
+                    FluidState fluidState = world.getFluidState(currentPos);
+                    if (fluidState.isStill() && fluidState.getFluid() == Fluids.WATER) {
+                        possible.add(currentPos);
+                    }
+                }
+            }
+        }
+        possible.removeIf(blockPos -> {
+            Rotation rotation = hypixelGetLookAtWaterBlock(blockPos);
+            return hypixelRayCast(rotation, 4.5).getType() != HitResult.Type.BLOCK;
+        });
+        if (possible.isEmpty()) return null;
+        return possible.getFirst();
+    }
+
+    private boolean hypixelNextTickWillLanding() {
+        return !hypixelIsAirBlocksBelow(hypixelGetYMotion());
+    }
+
+    private boolean hypixelIsAirBlocksBelow(int high) {
+        if (mc.player == null || mc.world == null) return false;
+
+        List<HypixelPlaceData> possibleBoxes = new ArrayList<>();
+
+        for (int x = -hypixelGetXMotion(); x <= hypixelGetXMotion(); x++) {
+            for (int z = -hypixelGetZMotion(); z <= hypixelGetZMotion(); z++) {
+                for (int y = 0; y <= high; y++) {
+                    var pos = mc.player.getBlockPos().add(x, 0, z).down(y);
+                    var state = mc.world.getBlockState(pos);
+
+                    var bb = new Box(pos).withMaxY(pos.getY() + 3);
+                    if (bb.intersects(mc.player.getBoundingBox()) && !state.isAir()) {
+                        possibleBoxes.add(new HypixelPlaceData(pos, bb));
+                    }
+                }
+            }
+        }
+
+        return possibleBoxes.isEmpty();
+    }
+
+    private int hypixelGetXMotion() {
+        if (mc.player == null) return -1;
+        return (int) Math.ceil(mc.player.getVelocity().x * mc.player.getVelocity().x);
+    }
+
+    private int hypixelGetYMotion() {
+        if (mc.player == null) return -1;
+        return (int) Math.ceil(mc.player.getVelocity().y * mc.player.getVelocity().y);
+    }
+
+    private int hypixelGetZMotion() {
+        if (mc.player == null) return -1;
+        return (int) Math.ceil(mc.player.getVelocity().z * mc.player.getVelocity().z);
+    }
+
+    private boolean hypixelHasEmptyBucket() {
+        if (mc.player == null) return false;
+
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack != null && stack.getItem() == Items.BUCKET) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean hypixelClientOnGround() {
+        if (mc.player == null) return false;
+        return hypixelPacketOnGround && mc.player.isOnGround();
+    }
+
+    private void hypixelInteractItem(Rotation rotation) {
+        Managers.ROTATION.setRotations(rotation, 10.0, MovementFix.NORMAL);
+        hypixelTargetRotation = rotation;
+        hypixelInteractRequired = true;
+    }
+
+    private HypixelPlaceData hypixelFindBestPlacePos() {
+        if (mc.player == null || mc.world == null) return null;
+
+        List<HypixelPlaceData> possibleBoxes = new ArrayList<>();
+
+        var playerBox = mc.player.getBoundingBox();
+        playerBox.offset(mc.player.getVelocity());
+
+        for (int x = -hypixelGetXMotion(); x <= hypixelGetXMotion(); x++) {
+            for (int z = -hypixelGetZMotion(); z <= hypixelGetZMotion(); z++) {
+                for (int y = 0; y <= hypixelGetYMotion(); y++) {
+                    var pos = mc.player.getBlockPos().add(x, 0, z).down(y);
+                    var state = mc.world.getBlockState(pos);
+
+                    var bb = new Box(pos).withMaxY(pos.getY() + 3);
+                    if (bb.intersects(playerBox) && !state.isAir()) {
+                        possibleBoxes.add(new HypixelPlaceData(pos, bb));
+                    }
+                }
+            }
+        }
+
+        possibleBoxes.sort(Comparator.comparingDouble(p -> p.pos.getY()));
+        Collections.reverse(possibleBoxes);
+        var best = possibleBoxes.getFirst();
+
+        possibleBoxes.removeIf(p -> p.pos.getY() != best.pos().getY());
+
+        possibleBoxes.sort(Comparator.comparingDouble(p -> Vec3d.of(p.pos()).squaredDistanceTo(
+                playerBox.getCenter().withAxis(Direction.Axis.Y, playerBox.minY)
+        )));
+        possibleBoxes.sort(Comparator.comparing(p -> !p.bb.contains(mc.player.getEntityPos())));
+        return possibleBoxes.getFirst();
+    }
+
+    private Rotation hypixelGetLookAtWaterBlock(BlockPos targetPos) {
+        if (mc.player == null || targetPos == null) {
+            return new Rotation(0, 0);
+        }
+
+        return RotationUtil.calculate(Vec3d.of(targetPos));
+    }
+
+    private void hypixelPlaceWaterBucket(int waterBucketSlot) {
+        if (waterBucketSlot == -1 || mc.player == null) {
+            return;
+        }
+        hypixelOldSlot = mc.player.getInventory().getSelectedSlot();
+
+        var best = hypixelFindBestPlacePos();
+        hypixelLastData = best;
+
+        if (best == null) return;
+
+        var r = hypixelGetLookAtWaterBlock(best.pos());
+
+        if (mc.player.getMainHandStack().getItem() != Items.WATER_BUCKET)
+            mc.player.getInventory().setSelectedSlot(waterBucketSlot);
+        hypixelInteractItem(r);
+        hypixelShouldReceive = true;
+    }
+
+    private int hypixelFindSlot(net.minecraft.item.Item item) {
+        if (mc.player == null) return -1;
+        int slot = -1;
+        for (int i = 0; i < 9; i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack != null && stack.getItem() == item) {
+                slot = i;
+            }
+        }
+        return slot;
+    }
+
+    private BlockHitResult hypixelRayCast(Rotation rotation, double reach) {
+        if (mc.player == null || mc.world == null) return null;
+        Vec3d eyesPos = mc.player.getCameraPosVec(1f);
+        Vec3d rotationVec = Vec3d.fromPolar(rotation.pitch, rotation.yaw);
+        Vec3d endPos = eyesPos.add(rotationVec.x * reach, rotationVec.y * reach, rotationVec.z * reach);
+        return mc.world.raycast(new RaycastContext(eyesPos, endPos, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, mc.player));
     }
 
     private boolean shouldSkipMlgPlacement(BlockPos bestPos) {
@@ -436,14 +784,22 @@ public class NoFall extends Module {
 
     @EventHandler
     public void onPacketSend(PacketEvent event) {
-        if (nullCheck() || event.getType() != EventType.SEND) return;
+        if (nullCheck()) return;
+
+        if (event.getType() == EventType.SEND && event.getPacket() instanceof PlayerMoveC2SPacket packet) {
+            hypixelPacketOnGround = packet.isOnGround();
+        }
+
+        if (event.getType() == EventType.RECEIVE && event.getPacket() instanceof PlayerPositionLookS2CPacket) {
+            hypixelTicksSinceTeleport = 0;
+        }
 
         for (EquipmentSlot slot : AttributeModifierSlot.ARMOR) {
             if (mc.player.getEquippedStack(slot).getItem() == Items.ELYTRA) {
                 return;
             }
         }
-        if (mode.is(Mode.Packet)) {
+        if (event.getType() == EventType.SEND && mode.is(Mode.Packet)) {
             if (event.getPacket() instanceof PlayerMoveC2SPacket packet && isFalling()) {
                 ((IPlayerMoveC2SPacket) packet).setOnGround(true);
             }
@@ -464,5 +820,18 @@ public class NoFall extends Module {
         BBTT,
         Packet,
         MLG
+    }
+
+    private enum MlgMode {
+        Grim,
+        Hypixel
+    }
+
+    private enum HypixelFallDistanceMode {
+        SafeDistance,
+        Custom
+    }
+
+    private record HypixelPlaceData(BlockPos pos, Box bb) {
     }
 }

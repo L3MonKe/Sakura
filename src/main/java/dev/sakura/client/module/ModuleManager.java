@@ -34,6 +34,7 @@ public class ModuleManager {
     private void init() {
         // Combat
         add(new AntiBot());
+        add(new AntiFireball());
         add(new AttackCrystal());
         //add(new AttackReduce());
         add(new AutoWeapon());
@@ -45,6 +46,7 @@ public class ModuleManager {
         add(new AutoThrow());
         add(new LegitCrystal());
         add(new SafeHotbar());
+        add(new FakeLag());
         //add(new TickBase());
         //add(new TpAura());
 
@@ -68,13 +70,16 @@ public class ModuleManager {
         add(new TargetStrafe());
 
         // Player
+        add(new Blink());
         add(new AntiHunger());
         add(new AutoDick());
         add(new AutoSoup());
         add(new AutoTool());
+        add(new BedBreaker());
         add(new BowBomb());
         add(new BreakCooldown());
         add(new Disabler());
+        add(new FastPlace());
         add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());

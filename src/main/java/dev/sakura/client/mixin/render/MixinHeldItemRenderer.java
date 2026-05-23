@@ -5,13 +5,16 @@ import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
 import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
 import dev.sakura.client.interfaces.IHeldItemRenderer;
 import dev.sakura.client.module.impl.render.Animations;
+import dev.sakura.client.utils.player.ItemSpoofUtils;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.command.OrderedRenderCommandQueue;
 import net.minecraft.client.render.item.HeldItemRenderer;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.FilledMapItem;
+import net.minecraft.item.ItemDisplayContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
 import net.minecraft.util.Hand;
@@ -77,8 +80,31 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
         this.offHand = stack;
     }
 
+    @ModifyVariable(method = "renderItem(Lnet/minecraft/entity/LivingEntity;Lnet/minecraft/item/ItemStack;Lnet/minecraft/item/ItemDisplayContext;Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/client/render/command/OrderedRenderCommandQueue;I)V", at = @At("HEAD"), argsOnly = true)
+    private ItemStack modifyRenderItemStack(ItemStack stack, LivingEntity entity) {
+        if (this.client.player != null && entity == this.client.player) {
+            if (stack == this.client.player.getMainHandStack()) {
+                ItemStack spoofedStack = ItemSpoofUtils.getSpoofedStack();
+                if (spoofedStack != null) {
+                    stack = spoofedStack;
+                }
+            }
+        }
+        return stack;
+    }
+
+    @Shadow
+    private net.minecraft.client.MinecraftClient client;
+
     @ModifyVariable(method = "renderFirstPersonItem", at = @At("HEAD"), argsOnly = true)
     private ItemStack modifyRenderItem(ItemStack stack, AbstractClientPlayerEntity player, float tickProgress, float pitch, Hand hand, float swingProgress, ItemStack item, float equipProgress, MatrixStack matrices, OrderedRenderCommandQueue orderedRenderCommandQueue, int light) {
+        if (hand == Hand.MAIN_HAND) {
+            ItemStack spoofedStack = ItemSpoofUtils.getSpoofedStack();
+            if (spoofedStack != null) {
+                stack = spoofedStack;
+            }
+        }
+
         HeldItemRendererEvent event = new HeldItemRendererEvent(hand, stack, 0, new MatrixStack());
         Sakura.EVENT_BUS.post(event);
 
@@ -87,7 +113,9 @@ public abstract class MixinHeldItemRenderer implements IHeldItemRenderer {
 
     @Redirect(method = "updateHeldItems", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getMainHandStack()Lnet/minecraft/item/ItemStack;"))
     public ItemStack hookMainHand(ClientPlayerEntity player) {
-        UpdateHeldItemEvent event = new UpdateHeldItemEvent(Hand.MAIN_HAND, player.getMainHandStack());
+        ItemStack spoofedStack = ItemSpoofUtils.getSpoofedStack();
+        ItemStack original = player.getMainHandStack();
+        UpdateHeldItemEvent event = new UpdateHeldItemEvent(Hand.MAIN_HAND, spoofedStack != null ? spoofedStack : original);
         if (player == mc.player) {
             Sakura.EVENT_BUS.post(event);
         }

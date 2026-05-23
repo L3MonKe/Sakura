@@ -12,12 +12,24 @@ import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(PlayerEntity.class)
 public abstract class MixinPlayerEntity extends LivingEntity {
     protected MixinPlayerEntity(EntityType<? extends LivingEntity> entityType, World world) {
         super(entityType, world);
+    }
+
+    @Redirect(method = "knockbackTarget", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;setVelocity(Lnet/minecraft/util/math/Vec3d;)V"))
+    private void redirectSetVelocity(Entity instance, Vec3d vec3d) {
+        if (instance == (Object) this && (Object) this == MinecraftClient.getInstance().player) {
+            KeepSprint keepSprint = Sakura.MODULES.getModule(KeepSprint.class);
+            if (keepSprint != null && keepSprint.isEnabled() && keepSprint.isVanilla()) {
+                return;
+            }
+        }
+        instance.setVelocity(vec3d);
     }
 
     @Inject(method = "knockbackTarget", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerEntity;setSprinting(Z)V"), cancellable = true)

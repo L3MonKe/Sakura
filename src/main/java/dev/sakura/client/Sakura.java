@@ -12,6 +12,7 @@ import dev.sakura.client.gui.mainmenu.NewMainMenuScreen;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
 import dev.sakura.client.nanovg.NanoVGRenderer;
+import dev.sakura.client.utils.player.BlinkUtils;
 import dev.sakura.verify.AuthState;
 import dev.sakura.verify.util.ExitUtil;
 import jnic.JNICInclude;
@@ -131,6 +132,8 @@ public class Sakura {
         Managers.init();
 
         MODULES = new ModuleManager();
+
+        BlinkUtils.register();
 
         CLICKGUI = new ClickGuiScreen();
 

@@ -54,6 +54,8 @@ public class KillAura extends Module {
     private final NumberValue<Double> maxCps = new NumberValue<>("Max CPS", "最大攻击速度", 10.0, 1.0, 20.0, 1.0, () -> mode.is(AttackMode.v1_8));
     private final NumberValue<Integer> rotateSpeed = new NumberValue<>("Rotation Speed", "转向速度", 10, 1, 10, 1);
     private final BoolValue rayTrace = new BoolValue("RayTrace", "射线检测", true);
+    private final BoolValue throughWall = new BoolValue("ThroughWall", "穿墙攻击", false);
+    private final NumberValue<Double> throughWallRange = new NumberValue<>("ThroughWall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1, throughWall::get);
     private final EnumValue<AutoBlockMode> abMode = new EnumValue<>("Auto Block", "自动格挡", AutoBlockMode.Fake);
     private final NumberValue<Integer> blinkTicks = new NumberValue<>("Blink Ticks", "闪烁刻数", 3, 1, 5, 1, () -> abMode.is(AutoBlockMode.Hypixel));
     private final BoolValue debugRender = new BoolValue("Debug Render", "调试渲染", false);
@@ -82,6 +84,16 @@ public class KillAura extends Module {
 
     public LivingEntity getCurrentTarget() {
         return target;
+    }
+
+    public List<LivingEntity> getTargets() {
+        return targets;
+    }
+
+    public boolean isNoWorking() {
+        if (mc.player == null) return true;
+        if (mc.player.isSpectator() || !mc.player.isAlive()) return true;
+        return false;
     }
 
     @EventHandler
@@ -136,11 +148,16 @@ public class KillAura extends Module {
         }
 
         if (target != null) {
-            if (mc.player.squaredDistanceTo(target) <= aimRange.get() * aimRange.get()) {
+            double maxRange = throughWall.get() ? Math.max(aimRange.get(), throughWallRange.get()) : aimRange.get();
+            if (mc.player.squaredDistanceTo(target) <= maxRange * maxRange) {
                 if (mc.player.isUsingItem() && !abMode.is(AutoBlockMode.Hypixel)) return;
                 Rotation calculate = RotationUtil.calculate(target);
                 Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, Priority.Medium);
-                if (rayTrace.get()) {
+                if (throughWall.get()) {
+                    if (RaytraceUtil.facingEnemy(mc.player, target, calculate, aimRange.get(), throughWallRange.get())) {
+                        attackTarget();
+                    }
+                } else if (rayTrace.get()) {
                     if (mc.crosshairTarget instanceof EntityHitResult entityHitResult && entityHitResult.getEntity().equals(target)) {
                         attackTarget();
                     }

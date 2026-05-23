@@ -11,6 +11,7 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
+import dev.sakura.client.utils.player.ItemSpoofUtils;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.utils.player.SlotUtil;
@@ -103,11 +104,17 @@ public class Scaffold extends Module {
         legitBlockCount = 0;
         inLegitPhase = false;
         pendingTelly = false;
+        if (swapMode.get() == SwapMode.Silent) {
+            ItemSpoofUtils.startSpoof();
+        }
     }
 
     @Override
     protected void onDisable() {
         blockInfo = null;
+        if (ItemSpoofUtils.isSpoofing) {
+            ItemSpoofUtils.stopSpoof();
+        }
         if (shouldSwapBack) {
             InvUtil.swapBack();
         }
@@ -222,12 +229,6 @@ public class Scaffold extends Module {
         }
 
         switch (swapMode.get()) {
-            case Silent -> {
-                if (swapped) {
-                    swapped = false;
-                    InvUtil.swapBack();
-                }
-            }
             case InvSwitch -> {
                 if (invSwapped) {
                     invSwapped = false;
@@ -326,7 +327,11 @@ public class Scaffold extends Module {
                 InvUtil.swap(item.slot(), should);
                 shouldSwapBack = should;
             }
-            case Silent -> swapped = InvUtil.swap(item.slot(), true);
+            case Silent -> {
+                if (item.slot() >= 0 && item.slot() <= 8) {
+                    mc.player.getInventory().setSelectedSlot(item.slot());
+                }
+            }
             case InvSwitch -> invSwapped = InvUtil.invSwap(item.slot());
         }
 
@@ -354,11 +359,16 @@ public class Scaffold extends Module {
                 InvUtil.swap(item.slot(), should);
                 shouldSwapBack = should;
             }
-            case Silent -> swapped = InvUtil.swap(item.slot(), true);
+            case Silent -> {
+                if (item.slot() >= 0 && item.slot() <= 8) {
+                    mc.player.getInventory().setSelectedSlot(item.slot());
+                }
+            }
             case InvSwitch -> invSwapped = InvUtil.invSwap(item.slot());
         }
 
         boolean hasRotated = RaytraceUtil.overBlock(Managers.ROTATION.getRotation(), blockInfo.dir, blockInfo.position, sideCheck.get());
+        boolean placed = false;
         if (hasRotated) {
             ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false));
             if (result.isAccepted()) {
@@ -372,9 +382,10 @@ public class Scaffold extends Module {
             if (render.get()) {
                 Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
             }
-            return result.isAccepted();
+            placed = result.isAccepted();
         }
-        return false;
+
+        return placed;
     }
 
     private void updateBlockInfo() {

@@ -3,6 +3,7 @@ package dev.sakura.client.mixin.input;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.impl.input.MouseClickEvent;
 import dev.sakura.client.event.type.KeyAction;
+import dev.sakura.client.utils.player.ItemSpoofUtils;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.Mouse;
 import net.minecraft.client.gui.Click;
@@ -13,6 +14,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Mouse.class)
@@ -33,5 +35,10 @@ public abstract class MixinMouse {
         if (Sakura.EVENT_BUS.post(new MouseClickEvent(click, KeyAction.from(action))).isCancelled()) {
             ci.cancel();
         }
+    }
+
+    @ModifyArg(method = "onMouseScroll", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/input/Scroller;scrollCycling(DII)I"), index = 1)
+    private int onMouseScrollSpoof(int selectedIndex) {
+        return ItemSpoofUtils.getSpoofedSlot();
     }
 }

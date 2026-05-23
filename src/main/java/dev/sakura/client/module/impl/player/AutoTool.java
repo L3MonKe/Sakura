@@ -1,101 +1,89 @@
 package dev.sakura.client.module.impl.player;
 
 import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.impl.client.TickEvent;
-import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
+import dev.sakura.client.event.impl.entity.AttackBlockEvent;
+import dev.sakura.client.event.impl.player.MotionEvent;
+import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.player.inventory.InvHelper;
-import dev.sakura.client.utils.player.EnchantmentUtil;
+import dev.sakura.client.utils.player.ItemSpoofUtils;
 import dev.sakura.client.values.impl.BoolValue;
-import net.minecraft.block.*;
-import net.minecraft.enchantment.Enchantments;
+import net.minecraft.block.BlockState;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 
 public class AutoTool extends Module {
     public AutoTool() {
         super("AutoTool", "自动工具", Category.Player);
+        this.setHidden(true);
     }
 
-    private final BoolValue checkSword = new BoolValue("Check Sword", "检查剑", false);
-    private final BoolValue switchBack = new BoolValue("Switch Back", "切回", false);
-    private final BoolValue fakeSilent = new BoolValue("Fake Silent", "假鬼手", false);
-
-    private int originSlot = -1;
+    public static final BoolValue spoof = new BoolValue("Spoof", "鬼手", true);
+    private int originalSlot = -1;
+    private boolean hasStartedSpoofing = false;
 
     @EventHandler
-    public void onUpdateHeldItem(UpdateHeldItemEvent event) {
-        if (switchBack.get() && fakeSilent.get() && event.getHand() == Hand.MAIN_HAND && originSlot != -1) {
-            event.setItem(mc.player.getInventory().getStack(originSlot));
-        }
+    public void onClick(AttackBlockEvent event) {
+        switchSlot(event.getPos());
     }
 
     @EventHandler
-    public void onTick(TickEvent.Pre event) {
-        if (nullCheck()) return;
-
-        if (mc.interactionManager.isBreakingBlock()) {
-            if (checkSword.get()) {
-                ItemStack itemStack = mc.player.getMainHandStack();
-                if (itemStack.isIn(ItemTags.SWORDS)) {
-                    return;
+    public void onMotion(MotionEvent event) {
+        if (mc.player == null || event.getType() != EventType.PRE) return;
+        if (!mc.options.attackKey.isPressed() && BedBreaker.breakingBlockPos == null) {
+            if (hasStartedSpoofing) {
+                if (originalSlot != -1) {
+                    mc.player.getInventory().setSelectedSlot(originalSlot);
+                    originalSlot = -1;
                 }
-            }
-
-            if (mc.crosshairTarget.getType() == HitResult.Type.BLOCK) {
-                BlockHitResult hitResult = (BlockHitResult) mc.crosshairTarget;
-                int bestTool = getBestTool(hitResult.getBlockPos());
-                if (bestTool != -1 && bestTool != mc.player.getInventory().getSelectedSlot()) {
-                    this.originSlot = mc.player.getInventory().getSelectedSlot();
-                    mc.player.getInventory().setSelectedSlot(bestTool);
-                }
+                ItemSpoofUtils.stopSpoof();
+                hasStartedSpoofing = false;
             }
         }
     }
 
-    @EventHandler
-    private void onTickPost(TickEvent.Post event) {
-        if (nullCheck()) return;
+    public void switchSlot(BlockPos blockPos) {
+        if (mc.world == null || mc.player == null) return;
+        float bestSpeed = 1F;
+        int bestSlot = -1;
 
-        if (!mc.interactionManager.isBreakingBlock() && this.switchBack.get() && this.originSlot != -1) {
-            mc.player.getInventory().setSelectedSlot(this.originSlot);
-            this.originSlot = -1;
-        }
-    }
+        BlockState blockState = mc.world.getBlockState(blockPos);
 
-    private int getBestTool(BlockPos pos) {
-        BlockState blockState = mc.world.getBlockState(pos);
-        Block block = blockState.getBlock();
-        int slot = 0;
-        float dmg = 1.0F;
-
-        for (int index = 0; index < 9; index++) {
-            ItemStack itemStack = mc.player.getInventory().getStack(index);
-            if (!InvHelper.isGodItem(itemStack)
-                    && !itemStack.isEmpty()
-                    && !blockState.isAir()
-                    && (!itemStack.isIn(ItemTags.SWORDS) || block instanceof CobwebBlock)) {
-                float strVsBlock = itemStack.getItem().getMiningSpeed(itemStack, blockState);
-                if (strVsBlock > 1.0F && !(block instanceof ExperienceDroppingBlock) && !(block instanceof RedstoneOreBlock)) {
-                    int i = EnchantmentUtil.getEnchantmentLevel(itemStack, Enchantments.EFFICIENCY);
-                    if (i > 0) {
-                        strVsBlock += (float) (i * i + 1);
-                    }
-                }
-
-                if (strVsBlock > dmg) {
-                    slot = index;
-                    dmg = strVsBlock;
+        for (int i = 0; i <= 8; i++) {
+            ItemStack item = mc.player.getInventory().getStack(i);
+            if (InvHelper.isGodItem(item)) {
+                continue;
+            }
+            if (!item.isEmpty()) {
+                float speed = item.getMiningSpeedMultiplier(blockState);
+                if (speed > bestSpeed) {
+                    bestSpeed = speed;
+                    bestSlot = i;
                 }
             }
         }
+        if (bestSlot != -1 && mc.player.getInventory().getSelectedSlot() != bestSlot) {
+            if (spoof.get() && !ItemSpoofUtils.isSpoofing) {
+                ItemSpoofUtils.startSpoof();
+                hasStartedSpoofing = true;
+            }
+            if (originalSlot == -1) {
+                originalSlot = mc.player.getInventory().getSelectedSlot();
+            }
+            mc.player.getInventory().setSelectedSlot(bestSlot);
+        }
+    }
 
-        return dmg > 1.0F ? slot : -1;
+    @Override
+    protected void onDisable() {
+        if (hasStartedSpoofing) {
+            if (originalSlot != -1 && mc.player != null) {
+                mc.player.getInventory().setSelectedSlot(originalSlot);
+                originalSlot = -1;
+            }
+            ItemSpoofUtils.reset();
+            hasStartedSpoofing = false;
+        }
     }
 }
-
