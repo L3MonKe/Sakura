@@ -11,6 +11,7 @@ import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
+import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.module.impl.combat.KillAura;
 import dev.sakura.client.module.impl.player.Blink;
 import dev.sakura.client.utils.player.BlinkUtils;
@@ -23,7 +24,6 @@ import dev.sakura.client.utils.rotation.VecRotation;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.utils.world.BreakUtils;
 import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.ColorValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.block.BedBlock;
@@ -31,8 +31,12 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.enums.BedPart;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.component.type.DyedColorComponent;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
@@ -50,19 +54,12 @@ import java.util.Objects;
 public class BedBreaker extends Module {
 
     public enum BreakMode { ThroughWall, Swap, Legit }
-    public enum RotationMode { Normal, Snap }
-    public enum TeamsMode { None, Hypixel }
-    public enum RenderMode { Top, None }
 
     public static final EnumValue<BreakMode> mode = new EnumValue<>("BreakMode", "破坏模式", BreakMode.Swap);
-    public final EnumValue<RenderMode> render = new EnumValue<>("RenderMode", "渲染模式", RenderMode.Top);
-    public static final EnumValue<RotationMode> rotationMode = new EnumValue<>("RotationMode", "旋转模式", RotationMode.Normal);
-    public static final EnumValue<TeamsMode> teams = new EnumValue<>("Teams", "队伍", TeamsMode.Hypixel);
-    public static final BoolValue renderBox = new BoolValue("RenderBox", "渲染盒子", true);
+    public static final BoolValue teams = new BoolValue("Teams", "队伍", true);
+    public static final BoolValue render = new BoolValue("Render", "渲染", true);
     public static final NumberValue<Double> range = new NumberValue<>("Range", "范围", 4.5, 0.0, 7.0, 0.01);
     public static final BoolValue noDelay = new BoolValue("NoBreakDelay", "无破坏延迟", true);
-    public static final BoolValue noHit = new BoolValue("NoHit", "不打断", true);
-    private final ColorValue boxColor = new ColorValue("BoxColor", "盒子颜色", new Color(0, 200, 200));
 
     public static Integer targetX;
     public static Integer targetZ;
@@ -130,24 +127,16 @@ public class BedBreaker extends Module {
     public void onMotion(MotionEvent event) {
         if (nullCheck() || event.getType() != EventType.POST) return;
 
-        KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
-        if (noHit.get() && killAura != null && (killAura.getCurrentTarget() != null || (killAura.getTargets() != null && !killAura.getTargets().isEmpty()))) {
+        updateClosestBlockPos();
+
+        if (teams.get() && pos != null && isSameTeam()) {
             pos = null;
             breakingBlockPos = null;
             hitBlock = false;
             breakState = BreakState.NONE;
             currentDamage = 0F;
             oldPos = null;
-        }
-
-        updateClosestBlockPos();
-
-        if (!teams.is(TeamsMode.None)) {
-            if (targetX != null) {
-                if (mc.player.getZ() > targetZ - 10 && mc.player.getZ() < targetZ + 10 && mc.player.getX() > targetX - 10 && mc.player.getX() < targetX + 10) {
-                    return;
-                }
-            }
+            return;
         }
 
         if (pos == null || !(mc.world.getBlockState(pos).getBlock() instanceof BedBlock) || mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > range.get() * range.get()) {
@@ -278,7 +267,7 @@ public class BedBreaker extends Module {
                         mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) <= range.get() * range.get() &&
                         !mc.world.getBlockState(pos).isAir();
 
-        if (spot != null && validTarget && (!hitBlock || rotationMode.is(RotationMode.Normal))) {
+        if (spot != null && validTarget) {
             Managers.ROTATION.setRotations(spot.rotation, 10.0, MovementFix.NORMAL, Priority.Medium);
         }
     }
@@ -378,7 +367,7 @@ public class BedBreaker extends Module {
         int breakStage = (int) (currentDamage * 10F);
         if (breakStage > 9) breakStage = 9;
 
-        mc.world.addBlockBreakParticles(currentPos, state);
+        mc.world.spawnBlockBreakingParticle(currentPos, Direction.byIndex(breakStage));
         mc.world.setBlockBreakingInfo(mc.player.getId(), currentPos, breakStage);
 
         if (currentDamage >= 1F) {
@@ -414,28 +403,28 @@ public class BedBreaker extends Module {
     public void onRender3D(Render3DEvent event) {
         if (mc.player == null) return;
         if (mc.player.isSpectator()) return;
-        if (renderBox.get() && pos != null) {
+        if (render.get() && pos != null) {
             Box originalBox = new Box(pos);
 
-            float scaleX = currentDamage;
-            float scaleY = currentDamage;
-            float scaleZ = currentDamage;
+            float shrink = 0.002F;
+            Box expandedBox = originalBox.expand(shrink);
 
-            double newWidth = (originalBox.maxX - originalBox.minX) * scaleX;
-            double newHeight = (originalBox.maxY - originalBox.minY) * scaleY;
-            double newDepth = (originalBox.maxZ - originalBox.minZ) * scaleZ;
+            double centerX = (expandedBox.minX + expandedBox.maxX) / 2.0;
+            double centerY = (expandedBox.minY + expandedBox.maxY) / 2.0;
+            double centerZ = (expandedBox.minZ + expandedBox.maxZ) / 2.0;
 
-            double centerX = (originalBox.minX + originalBox.maxX) / 2.0;
-            double centerY = (originalBox.minY + originalBox.maxY) / 2.0;
-            double centerZ = (originalBox.minZ + originalBox.maxZ) / 2.0;
+            double newWidth = (expandedBox.maxX - expandedBox.minX) * currentDamage;
+            double newHeight = (expandedBox.maxY - expandedBox.minY) * currentDamage;
+            double newDepth = (expandedBox.maxZ - expandedBox.minZ) * currentDamage;
 
             Box scaledBox = new Box(
                     centerX - newWidth / 2.0, centerY - newHeight / 2.0, centerZ - newDepth / 2.0,
                     centerX + newWidth / 2.0, centerY + newHeight / 2.0, centerZ + newDepth / 2.0
             );
 
-            Color c = boxColor.get();
-            Render3DUtil.drawFilledBox(event.getMatrices(), scaledBox, new Color(c.getRed(), c.getGreen(), c.getBlue(), 140));
+            Color bottomColor = new Color(ClickGui.color(0).getRed(), ClickGui.color(0).getGreen(), ClickGui.color(0).getBlue(), 50);
+            Color topColor = new Color(ClickGui.color2(0).getRed(), ClickGui.color2(0).getGreen(), ClickGui.color2(0).getBlue(), 50);
+            Render3DUtil.drawFilledFadeBox(event.getMatrices(), scaledBox, bottomColor.getRGB(), topColor.getRGB());
         }
     }
 
@@ -457,7 +446,8 @@ public class BedBreaker extends Module {
                     BlockPos blp = new BlockPos(SearchX, SearchY, SearchZ);
                     if (mc.world.getBlockState(blp).getBlock() != net.minecraft.block.Blocks.AIR) {
                         Block block = mc.world.getBlockState(blp).getBlock();
-                        if (block instanceof BedBlock) {
+                        if (block instanceof BedBlock bedBlock) {
+                            if (teams.get() && isSameTeamBed(bedBlock)) continue;
                             targetBlockList.add(blp);
                         }
                     }
@@ -499,7 +489,9 @@ public class BedBreaker extends Module {
                 for (int z = -radius; z <= radius; z++) {
                     BlockPos checkPos = player.getBlockPos().add(x, y, z);
                     Block block = world.getBlockState(checkPos).getBlock();
-                    if (!(block instanceof BedBlock)) continue;
+                    if (!(block instanceof BedBlock bedBlock)) continue;
+
+                    if (teams.get() && isSameTeamBed(bedBlock)) continue;
 
                     double distSq = player.squaredDistanceTo(Vec3d.ofCenter(checkPos));
 
@@ -571,5 +563,75 @@ public class BedBreaker extends Module {
 
         BlockState state = mc.world.getBlockState(blockPos);
         return state.getCollisionShape(mc.world, blockPos).raycast(eyes, endPos, blockPos);
+    }
+
+    private boolean isSameTeam() {
+        if (mc.player == null || mc.world == null || pos == null) return false;
+
+        Block block = mc.world.getBlockState(pos).getBlock();
+        if (!(block instanceof BedBlock bedBlock)) return false;
+
+        return isSameTeamBed(bedBlock);
+    }
+
+    private boolean isSameTeamBed(BedBlock bedBlock) {
+        if (mc.player == null) return false;
+
+        DyeColor armorDyeColor = getArmorDyeColor();
+        if (armorDyeColor == null) return false;
+
+        DyeColor bedDyeColor = bedBlock.getColor();
+        return armorDyeColor == bedDyeColor;
+    }
+
+    private DyeColor getArmorDyeColor() {
+        if (mc.player == null) return null;
+
+        ItemStack helmet = mc.player.getEquippedStack(EquipmentSlot.HEAD);
+        ItemStack chestplate = mc.player.getEquippedStack(EquipmentSlot.CHEST);
+
+        Integer helmetColor = getLeatherColor(helmet);
+        Integer chestplateColor = getLeatherColor(chestplate);
+
+        int rgb;
+        if (helmetColor != null) {
+            rgb = helmetColor;
+        } else if (chestplateColor != null) {
+            rgb = chestplateColor;
+        } else {
+            return null;
+        }
+
+        return getClosestDyeColor(rgb);
+    }
+
+    private Integer getLeatherColor(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return null;
+        if (!stack.contains(net.minecraft.component.DataComponentTypes.DYED_COLOR)) return null;
+        return DyedColorComponent.getColor(stack, DyedColorComponent.DEFAULT_COLOR);
+    }
+
+    private DyeColor getClosestDyeColor(int rgb) {
+        int r = (rgb >> 16) & 0xFF;
+        int g = (rgb >> 8) & 0xFF;
+        int b = rgb & 0xFF;
+
+        DyeColor closest = null;
+        double minDist = Double.MAX_VALUE;
+
+        for (DyeColor dyeColor : DyeColor.values()) {
+            int entityColor = dyeColor.getEntityColor();
+            int dr = (entityColor >> 16) & 0xFF;
+            int dg = (entityColor >> 8) & 0xFF;
+            int db = entityColor & 0xFF;
+
+            double dist = Math.sqrt((r - dr) * (r - dr) + (g - dg) * (g - dg) + (b - db) * (b - db));
+            if (dist < minDist) {
+                minDist = dist;
+                closest = dyeColor;
+            }
+        }
+
+        return closest;
     }
 }
