@@ -39,6 +39,14 @@ public class MixinMinecraftClient {
         NewMenuMusicController.tick();
     }
 
+    @Inject(method = "handleInputEvents", at = @At("HEAD"), cancellable = true)
+    private void onHandleInputEventsHead(CallbackInfo ci) {
+        MinecraftClient client = (MinecraftClient) (Object) this;
+        if (client.player == null) {
+            ci.cancel();
+        }
+    }
+
     @Inject(method = "handleInputEvents", at = {@At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;isUsingItem()Z", ordinal = 0, shift = At.Shift.BEFORE)}, cancellable = true)
     private void onHandleInputEvents(CallbackInfo ci) {
         ClickEvent event = Sakura.EVENT_BUS.post(new ClickEvent());

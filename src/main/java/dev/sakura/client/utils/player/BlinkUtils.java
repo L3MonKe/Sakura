@@ -41,6 +41,10 @@ public class BlinkUtils {
         blinking = false;
     }
 
+    public static boolean isClientPacketsEmpty() {
+        return clientPackets.isEmpty();
+    }
+
     public static void startDelay() {
         if (delaying) return;
         serverPackets.clear();

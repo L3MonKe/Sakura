@@ -70,7 +70,7 @@ public class ModuleManager {
         add(new TargetStrafe());
 
         // Player
-        add(new Blink());
+        // add(new Blink());
         add(new AntiHunger());
         add(new AutoDick());
         add(new AutoSoup());
