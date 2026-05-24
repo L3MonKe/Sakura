@@ -5,7 +5,7 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
-import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
+import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -234,8 +234,8 @@ public class Scaffold extends Module {
     }
 
     @EventHandler
-    private void onUpdateHeldItem(UpdateHeldItemEvent event) {
-        if (!spoofSwap.get() || oldSlot == -1 || event.getHand() != Hand.MAIN_HAND || mc.player == null) {
+    private void onUpdateHeldItem(HeldItemRendererEvent event) {
+        if (!spoofSwap.get() || oldSlot == -1 || event.getHand() != Hand.MAIN_HAND) {
             return;
         }
 
