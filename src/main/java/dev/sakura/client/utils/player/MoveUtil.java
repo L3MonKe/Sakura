@@ -181,16 +181,13 @@ public class MoveUtil {
     public static void fixMovement(MoveInputEvent event, float yaw) {
         float forward = event.getForward();
         float strafe = event.getStrafe();
-
         int angleUnit = 45;
         float angleTolerance = 22.5F;
         float directionFactor = Math.max(Math.abs(forward), Math.abs(strafe));
         double angleDifference = MathHelper.wrapDegrees(getDirection(forward, strafe) - yaw);
         double angleDistance = Math.abs(angleDifference);
-
         forward = 0.0F;
         strafe = 0.0F;
-
         if (angleDistance <= (double) ((float) angleUnit + angleTolerance)) {
             forward++;
         } else if (angleDistance >= (double) (180.0F - (float) angleUnit - angleTolerance)) {
@@ -205,46 +202,49 @@ public class MoveUtil {
 
         forward *= directionFactor;
         strafe *= directionFactor;
-
         event.setForward(forward);
         event.setStrafe(strafe);
     }
 
     private static float getDirection(float forward, float strafe) {
-        float yaw = mc.player.getYaw();
-
-        boolean isMovingForward = forward > 0;
-        boolean isMovingBack = forward < 0;
-        boolean isMovingRight = strafe > 0;
-        boolean isMovingLeft = strafe < 0;
+        float direction = mc.player.getYaw();
+        boolean isMovingForward = forward > 0.0F;
+        boolean isMovingBack = forward < 0.0F;
+        boolean isMovingRight = strafe > 0.0F;
+        boolean isMovingLeft = strafe < 0.0F;
         boolean isMovingSideways = isMovingRight || isMovingLeft;
         boolean isMovingStraight = isMovingForward || isMovingBack;
-
         if (forward != 0.0F || strafe != 0.0F) {
             if (isMovingBack && !isMovingSideways) {
-                return yaw + 180.0F;
+                return direction + 180.0F;
             }
+
             if (isMovingForward && isMovingLeft) {
-                return yaw + 45.0F;
+                return direction + 45.0F;
             }
+
             if (isMovingForward && isMovingRight) {
-                return yaw - 45.0F;
+                return direction - 45.0F;
             }
+
             if (!isMovingStraight && isMovingLeft) {
-                return yaw + 90.0F;
+                return direction + 90.0F;
             }
-            if (!isMovingStraight) {
-                return yaw - 90.0F;
+
+            if (!isMovingStraight && isMovingRight) {
+                return direction - 90.0F;
             }
+
             if (isMovingBack && isMovingLeft) {
-                return yaw + 135.0F;
+                return direction + 135.0F;
             }
+
             if (isMovingBack) {
-                return yaw - 135.0F;
+                return direction - 135.0F;
             }
         }
 
-        return yaw;
+        return direction;
     }
 
     public static float getTickDelta() {
