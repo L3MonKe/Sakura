@@ -113,7 +113,6 @@ public class ModuleManager {
         add(new TotemParticles());
         add(new Trajectories());
         add(new ViewModel());
-        add(new GlowESP());
 
         // Client
         add(new AutoHeypixel());
