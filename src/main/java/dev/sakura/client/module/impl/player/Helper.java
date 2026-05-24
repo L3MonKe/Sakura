@@ -4,7 +4,6 @@ import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
-import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
@@ -13,7 +12,6 @@ import dev.sakura.client.module.impl.movement.NoFall;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
 import dev.sakura.client.utils.player.InvUtil;
-import dev.sakura.client.utils.render.Render3DUtil;
 import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
@@ -40,7 +38,6 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -163,19 +160,6 @@ public class Helper extends Module {
 
         if (event.getType() == EventType.PRE) {
             updateBucketTracker();
-        }
-    }
-
-    @EventHandler
-    public void onRender3D(Render3DEvent event) {
-        if (nullCheck()) return;
-
-        if (modulesSetting.isEnabled("AntiTNT")) {
-            renderAntiTNT(event);
-        }
-        if (modulesSetting.isEnabled("Block Lava") && blState != 0 && blTargetPos != null) {
-            Render3DUtil.drawFilledBox(event.getMatrices(), new Box(blTargetPos), new Color(255, 165, 0, 64).getRGB());
-            Render3DUtil.drawOutlineBox(event.getMatrices(), new Box(blTargetPos), new Color(255, 165, 0, 191).getRGB(), 2f);
         }
     }
 
@@ -872,24 +856,6 @@ public class Helper extends Module {
         double clampedY = Math.max(blockPos.getY(), Math.min(blockPos.getY() + 1, hitY));
         double clampedZ = Math.max(blockPos.getZ(), Math.min(blockPos.getZ() + 1, hitZ));
         return new Vec3d(clampedX, clampedY, clampedZ);
-    }
-
-    private void renderAntiTNT(Render3DEvent event) {
-        if (atLastPlacedPos != null) {
-            Render3DUtil.drawOutlineBox(event.getMatrices(), new Box(atLastPlacedPos), new Color(255, 255, 255, 204).getRGB(), 2f);
-        }
-        if (atTargetTnt != null && atTargetTnt.isAlive()) {
-            Box box = atTargetTnt.getBoundingBox();
-            Render3DUtil.drawFilledBox(event.getMatrices(), box, new Color(255, 0, 0, 64).getRGB());
-            Render3DUtil.drawOutlineBox(event.getMatrices(), box, new Color(255, 0, 0, 204).getRGB(), 2f);
-            float fuseSeconds = (float) atTargetTnt.getFuse() / 20.0f;
-            if (fuseSeconds > 0.0f) {
-                String fuseLabel = String.format("%.1fs", fuseSeconds);
-                BlockPos tntPos = atTargetTnt.getBlockPos();
-                Vec3d textPos = new Vec3d(tntPos.getX() + 0.5, tntPos.getY() + 1.1, tntPos.getZ() + 0.5);
-                Render3DUtil.drawText(fuseLabel, textPos, 0, 0, 0, Color.WHITE);
-            }
-        }
     }
 
     // ========== Fluid Tracking ==========
