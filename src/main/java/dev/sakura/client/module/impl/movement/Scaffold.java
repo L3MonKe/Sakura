@@ -5,6 +5,7 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
+import dev.sakura.client.event.impl.render.item.UpdateHeldItemEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
@@ -97,6 +98,7 @@ public class Scaffold extends Module {
     private final BoolValue telly = new BoolValue("Telly Bridge", "Telly Bridge", true);
     private final BoolValue snap = new BoolValue("Snap", "Snap", false, () -> !telly.get());
     private final EnumValue<RaytraceMode> raytrace = new EnumValue<>("Raytrace", "Raytrace", RaytraceMode.Hypixel);
+    private final BoolValue spoofSwap = new BoolValue("Spoof Swap", "静默切换", true);
     //    private final EnumValue<SwapMode> swapMode = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Normal);
 //    private final BoolValue swapBack = new BoolValue("SwapBack", "停用还原", true, () -> swapMode.is(SwapMode.Normal));
     private final BoolValue swingHand = new BoolValue("Swing Hand", "挥手", true);
@@ -229,6 +231,15 @@ public class Scaffold extends Module {
         if (mc.player.isOnGround() && !mc.options.jumpKey.isPressed() && MoveUtil.isMoving() && telly.get()) {
             event.setJump(true);
         }
+    }
+
+    @EventHandler
+    private void onUpdateHeldItem(UpdateHeldItemEvent event) {
+        if (!spoofSwap.get() || oldSlot == -1 || event.getHand() != Hand.MAIN_HAND || mc.player == null) {
+            return;
+        }
+
+        event.setItem(mc.player.getInventory().getStack(oldSlot));
     }
 
     private int findBlockSlot() {
