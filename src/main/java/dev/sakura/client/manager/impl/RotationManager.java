@@ -43,7 +43,7 @@ public class RotationManager {
     }
 
     public void setRotations(final Rotation rotations, final double rotationSpeed) {
-        setRotations(rotations, rotationSpeed, MovementFix.OFF, null, Priority.Lowest);
+        setRotations(rotations, rotationSpeed, MovementFix.NORMAL, null, Priority.Lowest);
     }
 
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement) {
