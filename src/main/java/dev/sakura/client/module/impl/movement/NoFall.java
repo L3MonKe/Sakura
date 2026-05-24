@@ -176,7 +176,8 @@ public class NoFall extends Module {
 
     private boolean isScaffoldClutchAwaiting() {
         Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
-        return scaffold != null && scaffold.isEnabled() && scaffold.isClutchAwaitingNoFall();
+//        return scaffold != null && scaffold.isEnabled() && scaffold.isClutchAwaitingNoFall(); todo
+        return true;
     }
 
     private boolean isNearGroundForClutch() {
@@ -273,9 +274,9 @@ public class NoFall extends Module {
                         resetPending();
 
                         Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
-                        if (scaffold != null && scaffold.isClutchAwaitingNoFall()) {
-                            scaffold.notifyNoFallPlaced();
-                        }
+//                        if (scaffold != null && scaffold.isClutchAwaitingNoFall()) { todo
+//                            scaffold.notifyNoFallPlaced();
+//                        }
                     }
                 }
                 return;

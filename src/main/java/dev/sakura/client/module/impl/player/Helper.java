@@ -31,15 +31,10 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.*;
 import net.minecraft.world.RaycastContext;
 
 import java.util.*;
-import java.util.List;
 
 public class Helper extends Module {
 
@@ -455,7 +450,8 @@ public class Helper extends Module {
             for (int z = -2; z <= 2; z++) {
                 for (int y = -2; y <= 2; y++) {
                     BlockPos check = base.add(x, y, z);
-                    if (mc.world.getBlockState(check).getBlock() instanceof net.minecraft.block.FluidBlock) return check;
+                    if (mc.world.getBlockState(check).getBlock() instanceof net.minecraft.block.FluidBlock)
+                        return check;
                 }
             }
         }

@@ -1,6 +1,5 @@
 package dev.sakura.client.module.impl.player;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
@@ -22,18 +21,17 @@ import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.minecraft.block.Blocks;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.FluidState;
 import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.registry.tag.ItemTags;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -45,7 +43,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
-import java.awt.Color;
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -883,12 +881,18 @@ public class AutoWebPlace extends Module {
         for (double u : fractions) {
             for (double v : fractions) {
                 Vec3d point = switch (face) {
-                    case UP -> new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + faceBox.maxY, pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
-                    case DOWN -> new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + faceBox.minY, pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
-                    case EAST -> new Vec3d(pos.getX() + faceBox.maxX, pos.getY() + lerp(faceBox.minY, faceBox.maxY, u), pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
-                    case WEST -> new Vec3d(pos.getX() + faceBox.minX, pos.getY() + lerp(faceBox.minY, faceBox.maxY, u), pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
-                    case SOUTH -> new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + lerp(faceBox.minY, faceBox.maxY, v), pos.getZ() + faceBox.maxZ);
-                    case NORTH -> new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + lerp(faceBox.minY, faceBox.maxY, v), pos.getZ() + faceBox.minZ);
+                    case UP ->
+                            new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + faceBox.maxY, pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
+                    case DOWN ->
+                            new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + faceBox.minY, pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
+                    case EAST ->
+                            new Vec3d(pos.getX() + faceBox.maxX, pos.getY() + lerp(faceBox.minY, faceBox.maxY, u), pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
+                    case WEST ->
+                            new Vec3d(pos.getX() + faceBox.minX, pos.getY() + lerp(faceBox.minY, faceBox.maxY, u), pos.getZ() + lerp(faceBox.minZ, faceBox.maxZ, v));
+                    case SOUTH ->
+                            new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + lerp(faceBox.minY, faceBox.maxY, v), pos.getZ() + faceBox.maxZ);
+                    case NORTH ->
+                            new Vec3d(pos.getX() + lerp(faceBox.minX, faceBox.maxX, u), pos.getY() + lerp(faceBox.minY, faceBox.maxY, v), pos.getZ() + faceBox.minZ);
                 };
                 this.addUniquePoint(list, point);
             }
@@ -1439,10 +1443,12 @@ public class AutoWebPlace extends Module {
         }
     }
 
-    private record PlacementTarget(Entity target, PlacementInfo placement, PlacementType type, GroundWebData groundWebData) {
+    private record PlacementTarget(Entity target, PlacementInfo placement, PlacementType type,
+                                   GroundWebData groundWebData) {
     }
 
-    private record GroundWebData(BlockPos footPos, BlockPos headPos, PlacementInfo footPlacement, PlacementInfo headPlacement) {
+    private record GroundWebData(BlockPos footPos, BlockPos headPos, PlacementInfo footPlacement,
+                                 PlacementInfo headPlacement) {
     }
 
     private record PredictionTick(int ticks, BlockPos footPos, BlockPos headPos) {

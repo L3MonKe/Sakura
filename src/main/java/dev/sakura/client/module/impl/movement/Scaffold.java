@@ -2,7 +2,6 @@ package dev.sakura.client.module.impl.movement;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.EventPriority;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
@@ -29,7 +28,6 @@ import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
-import net.minecraft.world.World;
 
 import java.awt.*;
 import java.util.Arrays;
