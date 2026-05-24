@@ -9,11 +9,7 @@ import dev.sakura.client.nanovg.util.EmojiHelper;
 import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
-import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.ColorValue;
-import dev.sakura.client.values.impl.EnumValue;
-import dev.sakura.client.values.impl.NumberValue;
-import dev.sakura.client.values.impl.StringValue;
+import dev.sakura.client.values.impl.*;
 import dev.sakura.verify.AuthState;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.nanovg.NVGPaint;
@@ -48,9 +44,6 @@ public class WatermarkHud extends HudModule {
     private final NumberValue<Double> normalGlowRadius = new NumberValue<>("GlowRadius", "发光半径", 3.0, 1.0, 10.0, 0.5, () -> mode.is(ListMode.Normal) && normalTextGlow.get());
     private final NumberValue<Integer> normalGlowIntensity = new NumberValue<>("GlowIntensity", "发光强度", 2, 1, 10, 1, () -> mode.is(ListMode.Normal) && normalTextGlow.get());
 
-    
-
-    
 
     public enum XylitolSakuraFontMode {
         Regular,
@@ -597,7 +590,6 @@ public class WatermarkHud extends HudModule {
         }
     }
 
-    
 
     private Color getXylitolSakuraStepColor(double offsetDeg) {
         double factor = (Math.sin(Math.toRadians(offsetDeg)) + 1.0) / 2.0;

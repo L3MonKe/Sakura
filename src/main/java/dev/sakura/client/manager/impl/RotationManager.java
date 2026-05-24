@@ -199,6 +199,10 @@ public class RotationManager {
         return new float[]{MathHelper.wrapDegrees(yaw), MathHelper.wrapDegrees(pitch)};
     }
 
+    public boolean isDone() {
+        return Math.abs(MathHelper.wrapDegrees(this.rotations.yaw - this.targetRotations.yaw)) <= 1.0F && Math.abs(MathHelper.wrapDegrees(this.rotations.pitch - this.targetRotations.pitch)) <= 1.0F;
+    }
+
     @EventHandler
     private void onPlayerTick(PlayerTickEvent event) {
         if (!active || rotations == null || lastRotations == null || targetRotations == null) {

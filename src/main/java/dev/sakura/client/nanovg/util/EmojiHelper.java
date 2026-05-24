@@ -15,11 +15,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -86,35 +83,35 @@ public class EmojiHelper {
 
     private static boolean isEmojiStart(int codePoint) {
         return (codePoint >= 0x1F000 && codePoint <= 0x1FFFF) ||
-               (codePoint >= 0x2600 && codePoint <= 0x27BF) ||
-               (codePoint >= 0x2300 && codePoint <= 0x23FF) ||
-               (codePoint >= 0x2B50 && codePoint <= 0x2B55) ||
-               (codePoint >= 0x203C && codePoint <= 0x3299) ||
-               isSpecificEmojiSymbol(codePoint);
+                (codePoint >= 0x2600 && codePoint <= 0x27BF) ||
+                (codePoint >= 0x2300 && codePoint <= 0x23FF) ||
+                (codePoint >= 0x2B50 && codePoint <= 0x2B55) ||
+                (codePoint >= 0x203C && codePoint <= 0x3299) ||
+                isSpecificEmojiSymbol(codePoint);
     }
 
     private static boolean isSpecificEmojiSymbol(int codePoint) {
         return codePoint == 0x26A7 ||
-               codePoint == 0x2640 ||
-               codePoint == 0x2642 ||
-               codePoint == 0x2695 ||
-               codePoint == 0x262E ||
-               codePoint == 0x262F ||
-               codePoint == 0x2622 ||
-               codePoint == 0x2623 ||
-               codePoint == 0x2764 ||
-               codePoint == 0x2B50 ||
-               codePoint == 0x2B55 ||
-               codePoint == 0x2934 ||
-               codePoint == 0x2935 ||
-               codePoint == 0x25AA ||
-               codePoint == 0x25AB ||
-               codePoint == 0x25B6 ||
-               codePoint == 0x25C0 ||
-               codePoint == 0x25FB ||
-               codePoint == 0x25FC ||
-               codePoint == 0x25FD ||
-               codePoint == 0x25FE;
+                codePoint == 0x2640 ||
+                codePoint == 0x2642 ||
+                codePoint == 0x2695 ||
+                codePoint == 0x262E ||
+                codePoint == 0x262F ||
+                codePoint == 0x2622 ||
+                codePoint == 0x2623 ||
+                codePoint == 0x2764 ||
+                codePoint == 0x2B50 ||
+                codePoint == 0x2B55 ||
+                codePoint == 0x2934 ||
+                codePoint == 0x2935 ||
+                codePoint == 0x25AA ||
+                codePoint == 0x25AB ||
+                codePoint == 0x25B6 ||
+                codePoint == 0x25C0 ||
+                codePoint == 0x25FB ||
+                codePoint == 0x25FC ||
+                codePoint == 0x25FD ||
+                codePoint == 0x25FE;
     }
 
     private static int getEmojiSequenceLength(String text, int start) {
@@ -224,9 +221,9 @@ public class EmojiHelper {
     }
 
     public static void drawGradientStringWithEmoji(long vg, float x, float baseY, int font, float size,
-                                                    String text, double offsetDeg, int colorStepDeg,
-                                                    float totalTextW, float blockW,
-                                                    ColorSupplier colorSupplier) {
+                                                   String text, double offsetDeg, int colorStepDeg,
+                                                   float totalTextW, float blockW,
+                                                   ColorSupplier colorSupplier) {
         if (text == null || text.isEmpty()) return;
 
         List<TextSegment> segments = splitText(text);

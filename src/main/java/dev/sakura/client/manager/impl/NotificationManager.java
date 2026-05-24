@@ -66,7 +66,7 @@ public class NotificationManager {
         public static final Xylitol4Offsets ZERO = new Xylitol4Offsets(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
     }
 
-    
+
     private static final float HARD_SHADOW_RANGE = 8.0f;
     private static final float HARD_SHADOW_STRENGTH = 0.6f;
 
@@ -299,7 +299,6 @@ public class NotificationManager {
         });
     }
 
-    
 
     private static Color withAlpha(Color c, int alpha) {
         return new Color(c.getRed(), c.getGreen(), c.getBlue(), Math.max(0, Math.min(255, alpha)));

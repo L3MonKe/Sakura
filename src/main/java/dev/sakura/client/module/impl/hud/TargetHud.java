@@ -1335,12 +1335,36 @@ public class TargetHud extends HudModule {
         float r1, g1, b1;
         int hi = (int) (h * 6) % 6;
         switch (hi) {
-            case 0: r1 = c; g1 = x; b1 = 0; break;
-            case 1: r1 = x; g1 = c; b1 = 0; break;
-            case 2: r1 = 0; g1 = c; b1 = x; break;
-            case 3: r1 = 0; g1 = x; b1 = c; break;
-            case 4: r1 = x; g1 = 0; b1 = c; break;
-            default: r1 = c; g1 = 0; b1 = x; break;
+            case 0:
+                r1 = c;
+                g1 = x;
+                b1 = 0;
+                break;
+            case 1:
+                r1 = x;
+                g1 = c;
+                b1 = 0;
+                break;
+            case 2:
+                r1 = 0;
+                g1 = c;
+                b1 = x;
+                break;
+            case 3:
+                r1 = 0;
+                g1 = x;
+                b1 = c;
+                break;
+            case 4:
+                r1 = x;
+                g1 = 0;
+                b1 = c;
+                break;
+            default:
+                r1 = c;
+                g1 = 0;
+                b1 = x;
+                break;
         }
         return new int[]{
                 Math.round((r1 + m) * 255),
@@ -1774,7 +1798,7 @@ public class TargetHud extends HudModule {
             this.life = maxLife;
             this.mode = mode;
             this.gravity = 0.05f;
-            
+
             float speed = 0.3f + (float) (Math.random() * range);
             double angle = Math.random() * Math.PI * 2;
             this.velocityX = (float) (Math.cos(angle) * speed);

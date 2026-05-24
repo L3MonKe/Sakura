@@ -117,7 +117,7 @@ public class Criticals extends Module {
                     shouldResumeSprint = true;
                     shouldStopSprint = false;
                 }
-                
+
                 if (alwaysShowCritParticles.get()) {
                     lastAttackedEntity = event.getEntity();
                     shouldShowCritParticles = true;
@@ -157,7 +157,7 @@ public class Criticals extends Module {
 
         if (mode.is(Mode.Packet) && packetMode.is(PacketMode.Grim)) {
             handleAirComboTick();
-            
+
             if (shouldShowCritParticles && lastAttackedEntity != null) {
                 mc.player.addCritParticles(lastAttackedEntity);
                 shouldShowCritParticles = false;
@@ -177,19 +177,19 @@ public class Criticals extends Module {
             if (wasOnGround) {
                 comboActive = true;
             }
-            
+
             // 预测下一次攻击时间
             predictNextAttack();
         }
 
         wasOnGround = onGround;
     }
-    
+
     private void predictNextAttack() {
         if (!predictSprint.get()) {
             return;
         }
-        
+
         KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
         if (killAura == null || !killAura.isEnabled() || killAura.getCurrentTarget() == null) {
             return;
@@ -198,7 +198,7 @@ public class Criticals extends Module {
         if (mc.player.fallDistance <= 0) {
             return;
         }
-        
+
         long now = System.currentTimeMillis();
 
         if (shouldResumeSprint && now - nextAttackTime >= 20) {
@@ -223,7 +223,7 @@ public class Criticals extends Module {
 
             java.lang.reflect.Method isMethod = modeValue.getClass().getMethod("is", Object.class);
             boolean isV1_9 = (boolean) isMethod.invoke(modeValue, KillAura.AttackMode.v1_9);
-            
+
             if (isV1_9) {
                 float cooldown = mc.player.getAttackCooldownProgress(0.5f);
                 if (cooldown >= 1.0f) {
@@ -239,11 +239,11 @@ public class Criticals extends Module {
                 minCpsField.setAccessible(true);
                 maxCpsField.setAccessible(true);
                 lastAttackTimeField.setAccessible(true);
-                
+
                 Object minCpsValue = minCpsField.get(killAura);
                 Object maxCpsValue = maxCpsField.get(killAura);
                 long lastAttackTime = lastAttackTimeField.getLong(killAura);
-                
+
                 java.lang.reflect.Method getMethod = minCpsValue.getClass().getMethod("get");
                 double minCps = (Double) getMethod.invoke(minCpsValue);
                 double maxCps = (Double) getMethod.invoke(maxCpsValue);
@@ -267,7 +267,7 @@ public class Criticals extends Module {
             }
         }
     }
-    
+
     private void handleStuckTick() {
         KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
         if (!mc.player.isOnGround() && killAura != null && killAura.isEnabled() && killAura.getCurrentTarget() != null) {

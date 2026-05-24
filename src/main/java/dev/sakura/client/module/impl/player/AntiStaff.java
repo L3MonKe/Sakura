@@ -1,9 +1,5 @@
 package dev.sakura.client.module.impl.player;
 
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.List;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.type.EventType;
@@ -15,6 +11,11 @@ import net.minecraft.entity.EntityType;
 import net.minecraft.network.packet.Packet;
 import net.minecraft.network.packet.s2c.play.EntitySpawnS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
+
+import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.List;
 
 public class AntiStaff extends Module {
     public static AntiStaff INSTANCE;

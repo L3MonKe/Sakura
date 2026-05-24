@@ -1,23 +1,29 @@
 package dev.sakura.client.utils.player;
 
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.RaycastContext;
 
 import static dev.sakura.client.Sakura.mc;
 
 public class FallingPlayer {
-    public double x;
-    public double y;
-    public double z;
+    private double x;
+    private double y;
+    private double z;
     private double motionX;
     private double motionY;
     private double motionZ;
     private final float yaw;
     private final float strafe;
     private final float forward;
-    private float jumpMovementFactor;
+    private final float jumpMovementFactor;
 
-    public FallingPlayer(double x, double y, double z, double motionX, double motionY, double motionZ, float yaw, float strafe, float forward) {
+    public FallingPlayer(double x, double y, double z, double motionX, double motionY, double motionZ, float yaw, float strafe, float forward, float jumpMovementFactor) {
         this.x = x;
         this.y = y;
         this.z = z;
@@ -27,89 +33,116 @@ public class FallingPlayer {
         this.yaw = yaw;
         this.strafe = strafe;
         this.forward = forward;
+        this.jumpMovementFactor = jumpMovementFactor;
     }
 
     public FallingPlayer(PlayerEntity player) {
-        this(player.getX(), player.getY(), player.getZ(), player.getVelocity().x, player.getVelocity().y, player.getVelocity().z, player.getHeadYaw(), player.sidewaysSpeed, player.forwardSpeed);
-        float f = player.getEntityWorld().getBlockState(player.getBlockPos()).getBlock().getJumpVelocityMultiplier();
-        float f1 = player.getEntityWorld().getBlockState(player.getLandingPos()).getBlock().getJumpVelocityMultiplier();
-        float jumpingVelocity = 0.42F * ((double) f == 1.0 ? f1 : f) + player.getJumpBoostVelocityModifier();
-        this.jumpMovementFactor = jumpingVelocity;
-    }
-
-    private void calculateForTick2() {
-        float sr = this.strafe;
-        float fw = this.forward;
-        float v = sr * sr + fw * fw;
-        if (v >= 1.0E-4F) {
-            v = MathHelper.sqrt(v);
-            if (v < 1.0F) {
-                v = 1.0F;
-            }
-
-            float fixedJumpFactor = this.jumpMovementFactor;
-            if (mc.player.isSprinting()) {
-                fixedJumpFactor *= 1.3F;
-            }
-
-            v = fixedJumpFactor / v;
-            sr *= v;
-            fw *= v;
-            float f1 = MathHelper.sin(this.yaw * (float) Math.PI / 180.0F);
-            float f2 = MathHelper.cos(this.yaw * (float) Math.PI / 180.0F);
-            this.motionX += sr * f2 - fw * f1;
-            this.motionZ += fw * f2 + sr * f1;
-        }
-
-        this.motionY -= 0.08;
-        this.motionY *= 0.98F;
-        this.x = this.x + this.motionX;
-        this.y = this.y + this.motionY;
-        this.z = this.z + this.motionZ;
+        this(
+                player.getX(),
+                player.getY(),
+                player.getZ(),
+                player.getVelocity().x,
+                player.getVelocity().y,
+                player.getVelocity().z,
+                player.getYaw(),
+                0.0F,
+                0.0F,
+                player.getMovementSpeed()
+        );
     }
 
     private void calculateForTick() {
-        float sr = this.strafe * 0.98F;
-        float fw = this.forward * 0.98F;
-        float v = sr * sr + fw * fw;
-        if (v >= 1.0E-4F) {
-            v = MathHelper.sqrt(v);
-            if (v < 1.0F) {
-                v = 1.0F;
+        float sr = strafe * 0.9800000190734863F;
+        float fw = forward * 0.9800000190734863F;
+        float movement = sr * sr + fw * fw;
+
+        if (movement >= 1.0E-4F) {
+            movement = MathHelper.sqrt(movement);
+            if (movement < 1.0F) {
+                movement = 1.0F;
             }
 
-            float fixedJumpFactor = this.jumpMovementFactor;
-            if (mc.player.isSprinting()) {
+            float fixedJumpFactor = jumpMovementFactor;
+            if (mc.player != null && mc.player.isSprinting()) {
                 fixedJumpFactor *= 1.3F;
             }
 
-            v = fixedJumpFactor / v;
-            sr *= v;
-            fw *= v;
-            float f1 = MathHelper.sin(this.yaw * (float) Math.PI / 180.0F);
-            float f2 = MathHelper.cos(this.yaw * (float) Math.PI / 180.0F);
-            this.motionX += sr * f2 - fw * f1;
-            this.motionZ += fw * f2 + sr * f1;
+            movement = fixedJumpFactor / movement;
+            sr *= movement;
+            fw *= movement;
+
+            float sin = MathHelper.sin(yaw * ((float) Math.PI / 180.0F));
+            float cos = MathHelper.cos(yaw * ((float) Math.PI / 180.0F));
+            motionX += sr * cos - fw * sin;
+            motionZ += fw * cos + sr * sin;
         }
 
-        this.motionY -= 0.08;
-        this.motionY *= 0.98F;
-        this.x = this.x + this.motionX;
-        this.y = this.y + this.motionY;
-        this.z = this.z + this.motionZ;
-        this.motionX *= 0.91;
-        this.motionZ *= 0.91;
-    }
-
-    public void calculateMLG(int ticks) {
-        for (int i = 0; i < ticks; i++) {
-            this.calculateForTick2();
-        }
+        motionY -= 0.08D;
+        motionY *= 0.9800000190734863D;
+        x += motionX;
+        y += motionY;
+        z += motionZ;
+        motionX *= 0.91D;
+        motionZ *= 0.91D;
     }
 
     public void calculate(int ticks) {
         for (int i = 0; i < ticks; i++) {
-            this.calculateForTick();
+            calculateForTick();
         }
+    }
+
+    public BlockPos findCollision(int ticks) {
+        for (int i = 0; i < ticks; i++) {
+            Vec3d start = new Vec3d(x, y, z);
+            calculateForTick();
+            Vec3d end = new Vec3d(x, y, z);
+            BlockPos raytracedBlock;
+            float halfWidth = mc.player.getWidth() / 2.0F;
+
+            if ((raytracedBlock = raytrace(start, end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth, 0.0, halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(-halfWidth, 0.0, halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth, 0.0, -halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(-halfWidth, 0.0, -halfWidth), end)) != null) return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth, 0.0, halfWidth / 2.0F), end)) != null)
+                return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(-halfWidth, 0.0, halfWidth / 2.0F), end)) != null)
+                return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth / 2.0F, 0.0, halfWidth), end)) != null)
+                return raytracedBlock;
+            if ((raytracedBlock = raytrace(start.add(halfWidth / 2.0F, 0.0, -halfWidth), end)) != null)
+                return raytracedBlock;
+        }
+
+        return null;
+    }
+
+    private BlockPos raytrace(Vec3d start, Vec3d end) {
+        BlockHitResult result = mc.world.raycast(new RaycastContext(
+                start,
+                end,
+                RaycastContext.ShapeType.COLLIDER,
+                RaycastContext.FluidHandling.NONE,
+                mc.player
+        ));
+
+        if (result.getType() == HitResult.Type.BLOCK && result.getSide() == Direction.UP) {
+            return result.getBlockPos();
+        }
+
+        return null;
+    }
+
+    public double getX() {
+        return x;
+    }
+
+    public double getY() {
+        return y;
+    }
+
+    public double getZ() {
+        return z;
     }
 }

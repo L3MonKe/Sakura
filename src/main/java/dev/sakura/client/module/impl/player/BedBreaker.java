@@ -2,8 +2,8 @@ package dev.sakura.client.module.impl.player;
 
 import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
-import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.client.GameJoinEvent;
+import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.impl.render.Render3DEvent;
@@ -13,14 +13,9 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.client.ClickGui;
 import dev.sakura.client.module.impl.combat.KillAura;
-import dev.sakura.client.module.impl.player.Blink;
 import dev.sakura.client.utils.player.BlinkUtils;
 import dev.sakura.client.utils.render.Render3DUtil;
-import dev.sakura.client.utils.rotation.MovementFix;
-import dev.sakura.client.utils.rotation.Priority;
-import dev.sakura.client.utils.rotation.Rotation;
-import dev.sakura.client.utils.rotation.RotationUtil;
-import dev.sakura.client.utils.rotation.VecRotation;
+import dev.sakura.client.utils.rotation.*;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.utils.world.BreakUtils;
 import dev.sakura.client.values.impl.BoolValue;
@@ -34,8 +29,8 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.component.type.DyedColorComponent;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.item.ItemStack;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerActionC2SPacket;
+import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.DyeColor;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -53,7 +48,7 @@ import java.util.Objects;
 
 public class BedBreaker extends Module {
 
-    public enum BreakMode { ThroughWall, Swap, Legit }
+    public enum BreakMode {ThroughWall, Swap, Legit}
 
     public static final EnumValue<BreakMode> mode = new EnumValue<>("BreakMode", "破坏模式", BreakMode.Swap);
     public static final BoolValue teams = new BoolValue("Teams", "队伍", true);
