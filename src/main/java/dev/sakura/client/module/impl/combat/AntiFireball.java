@@ -48,8 +48,8 @@ public class AntiFireball extends Module {
         for (var entity : mc.world.getEntities()) {
             if (!(entity instanceof FireballEntity fireball)) continue;
 
-            Vec3d motion = fireball.getEntityPos().subtract(fireball.lastX, fireball.lastY, fireball.lastZ);
-            Vec3d toPlayer = mc.player.getEntityPos().subtract(fireball.getEntityPos());
+            Vec3d motion = new Vec3d(fireball.getX() - fireball.lastX, fireball.getY() - fireball.lastY, fireball.getZ() - fireball.lastZ);
+            Vec3d toPlayer = new Vec3d(mc.player.getX() - fireball.getX(), mc.player.getY() - fireball.getY(), mc.player.getZ() - fireball.getZ());
 
             if (motion.dotProduct(toPlayer) > 0 && fireball.squaredDistanceTo(mc.player) <= SCAN_RANGE * SCAN_RANGE) {
                 if (!trackedFireballs.contains(fireball)) trackedFireballs.add(fireball);
@@ -57,8 +57,8 @@ public class AntiFireball extends Module {
         }
 
         trackedFireballs.removeIf(fireball -> {
-            Vec3d motion = fireball.getEntityPos().subtract(fireball.lastX, fireball.lastY, fireball.lastZ);
-            Vec3d toPlayer = mc.player.getEntityPos().subtract(fireball.getEntityPos());
+            Vec3d motion = new Vec3d(fireball.getX() - fireball.lastX, fireball.getY() - fireball.lastY, fireball.getZ() - fireball.lastZ);
+            Vec3d toPlayer = new Vec3d(mc.player.getX() - fireball.getX(), mc.player.getY() - fireball.getY(), mc.player.getZ() - fireball.getZ());
             return motion.dotProduct(toPlayer) <= 0 || fireball.squaredDistanceTo(mc.player) > SCAN_RANGE * SCAN_RANGE;
         });
 
@@ -71,7 +71,9 @@ public class AntiFireball extends Module {
         Rotation targetRot = calculateRotationToEntity(closest);
         Managers.ROTATION.setRotations(targetRot, 10.0, MovementFix.NORMAL);
 
-        if (rayCastEntityHit(Managers.ROTATION.getRotation(), ATTACK_RANGE, false) != null && Objects.requireNonNull(rayCastEntityHit(Managers.ROTATION.getRotation(), ATTACK_RANGE, false)).getEntity() == closest) {
+        Rotation checkRotation = Managers.ROTATION.targetRotations != null ? Managers.ROTATION.targetRotations : targetRot;
+
+        if (rayCastEntityHit(checkRotation, ATTACK_RANGE, false) != null && Objects.requireNonNull(rayCastEntityHit(checkRotation, ATTACK_RANGE, false)).getEntity() == closest) {
             Objects.requireNonNull(mc.interactionManager).syncSelectedSlot();
             mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(closest, mc.player.isSneaking()));
             mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(Hand.MAIN_HAND));
@@ -79,8 +81,8 @@ public class AntiFireball extends Module {
     }
 
     private Rotation calculateRotationToEntity(FireballEntity target) {
-        Vec3d playerEye = mc.player.getEntityPos().add(0, mc.player.getEyeHeight(mc.player.getPose()), 0);
-        Vec3d targetPos = target.getEntityPos().add(0, target.getHeight() / 2.0, 0);
+        Vec3d playerEye = new Vec3d(mc.player.getX(), mc.player.getY() + mc.player.getEyeHeight(mc.player.getPose()), mc.player.getZ());
+        Vec3d targetPos = new Vec3d(target.getX(), target.getY() + target.getHeight() / 2.0, target.getZ());
 
         Vec3d diff = targetPos.subtract(playerEye);
         double diffX = diff.x;

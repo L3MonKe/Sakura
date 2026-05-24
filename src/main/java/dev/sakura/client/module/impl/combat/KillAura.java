@@ -10,6 +10,7 @@ import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.module.impl.movement.Scaffold;
+import dev.sakura.client.module.impl.movement.Velocity;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.PacketUtil;
 import dev.sakura.client.utils.render.Render3DUtil;
@@ -43,6 +44,10 @@ public class KillAura extends Module {
         v1_8, v1_9
     }
 
+    public enum MovementFixMode {
+        Silent, Strict, Smart
+    }
+
     public KillAura() {
         super("KillAura", "杀戮光环", Category.Combat);
     }
@@ -58,6 +63,7 @@ public class KillAura extends Module {
     private final NumberValue<Double> throughWallRange = new NumberValue<>("ThroughWall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1, throughWall::get);
     private final EnumValue<AutoBlockMode> abMode = new EnumValue<>("Auto Block", "自动格挡", AutoBlockMode.Fake);
     private final NumberValue<Integer> blinkTicks = new NumberValue<>("Blink Ticks", "闪烁刻数", 3, 1, 5, 1, () -> abMode.is(AutoBlockMode.Hypixel));
+    private final EnumValue<MovementFixMode> movementFixMode = new EnumValue<>("MovementFix", "移动修正", MovementFixMode.Smart);
     private final BoolValue debugRender = new BoolValue("Debug Render", "调试渲染", false);
 
     private List<LivingEntity> targets;
@@ -94,6 +100,10 @@ public class KillAura extends Module {
         if (mc.player == null) return true;
         if (mc.player.isSpectator() || !mc.player.isAlive()) return true;
         return false;
+    }
+
+    public double getSearchRange() {
+        return searchRange.get();
     }
 
     @EventHandler
@@ -152,7 +162,12 @@ public class KillAura extends Module {
             if (mc.player.squaredDistanceTo(target) <= maxRange * maxRange) {
                 if (mc.player.isUsingItem() && !abMode.is(AutoBlockMode.Hypixel)) return;
                 Rotation calculate = RotationUtil.calculate(target);
-                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), MovementFix.NORMAL, Priority.Medium);
+                MovementFix fix = switch (movementFixMode.get()) {
+                    case Silent -> MovementFix.NORMAL;
+                    case Strict -> MovementFix.TRADITIONAL;
+                    case Smart -> Velocity.shouldStrict ? MovementFix.TRADITIONAL : MovementFix.NORMAL;
+                };
+                Managers.ROTATION.setRotations(calculate, rotateSpeed.get(), fix, Priority.Medium);
                 if (throughWall.get()) {
                     if (RaytraceUtil.facingEnemy(mc.player, target, calculate, aimRange.get(), throughWallRange.get())) {
                         attackTarget();

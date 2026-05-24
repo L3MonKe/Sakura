@@ -139,6 +139,17 @@ public class BedBreaker extends Module {
             return;
         }
 
+        KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+        if (killAura != null && killAura.isEnabled() && hasNearbyPlayer()) {
+            pos = null;
+            breakingBlockPos = null;
+            hitBlock = false;
+            breakState = BreakState.NONE;
+            currentDamage = 0F;
+            oldPos = null;
+            return;
+        }
+
         if (pos == null || !(mc.world.getBlockState(pos).getBlock() instanceof BedBlock) || mc.player.squaredDistanceTo(Vec3d.ofCenter(pos)) > range.get() * range.get()) {
             if (breakingBlockPos != null) {
                 pos = breakingBlockPos;
@@ -563,6 +574,20 @@ public class BedBreaker extends Module {
 
         BlockState state = mc.world.getBlockState(blockPos);
         return state.getCollisionShape(mc.world, blockPos).raycast(eyes, endPos, blockPos);
+    }
+
+    private boolean hasNearbyPlayer() {
+        if (mc.player == null || mc.world == null) return false;
+        KillAura killAura = Sakura.MODULES.getModule(KillAura.class);
+        double searchRange = killAura != null ? killAura.getSearchRange() : 10.0;
+        double searchRangeSq = searchRange * searchRange;
+        for (net.minecraft.entity.player.PlayerEntity player : mc.world.getPlayers()) {
+            if (player == mc.player) continue;
+            if (mc.player.squaredDistanceTo(player) <= searchRangeSq) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean isSameTeam() {
