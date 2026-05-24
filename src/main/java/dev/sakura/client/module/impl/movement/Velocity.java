@@ -87,19 +87,14 @@ public class Velocity extends Module {
 
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.NoXZ);
     private final NumberValue<Double> alinkTime = new NumberValue<>("Max Alink Time (ms)", "最大Alink时间(ms)", 2500.0, 50.0, 10000.0, 50.0, () -> mode.is(Mode.NoXZ));
-    private final BoolValue render = new BoolValue("Render", "渲染", false);
-    private final BoolValue debug = new BoolValue("Debug", "调试", false);
+    private final BoolValue render = new BoolValue("Render", "渲染", false, () -> mode.is(Mode.NoXZ));
+    private final BoolValue debug = new BoolValue("Debug", "调试", false, () -> mode.is(Mode.NoXZ));
     private final BoolValue old = new BoolValue("Old", "旧逻辑", false, () -> mode.is(Mode.NoXZ));
 
     private final BoolValue attackReduce = new BoolValue("AttackReduce", "攻击减少", true, () -> mode.is(Mode.Hypixel));
-    private final BoolValue bufferCorrect = new BoolValue("BufferCorrect", "缓冲修正", true, () -> mode.is(Mode.Hypixel));
-    private final BoolValue rotationJumpReset = new BoolValue("RotationJumpReset", "旋转跳跃重置", true, () -> mode.is(Mode.Hypixel));
-    private final BoolValue airpushValue = new BoolValue("Airpush", "空气推", true, () -> mode.is(Mode.Hypixel));
+    private final BoolValue bufferCorrect = new BoolValue("Buffer", "缓冲修正", true, () -> mode.is(Mode.Hypixel));
+    private final BoolValue rotationJumpReset = new BoolValue("JumpReset", "旋转跳跃重置", true, () -> mode.is(Mode.Hypixel));
     private final NumberValue<Double> bufferTickValue = new NumberValue<>("BufferTick", "缓冲刻", 4.0, 0.0, 10.0, 1.0, () -> mode.is(Mode.Hypixel) && bufferCorrect.get());
-    private final BoolValue onlyPlayer = new BoolValue("OnlyAttackPlayer", "仅攻击玩家", true, () -> mode.is(Mode.Hypixel));
-    private final BoolValue riskMode = new BoolValue("RiskMode", "风险模式(导致软锁)", false, () -> mode.is(Mode.Hypixel) && airpushValue.get());
-    private final NumberValue<Double> attackRange = new NumberValue<>("AttackRange", "攻击范围", 3.2, 0.0, 6.0, 0.01, () -> mode.is(Mode.Hypixel));
-    private final NumberValue<Double> throughWallRange = new NumberValue<>("ThroughWallRange", "穿墙范围", 2.0, 0.0, 6.0, 0.01, () -> mode.is(Mode.Hypixel));
 
     public boolean lag;
     private boolean jump;
@@ -490,16 +485,16 @@ public class Velocity extends Module {
             shouldStrict = true;
         }
 
-        EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), attackRange.get(), false);
-        if (hitResult == null && throughWallRange.get() > 0) {
-            hitResult = rayCastEntityHit(getRotationOrElseMC(), throughWallRange.get(), true);
+        EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), 3.1, false);
+        if (hitResult == null && 0.0 > 0) {
+            hitResult = rayCastEntityHit(getRotationOrElseMC(), 0.0, true);
         }
         Entity rayTarget = (hitResult != null) ? hitResult.getEntity() : null;
 
-        boolean validTarget = (rayTarget != null && rayTarget != mc.player && (rayTarget instanceof PlayerEntity || !onlyPlayer.get()))
-                || (getKillAuraTarget() != null && (getKillAuraTarget() instanceof PlayerEntity || !onlyPlayer.get()));
+        boolean validTarget = (rayTarget != null && rayTarget != mc.player && (rayTarget instanceof PlayerEntity || !true))
+                || (getKillAuraTarget() != null && (getKillAuraTarget() instanceof PlayerEntity || !true));
 
-        if ((validTarget || getFarthestLivingEntity(onlyPlayer.get()) != null) && receiveVelocity) {
+        if ((validTarget || getFarthestLivingEntity(true) != null) && receiveVelocity) {
             shouldStrict = true;
         }
 
@@ -524,7 +519,7 @@ public class Velocity extends Module {
                             mc.player.setSprinting(false);
                         }
                     }
-                } else if (getFarthestLivingEntity(onlyPlayer.get()) != null && airpushValue.get()) {
+                } else if (getFarthestLivingEntity(true) != null && true) {
                     airPush();
                 }
             }
@@ -534,7 +529,7 @@ public class Velocity extends Module {
     }
 
     private void airPush() {
-        LivingEntity entity = getFarthestLivingEntity(onlyPlayer.get());
+        LivingEntity entity = getFarthestLivingEntity(true);
         if (entity != null && PacketLockUtils.attackAndLock()) {
             Sakura.EVENT_BUS.post(new AttackEntityEvent(mc.player, entity));
             mc.getNetworkHandler().sendPacket(PlayerInteractEntityC2SPacket.attack(entity, mc.player.isSneaking()));
@@ -549,14 +544,14 @@ public class Velocity extends Module {
     private void onHypixelPostTick() {
         if (mc.player == null) return;
 
-        EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), attackRange.get(), false);
-        if (hitResult == null && throughWallRange.get() > 0) {
-            hitResult = rayCastEntityHit(getRotationOrElseMC(), throughWallRange.get(), true);
+        EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), 3.1, false);
+        if (hitResult == null && 0.0 > 0) {
+            hitResult = rayCastEntityHit(getRotationOrElseMC(), 0.0, true);
         }
         Entity attackTarget = (hitResult != null) ? hitResult.getEntity() : null;
 
         if (hypBuffer) {
-            if (bufferTick >= bufferTickValue.get() || mc.player.isSprinting() || ((IClientPlayerEntity) mc.player).getLastSprinting() || mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.SLOWNESS) || clientOnGround() || getKillAuraTarget() == null && attackTarget == null && getFarthestLivingEntity(onlyPlayer.get()) == null) {
+            if (bufferTick >= bufferTickValue.get() || mc.player.isSprinting() || ((IClientPlayerEntity) mc.player).getLastSprinting() || mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.SLOWNESS) || clientOnGround() || getKillAuraTarget() == null && attackTarget == null && getFarthestLivingEntity(true) == null) {
                 while (!serverPackets.isEmpty()) {
                     Packet<? super ClientPlayNetworkHandler> p = serverPackets.poll();
                     p.apply(mc.getNetworkHandler());
@@ -566,9 +561,9 @@ public class Velocity extends Module {
                 receiveVelocity = true;
                 ticksSinceVelocity = 0;
                 if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
-                    if (getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get()) != null) {
-                        LivingEntity target = getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get());
-                        Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), throughWallRange.get()));
+                    if (getClosestLivingEntity(3.1, 0.0, true) != null) {
+                        LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
+                        Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
                         Managers.ROTATION.setRotations(new Rotation(oppositeRotation.yaw, rotation1.pitch), 10.0, MovementFix.TRADITIONAL, Priority.Medium);
                     } else {
                         Managers.ROTATION.setRotations(oppositeRotation, 10.0, MovementFix.TRADITIONAL, Priority.Medium);
@@ -613,18 +608,18 @@ public class Velocity extends Module {
 
                     if (!hypBuffer) {
                         if (bufferCorrect.get() && bufferTickValue.get() != 0) {
-                            EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), attackRange.get(), false);
-                            if (hitResult == null && throughWallRange.get() > 0) {
-                                hitResult = rayCastEntityHit(getRotationOrElseMC(), throughWallRange.get(), true);
+                            EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), 3.1, false);
+                            if (hitResult == null && 0.0 > 0) {
+                                hitResult = rayCastEntityHit(getRotationOrElseMC(), 0.0, true);
                             }
                             Entity attackTarget = (hitResult != null) ? hitResult.getEntity() : null;
                             if ((attackTarget != null && attackTarget != mc.player && (attackTarget instanceof PlayerEntity ||
-                                    !onlyPlayer.get())) || (getKillAuraTarget() != null && (getKillAuraTarget() instanceof PlayerEntity || !onlyPlayer.get())) || (getFarthestLivingEntity(onlyPlayer.get())) != null && airpushValue.get()) {
+                                    !true)) || (getKillAuraTarget() != null && (getKillAuraTarget() instanceof PlayerEntity || !true)) || (getFarthestLivingEntity(true)) != null && true) {
                                 if (mc.player.isSprinting() || ((IClientPlayerEntity) mc.player).getLastSprinting()) {
                                     if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
-                                        if (getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get()) != null) {
-                                            LivingEntity target = getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get());
-                                            Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), throughWallRange.get()));
+                                        if (getClosestLivingEntity(3.1, 0.0, true) != null) {
+                                            LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
+                                            Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
                                             Managers.ROTATION.setRotations(new Rotation(oppositeRotation.yaw, rotation1.pitch), 10.0, MovementFix.TRADITIONAL, Priority.Medium);
                                         } else {
                                             Managers.ROTATION.setRotations(oppositeRotation, 10.0, MovementFix.TRADITIONAL, Priority.Medium);
@@ -641,9 +636,9 @@ public class Velocity extends Module {
                                 }
                             } else {
                                 if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
-                                    if (getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get()) != null) {
-                                        LivingEntity target = getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get());
-                                        Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), throughWallRange.get()));
+                                    if (getClosestLivingEntity(3.1, 0.0, true) != null) {
+                                        LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
+                                        Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
                                         Managers.ROTATION.setRotations(new Rotation(oppositeRotation.yaw, rotation1.pitch), 10.0, MovementFix.TRADITIONAL, Priority.Medium);
                                     } else {
                                         Managers.ROTATION.setRotations(oppositeRotation, 10.0, MovementFix.TRADITIONAL, Priority.Medium);
@@ -655,9 +650,9 @@ public class Velocity extends Module {
                             }
                         } else {
                             if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
-                                if (getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get()) != null) {
-                                    LivingEntity target = getClosestLivingEntity(attackRange.get(), throughWallRange.get(), onlyPlayer.get());
-                                    Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), throughWallRange.get()));
+                                if (getClosestLivingEntity(3.1, 0.0, true) != null) {
+                                    LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
+                                    Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
                                     Managers.ROTATION.setRotations(new Rotation(oppositeRotation.yaw, rotation1.pitch), 10.0, MovementFix.TRADITIONAL, Priority.Medium);
                                 } else {
                                     Managers.ROTATION.setRotations(oppositeRotation, 10.0, MovementFix.TRADITIONAL, Priority.Medium);
@@ -803,7 +798,7 @@ public class Velocity extends Module {
 
             double dist = newGetDistanceToEntityBoxSafe(mc.player, living, Double.MAX_VALUE);
 
-            if (dist < 11 && !riskMode.get()) continue;
+            if (dist < 11 && !false) continue;
 
             if (dist > farthestDistance) {
                 farthestDistance = dist;

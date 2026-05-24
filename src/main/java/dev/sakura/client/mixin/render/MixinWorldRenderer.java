@@ -64,10 +64,10 @@ public class MixinWorldRenderer {
     @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gl/ShaderLoader;loadPostEffect(Lnet/minecraft/util/Identifier;Ljava/util/Set;)Lnet/minecraft/client/gl/PostEffectProcessor;"))
     private PostEffectProcessor onRender(ShaderLoader shaderLoader, Identifier id, Set<Identifier> availableExternalTargets) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
+        ESP esp = Sakura.MODULES.getModule(ESP.class);
         ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
 
-        if ((shaders != null && shaders.isEnabled() || glowESP != null && glowESP.isEnabled() || chestESP != null && chestESP.isEnabled() && chestESP.isGlowEnabled()) && vanillaOutline.equals(id)) {
+        if ((shaders != null && shaders.isEnabled() || esp != null && esp.isEnabled() || chestESP != null && chestESP.isEnabled() && chestESP.isGlowEnabled()) && vanillaOutline.equals(id)) {
             return null;
         }
         return shaderLoader.loadPostEffect(id, availableExternalTargets);
@@ -76,12 +76,12 @@ public class MixinWorldRenderer {
     @Inject(method = "drawEntityOutlinesFramebuffer", at = @At("HEAD"), cancellable = true)
     private void onDrawEntityOutlinesFramebuffer(CallbackInfo ci) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
+        ESP esp = Sakura.MODULES.getModule(ESP.class);
         ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
 
         if (entityOutlineFramebuffer == null) return;
 
-        if (glowESP != null && glowESP.isEnabled()) {
+        if (esp != null && esp.isEnabled()) {
             Managers.SHADER.renderEntityOutlineShader(entityOutlineFramebuffer, dev.sakura.client.manager.impl.ShaderManager.Shader.Glow, Sakura.mc.getRenderTickCounter().getTickProgress(true));
             ci.cancel();
             return;

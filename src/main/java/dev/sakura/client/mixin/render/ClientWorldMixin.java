@@ -22,7 +22,12 @@ public class ClientWorldMixin {
 
     @Redirect(method = "tickEntity", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;tick()V"))
     public void onTickEntity(Entity instance) {
-        if (Sakura.skipTicks > 0 && instance == mc.player) {
+        if (!Sakura.delayPackets.isEmpty() && instance == mc.player) {
+            Runnable delayed = Sakura.delayPackets.poll();
+            if (delayed != null) {
+                delayed.run();
+            }
+        } else if (Sakura.skipTicks > 0 && instance == mc.player) {
             Sakura.skipTicks--;
         } else {
             instance.tick();

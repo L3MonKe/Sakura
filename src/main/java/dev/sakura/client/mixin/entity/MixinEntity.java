@@ -7,7 +7,7 @@ import dev.sakura.client.event.impl.player.RayTraceEvent;
 import dev.sakura.client.event.impl.player.StrafeEvent;
 import dev.sakura.client.event.impl.player.UpdateVelocityEvent;
 import dev.sakura.client.module.impl.player.ViewLock;
-import dev.sakura.client.module.impl.render.GlowESP;
+import dev.sakura.client.module.impl.render.ESP;
 import dev.sakura.client.module.impl.render.Shaders;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.MovementType;
@@ -117,10 +117,10 @@ public abstract class MixinEntity {
     @Inject(method = "isGlowing", at = @At("HEAD"), cancellable = true)
     private void hookIsGlowing(CallbackInfoReturnable<Boolean> cir) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
+        ESP esp = Sakura.MODULES.getModule(ESP.class);
 
         if ((shaders != null && shaders.isEnabled() && shaders.shouldRender((Entity) (Object) this)) ||
-                (glowESP != null && glowESP.isEnabled() && glowESP.shouldRender((Entity) (Object) this))) {
+                (esp != null && esp.isEnabled() && esp.shouldRender((Entity) (Object) this))) {
             cir.setReturnValue(true);
         }
     }

@@ -508,7 +508,7 @@ public class InvHelper {
                     return false;
                 }
 
-                return block.getBlock() != Blocks.COBWEB;
+                return true;
             } else {
                 if (item == Items.BOOK || item instanceof WritableBookItem || item instanceof WrittenBookItem) {
                     return false;
@@ -647,7 +647,6 @@ public class InvHelper {
             Blocks.DISPENSER,
             Blocks.DROPPER,
             Blocks.CRAFTING_TABLE,
-            Blocks.COBWEB,
             Blocks.PUMPKIN,
             Blocks.COBBLESTONE_WALL,
             Blocks.OAK_FENCE,

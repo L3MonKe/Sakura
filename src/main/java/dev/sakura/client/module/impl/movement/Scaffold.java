@@ -1,8 +1,11 @@
 package dev.sakura.client.module.impl.movement;
 
+import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MouseClickEvent;
+import dev.sakura.client.event.impl.packet.PacketEvent;
+import dev.sakura.client.event.impl.player.JumpEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
 import dev.sakura.client.event.type.EventType;
 import dev.sakura.client.manager.Managers;
@@ -10,6 +13,7 @@ import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FindItemResult;
+import dev.sakura.client.utils.player.FallingPlayer;
 import dev.sakura.client.utils.player.InvUtil;
 import dev.sakura.client.utils.player.ItemSpoofUtils;
 import dev.sakura.client.utils.player.MoveUtil;
@@ -28,11 +32,16 @@ import net.minecraft.block.*;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.ItemStack;
+import net.minecraft.network.packet.c2s.play.ClientCommandC2SPacket;
 import net.minecraft.network.packet.c2s.play.HandSwingC2SPacket;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.network.packet.s2c.play.EntityVelocityUpdateS2CPacket;
+import net.minecraft.network.packet.s2c.play.PlayerPositionLookS2CPacket;
 import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.*;
+import net.minecraft.util.shape.VoxelShape;
 
 import java.awt.*;
 
@@ -75,6 +84,9 @@ public class Scaffold extends Module {
     private final ColorValue sideColor = new ColorValue("Side Color", "侧面颜色", new Color(255, 183, 197, 100), render::get);
     private final ColorValue lineColor = new ColorValue("Line Color", "线条颜色", new Color(255, 105, 180), render::get);
 
+    private final BoolValue clutch = new BoolValue("Clutch", "Clutch", true);
+    private final NumberValue<Double> clutchFallDistance = new NumberValue<>("Clutch Fall Dist", "Clutch坠落距离", 5.0, 1.0, 10.0, 0.5, clutch::get);
+
     private int yLevel;
     private int airTicks;
 
@@ -90,6 +102,34 @@ public class Scaffold extends Module {
 
     private BlockInfo blockInfo;
 
+    private boolean canBuildNow = true;
+    private int velocityDelay = 0;
+    private int rotationDelay = 0;
+    private int clutchGroundTicks = 0;
+    private int clutchAirTicks = 0;
+    private boolean clutchBufferingPackets = false;
+    private boolean clutchSentFlyPacket = false;
+    private boolean clutchJumpBoostActive = false;
+    private boolean clutchReceivedPositionPacket = false;
+    private int clutchJumpBoostTick = 0;
+    private boolean clutchAwaitingNoFall = false;
+
+    public boolean isClutchBuffering() {
+        return clutch.get() && clutchBufferingPackets;
+    }
+
+    public boolean isClutchAwaitingNoFall() {
+        return clutchAwaitingNoFall;
+    }
+
+    public void notifyNoFallPlaced() {
+        if (clutchAwaitingNoFall) {
+            clutchAwaitingNoFall = false;
+            clutchBufferingPackets = false;
+            clutchSentFlyPacket = false;
+        }
+    }
+
     @Override
     public String getSuffix() {
         return mode.get().name();
@@ -104,6 +144,18 @@ public class Scaffold extends Module {
         legitBlockCount = 0;
         inLegitPhase = false;
         pendingTelly = false;
+        canBuildNow = true;
+        velocityDelay = 0;
+        rotationDelay = 0;
+        clutchGroundTicks = 0;
+        clutchAirTicks = 0;
+        clutchBufferingPackets = false;
+        clutchSentFlyPacket = false;
+        clutchJumpBoostActive = false;
+        clutchReceivedPositionPacket = false;
+        clutchJumpBoostTick = 0;
+        clutchAwaitingNoFall = false;
+        Sakura.delayPackets.clear();
         if (swapMode.get() == SwapMode.Silent) {
             ItemSpoofUtils.startSpoof();
         }
@@ -111,6 +163,12 @@ public class Scaffold extends Module {
 
     @Override
     protected void onDisable() {
+        Sakura.delayPackets.clear();
+        if (clutchJumpBoostActive) {
+            clutchJumpBoostActive = false;
+            mc.options.jumpKey.setPressed(false);
+        }
+        clutchReset();
         blockInfo = null;
         if (ItemSpoofUtils.isSpoofing) {
             ItemSpoofUtils.stopSpoof();
@@ -129,15 +187,110 @@ public class Scaffold extends Module {
     }
 
     @EventHandler
+    private void onPacket(PacketEvent event) {
+        if (!clutch.get() || mc.player == null || mc.world == null) return;
+
+        if (event.getType() == EventType.SEND && clutchBufferingPackets && !clutchAwaitingNoFall && event.getPacket() instanceof PlayerMoveC2SPacket) {
+            event.setCancelled(true);
+        }
+
+        if (event.getType() == EventType.RECEIVE) {
+            if (event.getPacket() instanceof EntityVelocityUpdateS2CPacket packet) {
+                if (packet.getEntityId() == mc.player.getId()) {
+                    Vec3d velocity = packet.getVelocity();
+                    double length = new Vec3d(velocity.x, 0.0, velocity.z).length();
+                    if (length >= 1.5) {
+                        velocityDelay = 60;
+                    }
+                }
+            }
+
+            if (event.getPacket() instanceof PlayerPositionLookS2CPacket && (clutchSentFlyPacket || clutchBufferingPackets)) {
+                clutchReset();
+                clutchJumpBoostActive = true;
+                clutchJumpBoostTick = 0;
+                clutchReceivedPositionPacket = true;
+            }
+        }
+    }
+
+    @EventHandler
+    private void onJump(JumpEvent event) {
+        if (clutch.get() && !canBuildNow && blockInfo != null && rotationDelay > 0) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
     public void onMotion(MotionEvent e) {
         if (e.getType() == EventType.PRE && safeWalk.get() && mode.is(Mode.GodBridge)) {
             mc.options.sneakKey.setPressed(mc.player.isOnGround() && SafeWalk.isOnBlockEdge(0.3F));
+        }
+
+        if (clutch.get() && e.getType() == EventType.POST) {
+            if (mc.player.isOnGround()) {
+                clutchAirTicks = 0;
+                clutchGroundTicks++;
+            } else {
+                clutchGroundTicks = 0;
+                clutchAirTicks++;
+            }
         }
     }
 
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
+
+        if (clutch.get()) {
+            if (velocityDelay > 0) velocityDelay--;
+            if (mc.player.isOnGround() && velocityDelay <= 30) velocityDelay = 0;
+
+            if (mc.player.isOnGround()) {
+                if (clutchAwaitingNoFall) {
+                    clutchAwaitingNoFall = false;
+                }
+                if (clutchReceivedPositionPacket) {
+                    if (clutchJumpBoostActive) {
+                        clutchJumpBoostActive = false;
+                        mc.options.jumpKey.setPressed(false);
+                    }
+                    clutchReset();
+                    clutchReceivedPositionPacket = false;
+                }
+                if (clutchBufferingPackets || clutchSentFlyPacket) {
+                    clutchReset();
+                }
+            }
+
+            if (!mc.player.isOnGround() && mc.player.getVelocity().y < 0.0) {
+                if (!clutchBufferingPackets && !clutchSentFlyPacket && !clutchAwaitingNoFall) {
+                    boolean shouldBuffer = mc.player.getVelocity().y < 0.1 && isVoidBelow() && !isSafe(mc.player.getY() + mc.player.getStandingEyeHeight());
+                    if (shouldBuffer) {
+                        clutchBufferingPackets = true;
+                    }
+                }
+                if (clutchBufferingPackets && !clutchAwaitingNoFall) {
+                    boolean hasBlockBelow = !isVoidBelow() || isSafe(mc.player.getY() + mc.player.getStandingEyeHeight());
+                    if (hasBlockBelow && mc.player.fallDistance >= 3.0f) {
+                        clutchAwaitingNoFall = true;
+                    } else if (mc.player.fallDistance > clutchFallDistance.get().floatValue()) {
+                        PacketUtil.sendPacketNoEvent(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.START_FALL_FLYING));
+                        clutchReset();
+                        clutchSentFlyPacket = true;
+                    }
+                }
+            }
+
+            if (clutchJumpBoostActive) {
+                clutchJumpBoostTick++;
+                if (clutchJumpBoostTick > 10) {
+                    clutchJumpBoostActive = false;
+                    clutchJumpBoostTick = 0;
+                }
+                mc.options.jumpKey.setPressed(true);
+            }
+        }
 
         hasJump = false;
         boolean isLegitMode = mode.is(Mode.Telly) && legit.get();
@@ -160,6 +313,22 @@ public class Scaffold extends Module {
 
         updateBlockInfo();
 
+        if (clutch.get()) {
+            canBuildNow = true;
+            if (blockInfo != null) {
+                if (mc.player.getVelocity().y < -0.1) {
+                    FallingPlayer sim = new FallingPlayer(mc.player);
+                    sim.calculate(2);
+                    if (blockInfo.position.getY() > sim.y) {
+                        canBuildNow = false;
+                    }
+                }
+            }
+            if (mc.player.isOnGround()) {
+                canBuildNow = true;
+            }
+        }
+
         MovementFix movementFix;
         if (silentRotation.get()) {
             movementFix = MovementFix.OFF;
@@ -167,44 +336,70 @@ public class Scaffold extends Module {
             movementFix = moveFix.get() ? MovementFix.NORMAL : MovementFix.OFF;
         }
         boolean silent = silentRotation.get();
-        if (mode.is(Mode.Telly)) {
-            if (mc.player.isOnGround()) {
-                yLevel = MathHelper.floor(mc.player.getY()) - 1;
-                airTicks = 0;
-                blockInfo = null;
-                if (!silent) {
-                    Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
-                    Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix);
-                }
 
-                if (isLegitMode && !hasJump) {
-                    inLegitPhase = true;
+        if (clutch.get() && blockInfo == null) {
+            Sakura.delayPackets.clear();
+        } else if (clutch.get() && blockInfo != null && (!canBuildNow || velocityDelay > 0) && rotationDelay <= 8) {
+            Rotation rotationToBlock = RotationUtil.calculate(blockInfo.position, blockInfo.dir);
+            Managers.ROTATION.setRotations(rotationToBlock, rotationSpeed.get(), movementFix);
+            rotationDelay++;
+            BlockInfo capturedInfo = blockInfo;
+            Sakura.delayPackets.add(() -> {});
+            Sakura.delayPackets.add(() -> {
+                if (capturedInfo != blockInfo && blockInfo == null) return;
+                float yaw = rotationToBlock.yaw;
+                if (yaw > -360.0f && yaw < 360.0f) {
+                    yaw += 720.0f;
                 }
-            } else {
-                if (airTicks >= tellyTick.get() && blockInfo != null) {
-                    FindItemResult item = findItem();
-                    if (item.found()) {
-                        if (silent) {
-                            silentPlace(item);
-                        } else {
-                            Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
-                            place(item);
-                        }
-                        if (isLegitMode) {
-                            pendingTelly = true;
+                PacketUtil.sendPacketNoEvent(new PlayerMoveC2SPacket.LookAndOnGround(yaw, rotationToBlock.pitch, mc.player.isOnGround(), mc.player.horizontalCollision));
+                doClutchSnap();
+            });
+        } else {
+            if (clutch.get()) {
+                canBuildNow = true;
+                Sakura.delayPackets.clear();
+                rotationDelay = 0;
+            }
+
+            if (mode.is(Mode.Telly)) {
+                if (mc.player.isOnGround()) {
+                    yLevel = MathHelper.floor(mc.player.getY()) - 1;
+                    airTicks = 0;
+                    blockInfo = null;
+                    if (!silent) {
+                        Rotation rotation = new Rotation(mc.player.getYaw(), mc.player.getPitch());
+                        Managers.ROTATION.setRotations(rotation, rotationBackSpeed.get(), movementFix);
+                    }
+
+                    if (isLegitMode && !hasJump) {
+                        inLegitPhase = true;
+                    }
+                } else {
+                    if (airTicks >= tellyTick.get() && blockInfo != null) {
+                        FindItemResult item = findItem();
+                        if (item.found()) {
+                            if (silent) {
+                                silentPlace(item);
+                            } else {
+                                Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
+                                place(item);
+                            }
+                            if (isLegitMode) {
+                                pendingTelly = true;
+                            }
                         }
                     }
+                    airTicks++;
                 }
-                airTicks++;
-            }
-        } else if (blockInfo != null) {
-            FindItemResult item = findItem();
-            if (item.found()) {
-                if (silent) {
-                    silentPlace(item);
-                } else {
-                    Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
-                    place(item);
+            } else if (blockInfo != null) {
+                FindItemResult item = findItem();
+                if (item.found()) {
+                    if (silent) {
+                        silentPlace(item);
+                    } else {
+                        Managers.ROTATION.setRotations(getRotation(blockInfo), rotationSpeed.get(), movementFix);
+                        place(item);
+                    }
                 }
             }
         }
@@ -388,8 +583,60 @@ public class Scaffold extends Module {
         return placed;
     }
 
+    private void doClutchSnap() {
+        if (blockInfo == null || mc.player == null || mc.interactionManager == null) return;
+        if (!(mc.player.getMainHandStack().getItem() instanceof BlockItem)) return;
+        Direction facing = blockInfo.dir;
+        if (facing == null) return;
+        if (facing == Direction.UP && !mc.player.isOnGround() && MoveUtil.isMoving() && !mc.options.jumpKey.isPressed() && !mode.is(Mode.GodBridge)) {
+            return;
+        }
+        BlockPos below = BlockPos.ofFloored(mc.player.getX(), mc.player.getY() - 0.5, mc.player.getZ());
+        if (!mc.world.isAir(below)) return;
+        if (!BlockUtil.canPlaceAt(blockInfo.blockPos)) return;
+        FindItemResult item = findItem();
+        if (!item.found()) return;
+        switch (swapMode.get()) {
+            case Normal -> {
+                boolean should = swapBack.get();
+                InvUtil.swap(item.slot(), should);
+                shouldSwapBack = should;
+            }
+            case Silent -> {
+                if (item.slot() >= 0 && item.slot() <= 8) {
+                    mc.player.getInventory().setSelectedSlot(item.slot());
+                }
+            }
+            case InvSwitch -> invSwapped = InvUtil.invSwap(item.slot());
+        }
+        BlockHitResult hit = new BlockHitResult(getVec3(blockInfo.position, blockInfo.dir), blockInfo.dir, blockInfo.position, false);
+        ActionResult result = mc.interactionManager.interactBlock(mc.player, item.getHand(), hit);
+        if (result.isAccepted()) {
+            if (swingHand.get()) {
+                mc.player.swingHand(item.getHand());
+            } else {
+                mc.getNetworkHandler().sendPacket(new HandSwingC2SPacket(item.getHand()));
+            }
+        }
+        if (render.get()) {
+            Managers.RENDER.add(blockInfo.blockPos, sideColor.get(), lineColor.get(), fade.get(), shrink.get());
+        }
+    }
+
     private void updateBlockInfo() {
         Vec3d baseVec = mc.player.getEyePos();
+
+        if (clutch.get()) {
+            if (!canBuildNow) {
+                baseVec = mc.player.getEyePos().add(mc.player.getVelocity().multiply(2.0, 2.0, 2.0));
+            }
+            if (mc.player.getVelocity().y < 0.01) {
+                FallingPlayer sim = new FallingPlayer(mc.player);
+                sim.calculate(2);
+                baseVec = new Vec3d(baseVec.x, Math.max(sim.y + mc.player.getStandingEyeHeight(), baseVec.y), baseVec.z);
+            }
+        }
+
         BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
         int baseX = base.getX();
         int baseZ = base.getZ();
@@ -453,6 +700,37 @@ public class Scaffold extends Module {
         Vec3d baseVec = mc.player.getEyePos();
         BlockPos base = BlockPos.ofFloored(baseVec.x, getYLevel(), baseVec.z);
         return mc.world.getBlockState(base).getBlock() instanceof AirBlock || mc.world.getBlockState(base).getBlock() instanceof LilyPadBlock;
+    }
+
+    private boolean isVoidBelow() {
+        int scanDepth = 30;
+        for (int dy = 0; dy < scanDepth; dy++) {
+            BlockPos cursor = BlockPos.ofFloored(mc.player.getX(), mc.player.getY() - dy, mc.player.getZ());
+            if (!mc.world.getBlockState(cursor).isAir()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isSafe(double maxFall) {
+        int offset = 0;
+        while (offset < maxFall) {
+            Box box = mc.player.getBoundingBox().offset(0.0, -offset, 0.0);
+            for (VoxelShape shape : mc.world.getCollisions(mc.player, box)) {
+                if (!shape.isEmpty()) {
+                    return true;
+                }
+            }
+            offset += 2;
+        }
+        return false;
+    }
+
+    private void clutchReset() {
+        clutchBufferingPackets = false;
+        clutchSentFlyPacket = false;
+        clutchAwaitingNoFall = false;
     }
 
     private record BlockInfo(BlockPos blockPos, BlockPos position, Direction dir) {

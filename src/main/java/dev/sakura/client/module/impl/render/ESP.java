@@ -12,8 +12,8 @@ import net.minecraft.entity.player.PlayerEntity;
 
 import java.awt.*;
 
-public class GlowESP extends Module {
-    public GlowESP() {
+public class ESP extends Module {
+    public ESP() {
         super("ESP", "ES的P", Category.Render);
     }
 

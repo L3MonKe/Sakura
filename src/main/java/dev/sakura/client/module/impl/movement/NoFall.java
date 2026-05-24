@@ -93,6 +93,10 @@ public class NoFall extends Module {
         super("NoFall", "无摔落", Category.Movement);
     }
 
+    public boolean isGrimMlgMode() {
+        return isEnabled() && mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim);
+    }
+
     @Override
     public String getSuffix() {
         return mode.get().name();
@@ -174,6 +178,17 @@ public class NoFall extends Module {
         return mc.player.fallDistance >= scaffoldRescueFall.get();
     }
 
+    private boolean isScaffoldClutchAwaiting() {
+        Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
+        return scaffold != null && scaffold.isEnabled() && scaffold.isClutchAwaitingNoFall();
+    }
+
+    private boolean isNearGroundForClutch() {
+        if (mc.player == null || mc.world == null) return false;
+        BlockPos below = BlockPos.ofFloored(mc.player.getX(), mc.player.getY() - 1.0, mc.player.getZ());
+        return !mc.world.getBlockState(below).isAir();
+    }
+
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
@@ -190,7 +205,7 @@ public class NoFall extends Module {
         if (mode.is(Mode.MLG)) {
             boolean scaffoldEnabled = isScaffoldEnabled();
             boolean scaffoldRescue = shouldScaffoldRescue();
-            if ((isFalling() || mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted && (!scaffoldEnabled || scaffoldRescue)) {
+            if ((isFalling() || mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted && (!scaffoldEnabled || scaffoldRescue || isScaffoldClutchAwaiting())) {
                 mc.player.setSprinting(false);
                 mc.options.sprintKey.setPressed(false);
             }
@@ -236,7 +251,7 @@ public class NoFall extends Module {
                 return;
             }
 
-            if (scaffoldEnabled && !scaffoldRescue) {
+            if (scaffoldEnabled && !scaffoldRescue && !isScaffoldClutchAwaiting()) {
                 resetPending();
                 return;
             }
@@ -260,12 +275,22 @@ public class NoFall extends Module {
 
                         quickCollectDelayTicks = collectDelayTicks.get();
                         resetPending();
+
+                        Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
+                        if (scaffold != null && scaffold.isClutchAwaitingNoFall()) {
+                            scaffold.notifyNoFallPlaced();
+                        }
                     }
                 }
                 return;
             }
 
             if (isFalling()) {
+                boolean clutchAwaiting = isScaffoldClutchAwaiting();
+                if (clutchAwaiting && !isNearGroundForClutch()) {
+                    return;
+                }
+
                 mlgCompleted = false;
                 placedWaterPos = null;
 

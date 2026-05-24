@@ -75,6 +75,7 @@ public class ModuleManager {
         add(new AutoDick());
         add(new AutoSoup());
         add(new AutoTool());
+        add(new AutoWebPlace());
         add(new BedBreaker());
         add(new BowBomb());
         add(new BreakCooldown());
@@ -83,6 +84,7 @@ public class ModuleManager {
         add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());
+        add(new Helper());
         add(new NameProtect());
 //        add(new PacketMine());
         add(new Stealer());
@@ -99,7 +101,7 @@ public class ModuleManager {
         add(new Chams());
         add(new ChestESP());
         add(new Fullbright());
-        add(new GlowESP());
+        add(new ESP());
         add(new Hat());
         add(new ItemPhysics());
         add(new JumpCircles());
@@ -113,7 +115,7 @@ public class ModuleManager {
         add(new TotemParticles());
         add(new Trajectories());
         add(new ViewModel());
-        add(new GlowESP());
+        add(new ESP());
 
         // Client
         add(new AutoHeypixel());

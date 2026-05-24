@@ -22,6 +22,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.lang.invoke.MethodHandles;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -110,6 +111,7 @@ public class Sakura {
     public static HudEditorScreen HUDEDITOR;
 
     public static int skipTicks;
+    public static final ConcurrentLinkedQueue<Runnable> delayPackets = new ConcurrentLinkedQueue<>();
 
     public static void init(MinecraftClient client) {
         NanoVGRenderer.INSTANCE.initNanoVG();

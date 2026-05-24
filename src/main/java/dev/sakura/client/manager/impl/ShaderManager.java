@@ -15,7 +15,7 @@ import com.mojang.blaze3d.textures.GpuTexture;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import dev.sakura.client.Sakura;
 import dev.sakura.client.module.impl.render.ChestESP;
-import dev.sakura.client.module.impl.render.GlowESP;
+import dev.sakura.client.module.impl.render.ESP;
 import dev.sakura.client.module.impl.render.Shaders;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gl.Framebuffer;
@@ -103,8 +103,8 @@ public class ShaderManager {
             encoder.clearDepthTexture(genericOutput.getDepthAttachment(), 1.0);
         }
 
-        // Check if GlowESP is enabled to use the 2-pass blur
-        boolean useGlowLogic = mode == Shader.Glow && Sakura.MODULES.getModule(GlowESP.class).isEnabled();
+        // Check if ESP is enabled to use the 2-pass blur
+        boolean useGlowLogic = mode == Shader.Glow && Sakura.MODULES.getModule(ESP.class).isEnabled();
 
         ChestESP chestESP = Sakura.MODULES.getModule(ChestESP.class);
         boolean useChestGlow = mode == Shader.Glow && chestESP.isEnabled() && chestESP.isGlowEnabled();
@@ -177,14 +177,14 @@ public class ShaderManager {
 
     private void renderPostPass(CommandEncoder encoder, GpuTextureView inColorView, GpuTextureView outColorView, Shader mode, float tickDelta, int inW, int inH, boolean isHands, Vector4f direction) {
         Shaders shaders = Sakura.MODULES.getModule(Shaders.class);
-        GlowESP glowESP = Sakura.MODULES.getModule(GlowESP.class);
+        ESP esp = Sakura.MODULES.getModule(ESP.class);
 
         RenderPipeline pipeline = getPipeline(mode);
         if (pipeline == null) return;
 
         ShaderParams params;
-        if (mode == Shader.Glow && glowESP.isEnabled()) {
-            params = ShaderParams.fromGlow(glowESP, tickDelta, inW, inH, time, isHands, direction);
+        if (mode == Shader.Glow && esp.isEnabled()) {
+            params = ShaderParams.fromGlow(esp, tickDelta, inW, inH, time, isHands, direction);
         } else if (mode == Shader.Glow && Sakura.MODULES.getModule(ChestESP.class).isEnabled() && Sakura.MODULES.getModule(ChestESP.class).isGlowEnabled()) {
             params = ShaderParams.fromChestGlow(Sakura.MODULES.getModule(ChestESP.class), tickDelta, inW, inH, time, isHands, direction);
         } else {
@@ -338,7 +338,7 @@ public class ShaderManager {
             return new ShaderParams(inSize, res, colorV, outlineV, zero, zero, colorV, zero, zero, colorV, zero, params1, params2, params3, time);
         }
 
-        static ShaderParams fromGlow(GlowESP g, float tickDelta, int inW, int inH, float time, boolean isHands, Vector4f direction) {
+        static ShaderParams fromGlow(ESP g, float tickDelta, int inW, int inH, float time, boolean isHands, Vector4f direction) {
             int scaledW = MinecraftClient.getInstance().getWindow().getScaledWidth();
             int scaledH = MinecraftClient.getInstance().getWindow().getScaledHeight();
 
