@@ -115,7 +115,10 @@ public class ModuleManager {
         add(new TotemParticles());
         add(new Trajectories());
         add(new ViewModel());
+<<<<<<< HEAD
         add(new ESP());
+=======
+>>>>>>> 37357060bbecbbab7e21005e9c2d7459c26a11e7
 
         // Client
         add(new AutoHeypixel());
