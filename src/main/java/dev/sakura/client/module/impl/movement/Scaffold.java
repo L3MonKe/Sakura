@@ -5,12 +5,12 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
 import dev.sakura.client.event.impl.player.MotionEvent;
-import dev.sakura.client.event.impl.render.item.HeldItemRendererEvent;
 import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.math.MathUtil;
 import dev.sakura.client.utils.player.FallingPlayer;
+import dev.sakura.client.utils.player.ItemSpoofUtils;
 import dev.sakura.client.utils.player.MoveUtil;
 import dev.sakura.client.utils.rotation.RaytraceUtil;
 import dev.sakura.client.utils.rotation.Rotation;
@@ -124,7 +124,7 @@ public class Scaffold extends Module {
     private int yLevel;
     private BlockPos blockPos;
     private Direction enumFacing;
-    private int oldSlot = -1;
+    private boolean isSpoofing;
     private Rotation rotation;
     private int rotateCount = 0;
 
@@ -135,8 +135,11 @@ public class Scaffold extends Module {
 
     @Override
     protected void onEnable() {
-        if (mc.player != null) {
-            oldSlot = mc.player.getInventory().getSelectedSlot();
+        isSpoofing = false;
+
+        if (mc.player != null && spoofSwap.get()) {
+            ItemSpoofUtils.startSpoof();
+            isSpoofing = true;
         }
 
         airTick = 0;
@@ -153,9 +156,11 @@ public class Scaffold extends Module {
         boolean isHoldingShift = InputUtil.isKeyPressed(mc.getWindow(), mc.options.sneakKey.getDefaultKey().getCode());
         mc.options.sneakKey.setPressed(isHoldingShift);
 
-        if (oldSlot != -1) {
-            mc.player.getInventory().setSelectedSlot(oldSlot);
+        if (isSpoofing) {
+            ItemSpoofUtils.stopSpoof();
+            isSpoofing = false;
         }
+
         yLevel = 0;
     }
 
@@ -231,15 +236,6 @@ public class Scaffold extends Module {
         if (mc.player.isOnGround() && !mc.options.jumpKey.isPressed() && MoveUtil.isMoving() && telly.get()) {
             event.setJump(true);
         }
-    }
-
-    @EventHandler
-    private void onUpdateHeldItem(HeldItemRendererEvent event) {
-        if (!spoofSwap.get() || oldSlot == -1 || event.getHand() != Hand.MAIN_HAND) {
-            return;
-        }
-
-        event.setItem(mc.player.getInventory().getStack(oldSlot));
     }
 
     private int findBlockSlot() {
