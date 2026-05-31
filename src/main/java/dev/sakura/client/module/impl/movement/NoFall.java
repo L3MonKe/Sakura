@@ -56,11 +56,6 @@ public class NoFall extends Module {
     private final NumberValue<Integer> collectDelayTicks = new NumberValue<>("Collect Delay Ticks", "收水延后Tick", 2, 0, 10, 1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
     private final NumberValue<Double> scaffoldRescueFall = new NumberValue<>("Scaffold Rescue Fall", "搭路自救距离", 5.5, 3.0, 12.0, 0.1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
 
-    private final EnumValue<HypixelFallDistanceMode> hypixelDistanceMode = new EnumValue<>("FallDistanceMode", "摔落距离模式", HypixelFallDistanceMode.SafeDistance, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel));
-    private final NumberValue<Double> hypixelFallDistance = new NumberValue<>("FallDistance", "摔落距离", 3.0, 0.0, 10.0, 0.1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel) && hypixelDistanceMode.is(HypixelFallDistanceMode.Custom));
-    private final NumberValue<Integer> hypixelRetrieveTick = new NumberValue<>("RetrieveTick", "收水刻", 0, 0, 20, 1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel));
-    private final BoolValue hypixelStopMove = new BoolValue("StopMove", "停止移动", false, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Hypixel));
-
     private boolean mlgCompleted = true;
     private BlockPos placedWaterPos = null;
     private final TimerUtil swapTimer = new TimerUtil();
@@ -368,9 +363,6 @@ public class NoFall extends Module {
             if (hypixelLastData != null) {
                 mc.player.setSprinting(false);
             }
-            if (hypixelHandleStopMove && hypixelStopMove.get()) {
-                event.setCancelled(true);
-            }
         }
     }
 
@@ -382,8 +374,7 @@ public class NoFall extends Module {
 
         if (hypixelTicksSinceTeleport < 3) return;
 
-        boolean shouldMLG = (mc.player.fallDistance > mc.player.getAttributeValue(EntityAttributes.SAFE_FALL_DISTANCE) && hypixelDistanceMode.is(HypixelFallDistanceMode.SafeDistance)
-                || mc.player.fallDistance > hypixelFallDistance.get() && hypixelDistanceMode.is(HypixelFallDistanceMode.Custom)) && !mc.player.isTouchingWater() && hypixelNextTickWillLanding();
+        boolean shouldMLG = mc.player.fallDistance > mc.player.getAttributeValue(EntityAttributes.SAFE_FALL_DISTANCE) && !mc.player.isTouchingWater() && hypixelNextTickWillLanding();
 
         if (hypixelTicksExisted >= 0) {
             hypixelTicksExisted--;
@@ -394,7 +385,7 @@ public class NoFall extends Module {
             if (waterBucketSlot == -1) {
                 shouldMLG = false;
             }
-            hypixelTicksExisted = hypixelRetrieveTick.get();
+            hypixelTicksExisted = 1;
             hypixelHandleStopMove = true;
             hypixelPlaceWaterBucket(waterBucketSlot);
         }
@@ -847,11 +838,6 @@ public class NoFall extends Module {
     private enum MlgMode {
         Grim,
         Hypixel
-    }
-
-    private enum HypixelFallDistanceMode {
-        SafeDistance,
-        Custom
     }
 
     private record HypixelPlaceData(BlockPos pos, Box bb) {
