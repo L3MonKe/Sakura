@@ -19,7 +19,6 @@ import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -52,14 +51,11 @@ import java.util.Optional;
 public class AutoWebPlace extends Module {
     public static Rotation targetRotation;
 
-    private enum SwapMode {
-        Normal,
-        Silent
-    }
+    private boolean isSpoofing;
 
     public final NumberValue<Double> rangeSetting = new NumberValue<>("Range", "范围", 4.0, 3.0, 5.0, 0.1);
     public final NumberValue<Double> delaySetting = new NumberValue<>("Delay", "延迟", 4.0, 1.0, 20.0, 1.0);
-    public final EnumValue<SwapMode> swapModeSetting = new EnumValue<>("Swap Mode", "切换模式", SwapMode.Silent);
+    public final BoolValue spoofSwap = new BoolValue("Spoof Swap", "静默切换", true);
     public final BoolValue renderSetting = new BoolValue("Render", "渲染", true);
     public final BoolValue groundWebSetting = new BoolValue("Ground Web", "地面蜘蛛网", false);
     public final BoolValue lavaSetting = new BoolValue("Lava", "岩浆", true);
@@ -97,21 +93,31 @@ public class AutoWebPlace extends Module {
 
     @Override
     protected void onEnable() {
-        if (this.swapModeSetting.is(SwapMode.Silent)) {
+        isSpoofing = false;
+
+        if (mc.player != null && spoofSwap.get()) {
             ItemSpoofUtils.startSpoof();
+            isSpoofing = true;
         }
+
         this.resetState();
     }
 
     @Override
     protected void onDisable() {
-        if (this.pendingSwapBack) {
+        if (!spoofSwap.get() && this.pendingSwapBack) {
             InvUtil.swapBack();
             this.pendingSwapBack = false;
         }
-        if (ItemSpoofUtils.isSpoofing) {
+
+        if (isSpoofing) {
             ItemSpoofUtils.stopSpoof();
+            isSpoofing = false;
+            if (mc.interactionManager != null) {
+                mc.interactionManager.syncSelectedSlot();
+            }
         }
+
         this.resetState();
     }
 
@@ -145,7 +151,7 @@ public class AutoWebPlace extends Module {
         if (nullCheck() || mc.interactionManager == null) {
             return;
         }
-        if (this.pendingSwapBack && this.swapTimer.passedMillise(200)) {
+        if (!spoofSwap.get() && this.pendingSwapBack && this.swapTimer.passedMillise(200)) {
             InvUtil.swapBack();
             this.pendingSwapBack = false;
         }
@@ -1374,9 +1380,10 @@ public class AutoWebPlace extends Module {
     private boolean swapTo(FindItemResult item) {
         if (!item.found()) return false;
         if (!item.isHotbar()) return false;
-        switch (this.swapModeSetting.get()) {
-            case Normal -> InvUtil.swap(item.slot(), true);
-            case Silent -> mc.player.getInventory().setSelectedSlot(item.slot());
+        if (spoofSwap.get()) {
+            mc.player.getInventory().setSelectedSlot(item.slot());
+        } else {
+            InvUtil.swap(item.slot(), true);
         }
         return true;
     }
@@ -1384,11 +1391,9 @@ public class AutoWebPlace extends Module {
     private void scheduleSwapBack(FindItemResult item) {
         if (!item.found()) return;
         if (!item.isHotbar()) return;
-        switch (this.swapModeSetting.get()) {
-            case Normal -> {
-                this.pendingSwapBack = true;
-                this.swapTimer.reset();
-            }
+        if (!spoofSwap.get()) {
+            this.pendingSwapBack = true;
+            this.swapTimer.reset();
         }
     }
 

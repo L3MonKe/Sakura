@@ -62,7 +62,7 @@ public class KillAura extends Module {
     private final BoolValue throughWall = new BoolValue("ThroughWall", "穿墙攻击", false);
     private final NumberValue<Double> throughWallRange = new NumberValue<>("ThroughWall Range", "穿墙范围", 3.0, 0.0, 6.0, 0.1, throughWall::get);
     private final EnumValue<AutoBlockMode> abMode = new EnumValue<>("Auto Block", "自动格挡", AutoBlockMode.Fake);
-    private final NumberValue<Integer> blinkTicks = new NumberValue<>("Blink Ticks", "闪烁刻数", 3, 1, 5, 1, () -> abMode.is(AutoBlockMode.Hypixel));
+
     private final EnumValue<MovementFixMode> movementFixMode = new EnumValue<>("MovementFix", "移动修正", MovementFixMode.Smart);
     private final BoolValue debugRender = new BoolValue("Debug Render", "调试渲染", false);
 
@@ -130,7 +130,7 @@ public class KillAura extends Module {
                         movePacketCount++;
                     }
                 }
-                if (movePacketCount >= blinkTicks.get()) {
+                if (movePacketCount >= 3) {
                     mc.getNetworkHandler().sendPacket(new PlayerInteractItemC2SPacket(Hand.MAIN_HAND, 0, Managers.ROTATION.getYaw(), Managers.ROTATION.getPitch()));
                     flush();
                     mc.getNetworkHandler().sendPacket(new PlayerActionC2SPacket(PlayerActionC2SPacket.Action.RELEASE_USE_ITEM, BlockPos.ORIGIN, Direction.DOWN));

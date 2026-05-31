@@ -85,11 +85,10 @@ public class Velocity extends Module {
     private final BoolValue render = new BoolValue("Render", "渲染", false, () -> mode.is(Mode.NoXZ));
     private final BoolValue debug = new BoolValue("Debug", "调试", false, () -> mode.is(Mode.NoXZ));
     private final BoolValue old = new BoolValue("Old", "旧逻辑", false, () -> mode.is(Mode.NoXZ));
-
+    private final BoolValue airpushValue = new BoolValue("Airpush", "空气推", true, () -> mode.is(Mode.Hypixel));
     private final BoolValue attackReduce = new BoolValue("AttackReduce", "攻击减少", true, () -> mode.is(Mode.Hypixel));
-    private final BoolValue bufferCorrect = new BoolValue("Buffer", "缓冲修正", true, () -> mode.is(Mode.Hypixel));
-    private final BoolValue rotationJumpReset = new BoolValue("JumpReset", "旋转跳跃重置", true, () -> mode.is(Mode.Hypixel));
-    private final NumberValue<Double> bufferTickValue = new NumberValue<>("BufferTick", "缓冲刻", 4.0, 0.0, 10.0, 1.0, () -> mode.is(Mode.Hypixel) && bufferCorrect.get());
+
+
 
     public boolean lag;
     private boolean jump;
@@ -472,9 +471,7 @@ public class Velocity extends Module {
             shouldStrict = false;
         }
 
-        if (rotationJumpReset.get()) {
-            handleJumpReset();
-        }
+        handleJumpReset();
 
         if (hypBuffer || handleReset) {
             shouldStrict = true;
@@ -514,7 +511,7 @@ public class Velocity extends Module {
                             mc.player.setSprinting(false);
                         }
                     }
-                } else if (getFarthestLivingEntity(true) != null && true) {
+                } else if (getFarthestLivingEntity(true) != null && airpushValue.get()) {
                     airPush();
                 }
             }
@@ -546,7 +543,7 @@ public class Velocity extends Module {
         Entity attackTarget = (hitResult != null) ? hitResult.getEntity() : null;
 
         if (hypBuffer) {
-            if (bufferTick >= bufferTickValue.get() || mc.player.isSprinting() || ((IClientPlayerEntity) mc.player).getLastSprinting() || mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.SLOWNESS) || clientOnGround() || getKillAuraTarget() == null && attackTarget == null && getFarthestLivingEntity(true) == null) {
+            if (bufferTick >= 4 || mc.player.isSprinting() || ((IClientPlayerEntity) mc.player).getLastSprinting() || mc.player.hasStatusEffect(net.minecraft.entity.effect.StatusEffects.SLOWNESS) || clientOnGround() || getKillAuraTarget() == null && attackTarget == null && getFarthestLivingEntity(true) == null) {
                 while (!serverPackets.isEmpty()) {
                     Packet<? super ClientPlayNetworkHandler> p = serverPackets.poll();
                     p.apply(mc.getNetworkHandler());
@@ -555,7 +552,7 @@ public class Velocity extends Module {
                     debug("Used Tick: " + bufferTick);
                 receiveVelocity = true;
                 ticksSinceVelocity = 0;
-                if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
+                if (clientOnGround() && !isScaffoldEnabled()) {
                     if (getClosestLivingEntity(3.1, 0.0, true) != null) {
                         LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
                         Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
@@ -602,35 +599,15 @@ public class Velocity extends Module {
                     oppositeRotation = rotation;
 
                     if (!hypBuffer) {
-                        if (bufferCorrect.get() && bufferTickValue.get() != 0) {
-                            EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), 3.1, false);
-                            if (hitResult == null && 0.0 > 0) {
-                                hitResult = rayCastEntityHit(getRotationOrElseMC(), 0.0, true);
-                            }
-                            Entity attackTarget = (hitResult != null) ? hitResult.getEntity() : null;
-                            if ((attackTarget != null && attackTarget != mc.player && (attackTarget instanceof PlayerEntity ||
-                                    !true)) || (getKillAuraTarget() != null && (getKillAuraTarget() instanceof PlayerEntity || !true)) || (getFarthestLivingEntity(true)) != null && true) {
-                                if (mc.player.isSprinting() || ((IClientPlayerEntity) mc.player).getLastSprinting()) {
-                                    if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
-                                        if (getClosestLivingEntity(3.1, 0.0, true) != null) {
-                                            LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
-                                            Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
-                                            Managers.ROTATION.setRotations(new Rotation(oppositeRotation.yaw, rotation1.pitch), 10.0, MovementFix.TRADITIONAL, Priority.Medium);
-                                        } else {
-                                            Managers.ROTATION.setRotations(oppositeRotation, 10.0, MovementFix.TRADITIONAL, Priority.Medium);
-                                        }
-                                        shouldStrict = true;
-                                    }
-                                    receiveVelocity = true;
-                                    ticksSinceVelocity = 0;
-                                } else {
-                                    hypBuffer = true;
-                                    if (debug.get())
-                                        debug("Buffer");
-                                    bufferTick = 0;
-                                }
-                            } else {
-                                if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
+                        EntityHitResult hitResult = rayCastEntityHit(getRotationOrElseMC(), 3.1, false);
+                        if (hitResult == null && 0.0 > 0) {
+                            hitResult = rayCastEntityHit(getRotationOrElseMC(), 0.0, true);
+                        }
+                        Entity attackTarget = (hitResult != null) ? hitResult.getEntity() : null;
+                        if ((attackTarget != null && attackTarget != mc.player && (attackTarget instanceof PlayerEntity ||
+                                !true)) || (getKillAuraTarget() != null && (getKillAuraTarget() instanceof PlayerEntity || !true)) || (getFarthestLivingEntity(true)) != null && true) {
+                            if (mc.player.isSprinting() || ((IClientPlayerEntity) mc.player).getLastSprinting()) {
+                                if (clientOnGround() && !isScaffoldEnabled()) {
                                     if (getClosestLivingEntity(3.1, 0.0, true) != null) {
                                         LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
                                         Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
@@ -642,9 +619,14 @@ public class Velocity extends Module {
                                 }
                                 receiveVelocity = true;
                                 ticksSinceVelocity = 0;
+                            } else {
+                                hypBuffer = true;
+                                if (debug.get())
+                                    debug("Buffer");
+                                bufferTick = 0;
                             }
                         } else {
-                            if (clientOnGround() && !isScaffoldEnabled() && rotationJumpReset.get()) {
+                            if (clientOnGround() && !isScaffoldEnabled()) {
                                 if (getClosestLivingEntity(3.1, 0.0, true) != null) {
                                     LivingEntity target = getClosestLivingEntity(3.1, 0.0, true);
                                     Rotation rotation1 = RotationUtil.calculate(newGetPointToEntityBoxSafe(mc.player, Objects.requireNonNull(target), 0.0));
@@ -654,8 +636,8 @@ public class Velocity extends Module {
                                 }
                                 shouldStrict = true;
                             }
-                            ticksSinceVelocity = 0;
                             receiveVelocity = true;
+                            ticksSinceVelocity = 0;
                         }
                     }
                 }

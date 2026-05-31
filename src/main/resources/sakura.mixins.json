@@ -5,7 +5,9 @@
   "compatibilityLevel": "JAVA_21",
   "client": [
     "MixinMain",
+    "accessor.IAbstractFurnaceScreenHandler",
     "accessor.IBillboardParticle",
+    "accessor.IBrewingStandScreenHandler",
     "accessor.IChatInputSuggestor",
     "accessor.IClientPlayerEntity",
     "accessor.ICreativeInventoryScreen",

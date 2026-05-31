@@ -63,7 +63,7 @@ public class ModuleManager {
         add(new NoSlow());
         add(new SafeWalk());
         add(new Scaffold());
-        add(new Speed());
+        // add(new Speed());
         add(new Sprint());
         add(new Stuck());
         add(new Velocity());
@@ -71,11 +71,12 @@ public class ModuleManager {
 
         // Player
         // add(new Blink());
+        add(new ChestAura());
         add(new AntiHunger());
         add(new AutoDick());
         add(new AutoSoup());
         add(new AutoTool());
-        add(new AutoWebPlace());
+        // add(new AutoWebPlace());
         add(new BedBreaker());
         add(new BowBomb());
         add(new BreakCooldown());
@@ -84,14 +85,14 @@ public class ModuleManager {
         add(new MCP());
         add(new FakePlayer());
         add(new GhostHand());
-        add(new Helper());
+        // add(new Helper());
         add(new NameProtect());
 //        add(new PacketMine());
         add(new Stealer());
         add(new Timer());
         add(new ViewLock());
         add(new InvManager());
-        add(new InventorySync());
+        // add(new InventorySync());
 
         // Render
         add(new AspectRatio());
