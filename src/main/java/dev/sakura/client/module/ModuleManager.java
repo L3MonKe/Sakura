@@ -106,7 +106,7 @@ public class ModuleManager {
         add(new Hat());
         add(new ItemPhysics());
         add(new JumpCircles());
-        add(new KillEffect());
+        // add(new KillEffect());
 //        add(new MotionBlur());
         add(new NameTags());
         add(new NoFov());
