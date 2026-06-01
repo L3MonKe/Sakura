@@ -1,6 +1,5 @@
 package dev.sakura.client.module.impl.movement;
 
-import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.input.MoveInputEvent;
@@ -51,16 +50,12 @@ import java.util.List;
 public class NoFall extends Module {
     private final EnumValue<Mode> mode = new EnumValue<>("Mode", "模式", Mode.Packet);
     private final EnumValue<MlgMode> mlgMode = new EnumValue<>("MLG Mode", "MLG模式", MlgMode.Grim, () -> mode.is(Mode.MLG));
-    private final NumberValue<Integer> swapDelay = new NumberValue<>("Swap Back Delay", "切回延迟", 200, 0, 1000, 10, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
     private final NumberValue<Integer> interactDelay = new NumberValue<>("Interact Delay", "交互延迟", 60, 0, 300, 5, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
     private final NumberValue<Integer> collectDelayTicks = new NumberValue<>("Collect Delay Ticks", "收水延后Tick", 2, 0, 10, 1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
-    private final NumberValue<Double> scaffoldRescueFall = new NumberValue<>("Scaffold Rescue Fall", "搭路自救距离", 5.5, 3.0, 12.0, 0.1, () -> mode.is(Mode.MLG) && mlgMode.is(MlgMode.Grim));
 
     private boolean mlgCompleted = true;
     private BlockPos placedWaterPos = null;
-    private final TimerUtil swapTimer = new TimerUtil();
     private final TimerUtil interactTimer = new TimerUtil();
-    private boolean pendingSwapBack = false;
     private int quickCollectDelayTicks = 0;
 
     private boolean shouldInteract = false;
@@ -69,6 +64,13 @@ public class NoFall extends Module {
 
     private Rotation lockedRotation = null;
     private boolean waitingForRotation = false;
+
+    private boolean grimShouldCollect = false;
+    private Rotation grimCollectRotation = null;
+    private int grimCollectSlot = -1;
+    private boolean grimWaitingCollectRotation = false;
+    private final TimerUtil swapTimer = new TimerUtil();
+    private boolean pendingSwapBack = false;
 
     private int hypixelTicksExisted = -1;
     private boolean hypixelInteractRequired = false;
@@ -97,10 +99,14 @@ public class NoFall extends Module {
     protected void onEnable() {
         mlgCompleted = true;
         placedWaterPos = null;
-        pendingSwapBack = false;
         quickCollectDelayTicks = 0;
-        swapTimer.reset();
         interactTimer.reset();
+        swapTimer.reset();
+        grimShouldCollect = false;
+        grimCollectRotation = null;
+        grimCollectSlot = -1;
+        grimWaitingCollectRotation = false;
+        pendingSwapBack = false;
         resetPending();
         resetHypixel();
     }
@@ -109,10 +115,14 @@ public class NoFall extends Module {
     protected void onDisable() {
         mlgCompleted = true;
         placedWaterPos = null;
-        pendingSwapBack = false;
         quickCollectDelayTicks = 0;
-        swapTimer.reset();
         interactTimer.reset();
+        swapTimer.reset();
+        grimShouldCollect = false;
+        grimCollectRotation = null;
+        grimCollectSlot = -1;
+        grimWaitingCollectRotation = false;
+        pendingSwapBack = false;
         resetPending();
         resetHypixel();
     }
@@ -159,28 +169,6 @@ public class NoFall extends Module {
         return result.isAccepted();
     }
 
-    private boolean isScaffoldEnabled() {
-        Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
-        return scaffold != null && scaffold.isEnabled();
-    }
-
-    private boolean shouldScaffoldRescue() {
-        if (!isScaffoldEnabled()) return false;
-        return mc.player.fallDistance >= scaffoldRescueFall.get();
-    }
-
-    private boolean isScaffoldClutchAwaiting() {
-        Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
-//        return scaffold != null && scaffold.isEnabled() && scaffold.isClutchAwaitingNoFall(); todo
-        return true;
-    }
-
-    private boolean isNearGroundForClutch() {
-        if (mc.player == null || mc.world == null) return false;
-        BlockPos below = BlockPos.ofFloored(mc.player.getX(), mc.player.getY() - 1.0, mc.player.getZ());
-        return !mc.world.getBlockState(below).isAir();
-    }
-
     @EventHandler
     public void onTick(TickEvent.Pre event) {
         if (nullCheck()) return;
@@ -189,62 +177,59 @@ public class NoFall extends Module {
             return;
         }
 
-        if (pendingSwapBack && swapTimer.passedMillise(swapDelay.get())) {
-            InvUtil.swapBack();
-            pendingSwapBack = false;
-        }
-
         if (mode.is(Mode.MLG)) {
-            boolean scaffoldEnabled = isScaffoldEnabled();
-            boolean scaffoldRescue = shouldScaffoldRescue();
-            if ((isFalling() || mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted && (!scaffoldEnabled || scaffoldRescue || isScaffoldClutchAwaiting())) {
+            if ((isFalling() || mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted) {
                 mc.player.setSprinting(false);
                 mc.options.sprintKey.setPressed(false);
             }
 
-            if (tryContinuousCollectWater()) {
-                return;
+            if (pendingSwapBack && swapTimer.passedMillise(200)) {
+                InvUtil.swapBack();
+                pendingSwapBack = false;
             }
 
-            if ((mc.player.isTouchingWater() || mc.player.isInFluid()) && !mlgCompleted) {
-                if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
-                    completeMlgCycle();
-                    return;
-                }
+            if (grimShouldCollect) {
+                if (quickCollectDelayTicks > 0) {
+                    quickCollectDelayTicks--;
+                } else if (grimWaitingCollectRotation && grimCollectRotation != null) {
+                    Managers.ROTATION.setRotations(grimCollectRotation, 180, MovementFix.NORMAL, Priority.High);
 
-                FindItemResult bucket = InvUtil.findInHotbar(Items.BUCKET);
-                if (bucket.found()) {
-                    BlockPos targetPos = placedWaterPos != null ? placedWaterPos : getWaterPos();
-                    if (targetPos != null) {
-                        Vec3d eyesPos = mc.player.getEyePos();
-                        double hitX = MathHelper.clamp(eyesPos.x, targetPos.getX(), targetPos.getX() + 1.0);
-                        double hitZ = MathHelper.clamp(eyesPos.z, targetPos.getZ(), targetPos.getZ() + 1.0);
-                        Vec3d hitVec = new Vec3d(hitX, targetPos.getY() + 1.0, hitZ);
-                        Rotation rotation = RotationUtil.calculate(hitVec);
-                        Managers.ROTATION.setRotations(rotation, 180, MovementFix.NORMAL, Priority.High);
-
-                        if (!isFacing(rotation, 2.0f, 2.5f)) {
-                            return;
-                        }
-
-                        InvUtil.swap(bucket.slot(), true);
-                        if (interactTimer.passedMillise(interactDelay.get()) && useItemLegit(rotation)) {
+                    if (isFacing(grimCollectRotation, 2.0f, 2.5f)) {
+                        InvUtil.swap(grimCollectSlot, true);
+                        if (useItemLegit(grimCollectRotation)) {
                             mc.player.swingHand(Hand.MAIN_HAND);
-                            interactTimer.reset();
                             pendingSwapBack = true;
                             swapTimer.reset();
+                            completeMlgCycle();
+                        } else {
+                            grimWaitingCollectRotation = false;
+                            grimCollectRotation = null;
+                            grimCollectSlot = -1;
                         }
                     }
                 } else {
-                    if (InvUtil.testInHands(Items.WATER_BUCKET)) {
+                    if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
+                        InvUtil.swapBack();
                         completeMlgCycle();
+                        return;
+                    }
+
+                    FindItemResult bucket = InvUtil.findInHotbar(Items.BUCKET);
+                    if (bucket.found()) {
+                        BlockPos waterPos = grimFindCollectableWater();
+                        if (waterPos != null) {
+                            Vec3d eyesPos = mc.player.getEyePos();
+                            double hitX = MathHelper.clamp(eyesPos.x, waterPos.getX(), waterPos.getX() + 1.0);
+                            double hitZ = MathHelper.clamp(eyesPos.z, waterPos.getZ(), waterPos.getZ() + 1.0);
+                            Vec3d hitVec = new Vec3d(hitX, waterPos.getY() + 0.875, hitZ);
+                            Rotation rotation = RotationUtil.calculate(hitVec);
+                            Managers.ROTATION.setRotations(rotation, 180, MovementFix.NORMAL, Priority.High);
+                            grimCollectRotation = rotation;
+                            grimCollectSlot = bucket.slot();
+                            grimWaitingCollectRotation = true;
+                        }
                     }
                 }
-                return;
-            }
-
-            if (scaffoldEnabled && !scaffoldRescue && !isScaffoldClutchAwaiting()) {
-                resetPending();
                 return;
             }
 
@@ -266,23 +251,14 @@ public class NoFall extends Module {
                         }
 
                         quickCollectDelayTicks = collectDelayTicks.get();
+                        grimShouldCollect = true;
                         resetPending();
-
-                        Scaffold scaffold = Sakura.MODULES.getModule(Scaffold.class);
-//                        if (scaffold != null && scaffold.isClutchAwaitingNoFall()) { todo
-//                            scaffold.notifyNoFallPlaced();
-//                        }
                     }
                 }
                 return;
             }
 
-            if (isFalling()) {
-                boolean clutchAwaiting = isScaffoldClutchAwaiting();
-                if (clutchAwaiting && !isNearGroundForClutch()) {
-                    return;
-                }
-
+            if (isFalling() && !grimShouldCollect) {
                 mlgCompleted = false;
                 placedWaterPos = null;
 
@@ -635,6 +611,44 @@ public class NoFall extends Module {
         return mc.world.raycast(new RaycastContext(eyesPos, endPos, RaycastContext.ShapeType.OUTLINE, RaycastContext.FluidHandling.NONE, mc.player));
     }
 
+    private BlockPos grimFindCollectableWater() {
+        if (mc.player == null || mc.world == null) return null;
+        Vec3d eyesPos = mc.player.getEyePos();
+        BlockPos base = BlockPos.ofFloored(mc.player.getX(), mc.player.getY(), mc.player.getZ());
+        BlockPos bestPos = null;
+        double bestDistance = Double.MAX_VALUE;
+
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    BlockPos check = base.add(x, y, z);
+                    FluidState fluidState = mc.world.getFluidState(check);
+                    if (!fluidState.isStill() || fluidState.getFluid() != Fluids.WATER) continue;
+
+                    double hitX = MathHelper.clamp(eyesPos.x, check.getX(), check.getX() + 1.0);
+                    double hitZ = MathHelper.clamp(eyesPos.z, check.getZ(), check.getZ() + 1.0);
+                    Vec3d targetVec = new Vec3d(hitX, check.getY() + 0.875, hitZ);
+                    double distance = eyesPos.squaredDistanceTo(targetVec);
+
+                    if (distance >= bestDistance) continue;
+                    if (!canSeePosition(eyesPos, targetVec, check)) continue;
+
+                    bestDistance = distance;
+                    bestPos = check;
+                }
+            }
+        }
+
+        return bestPos;
+    }
+
+    private boolean canSeePosition(Vec3d from, Vec3d to, BlockPos targetBlock) {
+        RaycastContext context = new RaycastContext(from, to, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.SOURCE_ONLY, mc.player);
+        BlockHitResult result = mc.world.raycast(context);
+        if (result == null || result.getType() == HitResult.Type.MISS) return true;
+        return result.getBlockPos().equals(targetBlock);
+    }
+
     private boolean shouldSkipMlgPlacement(BlockPos bestPos) {
         BlockPos landingPos = bestPos.down();
         BlockState landingState = mc.world.getBlockState(landingPos);
@@ -654,73 +668,12 @@ public class NoFall extends Module {
     private void completeMlgCycle() {
         mlgCompleted = true;
         placedWaterPos = null;
-        pendingSwapBack = false;
         quickCollectDelayTicks = 0;
+        grimShouldCollect = false;
+        grimCollectRotation = null;
+        grimCollectSlot = -1;
+        grimWaitingCollectRotation = false;
         resetPending();
-    }
-
-    private boolean tryContinuousCollectWater() {
-        if (waitingForRotation || shouldInteract) return false;
-        if (isFalling() && !mc.player.isTouchingWater() && !mc.player.isInFluid()) return false;
-
-        if (quickCollectDelayTicks > 0) {
-            quickCollectDelayTicks--;
-            return false;
-        }
-
-        if (InvUtil.findInHotbar(Items.WATER_BUCKET).found()) {
-            completeMlgCycle();
-            return true;
-        }
-
-        FindItemResult bucket = InvUtil.findInHotbar(Items.BUCKET);
-        if (!bucket.found()) return false;
-
-        BlockPos targetPos = findNearbyWaterTarget();
-        if (targetPos == null) return false;
-
-        Vec3d eyesPos = mc.player.getEyePos();
-        double hitX = MathHelper.clamp(eyesPos.x, targetPos.getX(), targetPos.getX() + 1.0);
-        double hitZ = MathHelper.clamp(eyesPos.z, targetPos.getZ(), targetPos.getZ() + 1.0);
-        Vec3d hitVec = new Vec3d(hitX, targetPos.getY() + 1.0, hitZ);
-        Rotation rotation = RotationUtil.calculate(hitVec);
-        Managers.ROTATION.setRotations(rotation, 180, MovementFix.NORMAL, Priority.High);
-
-        if (!isFacing(rotation, 2.0f, 2.5f)) return true;
-
-        InvUtil.swap(bucket.slot(), true);
-        if (interactTimer.passedMillise(interactDelay.get()) && useItemLegit(rotation)) {
-            mc.player.swingHand(Hand.MAIN_HAND);
-            interactTimer.reset();
-            completeMlgCycle();
-        }
-
-        return true;
-    }
-
-    private BlockPos findNearbyWaterTarget() {
-        BlockPos base = BlockPos.ofFloored(mc.player.getX(), mc.player.getY(), mc.player.getZ());
-        Vec3d eyesPos = mc.player.getEyePos();
-        BlockPos bestPos = null;
-        double bestDistance = Double.MAX_VALUE;
-
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    BlockPos check = base.add(x, y, z);
-                    BlockState state = mc.world.getBlockState(check);
-                    if (!state.getFluidState().isOf(Fluids.WATER)) continue;
-
-                    double distance = eyesPos.squaredDistanceTo(check.toCenterPos().add(0, 0.5, 0));
-                    if (distance < bestDistance) {
-                        bestDistance = distance;
-                        bestPos = check;
-                    }
-                }
-            }
-        }
-
-        return bestPos;
     }
 
     private BlockPos getBestPos() {
@@ -821,8 +774,7 @@ public class NoFall extends Module {
 
     private boolean isFalling() {
         if (mode.is(Mode.MLG)) {
-            double triggerDistance = isScaffoldEnabled() ? 2.2 : 3.0;
-            boolean falling = mc.player.fallDistance > triggerDistance && !mc.player.isOnGround();
+            boolean falling = mc.player.fallDistance > 3.0 && !mc.player.isOnGround();
             if (mc.player.getVelocity().y > 0) return false;
             return falling;
         }

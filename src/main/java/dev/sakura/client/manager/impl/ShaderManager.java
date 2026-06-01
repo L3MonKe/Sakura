@@ -342,26 +342,43 @@ public class ShaderManager {
             int scaledW = MinecraftClient.getInstance().getWindow().getScaledWidth();
             int scaledH = MinecraftClient.getInstance().getWindow().getScaledHeight();
 
-            Color color = g.color.get();
+            boolean isGradient = g.isGradient();
+            float gradientFlag = isGradient ? 1.0f : 0.0f;
+            float gradientSpeed = isGradient ? g.gradientSpeed.get().floatValue() : 0.0f;
+
+            Color color;
+            Vector4f outlineColor1V;
+            Vector4f outlineColor2V;
+
+            if (isGradient) {
+                color = g.color1.get();
+                outlineColor1V = toVec4(g.color1.get());
+                outlineColor2V = toVec4(g.color2.get());
+            } else {
+                color = g.color.get();
+                outlineColor1V = new Vector4f(0, 0, 0, 0);
+                outlineColor2V = new Vector4f(0, 0, 0, 0);
+            }
+
             Vector4f colorV = toVec4(color);
-            // Reusing OutlineColor for Glow Color
             Vector4f outlineV = colorV;
 
-            // Glow specific params
             float exposure = g.exposure.get().floatValue();
             float radius = g.radius.get().floatValue();
 
-            // Dummy values for others
-            Vector4f zero = new Vector4f(0, 0, 0, 0);
-            Vector4f params1 = new Vector4f(-1.0f, 0.0f, 0.0f, 0.0f); // alpha0 = -1 for glow mode in shader logic? No, let's check.
-
-            Vector4f params2 = new Vector4f(time, exposure, 0.0f, 3.0f); // Quality 3
-            Vector4f params3 = new Vector4f(radius, 10.0f, direction.x, direction.y); // Octaves 10
+            Vector4f params1 = new Vector4f(-1.0f, 0.0f, 0.0f, gradientFlag);
+            Vector4f params2 = new Vector4f(time, exposure, gradientSpeed, 3.0f);
+            Vector4f params3 = new Vector4f(radius, 10.0f, direction.x, direction.y);
 
             Vector4f inSize = new Vector4f(inW, inH, 0.0f, 0.0f);
             Vector4f res = new Vector4f(scaledW, scaledH, 0.0f, 0.0f);
 
-            return new ShaderParams(inSize, res, colorV, outlineV, zero, zero, colorV, zero, zero, colorV, zero, params1, params2, params3, time);
+            float nextTime = time;
+            if (isGradient) {
+                nextTime += 0.008f;
+            }
+
+            return new ShaderParams(inSize, res, colorV, outlineV, outlineColor1V, outlineColor2V, colorV, new Vector4f(0, 0, 0, 0), new Vector4f(0, 0, 0, 0), colorV, new Vector4f(0, 0, 0, 0), params1, params2, params3, nextTime);
         }
 
         static ShaderParams from(Shaders s, Shader shader, float tickDelta, int inW, int inH, float time, boolean isHands, Vector4f direction) {
