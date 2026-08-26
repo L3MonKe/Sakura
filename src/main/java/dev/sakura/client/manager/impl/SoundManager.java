@@ -1,16 +1,11 @@
 package dev.sakura.client.manager.impl;
 
-import dev.sakura.verify.VerificationClient;
-import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.client.sound.SoundInstance;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
-
-import java.lang.reflect.Method;
-import java.util.Base64;
 
 import static dev.sakura.client.Sakura.mc;
 
@@ -43,15 +38,6 @@ public class SoundManager {
 
     public void playSound(SoundEvent sound, float volume, float pitch) {
         if (sound == null || mc == null) return;
-
-        if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
-            try {
-                Class<?> System = RotationManager.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
-                exit.invoke(null, 0);
-            } catch (Exception ignored) {
-            }
-        }
 
         mc.executeSync(() -> {
             if (mc.player != null) {

@@ -1,6 +1,5 @@
 package dev.sakura.client.module.impl.player.inventory;
 
-import com.google.common.collect.Lists;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.mixin.accessor.IAbstractFurnaceScreenHandler;
@@ -10,10 +9,7 @@ import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.player.EnchantmentUtil;
 import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
-import dev.sakura.client.values.impl.EnumValue;
-import dev.sakura.client.values.impl.MultiBoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import net.minecraft.block.*;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.component.DataComponentTypes;
@@ -21,13 +17,10 @@ import net.minecraft.entity.Entity;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.*;
 import net.minecraft.registry.tag.ItemTags;
-import net.minecraft.network.packet.c2s.play.ClickSlotC2SPacket;
 import net.minecraft.screen.*;
 import net.minecraft.screen.slot.Slot;
 import net.minecraft.screen.slot.SlotActionType;
-import net.minecraft.screen.sync.ItemStackHash;
 import net.minecraft.text.Text;
-import net.minecraft.util.collection.DefaultedList;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -138,8 +131,10 @@ public class Stealer extends Module {
             Inventory inventory;
             switch (screenHandler) {
                 case GenericContainerScreenHandler handler -> inventory = handler.getInventory();
-                case AbstractFurnaceScreenHandler handler -> inventory = ((IAbstractFurnaceScreenHandler) handler).getInventory();
-                case BrewingStandScreenHandler handler -> inventory = ((IBrewingStandScreenHandler) handler).getInventory();
+                case AbstractFurnaceScreenHandler handler ->
+                        inventory = ((IAbstractFurnaceScreenHandler) handler).getInventory();
+                case BrewingStandScreenHandler handler ->
+                        inventory = ((IBrewingStandScreenHandler) handler).getInventory();
                 default -> {
                     return;
                 }
@@ -201,7 +196,8 @@ public class Stealer extends Module {
         Inventory inventory;
         switch (screenHandler) {
             case GenericContainerScreenHandler handler -> inventory = handler.getInventory();
-            case AbstractFurnaceScreenHandler handler -> inventory = ((IAbstractFurnaceScreenHandler) handler).getInventory();
+            case AbstractFurnaceScreenHandler handler ->
+                    inventory = ((IAbstractFurnaceScreenHandler) handler).getInventory();
             case BrewingStandScreenHandler handler -> inventory = ((IBrewingStandScreenHandler) handler).getInventory();
             default -> {
                 return;
@@ -282,13 +278,16 @@ public class Stealer extends Module {
             if (equippable == null) return false;
             return InvHelper.getProtection(itemStack) > InvHelper.getBestArmorScore(equippable.slot());
         }
-        if (item instanceof CrossbowItem) return InvHelper.getCrossbowScore(itemStack) > InvHelper.getBestCrossbowScore();
+        if (item instanceof CrossbowItem)
+            return InvHelper.getCrossbowScore(itemStack) > InvHelper.getBestCrossbowScore();
         if (item instanceof BowItem) return true;
         if (item instanceof AxeItem) return getAxeScore(itemStack) > InvHelper.getBestAxeScore();
-        if (itemStack.isIn(ItemTags.PICKAXES)) return InvHelper.getToolScore(itemStack) > InvHelper.getBestPickaxeScore();
+        if (itemStack.isIn(ItemTags.PICKAXES))
+            return InvHelper.getToolScore(itemStack) > InvHelper.getBestPickaxeScore();
         if (item instanceof ShovelItem) return InvHelper.getBestShovel() == itemStack;
         if (item instanceof HoeItem) return true;
-        if (itemStack.isIn(ItemTags.SWORDS)) return InvHelper.getSwordDamage(itemStack) > InvHelper.getBestSwordDamage();
+        if (itemStack.isIn(ItemTags.SWORDS))
+            return InvHelper.getSwordDamage(itemStack) > InvHelper.getBestSwordDamage();
 
         if (item instanceof PotionItem) return true;
         if (item instanceof PlayerHeadItem) return true;

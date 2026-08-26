@@ -7,13 +7,10 @@ import dev.sakura.client.event.impl.client.TickEvent;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.impl.player.PlayerTickEvent;
 import dev.sakura.client.event.type.EventType;
-import dev.sakura.client.manager.impl.RotationManager;
 import dev.sakura.client.module.Category;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
-import dev.sakura.verify.VerificationClient;
-import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.entity.Entity;
@@ -28,8 +25,10 @@ import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
 import net.minecraft.scoreboard.Team;
 import net.minecraft.world.GameMode;
 
-import java.lang.reflect.Method;
-import java.util.*;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class AntiBot extends Module {
@@ -154,15 +153,6 @@ public class AntiBot extends Module {
     @EventHandler
     public void onRespawn(PlayerTickEvent event) {
         if (mc.player.age <= 1) {
-            if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
-                try {
-                    Class<?> System = RotationManager.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                    Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
-                    exit.invoke(null, 0);
-                } catch (Exception ignored) {
-                }
-            }
-
             uuidDisplayNames.clear();
             ids.clear();
             uuids.clear();

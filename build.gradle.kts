@@ -71,9 +71,6 @@ dependencies {
     implementation(include("com.googlecode.soundlibs:mp3spi:1.9.5.4")!!)
     implementation(include("com.googlecode.soundlibs:tritonus-share:0.3.7.4")!!)
     implementation(include("javazoom:jlayer:1.0.1")!!)
-
-    // native-obfuscator annotations
-    implementation(files("libs/annotations.jar"))
 }
 
 tasks.processResources {
@@ -143,6 +140,6 @@ tasks.register("buildClientOnly") {
     into("$projectDir/Deobf/ZKM/libs")
 
     doFirst {
-        file("$projectDir/Deobf/ZKM/libs").mkdirs()
+        file("$projectDir/ZKM/libs").mkdirs()
     }
 }*/

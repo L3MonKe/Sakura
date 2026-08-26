@@ -7,7 +7,6 @@ import dev.sakura.client.command.ModuleArgumentType;
 import dev.sakura.client.gui.clickgui.panel.CategoryPanel;
 import dev.sakura.client.module.Module;
 import dev.sakura.client.utils.client.ChatUtil;
-import dev.sakura.verify.util.ExitUtil;
 import net.minecraft.command.CommandSource;
 
 public class ResetCommand extends Command {
@@ -19,7 +18,6 @@ public class ResetCommand extends Command {
     public void buildCommand(LiteralArgumentBuilder<CommandSource> builder) {
         builder
                 .then(literal("all").executes(c -> {
-                    ExitUtil.ensureVerifiedOrExit();
                     resetAll();
                     ChatUtil.clientMessage("§a已重置所有配置为默认值。");
                     return 1;
@@ -27,7 +25,6 @@ public class ResetCommand extends Command {
                 .then(literal("module")
                         .then(argument("module", ModuleArgumentType.module())
                                 .executes(c -> {
-                                    ExitUtil.ensureVerifiedOrExit();
                                     Module module = ModuleArgumentType.getModule(c, "module");
                                     module.reset();
                                     ChatUtil.clientMessage("§a已重置模块 " + module.getEnglishName() + " 为默认值。");

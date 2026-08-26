@@ -9,7 +9,6 @@ import dev.sakura.client.event.impl.client.SendMessageEvent;
 import dev.sakura.client.event.impl.client.SuggestChatEvent;
 import dev.sakura.client.event.impl.key.KeyEvent;
 import dev.sakura.client.event.type.KeyAction;
-import dev.sakura.verify.util.ExitUtil;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import net.minecraft.command.CommandSource;
@@ -39,9 +38,7 @@ public class CommandManager {
 
         register(
                 new BindCommand(),
-                new ConfigCommand(),
                 new HelpCommand(),
-                //new IRCCommand(),
                 new PrefixCommand(),
                 new ResetCommand(),
                 new SaveCommand(),
@@ -90,7 +87,6 @@ public class CommandManager {
     public void onChatMessage(SendMessageEvent event) {
         final String text = event.getMessage().trim();
         if (text.startsWith(prefix)) {
-            ExitUtil.ensureVerifiedOrExit();
             String literal = text.substring(prefix.length());
             event.setCancelled(true);
             mc.inGameHud.getChatHud().addToMessageHistory(text);
@@ -104,7 +100,6 @@ public class CommandManager {
     @EventHandler
     public void onKey(KeyEvent event) {
         if (event.getAction() == KeyAction.Press && event.getKey() == prefixKey && mc.currentScreen == null) {
-            ExitUtil.ensureVerifiedOrExit();
             event.setCancelled(true);
             mc.setScreen(new ChatScreen("", true));
         }
@@ -115,7 +110,6 @@ public class CommandManager {
         if (!(mc.currentScreen instanceof ChatScreen)) {
             return;
         }
-        ExitUtil.ensureVerifiedOrExit();
         event.setPrefix(prefix);
         event.setDispatcher(dispatcher);
         event.setSource(mc.getNetworkHandler().getCommandSource());

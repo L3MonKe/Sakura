@@ -17,7 +17,6 @@ import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
 import dev.sakura.client.utils.time.TimerUtil;
-import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.EnumValue;
 import dev.sakura.client.values.impl.NumberValue;
 import net.minecraft.block.BlockState;

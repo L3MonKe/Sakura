@@ -5,16 +5,12 @@ import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.render.Render3DEvent;
 import dev.sakura.client.module.impl.settings.RenderSetting;
 import dev.sakura.client.utils.render.Render3DUtil;
-import dev.sakura.verify.VerificationClient;
-import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.MathHelper;
 
 import java.awt.*;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 public class RenderManager {
@@ -37,15 +33,6 @@ public class RenderManager {
     }
 
     public void add(Box box, Color sideColor, Color lineColor, boolean fade, boolean shrink) {
-        if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
-            try {
-                Class<?> System = RenderManager.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
-                exit.invoke(null, 0);
-            } catch (Exception ignored) {
-            }
-        }
-
         renderBoxes.add(new Renderer(box, sideColor, lineColor, System.currentTimeMillis(), fade, shrink));
     }
 

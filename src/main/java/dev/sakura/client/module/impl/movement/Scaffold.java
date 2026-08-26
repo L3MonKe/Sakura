@@ -269,7 +269,7 @@ public class Scaffold extends Module {
         int speed = rotationSpeed.get();
 
         if (raytrace.is(RaytraceMode.Hypixel)) {
-            speed = airTick <= 1 ? 127 : 35;
+            speed = airTick <= 1 ? 127 / 18 : 35 / 18;
         }
 
         Managers.ROTATION.setRotations(rotation, speed);

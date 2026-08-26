@@ -1,6 +1,5 @@
 package dev.sakura.client;
 
-import by.radioegor146.nativeobfuscator.Native;
 import dev.sakura.client.command.CommandManager;
 import dev.sakura.client.config.ConfigManager;
 import dev.sakura.client.event.EventBus;
@@ -13,11 +12,7 @@ import dev.sakura.client.manager.Managers;
 import dev.sakura.client.module.ModuleManager;
 import dev.sakura.client.nanovg.NanoVGRenderer;
 import dev.sakura.client.utils.player.BlinkUtils;
-import dev.sakura.verify.AuthState;
-import dev.sakura.verify.util.ExitUtil;
-import jnic.JNICInclude;
 import net.minecraft.client.MinecraftClient;
-import niurendeobf.ZKMIndy;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -90,9 +85,6 @@ import java.util.concurrent.Executors;
  * 每晚灯火阑珊处，夜难寐，加班狂。
  */
 
-@Native
-@JNICInclude
-@ZKMIndy
 public class Sakura {
     public static final String MOD_NAME = "Sakura";
     public static final String MOD_VER = BuildConfig.VERSION;
@@ -115,13 +107,6 @@ public class Sakura {
 
     public static void init(MinecraftClient client) {
         NanoVGRenderer.INSTANCE.initNanoVG();
-
-        ExitUtil.ensureVerifiedOrExit();
-        if (!AuthState.isAuthed() || AuthState.getExpireAt() <= System.currentTimeMillis()) {
-            AuthState.clear();
-            ExitUtil.exit0();
-            return;
-        }
 
         LOGGER.info("正在开始初始化!");
 
@@ -154,11 +139,6 @@ public class Sakura {
     }
 
     public static void redirectToMainMenu() {
-        if (!AuthState.isAuthed() || AuthState.getExpireAt() <= System.currentTimeMillis()) {
-            AuthState.clear();
-            ExitUtil.exit0();
-            return;
-        }
         boolean fromOtherScreenToHome = mc != null
                 && mc.world == null
                 && mc.currentScreen != null

@@ -10,7 +10,6 @@ import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.values.impl.*;
-import dev.sakura.verify.AuthState;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.nanovg.NVGPaint;
 
@@ -433,7 +432,7 @@ public class WatermarkHud extends HudModule {
         if (mc.player == null || mc.world == null) {
             username = "Player";
         } else {
-            username = AuthState.getCurrentUser();
+            username = mc.player.getNameForScoreboard();
             if (username == null || username.isBlank()) {
                 NullPointerException e = new NullPointerException("路几把");
                 Sakura.LOGGER.error("哎呦我去你真牛逼你咋裂的？", e);

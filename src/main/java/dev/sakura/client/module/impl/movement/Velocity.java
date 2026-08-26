@@ -89,7 +89,6 @@ public class Velocity extends Module {
     private final BoolValue attackReduce = new BoolValue("AttackReduce", "攻击减少", true, () -> mode.is(Mode.Hypixel));
 
 
-
     public boolean lag;
     private boolean jump;
     private Vec3d velocity;

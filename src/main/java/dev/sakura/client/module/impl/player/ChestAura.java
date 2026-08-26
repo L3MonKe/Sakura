@@ -18,23 +18,9 @@ import dev.sakura.client.utils.time.TimerUtil;
 import dev.sakura.client.values.impl.BoolValue;
 import dev.sakura.client.values.impl.MultiBoolValue;
 import dev.sakura.client.values.impl.NumberValue;
-import net.minecraft.block.BlastFurnaceBlock;
-import net.minecraft.block.BrewingStandBlock;
-import net.minecraft.block.ChestBlock;
-import net.minecraft.block.FurnaceBlock;
-import net.minecraft.block.SmokerBlock;
-import net.minecraft.block.entity.BlastFurnaceBlockEntity;
-import net.minecraft.block.entity.BrewingStandBlockEntity;
-import net.minecraft.block.entity.ChestBlockEntity;
-import net.minecraft.block.entity.FurnaceBlockEntity;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.SmokerBlockEntity;
-import net.minecraft.client.gui.screen.ingame.BlastFurnaceScreen;
-import net.minecraft.client.gui.screen.ingame.BrewingStandScreen;
-import net.minecraft.client.gui.screen.ingame.FurnaceScreen;
-import net.minecraft.client.gui.screen.ingame.GenericContainerScreen;
-import net.minecraft.client.gui.screen.ingame.InventoryScreen;
-import net.minecraft.client.gui.screen.ingame.SmokerScreen;
+import net.minecraft.block.*;
+import net.minecraft.block.entity.*;
+import net.minecraft.client.gui.screen.ingame.*;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
@@ -54,12 +40,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.RaycastContext;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class ChestAura extends Module {
     private final MultiBoolValue container = new MultiBoolValue("Container", "容器", List.of(

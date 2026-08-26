@@ -1,1 +1,0 @@
-java -jar grunt-main.jar config.json

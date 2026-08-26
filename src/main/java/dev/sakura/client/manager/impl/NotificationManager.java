@@ -9,7 +9,6 @@ import dev.sakura.client.nanovg.util.NanoVGHelper;
 import dev.sakura.client.shaders.BlurShader;
 import dev.sakura.client.shaders.ShadowShader;
 import dev.sakura.client.utils.animations.Easing;
-import dev.sakura.verify.util.ExitUtil;
 import org.joml.Matrix3x2fStack;
 
 import javax.imageio.ImageIO;
@@ -165,7 +164,6 @@ public class NotificationManager {
     }
 
     public static void send(long id, String message, long length) {
-        ExitUtil.ensureVerifiedOrExit();
         long safeLength = normalizeTimeout(length);
         boolean forceNew = isSakuraModeActive();
         long finalId = forceNew ? (id ^ System.nanoTime()) : id;

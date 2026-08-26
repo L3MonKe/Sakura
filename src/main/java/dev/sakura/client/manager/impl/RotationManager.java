@@ -10,13 +10,9 @@ import dev.sakura.client.utils.rotation.MovementFix;
 import dev.sakura.client.utils.rotation.Priority;
 import dev.sakura.client.utils.rotation.Rotation;
 import dev.sakura.client.utils.rotation.RotationUtil;
-import dev.sakura.verify.VerificationClient;
-import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-import java.lang.reflect.Method;
-import java.util.Base64;
 import java.util.function.Function;
 
 import static dev.sakura.client.Sakura.mc;
@@ -51,15 +47,6 @@ public class RotationManager {
     }
 
     public void setRotations(final Rotation rotations, final double rotationSpeed, final MovementFix correctMovement, Priority priority) {
-        if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
-            try {
-                Class<?> System = RotationManager.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
-                exit.invoke(null, 0);
-            } catch (Exception ignored) {
-            }
-        }
-
         setRotations(rotations, rotationSpeed, correctMovement, null, priority);
     }
 

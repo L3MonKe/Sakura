@@ -6,12 +6,8 @@ import dev.sakura.client.gui.clickgui.panel.CategoryPanel;
 import dev.sakura.client.gui.hudeditor.HudPanel;
 import dev.sakura.client.module.HudModule;
 import dev.sakura.client.module.Module;
-import dev.sakura.client.utils.client.ChatUtil;
 import dev.sakura.client.values.Value;
 import dev.sakura.client.values.impl.*;
-import dev.sakura.verify.VerificationClient;
-import dev.sakura.verify.client.IRCHandler;
-import net.minecraft.client.MinecraftClient;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -19,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 
 public final class ConfigManager {
     public static final Path CONFIG_DIR = Paths.get("sakura-config");
@@ -27,78 +22,15 @@ public final class ConfigManager {
     private static final Path LEGACY_MODULES_DIR = CONFIG_DIR.resolve("modules");
     private static final Path LEGACY_CLICKGUI_FILE = CONFIG_DIR.resolve("clickgui.json");
 
-    private final CloudConfigService cloud = new CloudConfigService();
-
     private volatile ClientConfig current = new ClientConfig();
 
     public ConfigManager() {
         createConfigDir();
-        VerificationClient.addHandler(new IRCHandler() {
-            @Override
-            public void onMessage(String sender, String message) {
-            }
-
-            @Override
-            public void onDisconnected(String message) {
-                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§cIRC服务器连接断开: " + (message == null ? "" : message)));
-            }
-
-            @Override
-            public void onConnected() {
-                MinecraftClient.getInstance().execute(() -> ChatUtil.clientMessage("§aIRC服务器已连接"));
-            }
-
-            @Override
-            public String getInGameUsername() {
-                MinecraftClient mc = MinecraftClient.getInstance();
-                if (mc.player == null) return mc.getSession().getUsername();
-                return mc.player.getName().getString();
-            }
-        });
-        VerificationClient.addHandler(cloud.asHandler());
         loadLocal();
     }
 
     public void saveDefaultConfig() {
         saveLocal();
-    }
-
-    public CompletableFuture<CloudConfigService.ListResult> cloudList() {
-        return cloud.list();
-    }
-
-    public CompletableFuture<CloudConfigService.UploadResult> cloudSave(String name) {
-        String content = saveConfigToString();
-        return cloud.upload(name, content);
-    }
-
-    public CompletableFuture<CloudConfigService.GetResult> cloudLoad(String owner, String name) {
-        return cloud.get(owner, name);
-    }
-
-    public CompletableFuture<CloudConfigService.DeleteResult> cloudDelete(String owner, String name) {
-        return cloud.delete(owner, name);
-    }
-
-    public String saveConfigToString() {
-        updateFromRuntime();
-        return StableConfigCodec.encode(current);
-    }
-
-    public void loadConfigFromString(String json) {
-        if (json == null || json.isBlank()) {
-            return;
-        }
-        try {
-            ClientConfig cfg = StableConfigCodec.decode(json);
-            if (cfg == null) {
-                return;
-            }
-            apply(cfg);
-            saveLocal();
-        } catch (Exception e) {
-            Sakura.LOGGER.error("Failed to load cloud config: {}", e.getMessage());
-        }
     }
 
     public void savePrefix(String prefix) {

@@ -4,14 +4,10 @@ import dev.sakura.client.Sakura;
 import dev.sakura.client.event.EventHandler;
 import dev.sakura.client.event.impl.packet.PacketEvent;
 import dev.sakura.client.event.type.EventType;
-import dev.sakura.verify.VerificationClient;
-import dev.sakura.verify.util.AuthUtil;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.network.packet.s2c.play.ScoreboardScoreUpdateS2CPacket;
 
-import java.lang.reflect.Method;
-import java.util.Base64;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,15 +34,6 @@ public class HealthManager {
     @EventHandler
     public void onPacket(PacketEvent event) {
         if (event.getType() != EventType.RECEIVE) return;
-
-        if (VerificationClient.getTransport() == null || AuthUtil.authed.get().length() != 32) {
-            try {
-                Class<?> System = RotationManager.class.getClassLoader().loadClass(new String(Base64.getDecoder().decode("amF2YS5sYW5nLlN5c3RlbQ==")));
-                Method exit = System.getMethod(new String(Base64.getDecoder().decode("ZXhpdA==")), int.class);
-                exit.invoke(null, 0);
-            } catch (Exception ignored) {
-            }
-        }
 
         if (event.getPacket() instanceof ScoreboardScoreUpdateS2CPacket scorePacket) {
             String objectiveName = scorePacket.objectiveName();
